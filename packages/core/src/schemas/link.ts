@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExtractionStatus, SourceKind } from '../constants.js';
+import { ExtractionStatus, SourceKind } from '../constants';
 
 export const LinkSchema = z.object({
   id: z.string().uuid(),

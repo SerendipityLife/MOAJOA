@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from './types/database.js';
+import type { Database } from './types/database';
 
 /**
  * Loose generic intentionally — query helpers operate on any Supabase client

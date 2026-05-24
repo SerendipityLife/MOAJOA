@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Limits } from '../constants.js';
+import { Limits } from '../constants';
 
 /**
  * Place = a point on the map within a board. Either extracted from a link or

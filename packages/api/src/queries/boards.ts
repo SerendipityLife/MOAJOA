@@ -1,5 +1,5 @@
 import type { Board, BoardCreate, BoardUpdate, PublicBoardView } from '@moajoa/core';
-import type { MoajoaSupabaseClient } from '../client.js';
+import type { MoajoaSupabaseClient } from '../client';
 
 export async function listMyBoards(client: MoajoaSupabaseClient): Promise<Board[]> {
   const { data, error } = await client

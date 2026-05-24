@@ -1,5 +1,5 @@
 import type { Vote, VoteCast } from '@moajoa/core';
-import type { MoajoaSupabaseClient } from '../client.js';
+import type { MoajoaSupabaseClient } from '../client';
 
 /**
  * Cast a love vote. Idempotent — repeated calls return the existing vote.

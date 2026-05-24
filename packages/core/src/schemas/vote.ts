@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Limits, VoteKind } from '../constants.js';
+import { Limits, VoteKind } from '../constants';
 
 export const VoteSchema = z.object({
   id: z.string().uuid(),

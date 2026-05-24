@@ -1,5 +1,5 @@
 import { detectSourceKind, type Link, type LinkAdd } from '@moajoa/core';
-import type { MoajoaSupabaseClient } from '../client.js';
+import type { MoajoaSupabaseClient } from '../client';
 
 export async function listLinksByBoard(
   client: MoajoaSupabaseClient,

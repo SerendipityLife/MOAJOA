@@ -1,5 +1,5 @@
 import type { Place, PlaceAddManual } from '@moajoa/core';
-import type { MoajoaSupabaseClient } from '../client.js';
+import type { MoajoaSupabaseClient } from '../client';
 
 export async function listPlacesByBoard(
   client: MoajoaSupabaseClient,

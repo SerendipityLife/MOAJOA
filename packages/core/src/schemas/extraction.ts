@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExtractedPlacesPayloadSchema } from './place.js';
+import { ExtractedPlacesPayloadSchema } from './place';
 
 /**
  * Edge Function `extract-youtube` request/response contracts.

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MemberRole } from '../constants.js';
+import { MemberRole } from '../constants';
 
 export const MembershipSchema = z.object({
   id: z.string().uuid(),

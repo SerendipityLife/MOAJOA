@@ -3,11 +3,11 @@
  * Database row types live in @moajoa/api/src/types/database.ts (generated).
  */
 
-import type { Board } from '../schemas/board.js';
-import type { Link } from '../schemas/link.js';
-import type { Place } from '../schemas/place.js';
-import type { Vote } from '../schemas/vote.js';
-import type { Membership } from '../schemas/membership.js';
+import type { Board } from '../schemas/board';
+import type { Link } from '../schemas/link';
+import type { Place } from '../schemas/place';
+import type { Vote } from '../schemas/vote';
+import type { Membership } from '../schemas/membership';
 
 /** A board with all related data needed to render the map view. */
 export interface BoardWithContents {

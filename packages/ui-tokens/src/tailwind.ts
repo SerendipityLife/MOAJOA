@@ -3,7 +3,7 @@
  * apps/web/tailwind.config.ts and apps/ios's NativeWind config extend this.
  */
 
-import { colors, radii, shadows, spacing, typography } from './index.js';
+import { colors, radii, shadows, spacing, typography } from './index';
 
 export const tailwindPreset = {
   theme: {

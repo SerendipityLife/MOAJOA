@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BoardVisibility, Limits } from '../constants.js';
+import { BoardVisibility, Limits } from '../constants';
 
 export const BoardSchema = z.object({
   id: z.string().uuid(),
