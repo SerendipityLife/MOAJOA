@@ -1,0 +1,11 @@
+_archive_asis/
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+.expo/
+pnpm-lock.yaml
+supabase/.temp/
+**/*.generated.ts
+packages/api/src/types/database.ts

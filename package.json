@@ -1,0 +1,31 @@
+{
+  "name": "moajoa",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "web:dev": "pnpm --filter @moajoa/web dev",
+    "web:build": "pnpm --filter @moajoa/web build",
+    "ios:start": "pnpm --filter @moajoa/ios start",
+    "ios:run": "pnpm --filter @moajoa/ios ios",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:types": "supabase gen types typescript --local > packages/api/src/types/database.ts",
+    "supabase:functions:serve": "supabase functions serve --env-file ./supabase/.env.local",
+    "lint": "pnpm -r --parallel run lint",
+    "typecheck": "pnpm -r --parallel run typecheck",
+    "test": "pnpm -r --parallel run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2"
+  }
+}
