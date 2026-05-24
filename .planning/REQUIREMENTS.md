@@ -109,48 +109,49 @@ scope creep 방지용 명시 차단 목록.
 
 ## Traceability
 
-`/gsd-plan-phase` 진행 시 채워짐 (roadmapper가 Phase 매핑 후 업데이트).
+Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADMAP.md`.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUILD-01 | TBD | Pending |
-| BUILD-02 | TBD | Pending |
-| BUILD-03 | TBD | Pending |
-| SAVE-01 | TBD | Pending |
-| SAVE-02 | TBD | Pending |
-| SAVE-03 | TBD | Pending |
-| SAVE-04 | TBD | Pending |
-| SAVE-05 | TBD | Pending |
-| EXTRACT-01 | TBD | Pending |
-| EXTRACT-02 | TBD | Pending |
-| EXTRACT-03 | TBD | Pending |
-| EXTRACT-04 | TBD | Pending |
-| EXTRACT-05 | TBD | Pending |
-| EXTRACT-06 | TBD | Pending |
-| EXTRACT-07 | TBD | Pending |
-| VIEW-01 | TBD | Pending |
-| VIEW-02 | TBD | Pending |
-| VIEW-03 | TBD | Pending |
-| VIEW-04 | TBD | Pending |
-| VIEW-05 | TBD | Pending |
-| VIEW-06 | TBD | Pending |
-| TRUST-01 | TBD | Pending |
-| TRUST-02 | TBD | Pending |
-| TRUST-03 | TBD | Pending |
-| TRUST-04 | TBD | Pending |
-| ONBOARD-01 | TBD | Pending |
-| ONBOARD-02 | TBD | Pending |
-| WEB-01 | TBD | Pending |
-| WEB-02 | TBD | Pending |
+| BUILD-01 | Phase 1 | Pending |
+| BUILD-02 | Phase 1 | Pending |
+| BUILD-03 | Phase 1 | Pending |
+| WEB-01 | Phase 1 | Pending |
+| WEB-02 | Phase 1 | Pending |
+| EXTRACT-01 | Phase 2 | Pending |
+| EXTRACT-02 | Phase 2 | Pending |
+| EXTRACT-03 | Phase 2 | Pending |
+| EXTRACT-04 | Phase 2 | Pending |
+| EXTRACT-05 | Phase 2 | Pending |
+| EXTRACT-06 | Phase 2 | Pending |
+| SAVE-01 | Phase 3 | Pending |
+| SAVE-02 | Phase 3 | Pending |
+| SAVE-03 | Phase 3 | Pending |
+| SAVE-04 | Phase 3 | Pending |
+| SAVE-05 | Phase 3 | Pending |
+| VIEW-01 | Phase 4 | Pending |
+| VIEW-02 | Phase 4 | Pending |
+| VIEW-03 | Phase 4 | Pending |
+| VIEW-04 | Phase 4 | Pending |
+| VIEW-05 | Phase 4 | Pending |
+| VIEW-06 | Phase 4 | Pending |
+| TRUST-01 | Phase 5 | Pending |
+| TRUST-02 | Phase 5 | Pending |
+| TRUST-03 | Phase 5 | Pending |
+| TRUST-04 | Phase 5 | Pending |
+| ONBOARD-01 | Phase 5 | Pending |
+| ONBOARD-02 | Phase 5 | Pending |
+| EXTRACT-07 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 29 total
-- Mapped to phases: 0 (will be filled by roadmapper)
-- Unmapped: 29 ⚠️ (initial state)
+- Mapped to phases: 29 ✓
+- Unmapped: 0
+- Duplicate mappings: 0
 
 ## Dogfooding Gate
 
-Phase 1 완료 조건 (Karpathy goal-driven execution):
+Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 > **본인이 일본 또는 서울 여행 계획에 MOAJOA를 7일 연속 사용했고, 보드에 10개 이상의 핀이 추출·확정되었으며, 친구에게 그 보드 URL을 카톡으로 공유했을 때 모바일 브라우저에서 정상 열림.**
 
@@ -158,4 +159,4 @@ Phase 1 완료 조건 (Karpathy goal-driven execution):
 
 ---
 *Requirements defined: 2026-05-25*
-*Last updated: 2026-05-25 after initialization*
+*Last updated: 2026-05-25 — traceability filled after roadmap creation*
