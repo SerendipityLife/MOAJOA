@@ -1,6 +1,12 @@
-import { createServerClient as createSSRClient } from '@supabase/ssr';
+import { createServerClient as createSSRClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@moajoa/api';
+
+interface CookieToSet {
+  name: string;
+  value: string;
+  options: CookieOptions;
+}
 
 /**
  * Server-side Supabase client for Next.js server components and route handlers.
@@ -19,9 +25,9 @@ export async function getSupabaseServer() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookies) {
+      setAll(cookiesToSet: CookieToSet[]) {
         try {
-          for (const { name, value, options } of cookies) {
+          for (const { name, value, options } of cookiesToSet) {
             cookieStore.set(name, value, options);
           }
         } catch {

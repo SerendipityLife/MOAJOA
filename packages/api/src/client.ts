@@ -1,7 +1,15 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types/database.js';
 
-export type MoajoaSupabaseClient = SupabaseClient<Database>;
+/**
+ * Loose generic intentionally — query helpers operate on any Supabase client
+ * regardless of whether it was made by @supabase/supabase-js directly
+ * (apps/ios) or by @supabase/ssr's createServerClient (apps/web), which use
+ * slightly different generic shapes. Tighten once real DB types are
+ * generated via `pnpm supabase:types`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type MoajoaSupabaseClient = SupabaseClient<any, any, any>;
 
 export interface CreateClientArgs {
   url: string;
