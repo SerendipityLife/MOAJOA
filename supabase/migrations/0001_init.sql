@@ -149,17 +149,8 @@ create policy "boards: owner full access"
   using (owner_id = auth.uid())
   with check (owner_id = auth.uid());
 
--- Members of shared boards can read.
-create policy "boards: shared members can read"
-  on boards for select
-  to authenticated
-  using (
-    visibility in ('shared','public')
-    and exists (
-      select 1 from memberships m
-      where m.board_id = boards.id and m.user_id = auth.uid() and m.accepted_at is not null
-    )
-  );
+-- NOTE: "boards: shared members can read" policy depends on the memberships
+-- table — moved to bottom of this migration after memberships exists.
 
 -- Public boards readable by anyone *via the public_board_view RPC* (RLS bypass).
 -- Direct table SELECT not allowed for anon — keeps schema details private.
@@ -212,6 +203,18 @@ create policy "memberships: board owner or self can delete"
   using (
     user_id = auth.uid()
     or exists (select 1 from boards b where b.id = memberships.board_id and b.owner_id = auth.uid())
+  );
+
+-- Deferred policy from boards section: now that memberships exists.
+create policy "boards: shared members can read"
+  on boards for select
+  to authenticated
+  using (
+    visibility in ('shared','public')
+    and exists (
+      select 1 from memberships m
+      where m.board_id = boards.id and m.user_id = auth.uid() and m.accepted_at is not null
+    )
   );
 
 -- =============================================================================
