@@ -25,7 +25,8 @@ export function CreateBoardButton() {
       router.push(`/boards/${board.id}`);
     } catch (err) {
       console.error(err);
-      alert('보드 생성 실패');
+      const message = err instanceof Error ? err.message : String(err);
+      alert(`보드 생성 실패: ${message}`);
     } finally {
       setPending(false);
     }
