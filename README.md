@@ -6,10 +6,23 @@
 
 🚧 **Pivot in progress (2026-05-24~)** — 기존 Flutter+Firebase ASIS는 [`SerendipityLife/MOAJOA_ASIS`](https://github.com/SerendipityLife/MOAJOA_ASIS)로 이동. 이 레포는 TypeScript 모노레포로 새로 시작.
 
+**팀 협업을 시작하신다면:** [`docs/WORKSTREAMS.md`](docs/WORKSTREAMS.md)에서 자신의 트랙 확인 → [`docs/SESSION-NOTES-2026-05-25.md`](docs/SESSION-NOTES-2026-05-25.md)에서 현재 상태 파악.
+
+## 현재 동작 상태 (2026-05-25 기준)
+
+| 영역 | 상태 |
+|---|---|
+| Web SSR + Auth (이메일+비밀번호, 매직 링크) | ✅ |
+| Supabase 마이그레이션 + RLS + Edge Function 배포 | ✅ |
+| 유튜브 추출 파이프라인 (Claude + Places API) | ✅ baseline (정교화 필요) |
+| iOS 앱 로컬 빌드 | ⚠️ pnpm + RN podspec 이슈로 보류 — `docs/WORKSTREAMS.md § 1` 참조 |
+| Google/Apple OAuth | ⚠️ UI만 있고 provider 설정 미완 |
+| 공개 보드 `/b/[slug]` 폴리시 (OG, SEO) | ⚠️ baseline만 |
+
 ## Stack
 
 - **Web (열람·공개 보드):** Next.js 15 (App Router) · React 19 · Tailwind v4
-- **iOS (저장·공유·투표):** Expo SDK 51 (React Native 0.74) · Expo Router · NativeWind
+- **iOS (저장·공유·투표):** Expo SDK 54 (React Native 0.81) · Expo Router · NativeWind v4
 - **Backend:** Supabase — Postgres + PostGIS + Auth + Realtime + Storage + Edge Functions
 - **Maps & Places:** Google Maps Platform (Maps JS, Maps SDK iOS, Places API New)
 - **Extraction LLM:** Anthropic Claude (claude-sonnet-4-6)

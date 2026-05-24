@@ -5,15 +5,9 @@ const config: ExpoConfig = {
   slug: 'moajoa',
   version: '0.1.0',
   orientation: 'portrait',
-  icon: './assets/icon.png',
+  // icon/splash assets to be added in design pass. Expo uses defaults until then.
   scheme: 'moajoa',
   userInterfaceStyle: 'light',
-  splash: {
-    image: './assets/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#FFFFFF',
-  },
-  assetBundlePatterns: ['**/*'],
   ios: {
     bundleIdentifier: 'com.serendipitylife.moajoa',
     supportsTablet: false,
@@ -28,16 +22,9 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-font',
-    [
-      'expo-share-intent',
-      {
-        iosActivationRules: {
-          NSExtensionActivationSupportsWebURLWithMaxCount: 1,
-          NSExtensionActivationSupportsText: true,
-        },
-        androidIntentFilters: ['text/*'],
-      },
-    ],
+    // expo-share-intent will be re-added in Phase 1.5 with a SDK 54+ compatible
+    // version. We're not invoking its JS APIs yet, and it requires a native
+    // build (not Expo Go) anyway.
   ],
   experiments: {
     typedRoutes: true,
