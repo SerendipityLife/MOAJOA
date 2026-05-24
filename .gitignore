@@ -21,6 +21,13 @@ out/
 .env.local
 .env.*.local
 !.env.example
+# Catch-all for any env-related archive that might contain secrets
+.env*.zip
+.env*.tar
+.env*.tar.gz
+.env*.7z
+secrets/
+*.secrets
 
 # Logs
 *.log
