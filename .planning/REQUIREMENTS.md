@@ -32,12 +32,12 @@ iOS 빌드 블로커 해소 + 셸 동작. dogfooding의 prerequisite.
 
 추출 정확도·신뢰도·비용을 측정 가능한 수준으로.
 
-- [ ] **EXTRACT-01**: Edge Function이 추출 단계별 진행 상태를 Supabase Realtime Broadcast 채널 `extract:{link_id}`로 송신 (metadata/transcript/llm/places/done)
-- [ ] **EXTRACT-02**: Claude 응답의 모든 place 후보는 `transcript_quote` 필드 포함이 필수이며, 없으면 폐기됨
-- [ ] **EXTRACT-03**: 각 place 행에 `source_kind` (ai/manual), `video_offset_sec`, `quote`, `inferred_city` 컬럼이 저장됨
-- [ ] **EXTRACT-04**: 모든 추출 호출이 `extraction_costs` 테이블에 (provider, model, tokens, cost_usd, duration_ms)로 로깅됨
-- [ ] **EXTRACT-05**: Google Places API 호출이 명시적 FieldMask(`places.id,places.displayName,places.formattedAddress,places.location`)만 사용 (와일드카드 금지)
-- [ ] **EXTRACT-06**: Google Cloud billing alert가 $5/$20/$50 threshold로 셋업되어 있음
+- [x] **EXTRACT-01**: Edge Function이 추출 단계별 진행 상태를 Supabase Realtime Broadcast 채널 `extract:{link_id}`로 송신 (metadata/transcript/llm/places/done)
+- [x] **EXTRACT-02**: Claude 응답의 모든 place 후보는 `transcript_quote` 필드 포함이 필수이며, 없으면 폐기됨
+- [x] **EXTRACT-03**: 각 place 행에 `source_kind` (ai/manual), `video_offset_sec`, `quote`, `inferred_city` 컬럼이 저장됨
+- [x] **EXTRACT-04**: 모든 추출 호출이 `extraction_costs` 테이블에 (provider, model, tokens, cost_usd, duration_ms)로 로깅됨
+- [x] **EXTRACT-05**: Google Places API 호출이 명시적 FieldMask(`places.id,places.displayName,places.formattedAddress,places.location`)만 사용 (와일드카드 금지)
+- [x] **EXTRACT-06**: Google Cloud billing alert가 $5/$20/$50 threshold로 셋업되어 있음
 - [ ] **EXTRACT-07**: sample 영상 10~20개에 대한 expected/actual 비교 baseline 측정 결과가 문서화됨 (개선은 v2)
 
 ### Public Board Viewing (VIEW) — Web
@@ -118,12 +118,12 @@ Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | BUILD-03 | Phase 1 | Pending |
 | WEB-01 | Phase 1 | Pending |
 | WEB-02 | Phase 1 | Pending |
-| EXTRACT-01 | Phase 2 | Pending |
-| EXTRACT-02 | Phase 2 | Pending |
-| EXTRACT-03 | Phase 2 | Pending |
-| EXTRACT-04 | Phase 2 | Pending |
-| EXTRACT-05 | Phase 2 | Pending |
-| EXTRACT-06 | Phase 2 | Pending |
+| EXTRACT-01 | Phase 2 | Complete |
+| EXTRACT-02 | Phase 2 | Complete |
+| EXTRACT-03 | Phase 2 | Complete |
+| EXTRACT-04 | Phase 2 | Complete |
+| EXTRACT-05 | Phase 2 | Complete |
+| EXTRACT-06 | Phase 2 | Complete |
 | SAVE-01 | Phase 3 | Pending |
 | SAVE-02 | Phase 3 | Pending |
 | SAVE-03 | Phase 3 | Pending |
