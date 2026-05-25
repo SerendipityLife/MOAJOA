@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 
@@ -15,8 +15,11 @@ import { getSupabaseBrowser } from '@/lib/supabase/browser';
  * handler can't see them. The Supabase browser SDK's `detectSessionInUrl: true`
  * auto-parses the hash when it boots, so we just wait for the session and
  * redirect.
+ *
+ * Next.js 15 requires components calling useSearchParams() to be wrapped in
+ * <Suspense> for the prerender to succeed.
  */
-export default function AuthCallbackPage() {
+function CallbackHandler() {
   const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -77,5 +80,19 @@ export default function AuthCallbackPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center px-6">
+          <p className="text-neutral-500">잠시만요.</p>
+        </main>
+      }
+    >
+      <CallbackHandler />
+    </Suspense>
   );
 }
