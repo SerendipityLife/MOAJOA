@@ -1,11 +1,36 @@
 import { addLink, listLinksByBoard, listPlacesByBoard, getBoard, triggerExtraction } from '@moajoa/api';
-import { detectSourceKind, type Board, type Link, type Place } from '@moajoa/core';
+import { detectSourceKind, SharedDefaultsKeys, type Board, type Link, type Place } from '@moajoa/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  RefreshControl,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
+import { subscribeExtractProgress, type ExtractProgress } from '@/lib/realtime';
+import { showToast } from '@/lib/toast';
+import { SharedDefaults } from '@/lib/shared-defaults';
+import { PinBottomSheet } from './_pin-sheet';
+import { PinAddModal } from './_pin-add-modal';
+
+// UI-SPEC §1 error reason mapping fixture. Broadcast 'error' payloads from
+// Phase 2 extract-youtube carry a raw error string; we map a few known prefixes
+// to user-facing copy and fall back to the default for anything unrecognized.
+function mapErrorReason(raw?: string): string {
+  if (!raw) return '잠시 후 다시 시도';
+  if (raw.includes('transcript')) return '자막이 없는 영상';
+  if (raw.includes('no_place') || raw.includes('places_empty')) return '장소를 찾지 못함';
+  if (raw.includes('quota') || raw.includes('429')) return '오늘 할당량 초과';
+  return '잠시 후 다시 시도';
+}
 
 export default function BoardDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -14,6 +39,9 @@ export default function BoardDetailScreen() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [url, setUrl] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [analyzing, setAnalyzing] = useState<string | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [addPinOpen, setAddPinOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -35,17 +63,46 @@ export default function BoardDetailScreen() {
     load();
   }, [load]);
 
+  // D-10: subscribe to extract:{link_id} broadcast while a link is analyzing.
+  // Only react to 'done' / 'error' steps (no raw 5-stage UI — Phase 5 territory).
+  // Pitfall 5: cleanup via supabase.removeChannel(ch) on link_id change/unmount.
+  useEffect(() => {
+    if (!analyzing) return;
+    const ch = subscribeExtractProgress(analyzing, (p: ExtractProgress) => {
+      if (p.step === 'done') {
+        setAnalyzing(null);
+        load();
+        showToast(`${p.places_extracted ?? 0}개 핀 추가됨`);
+      } else if (p.step === 'error') {
+        setAnalyzing(null);
+        showToast(`분석 실패: ${mapErrorReason(p.error)}`, 'error');
+      }
+    });
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [analyzing, load]);
+
   async function onAddLink() {
     if (!url.trim() || !id) return;
     try {
       const link = await addLink(supabase, { board_id: id, url: url.trim() });
-      if (link.source_kind === 'youtube') {
-        triggerExtraction(supabase, link.id).catch((err) => console.error(err));
-      }
       setUrl('');
+      // D-02: mirror last_board_id to App Group SharedDefaults so the Share
+      // Extension knows where to enqueue subsequent shares.
+      SharedDefaults.set(SharedDefaultsKeys.LastBoardId, id);
+      if (detectSourceKind(link.url) === 'youtube') {
+        setAnalyzing(link.id);
+        triggerExtraction(supabase, link.id).catch((err) => {
+          console.warn('[triggerExtraction] failed:', err);
+          setAnalyzing(null);
+          showToast('분석 실패: 잠시 후 다시 시도', 'error');
+        });
+      }
       await load();
     } catch (err) {
-      Alert.alert('링크 추가 실패', err instanceof Error ? err.message : String(err));
+      console.warn('[addLink] failed:', err);
+      showToast('링크 추가 실패', 'error');
     }
   }
 
@@ -64,6 +121,9 @@ export default function BoardDetailScreen() {
         <Text className="ml-2 text-lg font-semibold flex-1" numberOfLines={1}>
           {board?.title ?? '...'}
         </Text>
+        <Pressable onPress={() => setAddPinOpen(true)} className="px-3 py-2">
+          <Text className="text-brand-500 text-base">+ 핀</Text>
+        </Pressable>
       </View>
 
       <View className="px-6 mb-3">
@@ -105,6 +165,7 @@ export default function BoardDetailScreen() {
               coordinate={{ latitude: p.lat, longitude: p.lng }}
               title={p.name_local}
               description={p.name_ko ?? p.address ?? undefined}
+              onPress={() => setSelectedPlace(p)}
             />
           ))}
         </MapView>
@@ -137,6 +198,47 @@ export default function BoardDetailScreen() {
           </View>
         )}
       />
+
+      {analyzing && (
+        <View
+          pointerEvents="auto"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            zIndex: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color="#F97316" />
+          <Text className="text-base text-neutral-700 mt-3">분석 중...</Text>
+        </View>
+      )}
+
+      <PinBottomSheet
+        place={selectedPlace}
+        onClose={() => setSelectedPlace(null)}
+        onChanged={load}
+      />
+
+      <Modal
+        visible={addPinOpen}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setAddPinOpen(false)}
+      >
+        {id && (
+          <PinAddModal
+            boardId={id}
+            onClose={() => setAddPinOpen(false)}
+            onAdded={load}
+          />
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
