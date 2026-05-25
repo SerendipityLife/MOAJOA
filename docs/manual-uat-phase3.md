@@ -22,6 +22,7 @@
 
 **Pass:** 1~6 모두 성공, 각 화면 전환 < 1초
 **Fail 조건:** 어느 단계든 crash, 흰 화면, "Login required" loop
+- Evidence: 
 
 ## Scenario 2 — SAVE-02: URL → 30초 안에 핀 (p90)
 
@@ -37,6 +38,7 @@
 **Pass:** 경과 ≤ 30초 (3회 반복 중 최소 2회 통과 = p90 추정). 핀 marker가 MapView에 표시됨.
 **Fail 조건:** spinner 60초+ 지속, error toast 표시, MapView marker 미표시.
 **p90 정밀 측정:** Phase 6 dogfooding 7일치 `extraction_costs.duration_ms` SQL aggregate (D-11)로 최종 확정.
+- Evidence: 
 
 ## Scenario 3 — SAVE-03: 카톡/사파리 Share Sheet → 1탭 저장
 
@@ -50,6 +52,7 @@
 **Fail 조건:** Share Extension에 BoardPicker 표시 (D-01 위반), toast 누락, dismiss > 3초, link 미저장.
 
 > 카톡 안에서의 share는 카카오톡 사용 시 동일 절차. 카카오 앱이 share sheet에서 MOAJOA 노출 안 하면 (카카오 정책), 사파리만으로 확인 충분.
+- Evidence: 
 
 ## Scenario 4 — SAVE-04: Offline enqueue + 메인 앱 launch 시 drain
 
@@ -63,6 +66,7 @@
 
 **Pass:** offline share 후 online 복구 시 cold launch AND foreground 복귀 둘 다에서 enqueue된 link가 자동 추출됨 (D-04). drain은 silent — 사용자 별도 action 없음.
 **Fail 조건:** drain 안 일어남 / 같은 URL 중복 link 생성 (Pitfall 7 retry storm) / app crash on launch with pending queue.
+- Evidence: 
 
 ## Scenario 5 — SAVE-05: 수동 핀 추가/편집/삭제
 
@@ -78,6 +82,7 @@
 
 **Pass:** 1~9 모두 성공, RLS 차단 없음 (본인이 board owner / member이므로)
 **Fail 조건:** 검색 결과 빈 응답, marker 미표시, RLS 거부 (`new row violates row-level security policy`), 삭제 후 marker 재출현.
+- Evidence: 
 
 ## 부정 시나리오 (Negative)
 
@@ -87,10 +92,23 @@
 
 **Pass:** retry > 3 시 pending_links_failed로 이동 + banner 표시
 (N1은 unit test로도 검증 — `__tests__/pending.test.ts` from Plan 03-04)
+- Evidence: 
 
-### N2 — SAVE-05 non-member RLS
+### N2 — SAVE-05 non-member RLS (REQUIRED, binary gate)
 1. 두 번째 계정 (board member 아님) 으로 로그인 → 보드 ID를 알아도 + 핀 추가 시도 → Edge Function 또는 DB RLS 거부 응답
-**Pass:** 401 또는 RLS error 응답, 핀 INSERT 안 됨
+2. **SQL substitute (recommended — 두 번째 계정 만들기 귀찮을 때):** linked Supabase prod에 psql로 직접 RLS 검증.
+
+```sql
+-- N2: non-member RLS denial (REQUIRED, binary gate)
+-- Run against linked Supabase prod via psql "$SUPABASE_DB_URL"
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000099', true);
+insert into places (board_id, name_local, lat, lng)
+  values ('<my-board-id>', 'rls-test', 0, 0);
+-- Expected: ERROR: 42501 insufficient_privilege
+```
+
+**Pass:** 401 또는 RLS error 응답 (`ERROR: 42501`), 핀 INSERT 안 됨
+- Evidence: 
 
 ---
 
