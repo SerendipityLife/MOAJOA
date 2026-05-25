@@ -3,14 +3,14 @@ gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-26T03:08:00.000Z"
+last_updated: "2026-05-26T03:15:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 14
   partial_plans: 0
-  percent: 81
+  percent: 87
 stopped_at: Phase 4 Wave 2 partial — 04-02 ✓ 2026-05-26 (apps/web/app/api/revalidate/route.ts Node-runtime + zod body + node:crypto timingSafeEqual + revalidateTag(BOARD_REVALIDATE_TAG(slug)); supabase/functions/extract-youtube/index.ts +26 lines fire-and-forget POST after broadcastStep('done') with visibility='public' gate + Deno.env WEB_BASE_URL/REVALIDATE_SECRET guards; 9/9 new tests pass — 8 api-revalidate matrix + 1 cache-key isolation Pitfall 1 guard; total 34/34 tests pass; 4 commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 webhook; deferred-items.md tracks 9 pre-existing deno check errors in extract-youtube/index.ts — unrelated to my changes). 04-03 still in progress (page.tsx/layout.tsx/metadata.test.ts uncommitted in working tree). Wave 3 (04-04 OG image) unblocked.
 ---
 
@@ -43,9 +43,11 @@ stopped_at: Phase 4 Wave 2 partial — 04-02 ✓ 2026-05-26 (apps/web/app/api/re
   - 03-04 ✓ SharedDefaults Expo Module (Swift bridge over UserDefaults(suiteName:APP_GROUP_ID)) + lib/shared-defaults.ts JSON wrapper + lib/pending.ts drainPendingLinks state machine (D-04 dual triggers, D-05 PendingLink shape, D-06 retry-budget→failed migration, Pitfall 7 dedup via module-level inFlight) + lib/realtime.ts subscribeExtractProgress + lib/toast.tsx single-instance host + _layout.tsx AppState wiring (cold-launch + foreground 'active', arrow-wrap cleanup, useRef inFlight) + index.tsx D-13 auth gate restoration (getSession + onAuthStateChange) + login.tsx UI-SPEC §6 (email+password primary + magic-link toggle + Korean error mapping) + boards.tsx UI-SPEC §5 failed-banner (useFocusEffect + bg-danger/5). TDD RED→GREEN: 6/6 unit tests pass. Three Rule 1 fixes to Plan 03-01 jest config + gitignore (anchored ignore patterns, setupFilesAfterEnv, pnpm-aware transformIgnorePatterns). iOS native build smoke deferred (pattern from 03-02). Commits: 667fb20, 5223be1, b6a8da4, cc1b7cd, 2ec3a2f.
 - **Phase 3 Wave 4:** ✓ 2026-05-26 — 03-05 (@gorhom/bottom-sheet@5.2.14 + PinBottomSheet D-09 single sheet [snap 25%/50%, link_id signal for AI/manual] + PinAddModal D-07/D-08 [300ms debounce + resolve-place + max 5 + addManualPlace] + boards/[id].tsx surgical extension [broadcast subscribe + supabase.removeChannel cleanup + spinner overlay brand-500 + 분석 중 + + 핀 header + Marker onPress + Modal pageSheet wrap + SharedDefaults.set(LastBoardId)] + realtime.test.ts 3/3 PASS + 4-branch mapErrorReason). Commits: bb70256, aa20be7. Real-device UAT (scenarios 1-5) + N2 SQL RLS substitute test deferred to end-of-phase UAT batch (supabase CLI not authenticated in this session).
 - **Phase 4 Wave 1:** ✓ 04-01 완료 2026-05-26 (~7분, 3 tasks TDD RED→GREEN; commits f155efb + d790bfc + 5647451 + 3257f35 + 55b64d4). Vitest+jsdom infra + youtube/static-maps/cache/env helpers + CITY_KO_MAP shipped. 20/20 unit tests pass.
-- **Phase 4 Wave 2:** ⚙ 04-02 완료 2026-05-26 (~3분, 3 tasks TDD; commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 Edge Function webhook). /api/revalidate Node-runtime route + timing-safe secret + Edge Function fire-and-forget POST after done broadcast. 9/9 new tests (8 api-revalidate matrix + 1 cache-key Pitfall 1 guard) — 34/34 total. 04-03 still in progress.
-- **Next action:** Complete 04-03 (page.tsx + PublicBoardMap + layout viewport) then Wave 3 04-04 (OG image).
-- **Progress:** [█████████] Overall 13/16 plans (Phase 1 + 2 완료 + Phase 3 5/5 code-complete + Phase 4 2/4 done; UAT-pending for Phase 3).
+- **Phase 4 Wave 2:** ✓ 2026-05-26
+  - 04-02 완료 2026-05-26 (~3분, 3 tasks TDD; commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 Edge Function webhook). /api/revalidate Node-runtime route + timing-safe secret + Edge Function fire-and-forget POST after done broadcast. 9/9 new tests (8 api-revalidate matrix + 1 cache-key Pitfall 1 guard).
+  - 04-03 완료 2026-05-26 (~12분, 2 implemented tasks + 1 deferred UAT checkpoint; commits ef951e0 + 4704faa). layout.tsx viewport (maximumScale:5 WCAG-safe) + metadataBase; page.tsx surgical rewrite — getCachedPublicBoard wrap, extended generateMetadata (description templates city有/無 + twitter:summary_large_image + alternates.canonical + robots.index=true), UI-SPEC §1 reassignment audit on 7 sites (text-3xl→2xl, font-medium→semibold, uppercase 제거, h-[420px]→h-[60vh], video card hover, footer brand-500 wordmark + "이 보드는 MOAJOA로 만들었어요"), empty state (places.length===0); PublicBoardMap +links prop + gestureHandling 'greedy' + clickableIcons false + marker click → window.open(buildYouTubeWatchUrl(...)) D-14/D-15/D-16; not-found.tsx + error.tsx (UI-SPEC §5/§6); 8 new vitest (metadata 5 + map-options 3) — 37/37 total pass; typecheck + build clean. Rule 3 fixes: vitest esbuild.jsx 'automatic' (React 19 auto JSX runtime), cache-key.test.ts non-null assertions (pre-existing 04-02 strict-TS gap). Real-browser UAT deferred to end-of-phase batch per auto mode.
+- **Next action:** Phase 4 Wave 3 — `/gsd-execute-phase 4` for 04-04 (OG image: Pretendard subset + opengraph-image.tsx Static Maps embed + fallback + smoke test).
+- **Progress:** [██████████░] Overall 14/16 plans (Phase 1 + 2 완료 + Phase 3 5/5 code-complete + Phase 4 3/4 done; UAT-pending for Phase 3 + Phase 4).
 
 ---
 
@@ -65,6 +67,7 @@ stopped_at: Phase 4 Wave 2 partial — 04-02 ✓ 2026-05-26 (apps/web/app/api/re
 - Phase 3 Plan 03-05 완료: 2026-05-26 (~4분, 2 automatable tasks + 1 deferred UAT checkpoint; commits bb70256 + aa20be7; realtime.test.ts 3/3 + pending.test.ts 6/6 = 9/9; real-device UAT + N2 SQL RLS deferred to end-of-phase batch)
 - Phase 4 Plan 04-01 완료: 2026-05-26 (~7분, 3 tasks TDD RED→GREEN; commits f155efb + d790bfc + 5647451 + 3257f35 + 55b64d4; 20/20 vitest tests pass; Rule 1 fix on plan's contradictory 12-char YouTube ID fixture vs 11-char regex)
 - Phase 4 Plan 04-02 완료: 2026-05-26 (~3분, 3 tasks TDD; commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 Edge Function; 9/9 new vitest tests pass — 34/34 total; no deviations from plan; pre-existing deno check errors in extract-youtube/index.ts logged to deferred-items.md)
+- Phase 4 Plan 04-03 완료: 2026-05-26 (~12분, 2 implemented tasks + 1 deferred UAT checkpoint; commits ef951e0 + 4704faa; metadata 5 + map-options 3 = 8 new vitest, 37/37 total pass; typecheck + build green; Rule 3 vitest esbuild.jsx automatic + Rule 3 cache-key non-null assertions; real-browser UAT deferred to end-of-phase batch per auto mode)
 
 ---
 
