@@ -229,16 +229,45 @@ export default function BoardDetailScreen() {
             링크 {links.length}개 · 장소 {places.length}개
           </Text>
         }
-        renderItem={({ item }) => (
-          <View className="p-3 border border-neutral-200 rounded-lg mb-2">
-            <Text className="text-sm font-medium" numberOfLines={1}>
-              {item.title ?? item.url}
-            </Text>
-            <Text className="text-xs text-neutral-500 mt-1">
-              {item.source_kind} · {item.extraction_status}
-            </Text>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          // D-11: 5 status copy fixture + failed-row tap retry.
+          // Only `failed` rows are interactive; others render as inert info.
+          const status = item.extraction_status;
+          const isFailed = status === 'failed';
+          const statusKo =
+            status === 'pending' ? '분석 대기'
+            : status === 'processing' ? '분석 중...'
+            : status === 'ready' ? '분석 완료'
+            : status === 'failed' ? '분석 실패 — 탭하여 재시도'
+            : status === 'manual_review' ? '재추출 필요'
+            : status;
+          const onRowPress = () => {
+            if (!isFailed) return;
+            setAnalyzing(item.id);
+            triggerExtraction(supabase, item.id).catch((err) => {
+              console.warn('[row-retry] failed:', err);
+              setAnalyzing(null);
+              showToast('재시도 실패', 'error');
+            });
+          };
+          return (
+            <Pressable
+              onPress={onRowPress}
+              disabled={!isFailed}
+              className="p-3 border border-neutral-200 rounded-lg mb-2"
+            >
+              <Text className="text-sm font-medium" numberOfLines={1}>
+                {item.title ?? item.url}
+              </Text>
+              <Text className="text-xs text-neutral-500 mt-1">
+                {item.source_kind} ·{' '}
+                <Text className={isFailed ? 'text-danger' : 'text-neutral-500'}>
+                  {statusKo}
+                </Text>
+              </Text>
+            </Pressable>
+          );
+        }}
       />
 
       {analyzing && (
