@@ -57,7 +57,7 @@ AI 추출 결과를 사용자가 믿을 수 있어야 dogfooding 성립.
 
 - [ ] **TRUST-01**: AI가 추출한 핀과 사용자가 수동으로 추가한 핀이 시각적으로 구분됨 (점선·실선, 아이콘 색)
 - [x] **TRUST-02**: 추출 진행 중인 링크에 진행 단계가 UI에 표시됨 (`extract:{link_id}` 구독)
-- [ ] **TRUST-03**: 추출 실패 시 사유가 노출되고 1탭 retry 가능
+- [x] **TRUST-03**: 추출 실패 시 사유가 노출되고 1탭 retry 가능
 - [ ] **TRUST-04**: `confidence < 0.7`인 핀은 시각적으로 약하게(low_confidence) 표시되고 사용자가 명시적으로 confirm 또는 reject 가능
 
 ### Onboarding (ONBOARD)
@@ -137,7 +137,7 @@ Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | VIEW-06 | Phase 4 | Complete (04-02, 2026-05-26) |
 | TRUST-01 | Phase 5 | Pending |
 | TRUST-02 | Phase 5 | Complete (05-02, 2026-05-26) |
-| TRUST-03 | Phase 5 | Pending |
+| TRUST-03 | Phase 5 | Complete (05-03, 2026-05-26) |
 | TRUST-04 | Phase 5 | Pending |
 | ONBOARD-01 | Phase 5 | Pending |
 | ONBOARD-02 | Phase 5 | Pending |
