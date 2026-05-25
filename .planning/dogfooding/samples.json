@@ -1,0 +1,134 @@
+[
+  {
+    "id": "sample-01",
+    "url": "",
+    "category": "vlog",
+    "city": "seoul",
+    "length_bucket": "short",
+    "transcript_lang": "ko",
+    "transcript_source": "creator",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-02",
+    "url": "",
+    "category": "vlog",
+    "city": "seoul",
+    "length_bucket": "long",
+    "transcript_lang": "ko",
+    "transcript_source": "auto",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-03",
+    "url": "",
+    "category": "vlog",
+    "city": "tokyo",
+    "length_bucket": "short",
+    "transcript_lang": "ja",
+    "transcript_source": "creator",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-04",
+    "url": "",
+    "category": "vlog",
+    "city": "tokyo",
+    "length_bucket": "long",
+    "transcript_lang": "ja",
+    "transcript_source": "auto",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-05",
+    "url": "",
+    "category": "food",
+    "city": "seoul",
+    "length_bucket": "short",
+    "transcript_lang": "ko",
+    "transcript_source": "creator",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-06",
+    "url": "",
+    "category": "food",
+    "city": "seoul",
+    "length_bucket": "long",
+    "transcript_lang": "ko",
+    "transcript_source": "auto",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-07",
+    "url": "",
+    "category": "food",
+    "city": "tokyo",
+    "length_bucket": "short",
+    "transcript_lang": "ja",
+    "transcript_source": "creator",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-08",
+    "url": "",
+    "category": "food",
+    "city": "tokyo",
+    "length_bucket": "long",
+    "transcript_lang": "ko",
+    "transcript_source": "creator",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-09",
+    "url": "",
+    "category": "walk",
+    "city": "seoul",
+    "length_bucket": "short",
+    "transcript_lang": "ko",
+    "transcript_source": "auto",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-10",
+    "url": "",
+    "category": "walk",
+    "city": "seoul",
+    "length_bucket": "long",
+    "transcript_lang": "ko",
+    "transcript_source": "creator",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-11",
+    "url": "",
+    "category": "walk",
+    "city": "tokyo",
+    "length_bucket": "short",
+    "transcript_lang": "ja",
+    "transcript_source": "auto",
+    "ground_truth_places": [],
+    "notes": ""
+  },
+  {
+    "id": "sample-12",
+    "url": "",
+    "category": "walk",
+    "city": "tokyo",
+    "length_bucket": "long",
+    "transcript_lang": "ko",
+    "transcript_source": "auto",
+    "ground_truth_places": [],
+    "notes": ""
+  }
+]

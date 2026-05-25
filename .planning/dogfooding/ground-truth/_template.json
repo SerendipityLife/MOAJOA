@@ -1,0 +1,21 @@
+{
+  "sample_id": "sample-XX",
+  "url": "https://youtu.be/XXXX",
+  "video_title": "",
+  "video_duration_sec": 0,
+  "ground_truth_places": [
+    {
+      "name_local": "",
+      "name_ko": "",
+      "google_place_id": "",
+      "city": "",
+      "first_mention_sec": 0,
+      "confidence_label": "high",
+      "notes": ""
+    }
+  ],
+  "ground_truth_method": "수동 시청 + Google Maps 검색",
+  "completed_by": "",
+  "completed_date": "",
+  "time_spent_min": 0
+}
