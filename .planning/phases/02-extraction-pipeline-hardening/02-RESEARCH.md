@@ -396,7 +396,7 @@ const PlaceCandidate = z.object({
 
 **If this table is empty:** N/A -- three assumptions identified above.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Places API cost constant: $0.003 vs $0.032**
    - What we know: CONTEXT.md D-10 says "$0.003/call Text Search Basic". Research shows the FieldMask triggers Text Search Pro at $0.032/call.
