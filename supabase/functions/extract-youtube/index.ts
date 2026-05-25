@@ -233,6 +233,32 @@ Deno.serve(async (req) => {
 
     await broadcastStep(admin, link_id, 'done', 100, { places_extracted: resolved.length });
 
+    // Fire-and-forget webhook to web /api/revalidate (per CONTEXT D-04, D-05).
+    // Lookup board.share_slug — only POST when visibility=public + slug present.
+    // Local dev: WEB_BASE_URL unset → skip silently (RESEARCH Pitfall 6).
+    try {
+      const { data: board } = await admin
+        .from('boards')
+        .select('share_slug, visibility')
+        .eq('id', link.board_id)
+        .maybeSingle();
+
+      if (board?.visibility === 'public' && board.share_slug) {
+        const webBase = Deno.env.get('WEB_BASE_URL');
+        const revalidateSecret = Deno.env.get('REVALIDATE_SECRET');
+        if (webBase && revalidateSecret) {
+          // fire-and-forget — D-05 lock. No await. .catch prevents unhandledrejection.
+          fetch(`${webBase}/api/revalidate`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ slug: board.share_slug, secret: revalidateSecret }),
+          }).catch((err) => console.warn('[revalidate-webhook] fetch failed:', err));
+        }
+      }
+    } catch (err) {
+      console.warn('[revalidate-webhook] lookup failed:', err);
+    }
+
     return jsonOk({
       link_id,
       status: resolved.length > 0 ? 'ready' : 'manual_review',
