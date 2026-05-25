@@ -77,9 +77,27 @@ export default function BoardDetailScreen() {
         load();
         showToast(`${p.places_extracted ?? 0}개 핀 추가됨`);
       } else if (p.step === 'error') {
+        // D-10/D-12: capture linkId before clearing analyzing so the retry
+        // closure has a stable reference. No automatic retry — user-explicit
+        // [재시도] tap only.
+        const linkId = analyzing;
         setAnalyzing(null);
         setCurrentStep(null);
-        showToast(`분석 실패: ${mapErrorReason(p.error)}`, 'error');
+        showToast(`분석 실패: ${mapErrorReason(p.error)}`, 'error', {
+          action: linkId
+            ? {
+                label: '재시도',
+                onPress: () => {
+                  setAnalyzing(linkId);
+                  triggerExtraction(supabase, linkId).catch((err) => {
+                    console.warn('[retry] failed:', err);
+                    setAnalyzing(null);
+                    showToast('재시도 실패: 잠시 후 다시 시도', 'error');
+                  });
+                },
+              }
+            : undefined,
+        });
       } else if (
         p.step === 'metadata' ||
         p.step === 'transcript' ||
@@ -107,7 +125,20 @@ export default function BoardDetailScreen() {
         triggerExtraction(supabase, link.id).catch((err) => {
           console.warn('[triggerExtraction] failed:', err);
           setAnalyzing(null);
-          showToast('분석 실패: 잠시 후 다시 시도', 'error');
+          // D-10: immediate trigger failure (network/RPC) also gets retry
+          // affordance. linkId is captured in closure from outer scope.
+          showToast('분석 실패: 잠시 후 다시 시도', 'error', {
+            action: {
+              label: '재시도',
+              onPress: () => {
+                setAnalyzing(link.id);
+                triggerExtraction(supabase, link.id).catch(() => {
+                  setAnalyzing(null);
+                  showToast('재시도 실패', 'error');
+                });
+              },
+            },
+          });
         });
       }
       await load();
