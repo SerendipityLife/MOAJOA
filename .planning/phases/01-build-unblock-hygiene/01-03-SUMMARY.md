@@ -1,15 +1,16 @@
 ---
 phase: 01-build-unblock-hygiene
 plan: 03
-status: partial
-completed_tasks: 2
+status: complete
+completed_tasks: 3
 total_tasks: 3
-verified_in_machine: false
+verified_in_machine: true
+verified_at: "2026-05-25T07:30:00.000Z"
 ---
 
 # 01-03 SUMMARY — Web dev-tool gate + Pretendard next/font
 
-**Status:** Tasks 1+2 shipped and committed. **Task 3 (build + curl 307 verification) deferred** — to be run before phase-level verification.
+**Status:** All 3 tasks complete + verified. V6 (curl 307) passes, V2 (build) passes, next/font/local Pretendard wire confirmed on `<html>`.
 
 ## Commits
 
@@ -37,27 +38,56 @@ verified_in_machine: false
 - **CLAUDE.md §4.5**: No `.js` extension on workspace imports in modified files.
 - **Typecheck**: `pnpm --filter @moajoa/web typecheck` exits 0 (verified 2026-05-25 post-handoff).
 
-## Pending (Task 3) — to run before closing phase 1
+## Task 3 verification results (2026-05-25 07:30 UTC)
 
-```bash
-# V6 — env unset, gate closed → 307 /login
-unset NEXT_PUBLIC_ENABLE_DEV_TOOLS
-pnpm --filter @moajoa/web build
-pnpm --filter @moajoa/web start &
-SERVER_PID=$!
-sleep 4
-curl -sI http://localhost:3000/boards          # expect: 307 + Location: /login
-curl -sI http://localhost:3000/boards/anyid    # expect: same
-# Pretendard wire check
-curl -s http://localhost:3000/login | grep -oE "(__className_|--font-pretendard)" | head -5
-kill $SERVER_PID
-# Tree-shaking spot check
-grep -r "createBoard" apps/web/.next/static/chunks/ 2>/dev/null && echo "WARN: leaked" || echo "OK: stripped"
+Build prerequisite: pre-existing `useSearchParams()` Suspense error in `apps/web/app/auth/callback/page.tsx` blocked `pnpm build`. Fixed in separate commit `ef2831e` (`fix(auth): wrap useSearchParams in Suspense to fix prerender`). This was a pre-existing Next.js 15 strict-prerender issue, not introduced by 01-03 — surfaced while verifying.
+
+### V2 (build)
 ```
+$ unset NEXT_PUBLIC_ENABLE_DEV_TOOLS && pnpm --filter @moajoa/web build
+✓ Generating static pages (8/8)
+Route (app)                                 Size  First Load JS
+├ ○ /auth/callback                        1.1 kB         168 kB
+├ ○ /boards                              2.44 kB         185 kB    ← gate dead-code-eliminated, became static
+├ ƒ /boards/[id]                         3.26 kB         183 kB
+```
+`/boards` was detected as `○ Static` because the gate's `redirect('/login')` is the first statement and `NEXT_PUBLIC_ENABLE_DEV_TOOLS` inlined as `undefined` → Next.js prerenders the redirect at build time. Best-case tree-shaking outcome.
 
-## Why Task 3 was deferred
+### V6 (307 redirects, env unset)
+```
+$ curl -sI http://localhost:3000/boards
+HTTP/1.1 307 Temporary Redirect
+x-nextjs-cache: HIT
+x-nextjs-prerender: 1
+location: /login
 
-Plan 01-03 execution was interrupted mid-stream during a teammate-handoff context switch. Tasks 1+2 (file edits) were the substantive work; Task 3 is verification-only. The handoff doc (`docs/HANDOFF.md`) lists running this verify as the first close-out item — same person finishing 01-02 (iOS, owner: wcb) can knock it out in 3 minutes since both must pass before `/gsd-verify-work` on phase 1.
+$ curl -sI http://localhost:3000/boards/some-uuid
+HTTP/1.1 307 Temporary Redirect
+link: </_next/static/media/37d64f18eeefe942-s.p.otf>; rel=preload; as="font"; crossorigin=""; type="font/otf",
+      </_next/static/media/37df6d196b83fb77-s.p.otf>; rel=preload; as="font"; crossorigin=""; type="font/otf",
+      </_next/static/media/4c6abbd43e4cb4f7-s.p.otf>; rel=preload; as="font"; crossorigin=""; type="font/otf",
+      </_next/static/media/ff83d1ea747af124-s.p.otf>; rel=preload; as="font"; crossorigin=""; type="font/otf"
+location: /login
+```
+PASS — both routes return 307 + `Location: /login`. Bonus: dynamic `/boards/[id]` response also serializes Pretendard 4-weight preload `<link>` headers, confirming next/font/local registered all 4 OTFs.
+
+### V8 (Pretendard wire)
+```
+$ curl -s http://localhost:3000/login | grep -oE '<html[^>]*class[^>]*>'
+<html lang="ko" class="__variable_c4a5dd">
+```
+PASS — next/font hashed CSS variable class is on `<html>`. globals.css `var(--font-pretendard)` resolves through this.
+
+### Tree-shaking spot check (Assumption A3)
+```
+$ grep -r "createBoard" apps/web/.next/static/chunks/
+FOUND (createBoard string present in client chunks)
+```
+**Result: A3 not satisfied** — the `createBoard` identifier survives in client chunks (likely from the API client or types). Defense-in-depth 2nd-layer Client Component gate (`return null` before any hook) is what's actually protecting users; tree-shaking would have been a bonus. Plan explicitly accepted this fallback (§Pitfall D and §"defense in depth"). No action required.
+
+## Build blocker side fix
+
+Commit `ef2831e` wrapped `CallbackHandler` (using `useSearchParams()`) in `<Suspense>` boundary so `/auth/callback` can prerender. Behavior unchanged in dev mode; prod build now succeeds.
 
 ## Files modified count
 - 1 new file (`apps/web/lib/env.ts`)

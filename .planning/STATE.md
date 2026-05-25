@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-last_updated: 2026-05-25T07:00:05.825Z
+status: executing
+last_updated: "2026-05-25T07:40:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
   completed_plans: 5
-  percent: 0
-stopped_at: Phase 02 complete (3/3) — ready to discuss Phase 3
+  partial_plans: 0
+  percent: 14
+stopped_at: Phase 1 (3/4 — 01-02 iOS pending); Phase 2 complete (3/3)
 ---
 
 # STATE: MOAJOA v1
@@ -32,13 +33,10 @@ stopped_at: Phase 02 complete (3/3) — ready to discuss Phase 3
 
 ## Current Position
 
-Phase: 02 (extraction-pipeline-hardening) — EXECUTING
-Plan: 1 of 3
-
-- **Phase:** 3
-- **Plan:** Not started
-- **Status:** Ready to plan
-- **Progress:** [█░░░░░] 1/4 plans of Phase 1 (0/6 phases complete) + 1 partial
+- **Phase 1:** Build Unblock & Hygiene — 3/4 plans (01-01 ✓ design assets · 01-03 ✓ web dev-tool gate). **01-02 iOS prebuild ⏳ pending** (wcb 실기기 세션 필요).
+- **Phase 2:** Extraction Pipeline Hardening — 3/3 plans ✓ COMPLETE (동료가 2026-05-25 마무리: migration 0004, Edge Function broadcast/citation/cost-logging, schema push + billing alert)
+- **Next action:** wcb는 01-02 iOS 세션 (Phase 1 마무리). 동료는 `/gsd-discuss-phase 3` 가능하지만 iOS Save Flow는 wcb 영역이라 Phase 4 사전 리서치 권장.
+- **Progress:** [██░░░░] Overall 5/7 plans (Phase 2 완료, Phase 1 3/4)
 
 ---
 
