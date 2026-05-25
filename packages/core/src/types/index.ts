@@ -27,7 +27,17 @@ export interface PublicBoardView {
   links: Pick<Link, 'id' | 'source_kind' | 'url' | 'title' | 'thumbnail_url' | 'author_name'>[];
   places: Pick<
     Place,
-    'id' | 'link_id' | 'name_local' | 'name_ko' | 'name_en' | 'lat' | 'lng' | 'category' | 'source_timestamp_sec'
+    | 'id'
+    | 'link_id'
+    | 'name_local'
+    | 'name_ko'
+    | 'name_en'
+    | 'lat'
+    | 'lng'
+    | 'category'
+    | 'source_timestamp_sec'
+    | 'source_kind'
+    | 'confidence'
   >[];
   owner_display_name: string;
 }

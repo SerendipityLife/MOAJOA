@@ -43,6 +43,26 @@ export const PlaceSchema = z.object({
   /** Soft delete: hide from board but keep for vote history. */
   hidden_at: z.string().datetime().nullable(),
 
+  /**
+   * Origin of this pin (Phase 5 TRUST-01).
+   * - 'ai': auto-extracted by extract-youtube Edge Function
+   * - 'manual': user-added (via PinAddModal or confirmAiPlace promotion)
+   *
+   * Source of truth: places.source_kind column (migration 0004) + public_board_view RPC
+   * (migration 0006 appended this field for web parity).
+   */
+  source_kind: z.enum(['ai', 'manual']),
+
+  /**
+   * LLM confidence 0..1 for AI-extracted pins (Phase 5 TRUST-04).
+   * - null = manual pin OR legacy AI pin before 0006 backfill
+   * - < LOW_CONFIDENCE_THRESHOLD (0.7) = low-confidence treatment (D-15)
+   * - >= 0.7 = trusted AI pin
+   *
+   * Source of truth: places.confidence column (migration 0006) + public_board_view RPC.
+   */
+  confidence: z.number().min(0).max(1).nullable(),
+
   created_at: z.string().datetime(),
 });
 
