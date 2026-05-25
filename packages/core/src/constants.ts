@@ -157,3 +157,34 @@ export const CITY_KO_MAP: Readonly<Record<string, string>> = {
   sapporo: '삿포로',
   okinawa: '오키나와',
 } as const;
+
+/**
+ * Phase 5 — Korean fixture for broadcast step names (D-09).
+ * Used by iOS step indicator overlay (TRUST-02).
+ * `done` / `error` are terminal (overlay dismisses) — not in this map.
+ * Single source so UI never displays raw broadcast.step strings.
+ */
+export const EXTRACT_STEP_KO = {
+  metadata: '영상 정보 가져오는 중',
+  transcript: '자막 읽는 중',
+  llm: '장소 찾는 중',
+  places: '지도에 표시하는 중',
+} as const;
+
+/**
+ * Phase 5 — Low confidence threshold (D-15).
+ * Pins with confidence < this value get the "신뢰도 낮음" treatment
+ * (opacity 0.5 marker + low_confidence badge + confirm/reject actions).
+ * `confidence === null` (legacy / manual pins) is NOT low confidence.
+ */
+export const LOW_CONFIDENCE_THRESHOLD = 0.7;
+
+/**
+ * Phase 5 — AsyncStorage keys for iOS onboarding state (D-20).
+ * Centralized so iOS code and any future test code share the source of truth.
+ * Pattern mirrors SharedDefaultsKeys above — namespaced under `@moajoa/onboard:`.
+ */
+export const OnboardKeys = {
+  /** '@moajoa/onboard:link_card_dismissed' — global once, all boards (D-20). */
+  LinkCardDismissed: '@moajoa/onboard:link_card_dismissed',
+} as const;
