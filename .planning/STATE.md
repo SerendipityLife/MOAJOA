@@ -1,17 +1,17 @@
 ---
-gsd_state_version: 1.0
+gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-last_updated: "2026-05-25T08:35:00.000Z"
+status: in_progress
+last_updated: "2026-05-26T00:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 6
+  total_plans: 12
+  completed_plans: 7
   partial_plans: 0
-  percent: 33
-stopped_at: Phase 1 ✓ (3/4 done, 01-04 N/A) + Phase 2 ✓ (3/3) — ready to discuss Phase 3 or Phase 4
+  percent: 38
+stopped_at: Phase 3 in progress — 03-01 ✓ (foundation: migration 0005 + APP_GROUP_ID + jest infra + UAT doc). 03-02..05 ready (Wave 2+).
 ---
 
 # STATE: MOAJOA v1
@@ -35,8 +35,9 @@ stopped_at: Phase 1 ✓ (3/4 done, 01-04 N/A) + Phase 2 ✓ (3/3) — ready to d
 
 - **Phase 1:** ✓ COMPLETE 2026-05-25 (01-01 design assets · 01-02 iOS smoke screen on real device · 01-03 web dev-tool gate · 01-04 N/A EAS fallback unused). BUILD-01/02/03 + WEB-01/02 모두 통과.
 - **Phase 2:** ✓ COMPLETE 2026-05-25 (동료: migration 0004, Edge Function broadcast/citation/cost-logging, schema push + billing alert). EXTRACT-01~06 모두 통과.
-- **Next action:** Phase 3 (iOS Save Flow, wcb 영역) 또는 Phase 4 (Web Public Board, 동료 영역) 시작 가능. 둘은 file-disjoint, 병렬 OK. `/gsd-discuss-phase 3` 또는 `/gsd-discuss-phase 4`.
-- **Progress:** [██░░░░] Overall 6/7 base plans (Phase 1 + 2 둘 다 완료) — milestone v1까지 Phase 3, 4, 5, 6 남음.
+- **Phase 3 Wave 1:** ✓ 03-01 완료 2026-05-26 (foundation — migration 0005 nullable link_id, packages/core APP_GROUP_ID + SharedDefaultsKeys + extractChannelName, apps/ios jest-expo infra, docs/manual-uat-phase3.md 5 scenarios + N1/N2). Wave 2+ (03-02..05) 진행 가능.
+- **Next action:** Phase 3 Wave 2 — Plans 03-02 (Share Extension prebuild) + 03-03 (resolve-place Edge Function) 병렬 가능. `/gsd-execute-phase 3` 계속.
+- **Progress:** [███░░░] Overall 7/12 plans (Phase 1 + 2 완료 + Phase 3 1/5).
 
 ---
 
@@ -49,6 +50,7 @@ stopped_at: Phase 1 ✓ (3/4 done, 01-04 N/A) + Phase 2 ✓ (3/3) — ready to d
 - Phase 1 완료: TBD
 - iOS 빌드 통과 시각: TBD
 - Dogfooding 시작 일자: TBD
+- Phase 3 Plan 03-01 완료: 2026-05-26 (~6분, 2 tasks, commits e7c389c + ca46b4e)
 
 ---
 
@@ -62,6 +64,9 @@ stopped_at: Phase 1 ✓ (3/4 done, 01-04 N/A) + Phase 2 ✓ (3/3) — ready to d
 - **Phase 2를 Phase 3·4 이전에** — Realtime broadcast / cost / citation 모두 후속 phase의 토대. Pitfall 1·2·3·5 모두 비용 없는 방어선이라 일찍 굳힘
 - **iOS 빌드 4시간 시간박스** — Pitfall 6: 박힘 시 EAS Build 즉시 전환. Phase 1 success criteria #3에 명시
 - **EXTRACT-07 (baseline 측정)을 Phase 6으로** — 7일 dogfooding과 같이 진행해야 sample이 실제 사용 패턴 반영
+- **App Group ID `group.com.serendipitylife.moajoa` 최종 lock** (Phase 3 03-01) — @moajoa/core `APP_GROUP_ID` 단일 상수로 노출. app.config.ts / entitlements / Swift `UserDefaults(suiteName:)` 모두 같은 상수 참조. Open Question 해소.
+- **Migration 0005 idempotent guard pattern** (Phase 3 03-01) — DO block + IF NOT NULL check로 re-runnable. 향후 ALTER 위주 마이그레이션의 기본 패턴.
+- **jest-expo + RNTL 12.7 + jest-native 5.4 채택** (Phase 3 03-01) — Expo SDK 54 호환 라인. apps/ios direct devDep 선언 (Phase 1 D-02 hoist 패턴 재사용).
 
 ### Todos (next session 시작점)
 
@@ -75,7 +80,7 @@ stopped_at: Phase 1 ✓ (3/4 done, 01-04 N/A) + Phase 2 ✓ (3/3) — ready to d
 ### Open questions (research/SUMMARY.md gaps)
 
 - Pretendard 4 weight 번들 확정 (Regular/Medium/SemiBold/Bold) — Phase 1 디자인
-- App Group identifier 최종 (`group.com.serendipitylife.moajoa`) — Phase 3 prebuild 전
+- ~~App Group identifier 최종 (`group.com.serendipitylife.moajoa`) — Phase 3 prebuild 전~~ ✓ resolved by 03-01 (locked in `@moajoa/core` APP_GROUP_ID)
 - iOS Google Maps 키 도입 시점 — Phase 6 평가 후
 - Resend/Postmark SMTP — Phase 1.5 외부 사용자 전
 - Eval sample 영상 10~20개 선정 기준 — Phase 6 시작 시
