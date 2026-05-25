@@ -12,8 +12,9 @@ const PlaceCandidate = z.object({
   name_local: z.string().min(1).max(200),
   name_ko: z.string().max(200).optional(),
   source_timestamp_sec: z.number().int().nonnegative().optional(),
-  source_quote: z.string().max(500).optional(),
+  source_quote: z.string().min(1).max(500),
   confidence: z.number().min(0).max(1).default(0.5),
+  inferred_city: z.string().max(100).optional(),
 });
 
 const LLMOutput = z.object({
@@ -22,6 +23,11 @@ const LLMOutput = z.object({
 });
 
 export type ExtractedCandidates = z.infer<typeof LLMOutput>;
+
+export interface ExtractResult {
+  candidates: ExtractedCandidates;
+  usage: { input_tokens: number; output_tokens: number; model: string };
+}
 
 export interface ExtractInputs {
   anthropicKey: string;
@@ -34,7 +40,7 @@ export interface ExtractInputs {
 
 export async function extractCandidatesFromContext(
   inputs: ExtractInputs,
-): Promise<ExtractedCandidates> {
+): Promise<ExtractResult> {
   const prompt = buildPrompt(inputs);
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -59,6 +65,11 @@ export async function extractCandidatesFromContext(
   }
 
   const data = await res.json();
+
+  // Extract usage with fallback to 0 if missing (Pitfall 2)
+  const inputTokens = data?.usage?.input_tokens ?? 0;
+  const outputTokens = data?.usage?.output_tokens ?? 0;
+
   const text = data?.content?.[0]?.text;
   if (typeof text !== 'string') {
     throw new Error('anthropic returned no text content');
@@ -72,7 +83,10 @@ export async function extractCandidatesFromContext(
     throw new Error(`failed to parse LLM JSON: ${(err as Error).message}\n---\n${jsonStr.slice(0, 500)}`);
   }
 
-  return LLMOutput.parse(parsed);
+  return {
+    candidates: LLMOutput.parse(parsed),
+    usage: { input_tokens: inputTokens, output_tokens: outputTokens, model: EXTRACTION_MODEL },
+  };
 }
 
 const SYSTEM_PROMPT = `You are a precise extractor of physical places (restaurants, cafes, shops, attractions) from Korean and Japanese travel YouTube content. You output ONLY a JSON object matching the provided schema. You never invent places that aren't actually mentioned. You include the timestamp where each place first appears.`;
@@ -90,7 +104,8 @@ Extract physical places visited or recommended in this YouTube video. Skip gener
       "name_ko": "<Korean reading or translation if mentioned in subtitles>",
       "source_timestamp_sec": <integer seconds from video start when place is first shown/mentioned>,
       "source_quote": "<short quote from transcript supporting this extraction (max 200 chars)>",
-      "confidence": <0.0-1.0, how sure you are this is a real specific place>
+      "confidence": <0.0-1.0, how sure you are this is a real specific place>,
+      "inferred_city": "<city or region where this place is located, e.g. 'Tokyo', 'Osaka', 'Seoul'>"
     }
   ]
 }
@@ -100,6 +115,7 @@ Extract physical places visited or recommended in this YouTube video. Skip gener
 - Max 30 places. Pick the most distinct.
 - confidence < 0.4 → skip the entry entirely (don't include it).
 - If transcript is empty, rely on description and title. Lower confidence accordingly.
+- Every place MUST include source_quote — a short excerpt from the transcript proving the place was mentioned. Omitting source_quote will cause the entry to be discarded.
 
 # Context
 City hint: ${inputs.cityHint ?? '(unknown)'}
