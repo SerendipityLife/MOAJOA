@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MOAJOA wordmark. Letters outlined from Pretendard Bold (no font dep at render time). -->
+<!-- TODO: replace these placeholder rectangles with actual Pretendard Bold outline paths -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 100" fill="#F97316">
+  <rect x="10"  y="10" width="60" height="80" rx="4"/>
+  <rect x="90"  y="10" width="60" height="80" rx="4"/>
+  <rect x="170" y="10" width="60" height="80" rx="4"/>
+  <rect x="250" y="10" width="60" height="80" rx="4"/>
+  <rect x="330" y="10" width="60" height="80" rx="4"/>
+  <rect x="410" y="10" width="60" height="80" rx="4"/>
+</svg>
