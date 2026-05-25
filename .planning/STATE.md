@@ -3,15 +3,15 @@ gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-26T00:00:00.000Z"
+last_updated: "2026-05-26T16:45:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 7
+  completed_plans: 8
   partial_plans: 0
-  percent: 38
-stopped_at: Phase 3 in progress — 03-01 ✓ (foundation: migration 0005 + APP_GROUP_ID + jest infra + UAT doc). 03-02..05 ready (Wave 2+).
+  percent: 42
+stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Extension config plugin + entitlements + EAS appExtensions; prebuild + real-device test deferred to end-of-phase UAT per /gsd-autonomous). 03-03..05 ready.
 ---
 
 # STATE: MOAJOA v1
@@ -35,9 +35,10 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation: migration 0005 + APP_
 
 - **Phase 1:** ✓ COMPLETE 2026-05-25 (01-01 design assets · 01-02 iOS smoke screen on real device · 01-03 web dev-tool gate · 01-04 N/A EAS fallback unused). BUILD-01/02/03 + WEB-01/02 모두 통과.
 - **Phase 2:** ✓ COMPLETE 2026-05-25 (동료: migration 0004, Edge Function broadcast/citation/cost-logging, schema push + billing alert). EXTRACT-01~06 모두 통과.
-- **Phase 3 Wave 1:** ✓ 03-01 완료 2026-05-26 (foundation — migration 0005 nullable link_id, packages/core APP_GROUP_ID + SharedDefaultsKeys + extractChannelName, apps/ios jest-expo infra, docs/manual-uat-phase3.md 5 scenarios + N1/N2). Wave 2+ (03-02..05) 진행 가능.
-- **Next action:** Phase 3 Wave 2 — Plans 03-02 (Share Extension prebuild) + 03-03 (resolve-place Edge Function) 병렬 가능. `/gsd-execute-phase 3` 계속.
-- **Progress:** [███░░░] Overall 7/12 plans (Phase 1 + 2 완료 + Phase 3 1/5).
+- **Phase 3 Wave 1:** ✓ 03-01 완료 2026-05-26 (foundation — migration 0005 nullable link_id, packages/core APP_GROUP_ID + SharedDefaultsKeys + extractChannelName, apps/ios jest-expo infra, docs/manual-uat-phase3.md 5 scenarios + N1/N2).
+- **Phase 3 Wave 2 (partial):** ✓ 03-02 완료 2026-05-26 (Share Extension config plugin via expo-share-intent@^5.1.1 — SDK 54 호환 라인; APP_GROUP_ID 6x 참조; EAS appExtensions; eas.json 신규). Prebuild + 실기기 share-sheet smoke test는 end-of-phase UAT로 deferred (auto mode). 03-03 (resolve-place Edge Function) 병렬 가능.
+- **Next action:** Plans 03-03 (resolve-place) → 03-04 (pending drain) → 03-05 (UI integration). `/gsd-execute-phase 3` 계속.
+- **Progress:** [███▒░░] Overall 8/12 plans (Phase 1 + 2 완료 + Phase 3 2/5).
 
 ---
 
@@ -51,6 +52,7 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation: migration 0005 + APP_
 - iOS 빌드 통과 시각: TBD
 - Dogfooding 시작 일자: TBD
 - Phase 3 Plan 03-01 완료: 2026-05-26 (~6분, 2 tasks, commits e7c389c + ca46b4e)
+- Phase 3 Plan 03-02 완료: 2026-05-26 (~5분, 1/2 tasks; Task 2 real-device deferred; commit 56c61d8)
 
 ---
 
@@ -67,6 +69,8 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation: migration 0005 + APP_
 - **App Group ID `group.com.serendipitylife.moajoa` 최종 lock** (Phase 3 03-01) — @moajoa/core `APP_GROUP_ID` 단일 상수로 노출. app.config.ts / entitlements / Swift `UserDefaults(suiteName:)` 모두 같은 상수 참조. Open Question 해소.
 - **Migration 0005 idempotent guard pattern** (Phase 3 03-01) — DO block + IF NOT NULL check로 re-runnable. 향후 ALTER 위주 마이그레이션의 기본 패턴.
 - **jest-expo + RNTL 12.7 + jest-native 5.4 채택** (Phase 3 03-01) — Expo SDK 54 호환 라인. apps/ios direct devDep 선언 (Phase 1 D-02 hoist 패턴 재사용).
+- **expo-share-intent@^5.1.1 채택** (Phase 3 03-02) — RESEARCH가 6.1.1을 SDK 54 호환으로 주장했으나 npm peer 확인 시 6.x는 `expo: ^55` 요구. 5.1.1이 실제 SDK 54 호환 라인. Plugin API shape (iosAppGroupIdentifier/iosShareExtensionName/iosActivationRules) 동일하여 plan 코드 블록 수정 X. SDK 55 업그레이드(Phase 6+) 시 6.x로 이관.
+- **app.config.ts에서 APP_GROUP_ID 리터럴 중복 허용** (Phase 3 03-02) — Expo CLI가 app.config.ts를 standalone 평가(workspace 모듈 import 불가). 로컬 const 선언 + grep 1회 gate로 drift 방지. diff against packages/core/src/constants.ts로 일치 확인.
 
 ### Todos (next session 시작점)
 
