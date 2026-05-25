@@ -1,5 +1,12 @@
 import { addLink, listLinksByBoard, listPlacesByBoard, getBoard, triggerExtraction } from '@moajoa/api';
-import { detectSourceKind, SharedDefaultsKeys, type Board, type Link, type Place } from '@moajoa/core';
+import {
+  detectSourceKind,
+  SharedDefaultsKeys,
+  LOW_CONFIDENCE_THRESHOLD,
+  type Board,
+  type Link,
+  type Place,
+} from '@moajoa/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -201,15 +208,46 @@ export default function BoardDetailScreen() {
 
       <View className="h-64 mx-6 rounded-lg overflow-hidden mb-3">
         <MapView style={{ flex: 1 }} initialRegion={region}>
-          {places.map((p) => (
-            <Marker
-              key={p.id}
-              coordinate={{ latitude: p.lat, longitude: p.lng }}
-              title={p.name_local}
-              description={p.name_ko ?? p.address ?? undefined}
-              onPress={() => setSelectedPlace(p)}
-            />
-          ))}
+          {places.map((p) => {
+            // TRUST-01 (D-05) + TRUST-04 (D-13/D-15): marker visual is a pure
+            // function of (source_kind, confidence). manual/legacy AI pins
+            // (confidence === null) render as high-confidence — D-15 explicitly
+            // excludes null from the low-confidence branch.
+            const isAi = p.source_kind === 'ai';
+            const isLowConf =
+              isAi && p.confidence !== null && p.confidence < LOW_CONFIDENCE_THRESHOLD;
+            const pinColor = isAi ? '#F97316' : '#0F172A';
+            const opacity = isLowConf ? 0.5 : 1.0;
+            return (
+              <Marker
+                key={p.id}
+                coordinate={{ latitude: p.lat, longitude: p.lng }}
+                title={p.name_local}
+                description={p.name_ko ?? p.address ?? undefined}
+                pinColor={pinColor}
+                opacity={opacity}
+                onPress={() => setSelectedPlace(p)}
+              >
+                {isLowConf ? (
+                  // RESEARCH Pitfall 3: react-native-maps `opacity` prop may be
+                  // ignored on Apple Maps. We pair it with a children View that
+                  // self-renders the low-confidence ? badge at the same alpha,
+                  // so the visual signal degrades gracefully on either provider.
+                  // Children-present semantics: react-native-maps replaces the
+                  // default pin with the View — intended trade-off (D-13 "low
+                  // conf = 의도적으로 약한 시각").
+                  <View className="w-7 h-9 items-center justify-center">
+                    <View
+                      className="w-6 h-6 rounded-full items-center justify-center"
+                      style={{ backgroundColor: 'rgba(249,115,22,0.5)' }}
+                    >
+                      <Text className="text-xs font-medium text-white">?</Text>
+                    </View>
+                  </View>
+                ) : null}
+              </Marker>
+            );
+          })}
         </MapView>
       </View>
 
