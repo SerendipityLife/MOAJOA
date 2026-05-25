@@ -68,3 +68,31 @@
 - **백엔드 담당자:** eval sample 10개 영상으로 추출 정확도 baseline 측정
 - **디자인 담당자:** `apps/ios/assets/icon.png` 1024×1024 + splash
 - **풀스택:** Google OAuth provider 설정 마무리 (Cloud Console + Supabase Dashboard)
+
+---
+
+## Phase 1 — iOS Build Path A 시도 (BUILD-01, plan 01-02 Task 2)
+
+- 시작 시각: 16:38
+- Path A 시도: local prebuild + pod install + (Task 3에서 expo run:ios --device by user)
+- 4시간 timebox 종료 예상: 20:38
+- Wave 1 (plan 01-01) 산출물 lock 확인: .npmrc node-linker=hoisted, icon/splash/font 자산 모두 present
+
+### 시도 timeline
+- 16:38: `npx expo prebuild --platform ios --clean` 시작 (cwd=apps/ios)
+- 16:39: prebuild Native directory 생성 OK (`ios/MOAJOA.xcodeproj`, `ios/Podfile` 생성됨)
+- 16:39: 자동 `pod install` 1차 시도 → **블록**. CocoaPods 1.16.2 + Ruby 4.0.2 호환성 버그
+  - 에러: `Encoding::CompatibilityError` in `UnicodeNormalize.normalize` (Pod::Config#installation_root)
+  - 원인: CocoaPods가 본인이 출력한 경고("CocoaPods requires your terminal to be using UTF-8 encoding")를 본인이 위반. ASCII-8BIT locale에서 unicode_normalize 호출.
+  - **이건 D-13 (reanimated/pnpm symlink) 막힘이 아님** — locale 문제. .npmrc node-linker=hoisted (Wave 1)는 prebuild 단계 통과시킴.
+- 16:39: 2차 시도 — `cd apps/ios/ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install`
+- 16:53: ✅ `Pod installation complete! There are 90 dependencies from the Podfile and 91 total pods installed.` (pod install 자체 시간: ~828s = 13.8분)
+- 16:53: `apps/ios/ios/MOAJOA.xcworkspace` 생성 확인됨
+
+### 결과
+- **Path A 성공** — 총 경과 ~14분 (4h timebox의 6%). Path B (EAS) 불필요.
+- 생성물: `apps/ios/ios/` (gitignored — apps/ios/.gitignore에 `ios/` 존재). git tree clean.
+- 다음: Task 3 (human-verify) — 사용자가 Xcode에서 `apps/ios/ios/MOAJOA.xcworkspace` 열고 실기기 install + smoke screen 시각 검증.
+
+### 학습 (PITFALLS 후보)
+- **새 pitfall: CocoaPods 1.16.2 + Ruby 4.0.2 (homebrew) + non-UTF-8 locale → pod install 즉시 크래시 with Encoding::CompatibilityError.** `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` env로 회피. `npx expo prebuild`의 자동 pod install은 이 env를 set하지 않음 — workaround: 첫 prebuild 후 수동으로 pod install 재실행, 또는 `~/.zshrc`에 `export LANG=en_US.UTF-8` 영구 추가.
