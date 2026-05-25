@@ -23,10 +23,10 @@ iOS 빌드 블로커 해소 + 셸 동작. dogfooding의 prerequisite.
 링크 → 핀의 흐름이 카톡·사파리에서 완결되어야 dogfooding 성립.
 
 - [x] **SAVE-01**: iOS 로그인 → 보드 목록 → 보드 상세까지 실기기에서 막힘 없이 진입됨
-- [ ] **SAVE-02**: 보드 상세에서 YouTube URL을 붙여 넣으면 30초 안에 핀이 지도에 나타남 (p90)
-- [ ] **SAVE-03**: 카톡/사파리 공유 시트에서 MOAJOA를 선택하면 보드 선택 화면이 뜨고, "마지막 사용 보드"가 default로 들어와 1탭에 저장됨
+- [x] **SAVE-02**: 보드 상세에서 YouTube URL을 붙여 넣으면 30초 안에 핀이 지도에 나타남 (p90) — code complete (03-05: broadcast subscribe + spinner overlay + done/error toast + mapErrorReason); p90 timing via Phase 6 SQL aggregate (D-11)
+- [x] **SAVE-03**: 카톡/사파리 공유 시트에서 MOAJOA를 선택하면 보드 선택 화면이 뜨고, "마지막 사용 보드"가 default로 들어와 1탭에 저장됨 — code complete (03-02 + 03-05 last_board_id mirror); real-device share-sheet UAT deferred
 - [x] **SAVE-04**: Share Extension 저장이 오프라인일 때 enqueue되고, 메인 앱 launch 시 자동 drain됨
-- [ ] **SAVE-05**: 사용자가 핀을 수동으로 추가·편집·삭제할 수 있음 (장소 검색은 google_place_id resolve로 처리) — backend pieces complete (03-03: resolve-place Edge Function + ResolvePlace schemas + renamePlace/deletePlace helpers); UI wiring lands in 03-05
+- [x] **SAVE-05**: 사용자가 핀을 수동으로 추가·편집·삭제할 수 있음 (장소 검색은 google_place_id resolve로 처리) — code complete (03-03 backend + 03-05 PinAddModal D-07/D-08 + PinBottomSheet D-09 rename/delete actions)
 
 ### Extraction Pipeline (EXTRACT) — Backend
 
@@ -125,10 +125,10 @@ Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | EXTRACT-05 | Phase 2 | Complete |
 | EXTRACT-06 | Phase 2 | Complete |
 | SAVE-01 | Phase 3 | Complete (03-04 — auth gate + login UI-SPEC §6; real-device verification deferred to end-of-phase UAT) |
-| SAVE-02 | Phase 3 | Pending |
-| SAVE-03 | Phase 3 | Pending |
+| SAVE-02 | Phase 3 | Code complete (03-05 broadcast subscribe + spinner overlay + done/error toast); p90 timing via Phase 6 SQL aggregate (D-11) |
+| SAVE-03 | Phase 3 | Code complete (03-02 Share Extension config + 03-05 last_board_id mirror); real-device share-sheet UAT deferred to end-of-phase batch |
 | SAVE-04 | Phase 3 | Complete (03-01 nullable migration + 03-02 App Group entitlement + 03-04 drainPendingLinks + banner; native build smoke deferred to end-of-phase UAT) |
-| SAVE-05 | Phase 3 | Backend complete (03-03); UI pending (03-05) |
+| SAVE-05 | Phase 3 | Code complete (03-03 backend + 03-05 PinAddModal D-07/D-08 + PinBottomSheet D-09 rename/delete) |
 | VIEW-01 | Phase 4 | Pending |
 | VIEW-02 | Phase 4 | Pending |
 | VIEW-03 | Phase 4 | Pending |

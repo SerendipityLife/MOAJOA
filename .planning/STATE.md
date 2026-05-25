@@ -3,15 +3,15 @@ gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-26T17:25:00.000Z"
+last_updated: "2026-05-26T18:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   partial_plans: 0
-  percent: 58
-stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Extension wiring) + 03-03 ✓ (resolve-place Edge Function + ResolvePlace schemas + renamePlace/deletePlace helpers; deploy + live curl smoke deferred to user-side UAT) + 03-04 ✓ (SharedDefaults native module + drainPendingLinks state machine TDD 6/6 + AppState/Toast/auth-gate restore + UI-SPEC §5 banner; native build smoke deferred). 03-05 ready (Wave 4).
+  percent: 67
+stopped_at: Phase 3 code-complete — 03-01 ✓ + 03-02 ✓ + 03-03 ✓ + 03-04 ✓ + 03-05 ✓ (@gorhom/bottom-sheet@5.2.14 + PinBottomSheet snap 25%/50% + PinAddModal 300ms debounce → resolve-place → max 5 + boards/[id].tsx broadcast subscribe with removeChannel cleanup + spinner overlay + + 핀 header + last_board_id SharedDefaults mirror + realtime.test.ts 3/3; real-device UAT + N2 SQL RLS test deferred to end-of-phase batch). Phase 3 ready to flip complete after UAT batch; Phase 4 (Public Web) next.
 ---
 
 # STATE: MOAJOA v1
@@ -41,8 +41,9 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
   - 03-03 ✓ resolve-place Edge Function (FIELD_MASK 5 fields, max 5, extraction_costs link_id=null) + ResolvePlace schemas in @moajoa/core (lines 86/103/117) + renamePlace/deletePlace helpers in @moajoa/api. Deno tests 8/8 pass. Deploy + live curl smoke deferred to user-side UAT.
 - **Phase 3 Wave 3:** ✓ 2026-05-26
   - 03-04 ✓ SharedDefaults Expo Module (Swift bridge over UserDefaults(suiteName:APP_GROUP_ID)) + lib/shared-defaults.ts JSON wrapper + lib/pending.ts drainPendingLinks state machine (D-04 dual triggers, D-05 PendingLink shape, D-06 retry-budget→failed migration, Pitfall 7 dedup via module-level inFlight) + lib/realtime.ts subscribeExtractProgress + lib/toast.tsx single-instance host + _layout.tsx AppState wiring (cold-launch + foreground 'active', arrow-wrap cleanup, useRef inFlight) + index.tsx D-13 auth gate restoration (getSession + onAuthStateChange) + login.tsx UI-SPEC §6 (email+password primary + magic-link toggle + Korean error mapping) + boards.tsx UI-SPEC §5 failed-banner (useFocusEffect + bg-danger/5). TDD RED→GREEN: 6/6 unit tests pass. Three Rule 1 fixes to Plan 03-01 jest config + gitignore (anchored ignore patterns, setupFilesAfterEnv, pnpm-aware transformIgnorePatterns). iOS native build smoke deferred (pattern from 03-02). Commits: 667fb20, 5223be1, b6a8da4, cc1b7cd, 2ec3a2f.
-- **Next action:** Plan 03-05 (Wave 4 — @gorhom/bottom-sheet + boards/[id].tsx broadcast subscribe + spinner overlay + PinAddModal + PinBottomSheet + real-device UAT execution). `/gsd-execute-phase 3` 계속.
-- **Progress:** [█████░] Overall 10/12 plans (Phase 1 + 2 완료 + Phase 3 4/5).
+- **Phase 3 Wave 4:** ✓ 2026-05-26 — 03-05 (@gorhom/bottom-sheet@5.2.14 + PinBottomSheet D-09 single sheet [snap 25%/50%, link_id signal for AI/manual] + PinAddModal D-07/D-08 [300ms debounce + resolve-place + max 5 + addManualPlace] + boards/[id].tsx surgical extension [broadcast subscribe + supabase.removeChannel cleanup + spinner overlay brand-500 + 분석 중 + + 핀 header + Marker onPress + Modal pageSheet wrap + SharedDefaults.set(LastBoardId)] + realtime.test.ts 3/3 PASS + 4-branch mapErrorReason). Commits: bb70256, aa20be7. Real-device UAT (scenarios 1-5) + N2 SQL RLS substitute test deferred to end-of-phase UAT batch (supabase CLI not authenticated in this session).
+- **Next action:** Phase 4 (Public Web SSR — `/gsd-discuss-phase 4`) OR end-of-phase 3 UAT batch when ready (prebuild + pod install + device + walk through docs/manual-uat-phase3.md scenarios 1-5 + run N2 SQL substitute test).
+- **Progress:** [██████░] Overall 11/12 plans (Phase 1 + 2 완료 + Phase 3 5/5 code-complete; UAT-pending).
 
 ---
 
@@ -59,6 +60,7 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - Phase 3 Plan 03-02 완료: 2026-05-26 (~5분, 1/2 tasks; Task 2 real-device deferred; commit 56c61d8)
 - Phase 3 Plan 03-03 완료: 2026-05-26 (~18분, 3 tasks TDD RED→GREEN→helpers; commits a617937 + 83a3b8f + ea2f0f0; Deno tests 8/8 pass; deploy + live curl deferred to UAT)
 - Phase 3 Plan 03-04 완료: 2026-05-26 (~7분, 3 tasks TDD RED→GREEN + task 2 + task 3; commits 667fb20 + 5223be1 + b6a8da4 + cc1b7cd + 2ec3a2f; pending.test.ts 6/6 pass; native build smoke deferred to UAT)
+- Phase 3 Plan 03-05 완료: 2026-05-26 (~4분, 2 automatable tasks + 1 deferred UAT checkpoint; commits bb70256 + aa20be7; realtime.test.ts 3/3 + pending.test.ts 6/6 = 9/9; real-device UAT + N2 SQL RLS deferred to end-of-phase batch)
 
 ---
 
@@ -85,6 +87,9 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - **Toast host = module-level `Set<Listener>` singleton, not React context** (Phase 3 03-04) — UI-SPEC §Toast specifies single instance + no queue. Module singleton matches that contract without prop-drilling; `showToast()` callable from any imperative caller including lib/pending.ts.
 - **gitignore `ios/` / `android/` anchored with leading slash** (Phase 3 03-04) — unanchored patterns matched apps/ios/modules/shared-defaults/ios/ and silently dropped the Swift file from a feat commit. Always anchor prebuild output ignores.
 - **jest infra Rule 1 fixes (testPathIgnorePatterns anchored, setupFiles→setupFilesAfterEnv, pnpm-aware transformIgnorePatterns)** (Phase 3 03-04) — three latent bugs in Plan 03-01's jest config surfaced when the first real test ran. All three fixed inline as Rule 1.
+- **PinBottomSheet uses `place.link_id` as AI/manual signal** (Phase 3 03-05) — migration 0004 added `places.source_kind` but Phase 2 legacy INSERTs may not populate it consistently; `link_id IS NULL` is the contract-binding signal for manual pins (add_manual_place RPC leaves it null). Avoids legacy-data branch bugs.
+- **"영상에서 위치 보기" v1 = youtube.com search results, not direct timestamp jump** (Phase 3 03-05) — PinBottomSheet receives `Place` only (no `link.url`), so true `&t=Xs` jump deferred to Phase 5 Trust UI. Acceptable per CONTEXT.md deferred #1.
+- **min query length 2 chars + defensive `results.slice(0, 5)` in PinAddModal** (Phase 3 03-05) — UI-SPEC didn't lock min query; chosen as researcher discretion to avoid 1-char API noise. slice(0,5) is defense-in-depth against future resolve-place regressions even though D-07 already caps server-side.
 
 ### Todos (next session 시작점)
 
