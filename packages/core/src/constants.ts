@@ -74,3 +74,31 @@ export const ExtractionStatus = [
   'manual_review',
 ] as const;
 export type ExtractionStatusType = (typeof ExtractionStatus)[number];
+
+/**
+ * Realtime Broadcast channel prefix. Server broadcasts to `extract:{link_id}`,
+ * clients subscribe to same. Shared to prevent channel name mismatch.
+ */
+export const EXTRACT_CHANNEL_PREFIX = 'extract:';
+
+/**
+ * Origin of a place pin.
+ * - 'ai': auto-extracted by Edge Function
+ * - 'manual': user-added
+ */
+export const PlaceSourceKind = ['ai', 'manual'] as const;
+export type PlaceSourceKindType = (typeof PlaceSourceKind)[number];
+
+/**
+ * Broadcast step names for extraction progress (D-02).
+ * Clients display progress based on these steps.
+ */
+export const ExtractionStep = [
+  'metadata',
+  'transcript',
+  'llm',
+  'places',
+  'done',
+  'error',
+] as const;
+export type ExtractionStepType = (typeof ExtractionStep)[number];
