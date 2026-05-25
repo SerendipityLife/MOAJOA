@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T03:40:28.396Z"
+last_updated: "2026-05-25T04:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 4
 ---
 
 # STATE: MOAJOA v1
@@ -32,9 +32,9 @@ progress:
 ## Current Position
 
 - **Phase:** 1 — Build Unblock & Hygiene
-- **Plan:** (none yet — `/gsd-discuss-phase 1` → `/gsd-plan-phase 1`)
-- **Status:** Ready to execute
-- **Progress:** [░░░░░░] 0/6 phases complete
+- **Plan:** 01-01 ✓ complete (Wave 1) — brand assets + pnpm hoist + NativeWind 4.2 upgrade
+- **Status:** Wave 1 done. Wave 2 next: 01-02 (iOS prebuild — needs physical iPhone session) + 01-03 (web dev-tool gate, auto)
+- **Progress:** [█░░░░░] 1/4 plans of Phase 1 (0/6 phases complete)
 
 ---
 
@@ -42,7 +42,8 @@ progress:
 
 (채워질 항목 — phase 진행 중 추가)
 
-- Phase 1 시작: TBD
+- Phase 1 시작: 2026-05-25 (Wave 1 — plan 01-01)
+- Phase 1 Wave 1 완료: 2026-05-25 (commits fbab9e2, f672279, 5cd4446)
 - Phase 1 완료: TBD
 - iOS 빌드 통과 시각: TBD
 - Dogfooding 시작 일자: TBD
