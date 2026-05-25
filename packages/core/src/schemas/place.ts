@@ -74,3 +74,48 @@ export const ExtractedPlacesPayloadSchema = z.object({
 });
 
 export type ExtractedPlacesPayload = z.infer<typeof ExtractedPlacesPayloadSchema>;
+
+// ----- resolve-place Edge Function contract (Phase 3 SAVE-05) -----
+
+/**
+ * Request to the resolve-place Edge Function. Either `query` (free text)
+ * or `{lat,lng}` (location bias) must be provided. `query` is the primary
+ * mode per D-07 (text input + dropdown); lat/lng bias is for future
+ * map long-press (deferred to v2).
+ */
+export const ResolvePlaceRequestSchema = z
+  .object({
+    query: z.string().min(1).max(200).optional(),
+    lat: z.number().min(-90).max(90).optional(),
+    lng: z.number().min(-180).max(180).optional(),
+    language: z.string().min(2).max(8).default('ko'),
+  })
+  .refine((v) => v.query !== undefined || (v.lat !== undefined && v.lng !== undefined), {
+    message: 'Either query or (lat,lng) is required',
+  });
+
+export type ResolvePlaceRequest = z.infer<typeof ResolvePlaceRequestSchema>;
+
+/**
+ * One resolved place candidate. Shape mirrors Google Places API v1
+ * Text Search response with our FieldMask whitelist (D-08 + Phase 2 D-12).
+ */
+export const ResolvedPlaceSchema = z.object({
+  google_place_id: z.string().min(1),
+  displayName: z.string(),
+  formattedAddress: z.string().nullable(),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+  primaryType: z.string().nullable(),
+});
+
+export type ResolvedPlace = z.infer<typeof ResolvedPlaceSchema>;
+
+/** Response from resolve-place: up to 5 candidates per D-07. */
+export const ResolvePlaceResponseSchema = z.object({
+  places: z.array(ResolvedPlaceSchema).max(5),
+});
+
+export type ResolvePlaceResponse = z.infer<typeof ResolvePlaceResponseSchema>;
