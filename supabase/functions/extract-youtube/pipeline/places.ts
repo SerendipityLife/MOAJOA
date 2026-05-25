@@ -13,6 +13,10 @@ export interface ResolvedPlace {
   primaryType: string | null;
 }
 
+export interface ResolveResult extends ResolvedPlace {
+  duration_ms: number;
+}
+
 export interface ResolveInputs {
   apiKey: string;
   query: string;
@@ -30,7 +34,8 @@ const FIELD_MASK = [
   'places.primaryType',
 ].join(',');
 
-export async function resolveGooglePlace(inputs: ResolveInputs): Promise<ResolvedPlace | null> {
+export async function resolveGooglePlace(inputs: ResolveInputs): Promise<ResolveResult | null> {
+  const t0 = performance.now();
   const res = await fetch(PLACES_TEXT_SEARCH_URL, {
     method: 'POST',
     headers: {
@@ -69,5 +74,6 @@ export async function resolveGooglePlace(inputs: ResolveInputs): Promise<Resolve
     lat,
     lng,
     primaryType: place.primaryType ?? null,
+    duration_ms: Math.round(performance.now() - t0),
   };
 }

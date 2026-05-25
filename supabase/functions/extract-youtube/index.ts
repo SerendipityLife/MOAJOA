@@ -20,6 +20,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { z } from 'npm:zod@3';
 
 import { extractCandidatesFromContext } from './pipeline/claude.ts';
+import type { ExtractResult } from './pipeline/claude.ts';
 import { fetchYouTubeMetadata, fetchYouTubeTranscript, normalizeYouTubeUrl } from './pipeline/youtube.ts';
 import { resolveGooglePlace } from './pipeline/places.ts';
 
@@ -95,23 +96,50 @@ Deno.serve(async (req) => {
     // ---- 1. Normalize URL + fetch metadata ----
     const canonical = normalizeYouTubeUrl(link.url);
     const meta = await fetchYouTubeMetadata(canonical);
+    await broadcastStep(admin, link_id, 'metadata', 10);
 
     // ---- 2. Fetch transcript ----
     const transcript = await fetchYouTubeTranscript(meta.videoId);
+    await broadcastStep(admin, link_id, 'transcript', 30);
 
     // ---- 3. LLM extraction ----
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY not set');
 
-    const candidates = await extractCandidatesFromContext({
+    const t0 = performance.now();
+    const { candidates, usage } = await extractCandidatesFromContext({
       anthropicKey,
       videoTitle: meta.title,
       description: meta.description,
       transcript,
       cityHint: null, // TODO: derive from board.city_code via link.board_id
     });
+    const anthropicDurationMs = Math.round(performance.now() - t0);
 
-    if (candidates.places.length === 0) {
+    // Log Anthropic cost
+    const anthropicCost = (usage.input_tokens * 3 + usage.output_tokens * 15) / 1_000_000;
+    await logCost(admin, link_id, {
+      provider: 'anthropic',
+      model: usage.model,
+      input_tokens: usage.input_tokens,
+      output_tokens: usage.output_tokens,
+      cost_usd: anthropicCost,
+      duration_ms: anthropicDurationMs,
+    });
+
+    // Citation post-filter: discard candidates without source_quote (D-04 safety net)
+    const validPlaces = candidates.places.filter(
+      (p) => p.source_quote && p.source_quote.trim().length > 0,
+    );
+    if (validPlaces.length < candidates.places.length) {
+      console.warn(
+        `[citation] discarded ${candidates.places.length - validPlaces.length} candidates without source_quote`,
+      );
+    }
+
+    await broadcastStep(admin, link_id, 'llm', 60);
+
+    if (validPlaces.length === 0) {
       await admin
         .from('links')
         .update({
@@ -138,7 +166,7 @@ Deno.serve(async (req) => {
     if (!placesKey) throw new Error('GOOGLE_PLACES_SERVER_KEY not set');
 
     const resolved = [];
-    for (const cand of candidates.places) {
+    for (const cand of validPlaces) {
       try {
         const place = await resolveGooglePlace({
           apiKey: placesKey,
@@ -146,15 +174,19 @@ Deno.serve(async (req) => {
           languageCode: 'ja',
         });
         if (place) {
-          resolved.push({
-            cand,
-            place,
+          resolved.push({ cand, place });
+          await logCost(admin, link_id, {
+            provider: 'google_places',
+            cost_usd: 0.032,
+            duration_ms: place.duration_ms,
           });
         }
       } catch (err) {
         console.error(`[resolveGooglePlace] failed for ${cand.name_local}:`, err);
       }
     }
+
+    await broadcastStep(admin, link_id, 'places', 80);
 
     // ---- 5. Insert places ----
     if (resolved.length > 0) {
@@ -172,6 +204,8 @@ Deno.serve(async (req) => {
         address: r.place.formattedAddress ?? null,
         source_timestamp_sec: r.cand.source_timestamp_sec ?? null,
         source_quote: r.cand.source_quote ?? null,
+        source_kind: 'ai',
+        inferred_city: r.cand.inferred_city ?? null,
       }));
 
       const { error: insertErr } = await admin
@@ -182,7 +216,7 @@ Deno.serve(async (req) => {
 
     // ---- 6. Mark link ready ----
     const avgConfidence =
-      candidates.places.reduce((a, p) => a + p.confidence, 0) / candidates.places.length;
+      validPlaces.reduce((a, p) => a + p.confidence, 0) / validPlaces.length;
 
     await admin
       .from('links')
@@ -197,6 +231,8 @@ Deno.serve(async (req) => {
       })
       .eq('id', link_id);
 
+    await broadcastStep(admin, link_id, 'done', 100, { places_extracted: resolved.length });
+
     return jsonOk({
       link_id,
       status: resolved.length > 0 ? 'ready' : 'manual_review',
@@ -207,6 +243,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[extract-youtube] failed:', message);
+    await broadcastStep(admin, link_id, 'error', 0, { error: message });
     await admin
       .from('links')
       .update({ extraction_status: 'failed', extraction_error: message })
@@ -214,6 +251,55 @@ Deno.serve(async (req) => {
     return jsonOk({ link_id, status: 'failed', places_extracted: 0, confidence: null, error: message });
   }
 });
+
+// ---- Broadcast + Cost helpers -----------------------------------------------
+
+async function broadcastStep(
+  admin: ReturnType<typeof createClient>,
+  linkId: string,
+  step: string,
+  progressPct: number,
+  detail?: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const channel = admin.channel('extract:' + linkId);
+    await channel.send({
+      type: 'broadcast',
+      event: 'progress',
+      payload: { step, progress_pct: progressPct, ...(detail ?? {}) },
+    });
+    admin.removeChannel(channel);
+  } catch (err) {
+    console.warn('[broadcast] failed:', err);
+  }
+}
+
+async function logCost(
+  admin: ReturnType<typeof createClient>,
+  linkId: string,
+  entry: {
+    provider: string;
+    model?: string;
+    input_tokens?: number;
+    output_tokens?: number;
+    cost_usd: number;
+    duration_ms: number;
+  },
+): Promise<void> {
+  try {
+    await admin.from('extraction_costs').insert({
+      link_id: linkId,
+      provider: entry.provider,
+      model: entry.model ?? null,
+      input_tokens: entry.input_tokens ?? null,
+      output_tokens: entry.output_tokens ?? null,
+      cost_usd: entry.cost_usd,
+      duration_ms: entry.duration_ms,
+    });
+  } catch (err) {
+    console.warn('[cost-log] failed:', err);
+  }
+}
 
 // ---- Helpers ---------------------------------------------------------------
 function jsonError(status: number, message: string): Response {
