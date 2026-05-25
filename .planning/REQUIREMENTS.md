@@ -49,7 +49,7 @@ iOS 빌드 블로커 해소 + 셸 동작. dogfooding의 prerequisite.
 - [ ] **VIEW-03**: `/b/[slug]/opengraph-image`가 보드 제목 + 미니맵(Static Maps) + Pretendard 한글 폰트로 동적 생성됨
 - [ ] **VIEW-04**: 보드 페이지의 `<head>`에 보드 제목·도시·핀 수 기반 SEO meta(title, description, og:*, twitter:*) 포함
 - [ ] **VIEW-05**: 핀을 탭하면 해당 영상이 정확한 타임스탬프(`?t=Xs`)로 열림
-- [ ] **VIEW-06**: 추출이 완료되면 보드 페이지가 자동으로 갱신됨 (Edge Function → `/api/revalidate?slug=...` webhook → `revalidateTag`)
+- [x] **VIEW-06**: 추출이 완료되면 보드 페이지가 자동으로 갱신됨 (Edge Function → `/api/revalidate?slug=...` webhook → `revalidateTag`) — 04-02 (2026-05-26)
 
 ### Trust UI (TRUST) — Cross-platform
 
@@ -134,7 +134,7 @@ Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | VIEW-03 | Phase 4 | Pending |
 | VIEW-04 | Phase 4 | Pending |
 | VIEW-05 | Phase 4 | Pending |
-| VIEW-06 | Phase 4 | Pending |
+| VIEW-06 | Phase 4 | Complete (04-02, 2026-05-26) |
 | TRUST-01 | Phase 5 | Pending |
 | TRUST-02 | Phase 5 | Pending |
 | TRUST-03 | Phase 5 | Pending |

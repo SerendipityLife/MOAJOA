@@ -3,15 +3,15 @@ gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-26T03:05:00.000Z"
+last_updated: "2026-05-26T03:08:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 12
+  completed_plans: 13
   partial_plans: 0
-  percent: 75
-stopped_at: Phase 4 Wave 1 complete — 04-01 ✓ 2026-05-26 (vitest+jsdom infra in apps/web, lib/youtube.ts extractYouTubeVideoId+buildYouTubeWatchUrl TDD 13/13, lib/og/static-maps.ts buildStaticMapsUrl+OG_GRAYSCALE_STYLE TDD 6/1, lib/cache.ts BOARD_REVALIDATE_TAG+getCachedPublicBoard, lib/env.ts +getRevalidateSecret/getBaseUrl/getGoogleMapsKey, packages/core CITY_KO_MAP 9 entries; 20/20 tests pass + typecheck clean; Rule 1 fix: 11-char real YouTube ID dQw4w9WgXcQ replaces plan's contradictory 12-char fixture). Wave 2 (04-02 revalidate route + Edge Function webhook, 04-03 page.tsx + map + layout viewport) and Wave 3 (04-04 OG image) unblocked.
+  percent: 81
+stopped_at: Phase 4 Wave 2 partial — 04-02 ✓ 2026-05-26 (apps/web/app/api/revalidate/route.ts Node-runtime + zod body + node:crypto timingSafeEqual + revalidateTag(BOARD_REVALIDATE_TAG(slug)); supabase/functions/extract-youtube/index.ts +26 lines fire-and-forget POST after broadcastStep('done') with visibility='public' gate + Deno.env WEB_BASE_URL/REVALIDATE_SECRET guards; 9/9 new tests pass — 8 api-revalidate matrix + 1 cache-key isolation Pitfall 1 guard; total 34/34 tests pass; 4 commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 webhook; deferred-items.md tracks 9 pre-existing deno check errors in extract-youtube/index.ts — unrelated to my changes). 04-03 still in progress (page.tsx/layout.tsx/metadata.test.ts uncommitted in working tree). Wave 3 (04-04 OG image) unblocked.
 ---
 
 # STATE: MOAJOA v1
@@ -43,8 +43,9 @@ stopped_at: Phase 4 Wave 1 complete — 04-01 ✓ 2026-05-26 (vitest+jsdom infra
   - 03-04 ✓ SharedDefaults Expo Module (Swift bridge over UserDefaults(suiteName:APP_GROUP_ID)) + lib/shared-defaults.ts JSON wrapper + lib/pending.ts drainPendingLinks state machine (D-04 dual triggers, D-05 PendingLink shape, D-06 retry-budget→failed migration, Pitfall 7 dedup via module-level inFlight) + lib/realtime.ts subscribeExtractProgress + lib/toast.tsx single-instance host + _layout.tsx AppState wiring (cold-launch + foreground 'active', arrow-wrap cleanup, useRef inFlight) + index.tsx D-13 auth gate restoration (getSession + onAuthStateChange) + login.tsx UI-SPEC §6 (email+password primary + magic-link toggle + Korean error mapping) + boards.tsx UI-SPEC §5 failed-banner (useFocusEffect + bg-danger/5). TDD RED→GREEN: 6/6 unit tests pass. Three Rule 1 fixes to Plan 03-01 jest config + gitignore (anchored ignore patterns, setupFilesAfterEnv, pnpm-aware transformIgnorePatterns). iOS native build smoke deferred (pattern from 03-02). Commits: 667fb20, 5223be1, b6a8da4, cc1b7cd, 2ec3a2f.
 - **Phase 3 Wave 4:** ✓ 2026-05-26 — 03-05 (@gorhom/bottom-sheet@5.2.14 + PinBottomSheet D-09 single sheet [snap 25%/50%, link_id signal for AI/manual] + PinAddModal D-07/D-08 [300ms debounce + resolve-place + max 5 + addManualPlace] + boards/[id].tsx surgical extension [broadcast subscribe + supabase.removeChannel cleanup + spinner overlay brand-500 + 분석 중 + + 핀 header + Marker onPress + Modal pageSheet wrap + SharedDefaults.set(LastBoardId)] + realtime.test.ts 3/3 PASS + 4-branch mapErrorReason). Commits: bb70256, aa20be7. Real-device UAT (scenarios 1-5) + N2 SQL RLS substitute test deferred to end-of-phase UAT batch (supabase CLI not authenticated in this session).
 - **Phase 4 Wave 1:** ✓ 04-01 완료 2026-05-26 (~7분, 3 tasks TDD RED→GREEN; commits f155efb + d790bfc + 5647451 + 3257f35 + 55b64d4). Vitest+jsdom infra + youtube/static-maps/cache/env helpers + CITY_KO_MAP shipped. 20/20 unit tests pass.
-- **Next action:** Phase 4 Wave 2 — `/gsd-execute-phase 4` continues with 04-02 (revalidate route) and 04-03 (page.tsx + PublicBoardMap), parallel-safe per plan dependencies.
-- **Progress:** [████████] Overall 12/16 plans (Phase 1 + 2 완료 + Phase 3 5/5 code-complete + Phase 4 Wave 1 done; UAT-pending for Phase 3).
+- **Phase 4 Wave 2:** ⚙ 04-02 완료 2026-05-26 (~3분, 3 tasks TDD; commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 Edge Function webhook). /api/revalidate Node-runtime route + timing-safe secret + Edge Function fire-and-forget POST after done broadcast. 9/9 new tests (8 api-revalidate matrix + 1 cache-key Pitfall 1 guard) — 34/34 total. 04-03 still in progress.
+- **Next action:** Complete 04-03 (page.tsx + PublicBoardMap + layout viewport) then Wave 3 04-04 (OG image).
+- **Progress:** [█████████] Overall 13/16 plans (Phase 1 + 2 완료 + Phase 3 5/5 code-complete + Phase 4 2/4 done; UAT-pending for Phase 3).
 
 ---
 
@@ -63,6 +64,7 @@ stopped_at: Phase 4 Wave 1 complete — 04-01 ✓ 2026-05-26 (vitest+jsdom infra
 - Phase 3 Plan 03-04 완료: 2026-05-26 (~7분, 3 tasks TDD RED→GREEN + task 2 + task 3; commits 667fb20 + 5223be1 + b6a8da4 + cc1b7cd + 2ec3a2f; pending.test.ts 6/6 pass; native build smoke deferred to UAT)
 - Phase 3 Plan 03-05 완료: 2026-05-26 (~4분, 2 automatable tasks + 1 deferred UAT checkpoint; commits bb70256 + aa20be7; realtime.test.ts 3/3 + pending.test.ts 6/6 = 9/9; real-device UAT + N2 SQL RLS deferred to end-of-phase batch)
 - Phase 4 Plan 04-01 완료: 2026-05-26 (~7분, 3 tasks TDD RED→GREEN; commits f155efb + d790bfc + 5647451 + 3257f35 + 55b64d4; 20/20 vitest tests pass; Rule 1 fix on plan's contradictory 12-char YouTube ID fixture vs 11-char regex)
+- Phase 4 Plan 04-02 완료: 2026-05-26 (~3분, 3 tasks TDD; commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 Edge Function; 9/9 new vitest tests pass — 34/34 total; no deviations from plan; pre-existing deno check errors in extract-youtube/index.ts logged to deferred-items.md)
 
 ---
 
@@ -96,6 +98,10 @@ stopped_at: Phase 4 Wave 1 complete — 04-01 ✓ 2026-05-26 (vitest+jsdom infra
 - **YouTube video_id regex enforces 11-char real-world constraint** (Phase 4 04-01) — `[\w-]{11}` matches actual YouTube ID length. Plan's RED fixture used 12-char `ABC123_def-1` which was a bug; Rule 1 fix replaced with `dQw4w9WgXcQ` (real 11-char ID). Regex unchanged.
 - **Static Maps URL signing not applied in v1** (Phase 4 04-01) — D-07 lock honored. URL composed via URLSearchParams (Node encodes ',' as %2C, '|' as %7C — Google accepts both). Max 10 markers truncate caps URL <500 chars.
 - **`BOARD_REVALIDATE_TAG` is factory function** (Phase 4 04-01) — `(slug) => 'board:${slug}'` enables type-safe consumers vs. string template. Same tag invalidates both `/b/[slug]` page and OG image per D-03/D-04.
+- **Length-prefix guard before `timingSafeEqual`** (Phase 4 04-02) — `node:crypto.timingSafeEqual` THROWS on length mismatch; pre-check `a.length !== b.length` short-circuits without throwing. Leaks only length (acceptable per D-20). Secret length is a known constant (64 hex chars).
+- **`/api/revalidate` runtime is `'nodejs'` (NOT edge)** (Phase 4 04-02) — `node:crypto.timingSafeEqual` unavailable in Edge runtime's WebCrypto. RESEARCH §Pitfall 9 lock. D-06 'Edge' references in earlier drafts corrected.
+- **Edge Function webhook fires inside try-success branch ONLY** (Phase 4 04-02) — Block placed AFTER successful `broadcastStep('done')` but INSIDE outer try. Failure path's catch handler does NOT invalidate cache (stale-invalidate prevention).
+- **`visibility==='public'` gates webhook firing** (Phase 4 04-02) — Private/shared boards skip the POST entirely (D-05 cost lock). `share_slug` presence also required (defensive double-check).
 
 ### Todos (next session 시작점)
 
