@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T06:31:56.439Z"
+last_updated: "2026-05-25T06:41:33.784Z"
 progress:
   total_phases: 6
   completed_phases: 0
@@ -31,9 +31,12 @@ progress:
 
 ## Current Position
 
+Phase: 02 (extraction-pipeline-hardening) — EXECUTING
+Plan: 1 of 3
+
 - **Phase:** 1 — Build Unblock & Hygiene
 - **Plan:** 01-01 ✓ complete · 01-03 ~ partial (Tasks 1+2 commit됨, Task 3 build+curl verify 보류)
-- **Status:** Ready to execute
+- **Status:** Executing Phase 02
 - **Progress:** [█░░░░░] 1/4 plans of Phase 1 (0/6 phases complete) + 1 partial
 
 ---
