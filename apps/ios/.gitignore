@@ -5,8 +5,10 @@ expo-env.d.ts
 
 # Native build output — regenerable via `pnpm --filter @moajoa/ios prebuild`.
 # We use the Expo managed workflow as the source of truth (app.config.ts).
-ios/
-android/
+# Anchor with leading slash so the pattern only matches the prebuild directory
+# at apps/ios/ios/, not any nested "ios" directory inside e.g. modules/.../ios/.
+/ios/
+/android/
 
 # Expo
 .expo/
