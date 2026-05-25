@@ -4,9 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { addLink, triggerExtraction } from '@moajoa/api';
 import { detectSourceKind } from '@moajoa/core';
+import { isDevToolsEnabled } from '@/lib/env';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 
 export function AddLinkForm({ boardId }: { boardId: string }) {
+  // D-09 defense in depth — page gate 우회 시에도 컴포넌트가 차단
+  if (!isDevToolsEnabled()) return null;
+
   const router = useRouter();
   const [url, setUrl] = useState('');
   const [pending, setPending] = useState(false);

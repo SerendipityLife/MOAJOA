@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { listMyBoards } from '@moajoa/api';
+import { isDevToolsEnabled } from '@/lib/env';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { CreateBoardButton } from './_components/create-board-button';
 
 export default async function BoardsPage() {
+  // WEB-01/WEB-02: dev-tool gate — env 미설정 시 즉시 /login으로 (auth 게이트 이전)
+  if (!isDevToolsEnabled()) redirect('/login');
+
   const supabase = await getSupabaseServer();
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect('/login');

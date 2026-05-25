@@ -1,11 +1,15 @@
 import { notFound, redirect } from 'next/navigation';
 import { getBoard, listLinksByBoard, listPlacesByBoard } from '@moajoa/api';
+import { isDevToolsEnabled } from '@/lib/env';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { AddLinkForm } from './_components/add-link-form';
 import { LinkList } from './_components/link-list';
 import { PlaceMap } from './_components/place-map';
 
 export default async function BoardDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // WEB-01/WEB-02: dev-tool gate — env 미설정 시 즉시 /login으로 (auth 게이트 이전)
+  if (!isDevToolsEnabled()) redirect('/login');
+
   const { id } = await params;
   const supabase = await getSupabaseServer();
   const { data } = await supabase.auth.getUser();
