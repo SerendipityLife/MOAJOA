@@ -102,3 +102,38 @@ export const ExtractionStep = [
   'error',
 ] as const;
 export type ExtractionStepType = (typeof ExtractionStep)[number];
+
+/**
+ * iOS App Group identifier shared between the main app target and the
+ * Share Extension target. MUST exactly match:
+ *   - apps/ios/app.config.ts entitlements + plugin option (Plan 03-02)
+ *   - apps/ios/ios/MOAJOA.entitlements after prebuild
+ *   - SharedDefaults(suiteName: APP_GROUP_ID) in Swift (Plan 03-04)
+ *
+ * Mismatch = silent nil from UserDefaults — no error, just data loss
+ * (Phase 3 RESEARCH Pitfall 2).
+ */
+export const APP_GROUP_ID = 'group.com.serendipitylife.moajoa' as const;
+
+/**
+ * Keys written to App Group SharedDefaults. Single source of truth so
+ * Share Extension Swift code and main-app TS code never drift.
+ */
+export const SharedDefaultsKeys = {
+  /** JSON array of {url, board_id, queued_at, retry_count} — D-05. */
+  PendingLinks: 'pending_links',
+  /** JSON array of {...PendingLink, failed_at, reason} — D-06 (retry_count > 3). */
+  PendingLinksFailed: 'pending_links_failed',
+  /** UUID string — last board the user saved to. Used by Share Extension default. */
+  LastBoardId: 'last_board_id',
+  /** Boolean string ('1' / '0') — Share Extension uses this to decide D-03 fallback. */
+  AuthStatus: 'auth_status',
+} as const;
+
+/**
+ * Supabase Realtime channel name builder for extraction broadcast.
+ * Phase 2 sends; Phase 3 subscribes.
+ */
+export function extractChannelName(linkId: string): string {
+  return `extract:${linkId}`;
+}
