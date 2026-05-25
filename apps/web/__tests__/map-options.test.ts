@@ -11,8 +11,12 @@ beforeEach(() => {
   markerCtor.mockClear();
   markerAddListener.mockClear();
   vi.stubEnv('NEXT_PUBLIC_GOOGLE_MAPS_KEY', 'TEST_KEY');
+  // 05-05: Marker icon now requires Size + Point ctors for scaledSize/anchor.
+  // Stub returns plain objects — only ctor identity matters for the assertions.
+  const sizeCtor = vi.fn((w: number, h: number) => ({ width: w, height: h }));
+  const pointCtor = vi.fn((x: number, y: number) => ({ x, y }));
   (window as unknown as { google: unknown }).google = {
-    maps: { Map: mapCtor, Marker: markerCtor },
+    maps: { Map: mapCtor, Marker: markerCtor, Size: sizeCtor, Point: pointCtor },
   };
 });
 afterEach(() => {
@@ -32,6 +36,8 @@ describe('PublicBoardMap', () => {
         name_local: 'A',
         link_id: 'L1',
         source_timestamp_sec: 120,
+        source_kind: 'ai',
+        confidence: 0.9,
       },
     ];
     const links = [
@@ -67,6 +73,8 @@ describe('PublicBoardMap', () => {
         name_local: 'A',
         link_id: 'L1',
         source_timestamp_sec: 120,
+        source_kind: 'ai',
+        confidence: 0.9,
       },
     ];
     const links = [
@@ -97,6 +105,8 @@ describe('PublicBoardMap', () => {
         name_local: 'manual',
         link_id: null,
         source_timestamp_sec: null,
+        source_kind: 'manual',
+        confidence: null,
       },
     ];
     const links: never[] = [];

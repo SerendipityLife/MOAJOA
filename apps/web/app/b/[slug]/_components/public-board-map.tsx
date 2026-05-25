@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import type { PublicBoardView } from '@moajoa/core';
 import { buildYouTubeWatchUrl } from '@/lib/youtube';
+import { buildMarkerIconUrl } from '@/lib/marker-svg';
 
 interface Props {
   places: PublicBoardView['places'];
@@ -47,13 +48,26 @@ export function PublicBoardMap({ places, links }: Props) {
       const linksById = new Map(links.map((l) => [l.id, l]));
 
       for (const p of places) {
+        // TRUST-01 web parity: color/opacity 분기 by source_kind + confidence (D-06/D-24).
+        // confidence may be undefined on stale ISR payloads pre-migration 0006 —
+        // builder treats that as high-conf (safe fallback per D-15).
+        const iconUrl = buildMarkerIconUrl({
+          source_kind: p.source_kind,
+          confidence: p.confidence,
+        });
+
         const marker = new g.Marker({
           map,
           position: { lat: p.lat, lng: p.lng },
           title: p.name_local,
+          icon: {
+            url: iconUrl,
+            scaledSize: new g.Size(32, 40),
+            anchor: new g.Point(16, 40),
+          },
         });
 
-        // Pin click → YouTube new tab (D-14, D-15)
+        // Pin click → YouTube new tab (D-14, D-15) — UNCHANGED from Phase 4
         if (p.link_id) {
           const link = linksById.get(p.link_id);
           if (link?.url) {
