@@ -65,7 +65,7 @@ AI 추출 결과를 사용자가 믿을 수 있어야 dogfooding 성립.
 첫 인상 lock. 첫 보드 없이 빈 상태 피하기.
 
 - [ ] **ONBOARD-01**: 신규 가입자에게 첫 로그인 시 "내 첫 여행" 보드가 자동 생성됨
-- [ ] **ONBOARD-02**: 첫 진입 시 "유튜브 링크를 붙여넣어 보세요" 안내 카드가 보드 상세에 1회 표시됨
+- [x] **ONBOARD-02**: 첫 진입 시 "유튜브 링크를 붙여넣어 보세요" 안내 카드가 보드 상세에 1회 표시됨
 
 ### Web Hygiene (WEB)
 
@@ -140,7 +140,7 @@ Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | TRUST-03 | Phase 5 | Complete (05-03, 2026-05-26) |
 | TRUST-04 | Phase 5 | Pending |
 | ONBOARD-01 | Phase 5 | Pending |
-| ONBOARD-02 | Phase 5 | Pending |
+| ONBOARD-02 | Phase 5 | Complete (2026-05-26, 05-06) |
 | EXTRACT-07 | Phase 6 | Pending |
 
 **Coverage:**
