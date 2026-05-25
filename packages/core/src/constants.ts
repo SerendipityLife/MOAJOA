@@ -137,3 +137,23 @@ export const SharedDefaultsKeys = {
 export function extractChannelName(linkId: string): string {
   return `extract:${linkId}`;
 }
+
+/**
+ * city_code → Korean display name (ko-KR only — I18N-01 v2).
+ * Shared between web (OG image, meta description) and iOS.
+ * Per Phase 4 CONTEXT D-09 + UI-SPEC §"Open Items".
+ *
+ * If a board's city_code is missing from this map, callers should gracefully
+ * omit the city line (per D-09 "city 없으면 omit").
+ */
+export const CITY_KO_MAP: Readonly<Record<string, string>> = {
+  tokyo: '도쿄',
+  osaka: '오사카',
+  kyoto: '교토',
+  seoul: '서울',
+  busan: '부산',
+  jeju: '제주',
+  fukuoka: '후쿠오카',
+  sapporo: '삿포로',
+  okinawa: '오키나와',
+} as const;
