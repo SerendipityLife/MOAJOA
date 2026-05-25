@@ -3,15 +3,15 @@ gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-26T16:45:00.000Z"
+last_updated: "2026-05-26T17:05:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 9
   partial_plans: 0
-  percent: 42
-stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Extension config plugin + entitlements + EAS appExtensions; prebuild + real-device test deferred to end-of-phase UAT per /gsd-autonomous). 03-03..05 ready.
+  percent: 50
+stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Extension wiring) + 03-03 ✓ (resolve-place Edge Function + ResolvePlace schemas + renamePlace/deletePlace helpers; deploy + live curl smoke deferred to user-side UAT). 03-04 + 03-05 ready (Wave 3+).
 ---
 
 # STATE: MOAJOA v1
@@ -36,9 +36,11 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - **Phase 1:** ✓ COMPLETE 2026-05-25 (01-01 design assets · 01-02 iOS smoke screen on real device · 01-03 web dev-tool gate · 01-04 N/A EAS fallback unused). BUILD-01/02/03 + WEB-01/02 모두 통과.
 - **Phase 2:** ✓ COMPLETE 2026-05-25 (동료: migration 0004, Edge Function broadcast/citation/cost-logging, schema push + billing alert). EXTRACT-01~06 모두 통과.
 - **Phase 3 Wave 1:** ✓ 03-01 완료 2026-05-26 (foundation — migration 0005 nullable link_id, packages/core APP_GROUP_ID + SharedDefaultsKeys + extractChannelName, apps/ios jest-expo infra, docs/manual-uat-phase3.md 5 scenarios + N1/N2).
-- **Phase 3 Wave 2 (partial):** ✓ 03-02 완료 2026-05-26 (Share Extension config plugin via expo-share-intent@^5.1.1 — SDK 54 호환 라인; APP_GROUP_ID 6x 참조; EAS appExtensions; eas.json 신규). Prebuild + 실기기 share-sheet smoke test는 end-of-phase UAT로 deferred (auto mode). 03-03 (resolve-place Edge Function) 병렬 가능.
-- **Next action:** Plans 03-03 (resolve-place) → 03-04 (pending drain) → 03-05 (UI integration). `/gsd-execute-phase 3` 계속.
-- **Progress:** [███▒░░] Overall 8/12 plans (Phase 1 + 2 완료 + Phase 3 2/5).
+- **Phase 3 Wave 2:** ✓ 2026-05-26 (parallel)
+  - 03-02 ✓ Share Extension config plugin via expo-share-intent@^5.1.1 (SDK 54 호환 라인; APP_GROUP_ID 6x 참조; EAS appExtensions; eas.json 신규). Prebuild + 실기기 share-sheet smoke test는 end-of-phase UAT로 deferred (auto mode).
+  - 03-03 ✓ resolve-place Edge Function (FIELD_MASK 5 fields, max 5, extraction_costs link_id=null) + ResolvePlace schemas in @moajoa/core (lines 86/103/117) + renamePlace/deletePlace helpers in @moajoa/api. Deno tests 8/8 pass. Deploy + live curl smoke deferred to user-side UAT.
+- **Next action:** Plan 03-04 (SharedDefaults Swift module + drain + auth gate restore). `/gsd-execute-phase 3` 계속.
+- **Progress:** [████░░] Overall 9/12 plans (Phase 1 + 2 완료 + Phase 3 3/5).
 
 ---
 
@@ -53,6 +55,7 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - Dogfooding 시작 일자: TBD
 - Phase 3 Plan 03-01 완료: 2026-05-26 (~6분, 2 tasks, commits e7c389c + ca46b4e)
 - Phase 3 Plan 03-02 완료: 2026-05-26 (~5분, 1/2 tasks; Task 2 real-device deferred; commit 56c61d8)
+- Phase 3 Plan 03-03 완료: 2026-05-26 (~18분, 3 tasks TDD RED→GREEN→helpers; commits a617937 + 83a3b8f + ea2f0f0; Deno tests 8/8 pass; deploy + live curl deferred to UAT)
 
 ---
 
@@ -71,6 +74,9 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - **jest-expo + RNTL 12.7 + jest-native 5.4 채택** (Phase 3 03-01) — Expo SDK 54 호환 라인. apps/ios direct devDep 선언 (Phase 1 D-02 hoist 패턴 재사용).
 - **expo-share-intent@^5.1.1 채택** (Phase 3 03-02) — RESEARCH가 6.1.1을 SDK 54 호환으로 주장했으나 npm peer 확인 시 6.x는 `expo: ^55` 요구. 5.1.1이 실제 SDK 54 호환 라인. Plugin API shape (iosAppGroupIdentifier/iosShareExtensionName/iosActivationRules) 동일하여 plan 코드 블록 수정 X. SDK 55 업그레이드(Phase 6+) 시 6.x로 이관.
 - **app.config.ts에서 APP_GROUP_ID 리터럴 중복 허용** (Phase 3 03-02) — Expo CLI가 app.config.ts를 standalone 평가(workspace 모듈 import 불가). 로컬 const 선언 + grep 1회 gate로 drift 방지. diff against packages/core/src/constants.ts로 일치 확인.
+- **resolve-place FIELD_MASK 5 fields lock** (Phase 3 03-03) — `places.id,places.displayName,places.formattedAddress,places.location,places.primaryType` (Phase 2 D-12 wildcard 금지 lock 준수). Deno test로 회귀 가드.
+- **extraction_costs INSERT는 input_tokens/output_tokens split 사용** (Phase 3 03-03) — 0004 스키마 실제 컬럼명. PLAN의 `tokens` 단일 표기는 잘못 (Rule 1 inline fix). 비-LLM 호출은 둘 다 null.
+- **`deletePlace = hidePlace` 상수 alias** (Phase 3 03-03) — soft-delete 로직 단일 소스 + UI 의도 일치 이름 제공 (Karpathy §3.2). 새 함수 중복 작성 X.
 
 ### Todos (next session 시작점)
 
