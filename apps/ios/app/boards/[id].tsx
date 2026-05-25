@@ -24,9 +24,11 @@ import { supabase } from '@/lib/supabase';
 import { subscribeExtractProgress, type ExtractProgress } from '@/lib/realtime';
 import { showToast } from '@/lib/toast';
 import { SharedDefaults } from '@/lib/shared-defaults';
+import { isLinkCardDismissed, dismissLinkCard } from '@/lib/onboarding';
 import { PinBottomSheet } from './_pin-sheet';
 import { PinAddModal } from './_pin-add-modal';
 import { StepIndicator, type Step } from './_step-indicator';
+import { OnboardCard } from './_onboard-card';
 
 // UI-SPEC §1 error reason mapping fixture. Broadcast 'error' payloads from
 // Phase 2 extract-youtube carry a raw error string; we map a few known prefixes
@@ -50,6 +52,10 @@ export default function BoardDetailScreen() {
   const [currentStep, setCurrentStep] = useState<Step | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [addPinOpen, setAddPinOpen] = useState(false);
+  // Phase 5 ONBOARD-02 (D-20): tri-state — null = loading from AsyncStorage,
+  // false = not dismissed (card may show), true = dismissed (card never shows).
+  // Loading null prevents a 1-frame flicker for users who already dismissed.
+  const [linkCardDismissed, setLinkCardDismissed] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -70,6 +76,12 @@ export default function BoardDetailScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Phase 5 ONBOARD-02: load dismiss flag once per mount. Global key (D-20),
+  // so a single read covers every board the user navigates to.
+  useEffect(() => {
+    isLinkCardDismissed().then(setLinkCardDismissed);
+  }, []);
 
   // D-10 + Phase 5 TRUST-02: subscribe to extract:{link_id} broadcast.
   // - done/error: terminal — dismiss overlay + clear step + toast (Phase 3 behavior)
@@ -161,6 +173,12 @@ export default function BoardDetailScreen() {
 
   const detected = url ? detectSourceKind(url) : null;
 
+  // Phase 5 ONBOARD-02 (D-19/D-21): only render when explicitly known not
+  // dismissed AND the board is empty on both axes (links and places). null
+  // (loading) is excluded so users who already dismissed never see a flash.
+  const showOnboardCard =
+    linkCardDismissed === false && places.length === 0 && links.length === 0;
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-row items-center px-4 pt-2 pb-3">
@@ -174,6 +192,19 @@ export default function BoardDetailScreen() {
           <Text className="text-brand-500 text-base">+ 핀</Text>
         </Pressable>
       </View>
+
+      {showOnboardCard && (
+        <OnboardCard
+          onDismiss={() => {
+            // Optimistic UI: hide immediately, then persist. The await is
+            // intentionally not blocking the close — write failure only logs
+            // a warn (see lib/onboarding.ts) so reopening the screen would
+            // simply show the card again, never a crash.
+            setLinkCardDismissed(true);
+            void dismissLinkCard();
+          }}
+        />
+      )}
 
       <View className="px-6 mb-3">
         <View className="flex-row gap-2">
