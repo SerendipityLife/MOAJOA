@@ -4,11 +4,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type ToastKind = 'info' | 'error' | 'success';
 
+interface ToastAction {
+  label: string;
+  onPress: () => void;
+}
+
 interface ToastState {
   id: number;
   message: string;
   kind: ToastKind;
   durationMs: number;
+  action?: ToastAction;
 }
 
 // Module-level subscribe pattern — single host, single visible toast.
@@ -18,16 +24,20 @@ type Listener = (t: ToastState | null) => void;
 const listeners = new Set<Listener>();
 let nextId = 1;
 
+// Phase 5 D-10: error default extended 5000 → 8000ms to give the user time
+// to tap the [재시도] action before auto-dismiss. Backward-compatible —
+// existing 2-arg callers (`showToast(msg, 'error')`) get 8s automatically.
 export function showToast(
   message: string,
   kind: ToastKind = 'info',
-  durationMs?: number,
+  options?: { durationMs?: number; action?: ToastAction },
 ): void {
   const t: ToastState = {
     id: nextId++,
     message,
     kind,
-    durationMs: durationMs ?? (kind === 'error' ? 5000 : 3000),
+    durationMs: options?.durationMs ?? (kind === 'error' ? 8000 : 3000),
+    action: options?.action,
   };
   for (const l of listeners) l(t);
 }
@@ -71,6 +81,7 @@ export function ToastHost(): React.ReactElement | null {
   if (!current) return null;
 
   const bg = current.kind === 'error' ? 'bg-danger' : 'bg-neutral-900';
+  const hasAction = !!current.action;
 
   return (
     <Animated.View
@@ -84,11 +95,31 @@ export function ToastHost(): React.ReactElement | null {
       }}
       pointerEvents="box-none"
     >
-      <Pressable onPress={hideToast}>
-        <View className={`mx-4 px-4 py-3 rounded-xl shadow-md ${bg}`}>
+      <View
+        className={`mx-4 px-4 py-3 rounded-xl shadow-md ${bg} ${
+          hasAction ? 'flex-row items-center justify-between' : ''
+        }`}
+        style={hasAction ? { gap: 8 } : undefined}
+      >
+        <Pressable onPress={hideToast} style={{ flex: 1 }} hitSlop={8}>
           <Text className="text-white text-sm">{current.message}</Text>
-        </View>
-      </Pressable>
+        </Pressable>
+        {current.action && (
+          <Pressable
+            onPress={() => {
+              const a = current.action!;
+              hideToast();
+              a.onPress();
+            }}
+            hitSlop={8}
+            className="px-2 py-1"
+          >
+            <Text className="text-white text-sm font-semibold underline">
+              {current.action.label}
+            </Text>
+          </Pressable>
+        )}
+      </View>
     </Animated.View>
   );
 }
