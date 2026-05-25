@@ -100,3 +100,34 @@ export async function renamePlace(
  * Per Phase 3 D-09: pin bottom sheet "삭제" action.
  */
 export const deletePlace = hidePlace;
+
+/**
+ * Phase 5 TRUST-04 — D-04/D-14.
+ * Confirms a low-confidence AI pin: flips source_kind to 'manual' and clears
+ * confidence (so it's no longer rendered with the "low conf" treatment).
+ * Reusing source_kind avoids a separate `confirmed_at` column (D-04 schema lock).
+ *
+ * RLS: `can_edit_board()` SECURITY DEFINER helper (0001/0002) gates this UPDATE.
+ * Non-members get RLS denial — wrapper does no extra check (T-05-02).
+ */
+export async function confirmAiPlace(
+  client: MoajoaSupabaseClient,
+  id: string,
+): Promise<Place> {
+  const { data, error } = await client
+    .from('places')
+    .update({ source_kind: 'manual', confidence: null })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as Place;
+}
+
+/**
+ * Phase 5 TRUST-04 — D-14 [잘못됨] action.
+ * Soft-delete via hidden_at — same semantics as hidePlace/deletePlace
+ * (places_board_idx WHERE hidden_at IS NULL already excludes hidden rows).
+ * Exported with intent-aligned name for the low-confidence reject UI.
+ */
+export const rejectAiPlace = hidePlace;
