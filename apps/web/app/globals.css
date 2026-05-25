@@ -2,7 +2,7 @@
 @config "../tailwind.config.ts";
 
 @theme {
-  --font-sans: 'Pretendard', 'IBM Plex Sans KR', 'Noto Sans JP', system-ui, sans-serif;
+  --font-sans: var(--font-pretendard), 'IBM Plex Sans KR', 'Noto Sans JP', system-ui, sans-serif;
 }
 
 :root {
