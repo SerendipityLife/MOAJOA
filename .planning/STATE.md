@@ -3,15 +3,15 @@ gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-26T17:05:00.000Z"
+last_updated: "2026-05-26T17:25:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
   partial_plans: 0
-  percent: 50
-stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Extension wiring) + 03-03 ✓ (resolve-place Edge Function + ResolvePlace schemas + renamePlace/deletePlace helpers; deploy + live curl smoke deferred to user-side UAT). 03-04 + 03-05 ready (Wave 3+).
+  percent: 58
+stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Extension wiring) + 03-03 ✓ (resolve-place Edge Function + ResolvePlace schemas + renamePlace/deletePlace helpers; deploy + live curl smoke deferred to user-side UAT) + 03-04 ✓ (SharedDefaults native module + drainPendingLinks state machine TDD 6/6 + AppState/Toast/auth-gate restore + UI-SPEC §5 banner; native build smoke deferred). 03-05 ready (Wave 4).
 ---
 
 # STATE: MOAJOA v1
@@ -39,8 +39,10 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - **Phase 3 Wave 2:** ✓ 2026-05-26 (parallel)
   - 03-02 ✓ Share Extension config plugin via expo-share-intent@^5.1.1 (SDK 54 호환 라인; APP_GROUP_ID 6x 참조; EAS appExtensions; eas.json 신규). Prebuild + 실기기 share-sheet smoke test는 end-of-phase UAT로 deferred (auto mode).
   - 03-03 ✓ resolve-place Edge Function (FIELD_MASK 5 fields, max 5, extraction_costs link_id=null) + ResolvePlace schemas in @moajoa/core (lines 86/103/117) + renamePlace/deletePlace helpers in @moajoa/api. Deno tests 8/8 pass. Deploy + live curl smoke deferred to user-side UAT.
-- **Next action:** Plan 03-04 (SharedDefaults Swift module + drain + auth gate restore). `/gsd-execute-phase 3` 계속.
-- **Progress:** [████░░] Overall 9/12 plans (Phase 1 + 2 완료 + Phase 3 3/5).
+- **Phase 3 Wave 3:** ✓ 2026-05-26
+  - 03-04 ✓ SharedDefaults Expo Module (Swift bridge over UserDefaults(suiteName:APP_GROUP_ID)) + lib/shared-defaults.ts JSON wrapper + lib/pending.ts drainPendingLinks state machine (D-04 dual triggers, D-05 PendingLink shape, D-06 retry-budget→failed migration, Pitfall 7 dedup via module-level inFlight) + lib/realtime.ts subscribeExtractProgress + lib/toast.tsx single-instance host + _layout.tsx AppState wiring (cold-launch + foreground 'active', arrow-wrap cleanup, useRef inFlight) + index.tsx D-13 auth gate restoration (getSession + onAuthStateChange) + login.tsx UI-SPEC §6 (email+password primary + magic-link toggle + Korean error mapping) + boards.tsx UI-SPEC §5 failed-banner (useFocusEffect + bg-danger/5). TDD RED→GREEN: 6/6 unit tests pass. Three Rule 1 fixes to Plan 03-01 jest config + gitignore (anchored ignore patterns, setupFilesAfterEnv, pnpm-aware transformIgnorePatterns). iOS native build smoke deferred (pattern from 03-02). Commits: 667fb20, 5223be1, b6a8da4, cc1b7cd, 2ec3a2f.
+- **Next action:** Plan 03-05 (Wave 4 — @gorhom/bottom-sheet + boards/[id].tsx broadcast subscribe + spinner overlay + PinAddModal + PinBottomSheet + real-device UAT execution). `/gsd-execute-phase 3` 계속.
+- **Progress:** [█████░] Overall 10/12 plans (Phase 1 + 2 완료 + Phase 3 4/5).
 
 ---
 
@@ -56,6 +58,7 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - Phase 3 Plan 03-01 완료: 2026-05-26 (~6분, 2 tasks, commits e7c389c + ca46b4e)
 - Phase 3 Plan 03-02 완료: 2026-05-26 (~5분, 1/2 tasks; Task 2 real-device deferred; commit 56c61d8)
 - Phase 3 Plan 03-03 완료: 2026-05-26 (~18분, 3 tasks TDD RED→GREEN→helpers; commits a617937 + 83a3b8f + ea2f0f0; Deno tests 8/8 pass; deploy + live curl deferred to UAT)
+- Phase 3 Plan 03-04 완료: 2026-05-26 (~7분, 3 tasks TDD RED→GREEN + task 2 + task 3; commits 667fb20 + 5223be1 + b6a8da4 + cc1b7cd + 2ec3a2f; pending.test.ts 6/6 pass; native build smoke deferred to UAT)
 
 ---
 
@@ -77,6 +80,11 @@ stopped_at: Phase 3 in progress — 03-01 ✓ (foundation) + 03-02 ✓ (Share Ex
 - **resolve-place FIELD_MASK 5 fields lock** (Phase 3 03-03) — `places.id,places.displayName,places.formattedAddress,places.location,places.primaryType` (Phase 2 D-12 wildcard 금지 lock 준수). Deno test로 회귀 가드.
 - **extraction_costs INSERT는 input_tokens/output_tokens split 사용** (Phase 3 03-03) — 0004 스키마 실제 컬럼명. PLAN의 `tokens` 단일 표기는 잘못 (Rule 1 inline fix). 비-LLM 호출은 둘 다 null.
 - **`deletePlace = hidePlace` 상수 alias** (Phase 3 03-03) — soft-delete 로직 단일 소스 + UI 의도 일치 이름 제공 (Karpathy §3.2). 새 함수 중복 작성 X.
+- **Defense-in-depth in-flight guards in drainPendingLinks + RootLayout** (Phase 3 03-04) — module-level `let inFlight` in pending.ts + useRef inFlight in _layout.tsx. Either alone catches the cold-launch vs AppState 'active' race; both together also catch future cross-call drains (e.g., URL-add path in Plan 03-05).
+- **AppState listener cleanup is arrow-wrapped `() => sub.remove()`** (Phase 3 03-04) — RESEARCH Pitfall 4 lock. Bare `.remove` ref loses emitter `this` binding on hot reload.
+- **Toast host = module-level `Set<Listener>` singleton, not React context** (Phase 3 03-04) — UI-SPEC §Toast specifies single instance + no queue. Module singleton matches that contract without prop-drilling; `showToast()` callable from any imperative caller including lib/pending.ts.
+- **gitignore `ios/` / `android/` anchored with leading slash** (Phase 3 03-04) — unanchored patterns matched apps/ios/modules/shared-defaults/ios/ and silently dropped the Swift file from a feat commit. Always anchor prebuild output ignores.
+- **jest infra Rule 1 fixes (testPathIgnorePatterns anchored, setupFiles→setupFilesAfterEnv, pnpm-aware transformIgnorePatterns)** (Phase 3 03-04) — three latent bugs in Plan 03-01's jest config surfaced when the first real test ran. All three fixed inline as Rule 1.
 
 ### Todos (next session 시작점)
 
