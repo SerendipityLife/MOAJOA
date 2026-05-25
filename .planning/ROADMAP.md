@@ -112,7 +112,11 @@ Architecture 리서치는 A→B(병렬 3트랙)→C(병렬 2트랙)→D 4 phase�
   4. 보드 페이지 `<head>`에 보드 제목·도시·핀 수 기반 SEO meta(title, description, og:*, twitter:*)가 포함된다
   5. 핀을 탭하면 해당 YouTube 영상이 정확한 타임스탬프(`?t=Xs`)로 새 탭에서 열린다
   6. Edge Function 추출 완료 시 `/api/revalidate?slug=...` webhook이 호출되어 보드 페이지가 자동으로 갱신된다
-**Plans:** TBD
+**Plans:** 4 plans
+  - [ ] 04-01-PLAN.md — Vitest + jsdom infra + lib/youtube.ts (extract+buildWatchUrl TDD) + lib/og/static-maps.ts (URL builder TDD) + lib/cache.ts (BOARD_REVALIDATE_TAG + getCachedPublicBoard) + lib/env.ts extension (REVALIDATE_SECRET/BASE_URL/MAPS_KEY) + packages/core CITY_KO_MAP [VIEW-03, VIEW-05] (Wave 1)
+  - [ ] 04-02-PLAN.md — /api/revalidate Node-runtime route (zod + node:crypto timingSafeEqual + revalidateTag) + cache-key isolation guard test + extract-youtube Edge Function fire-and-forget webhook after done broadcast [VIEW-01, VIEW-06] (Wave 2, depends 04-01)
+  - [ ] 04-03-PLAN.md — layout.tsx viewport (maximumScale:5) + metadataBase + /b/[slug]/page.tsx SSR rewrite (getCachedPublicBoard + generateMetadata template + UI-SPEC reassignment) + PublicBoardMap gestureHandling + pin click YouTube + not-found.tsx + error.tsx + metadata/map-options tests [VIEW-01, VIEW-02, VIEW-04, VIEW-05] (Wave 2, depends 04-01)
+  - [ ] 04-04-PLAN.md — Pretendard Korean-subset woff2 (Regular + SemiBold <150KB each) + opengraph-image.tsx (1200×630 ImageResponse, Static Maps embed, fallback) + lib/og/pretendard.ts (cached fs readFile) + smoke test [VIEW-03] (Wave 3, depends 04-01 + 04-03)
 **UI hint:** yes
 
 ---
@@ -159,8 +163,8 @@ Architecture 리서치는 A→B(병렬 3트랙)→C(병렬 2트랙)→D 4 phase�
 |-------|----------------|--------|-----------|
 | 1. Build Unblock & Hygiene | 3/4 (01-04 N/A) | Complete    | 2026-05-25 |
 | 2. Extraction Pipeline Hardening | 3/3 | Complete    | 2026-05-25 |
-| 3. iOS Save Flow | 0/5 | Planned     | - |
-| 4. Public Board (Web) | 0/0 | Not started | - |
+| 3. iOS Save Flow | 5/5 (UAT pending) | Code complete | 2026-05-26 |
+| 4. Public Board (Web) | 0/4 | Planned     | - |
 | 5. Trust UI & Onboarding | 0/0 | Not started | - |
 | 6. Dogfooding Gate | 0/0 | Not started | - |
 
@@ -222,4 +226,5 @@ Phase 1 (Foundation: iOS build + design assets + web hygiene)
 
 *Roadmap created: 2026-05-25 by roadmapper*
 *Phase 3 planned: 2026-05-26 (5 plans in 4 waves)*
-*Next: `/gsd-execute-phase 3`*
+*Phase 4 planned: 2026-05-26 (4 plans in 3 waves)*
+*Next: `/gsd-execute-phase 4` (Phase 3 UAT batch may run in parallel)*
