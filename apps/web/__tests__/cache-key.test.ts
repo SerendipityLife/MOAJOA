@@ -37,17 +37,17 @@ describe('getCachedPublicBoard cache key isolation (Pitfall 1)', () => {
     expect(calls.length).toBe(2);
 
     // Each keyParts array contains its own slug
-    expect(calls[0].keyParts).toContain('slug-aaaa1111');
-    expect(calls[1].keyParts).toContain('slug-bbbb2222');
+    expect(calls[0]!.keyParts).toContain('slug-aaaa1111');
+    expect(calls[1]!.keyParts).toContain('slug-bbbb2222');
 
     // keyParts MUST differ (Pitfall 1 — same keyParts = cross-slug leak)
-    expect(calls[0].keyParts).not.toEqual(calls[1].keyParts);
+    expect(calls[0]!.keyParts).not.toEqual(calls[1]!.keyParts);
 
     // Tag also slug-scoped
-    expect(calls[0].opts.tags).toContain('board:slug-aaaa1111');
-    expect(calls[1].opts.tags).toContain('board:slug-bbbb2222');
+    expect(calls[0]!.opts.tags).toContain('board:slug-aaaa1111');
+    expect(calls[1]!.opts.tags).toContain('board:slug-bbbb2222');
 
     // TTL fallback = 3600s per D-03
-    expect(calls[0].opts.revalidate).toBe(3600);
+    expect(calls[0]!.opts.revalidate).toBe(3600);
   });
 });
