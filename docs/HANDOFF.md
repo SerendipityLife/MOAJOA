@@ -14,18 +14,18 @@
 
 | Phase | 이름 | 상태 | 누가 |
 |---|---|---|---|
-| **1** | Build Unblock & Hygiene | 진행 중 (3/4 부분 완료) | iOS는 wcb · Web/Design은 완료 |
-| **2** | Extraction Pipeline Hardening | **미시작 (← 동료 시작 가능)** | Backend |
-| **3** | iOS Save Flow | 미시작 (Phase 1·2 끝나야 시작) | iOS = wcb |
-| **4** | Public Board (Web) | 미시작 (Phase 2 끝나야 의미 있음) | Web |
+| **1** | Build Unblock & Hygiene | ✅ 완료 2026-05-25 (01-04 EAS N/A) | wcb (iOS) + 동료 (Web/Backend dep) |
+| **2** | Extraction Pipeline Hardening | ✅ 완료 2026-05-25 | Backend (동료) |
+| **3** | iOS Save Flow | 미시작 (Phase 1·2 끝남 → 시작 가능) | iOS = wcb |
+| **4** | Public Board (Web) | 미시작 (Phase 2 끝남 → 시작 가능) | Web (동료) |
 | **5** | Trust UI & Onboarding | 미시작 (3+4 끝나야) | 양쪽 cross-cut |
 | **6** | Dogfooding Gate | 미시작 (전부 끝나야) | wcb (사용자 본인) |
 
-### Phase 1 세부 상태
-- ✅ **01-01 Brand assets** — completed (commits `fbab9e2` `f672279` `5cd4446` `a174919`). Pretendard 4-weight 폰트, icon/splash PNG 산출, sharp export 파이프라인, pnpm hoist scope `apps/ios/`로 한정.
-- ⏳ **01-02 iOS prebuild + smoke screen** — **미시작, wcb가 본인 iPhone+Mac+Xcode 세션으로 진행 예정**. 동료가 손댈 수 없음 (하드웨어 의존).
-- 🟡 **01-03 Web dev-tool gate** — Tasks 1+2 commit됨 (`31e5bfb` `72864be`), **Task 3 build+curl verify 보류**. `.planning/phases/01-build-unblock-hygiene/01-03-SUMMARY.md` 참고. 동료가 close-out 해도 됨 (web만 만져서 3분).
-- ❓ **01-04 EAS Build fallback** — 조건부 (01-02 4시간 timebox 도달 시에만 실행). 현재 미정.
+### Phase 1 세부 상태 (전부 완료)
+- ✅ **01-01 Brand assets** — Pretendard 4-weight 폰트, icon/splash PNG 산출, sharp export 파이프라인, pnpm hoist scope `apps/ios/`로 한정.
+- ✅ **01-02 iOS prebuild + smoke screen** — Path A 14분 prebuild + 실기기 install + smoke screen 시각 검증 통과. 새 pitfall 2개 발견 + 수정 (CocoaPods+Ruby locale, pnpm+nativewind transitive hoist).
+- ✅ **01-03 Web dev-tool gate** — `/boards` 307 redirect + Pretendard next/font/local + Client null gate. V2/V6/V8 모두 통과.
+- 🚫 **01-04 EAS Build fallback** — N/A (Path A 성공으로 EAS 전환 불필요). Phase 3+ 단계에서 필요해지면 재활성화.
 
 ## 3. 영역 분할
 
@@ -39,36 +39,35 @@
 
 ### 🤝 **동료가 시작할 수 있는 영역 — 추천 순서**
 
-**(추천) 1순위: Phase 2 — Extraction Pipeline Hardening (Backend)**
+**(추천) 1순위: Phase 4 — Public Board (Web)**
 
-> Phase 1 iOS와 **완전히 file-disjoint**, Phase 1 끝나길 안 기다려도 됨. ROADMAP §"Phase 2"에 "Backend 독립 — Phase 1과 병렬 가능"으로 명시되어 있음.
+> Phase 2 완료로 의존성 풀림. Phase 3(iOS, wcb)와 **file-disjoint** (`apps/web/**` vs `apps/ios/**`), 병렬 진행 가능.
 
-- **파일 영역:** `supabase/migrations/**` (새 마이그레이션만 추가), `supabase/functions/extract-youtube/**`, 새 테이블 `extraction_costs`
-- **요구사항:** EXTRACT-01 ~ EXTRACT-06 (`.planning/REQUIREMENTS.md` §Extraction Pipeline)
-- **첫 step:** `/gsd-discuss-phase 2` → `/gsd-plan-phase 2` → `/gsd-execute-phase 2`. GSD 워크플로우는 CLAUDE.md §2.
+- **파일 영역:** `apps/web/**` (특히 `apps/web/app/b/[slug]/**` 새로 만들 것), `apps/web/lib/env.ts` (확장 가능, 이미 wired)
+- **요구사항:** VIEW-01 ~ VIEW-06 (`.planning/REQUIREMENTS.md` §Public Board Viewing)
+- **첫 step:** `/gsd-discuss-phase 4` → `/gsd-plan-phase 4` → `/gsd-execute-phase 4`.
 - **핵심 deliverable:**
-  1. `extract:{link_id}` Realtime broadcast 5단계 (metadata/transcript/llm/places/done)
-  2. Claude 응답에서 `transcript_quote` 없는 후보 폐기 (Pitfall 1 citation 강제)
-  3. `extraction_costs` 테이블 + 모든 추출 호출 logging
-  4. Google Places API FieldMask 강제 (Pitfall 2)
-  5. Google Cloud billing alert ($5/$20/$50)
-  6. `places` 테이블에 `source_kind` · `video_offset_sec` · `quote` · `inferred_city` 컬럼 추가
+  1. `/b/[slug]` SSR 페이지 (p90 TTFB < 800ms, Vercel Edge Cache)
+  2. iPhone Safari 모바일 viewport 대응 (핀치줌, 핀 탭)
+  3. 카톡 OG 카드 — `/b/[slug]/opengraph-image` (Satori + Pretendard-Bold.ttf 이미 `apps/web/assets/`에 있음, Phase 4 consumer)
+  4. SEO meta (`<head>` 토큰: title/description/og:*/twitter:*)
+  5. 핀 탭 → `youtube.com/watch?v=...&t=Xs` 새 탭
+  6. Edge Function → `/api/revalidate?slug=...` webhook (Phase 2가 이미 broadcast 셋업했으므로 마무리 wire-up만)
 - **주의:**
-  - 마이그레이션은 **새 번호 파일만** (`0004_*.sql` 부터). 기존 `0001~0003` 절대 수정 X.
-  - RLS 변경 시 SECURITY DEFINER 헬퍼 (이미 `am_board_owner`, `am_board_member` 패턴 있음 — `0002_fix_rls_recursion.sql` 참고).
-  - 스키마 변경 후 `pnpm supabase:types` 돌려서 `packages/api/src/types/database.ts` 재생성.
-  - Edge Function 로컬 테스트: `supabase functions serve --env-file ./supabase/.env.local`
+  - `apps/web/middleware.ts`는 **D-09 lock** (Supabase 세션 refresh 전용). 손대지 말 것.
+  - `apps/web/lib/env.ts`는 향후 `NEXT_PUBLIC_*` 게이트의 정식 위치. 새 env 변수 필요하면 여기에 helper 추가.
+  - next/font/local Pretendard는 이미 `apps/web/app/layout.tsx`에 wired. OG에 쓸 Pretendard-Bold.ttf는 `apps/web/assets/`에 있음.
 
-**2순위: 01-03 Task 3 verify (3분짜리 마무리)**
+**2순위: Phase 5 사전 리서치 (cross-cut)**
 
-`.planning/phases/01-build-unblock-hygiene/01-03-SUMMARY.md` §Pending에 정확한 bash command 있음. 통과하면 ROADMAP에서 `[~] 01-03-PLAN.md` 를 `[x]`로 바꾸고 SUMMARY frontmatter `status: partial` → `status: complete` 만 수정.
+Phase 5 = Trust UI + Onboarding. Phase 3 + 4 둘 다 끝나야 본격 시작이지만 `/gsd-research-phase 5` 또는 `/gsd-discuss-phase 5`를 미리 돌려놓으면 phase 3+4 끝나자마자 plan 가능.
 
-**3순위 이후 (Phase 2 진행 중 같이 가능):**
+**3순위 이후:**
 
 | 영역 | 파일 | 비고 |
 |---|---|---|
 | 디자이너 워드마크 정교화 | `packages/ui-tokens/src/brand/wordmark.svg` | 현재 6개 사각형 placeholder. Pretendard Bold outline path로 교체 후 `pnpm --filter @moajoa/ui-tokens run export-assets` 재실행하면 모든 PNG 자동 갱신. |
-| Phase 4 사전 리서치 | (코드 아님) | Phase 4 = Web 공개 보드. Phase 2 완료 의존. `/gsd-research-phase 4` 또는 `/gsd-discuss-phase 4` 미리 돌려놓으면 본격 시작 빠름. |
+| 별도 chore PR | `packages/api/src/types/database.ts` line 1 | 동료의 `06ee485` typegen commit에서 `Initialising login role...` 로그 한 줄 박힘. typecheck 실패 원인. 한 줄 제거 후 commit. |
 
 ## 4. 공유 영역 (둘 다 손댈 수 있음, 합의 필요)
 

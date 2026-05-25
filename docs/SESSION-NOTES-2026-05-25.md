@@ -96,3 +96,27 @@
 
 ### 학습 (PITFALLS 후보)
 - **새 pitfall: CocoaPods 1.16.2 + Ruby 4.0.2 (homebrew) + non-UTF-8 locale → pod install 즉시 크래시 with Encoding::CompatibilityError.** `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` env로 회피. `npx expo prebuild`의 자동 pod install은 이 env를 set하지 않음 — workaround: 첫 prebuild 후 수동으로 pod install 재실행, 또는 `~/.zshrc`에 `export LANG=en_US.UTF-8` 영구 추가.
+
+### Task 3 — 실기기 install + smoke screen 시각 검증 (BUILD-01/02/03)
+
+- 17:13~17:29 (총 16분, 사용자 세션):
+  - 17:13: 첫 `expo run:ios --device` 시도 → 빌드 OK + install OK. JS bundle load "No script URL provided" (Metro 미시작 단계).
+  - 17:24: Metro 시작 + iPhone Reload JS → **두 번째 빨간 에러**:
+    ```
+    Unable to resolve "react-native-css-interop/jsx-runtime" from
+    node_modules/.pnpm/expo-router@.../expo-router/build/qualified-entry.js
+    ```
+  - 17:27: **새 pitfall 진단·수정 (commit `500ad75` `fix(01-02): add react-native-css-interop as direct dep for pnpm hoist resolution`).**
+    - 원인: nativewind@4.2.4 → react-native-css-interop@0.2.4 (direct dep) — pnpm `.pnpm/` store에만 존재. `apps/ios/.npmrc node-linker=hoisted`는 *apps/ios에서 pnpm install 실행할 때만* 적용되는데 Wave 1은 root에서 install. 결과: root/apps-ios 양쪽 `node_modules/`에 css-interop 부재. `apps/ios/metro.config.js`의 `disableHierarchicalLookup=true`가 pnpm store walk를 막아 module resolution 실패.
+    - Fix: `apps/ios/package.json` dependencies에 `"react-native-css-interop": "0.2.4"` 명시 → `pnpm install` → root `node_modules/react-native-css-interop/` 등장 → Metro lookup의 두 번째 path가 잡음.
+  - 17:28: `pnpm exec expo start --clear` (Metro cache clear) + iPhone Reload JS
+  - 17:29: ✅ **smoke screen 정상 표시** — orange `bg-brand-500` + 흰 카드 `rounded-2xl shadow-lg` + "NativeWind OK" `text-brand-700` bold + 한글 `text-neutral-600` 잘림 없이 렌더.
+
+### 결과: BUILD-01 ✓ / BUILD-02 ✓ / BUILD-03 ✓ — Phase 1 iOS 빌드 게이트 통과
+
+- 스크린샷: (사용자 보유, 본 세션 turn에 첨부됨 — `docs/screenshots/2026-05-25-phase1-smoke.png`로 저장 권장)
+- 카드 위치가 화면 중앙보다 살짝 아래 — SafeAreaProvider inset 영향. Plan success criteria 무관 (className 적용 여부만).
+- Pretendard weight matching (Assumption A1): bold가 시각적으로 굵게 나옴 → PostScript name 매칭 OK 추정. useFonts hook 추가 불필요.
+
+### 학습 추가 (PITFALLS 후보 2번째)
+- **pnpm + nativewind 4.2 + apps/ios subpackage hoist: transitive dep `react-native-css-interop`가 root/apps-ios 어디에도 hoist 안 됨.** Metro `disableHierarchicalLookup=true`와 결합되어 module resolution 실패. **회피:** nativewind의 direct dep를 apps/ios의 package.json에도 명시적으로 선언 (declarative duplication — pnpm hoist 보장). 또는 root `.npmrc`에 `public-hoist-pattern[]=react-native-css-interop` (하지만 root는 isolation 위해 안 만지는 게 원칙 — apps/ios direct dep 방식 권장).

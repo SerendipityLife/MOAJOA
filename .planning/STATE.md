@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-25T07:40:00.000Z"
+status: ready_to_plan
+last_updated: "2026-05-25T08:35:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   partial_plans: 0
-  percent: 14
-stopped_at: Phase 1 (3/4 — 01-02 iOS pending); Phase 2 complete (3/3)
+  percent: 33
+stopped_at: Phase 1 ✓ (3/4 done, 01-04 N/A) + Phase 2 ✓ (3/3) — ready to discuss Phase 3 or Phase 4
 ---
 
 # STATE: MOAJOA v1
@@ -33,10 +33,10 @@ stopped_at: Phase 1 (3/4 — 01-02 iOS pending); Phase 2 complete (3/3)
 
 ## Current Position
 
-- **Phase 1:** Build Unblock & Hygiene — 3/4 plans (01-01 ✓ design assets · 01-03 ✓ web dev-tool gate). **01-02 iOS prebuild ⏳ pending** (wcb 실기기 세션 필요).
-- **Phase 2:** Extraction Pipeline Hardening — 3/3 plans ✓ COMPLETE (동료가 2026-05-25 마무리: migration 0004, Edge Function broadcast/citation/cost-logging, schema push + billing alert)
-- **Next action:** wcb는 01-02 iOS 세션 (Phase 1 마무리). 동료는 `/gsd-discuss-phase 3` 가능하지만 iOS Save Flow는 wcb 영역이라 Phase 4 사전 리서치 권장.
-- **Progress:** [██░░░░] Overall 5/7 plans (Phase 2 완료, Phase 1 3/4)
+- **Phase 1:** ✓ COMPLETE 2026-05-25 (01-01 design assets · 01-02 iOS smoke screen on real device · 01-03 web dev-tool gate · 01-04 N/A EAS fallback unused). BUILD-01/02/03 + WEB-01/02 모두 통과.
+- **Phase 2:** ✓ COMPLETE 2026-05-25 (동료: migration 0004, Edge Function broadcast/citation/cost-logging, schema push + billing alert). EXTRACT-01~06 모두 통과.
+- **Next action:** Phase 3 (iOS Save Flow, wcb 영역) 또는 Phase 4 (Web Public Board, 동료 영역) 시작 가능. 둘은 file-disjoint, 병렬 OK. `/gsd-discuss-phase 3` 또는 `/gsd-discuss-phase 4`.
+- **Progress:** [██░░░░] Overall 6/7 base plans (Phase 1 + 2 둘 다 완료) — milestone v1까지 Phase 3, 4, 5, 6 남음.
 
 ---
 
