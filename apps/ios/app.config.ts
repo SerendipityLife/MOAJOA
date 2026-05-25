@@ -5,7 +5,7 @@ const config: ExpoConfig = {
   slug: 'moajoa',
   version: '0.1.0',
   orientation: 'portrait',
-  // icon/splash assets to be added in design pass. Expo uses defaults until then.
+  icon: './assets/icon.png',
   scheme: 'moajoa',
   userInterfaceStyle: 'light',
   ios: {
@@ -21,10 +21,29 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
-    'expo-font',
-    // expo-share-intent will be re-added in Phase 1.5 with a SDK 54+ compatible
-    // version. We're not invoking its JS APIs yet, and it requires a native
-    // build (not Expo Go) anyway.
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash.png',
+        backgroundColor: '#FFFFFF',
+        resizeMode: 'contain',
+        imageWidth: 234,
+      },
+    ],
+    [
+      'expo-font',
+      {
+        fonts: [
+          './assets/fonts/Pretendard-Regular.otf',
+          './assets/fonts/Pretendard-Medium.otf',
+          './assets/fonts/Pretendard-SemiBold.otf',
+          './assets/fonts/Pretendard-Bold.otf',
+        ],
+      },
+    ],
+    // expo-share-intent will be re-added in Phase 3 (NOT Phase 1.5 — D-16 보정)
+    // with a SDK 54+ compatible version. We're not invoking its JS APIs yet,
+    // and it requires a native build (not Expo Go) anyway.
   ],
   experiments: {
     typedRoutes: true,
