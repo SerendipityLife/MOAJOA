@@ -3,7 +3,6 @@ import { detectSourceKind, SharedDefaultsKeys, type Board, type Link, type Place
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Modal,
   Pressable,
@@ -20,6 +19,7 @@ import { showToast } from '@/lib/toast';
 import { SharedDefaults } from '@/lib/shared-defaults';
 import { PinBottomSheet } from './_pin-sheet';
 import { PinAddModal } from './_pin-add-modal';
+import { StepIndicator, type Step } from './_step-indicator';
 
 // UI-SPEC §1 error reason mapping fixture. Broadcast 'error' payloads from
 // Phase 2 extract-youtube carry a raw error string; we map a few known prefixes
@@ -40,6 +40,7 @@ export default function BoardDetailScreen() {
   const [url, setUrl] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [analyzing, setAnalyzing] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<Step | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [addPinOpen, setAddPinOpen] = useState(false);
 
@@ -63,19 +64,29 @@ export default function BoardDetailScreen() {
     load();
   }, [load]);
 
-  // D-10: subscribe to extract:{link_id} broadcast while a link is analyzing.
-  // Only react to 'done' / 'error' steps (no raw 5-stage UI — Phase 5 territory).
+  // D-10 + Phase 5 TRUST-02: subscribe to extract:{link_id} broadcast.
+  // - done/error: terminal — dismiss overlay + clear step + toast (Phase 3 behavior)
+  // - metadata/transcript/llm/places: advance StepIndicator current step (D-07/D-08)
   // Pitfall 5: cleanup via supabase.removeChannel(ch) on link_id change/unmount.
   useEffect(() => {
     if (!analyzing) return;
     const ch = subscribeExtractProgress(analyzing, (p: ExtractProgress) => {
       if (p.step === 'done') {
         setAnalyzing(null);
+        setCurrentStep(null);
         load();
         showToast(`${p.places_extracted ?? 0}개 핀 추가됨`);
       } else if (p.step === 'error') {
         setAnalyzing(null);
+        setCurrentStep(null);
         showToast(`분석 실패: ${mapErrorReason(p.error)}`, 'error');
+      } else if (
+        p.step === 'metadata' ||
+        p.step === 'transcript' ||
+        p.step === 'llm' ||
+        p.step === 'places'
+      ) {
+        setCurrentStep(p.step);
       }
     });
     return () => {
@@ -214,8 +225,7 @@ export default function BoardDetailScreen() {
             alignItems: 'center',
           }}
         >
-          <ActivityIndicator size="large" color="#F97316" />
-          <Text className="text-base text-neutral-700 mt-3">분석 중...</Text>
+          <StepIndicator current={currentStep} />
         </View>
       )}
 
