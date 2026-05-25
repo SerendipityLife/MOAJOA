@@ -46,7 +46,7 @@ iOS 빌드 블로커 해소 + 셸 동작. dogfooding의 prerequisite.
 
 - [ ] **VIEW-01**: 공개 보드 URL(`/b/[slug]`)이 비로그인 상태에서 SSR로 즉시 렌더링됨 (p90 TTFB < 800ms)
 - [ ] **VIEW-02**: 공개 보드 페이지가 모바일(iPhone Safari) viewport에서 정상 사용 가능 (지도 핀치줌, 핀 탭 동작)
-- [ ] **VIEW-03**: `/b/[slug]/opengraph-image`가 보드 제목 + 미니맵(Static Maps) + Pretendard 한글 폰트로 동적 생성됨
+- [x] **VIEW-03**: `/b/[slug]/opengraph-image`가 보드 제목 + 미니맵(Static Maps) + Pretendard 한글 폰트로 동적 생성됨
 - [ ] **VIEW-04**: 보드 페이지의 `<head>`에 보드 제목·도시·핀 수 기반 SEO meta(title, description, og:*, twitter:*) 포함
 - [ ] **VIEW-05**: 핀을 탭하면 해당 영상이 정확한 타임스탬프(`?t=Xs`)로 열림
 - [x] **VIEW-06**: 추출이 완료되면 보드 페이지가 자동으로 갱신됨 (Edge Function → `/api/revalidate?slug=...` webhook → `revalidateTag`) — 04-02 (2026-05-26)
@@ -131,7 +131,7 @@ Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | SAVE-05 | Phase 3 | Code complete (03-03 backend + 03-05 PinAddModal D-07/D-08 + PinBottomSheet D-09 rename/delete) |
 | VIEW-01 | Phase 4 | Pending |
 | VIEW-02 | Phase 4 | Pending |
-| VIEW-03 | Phase 4 | Pending |
+| VIEW-03 | Phase 4 | Code complete (04-04, 2026-05-26 — Pretendard KS X 1001 woff2 subset 317KB combined < 500KB ImageResponse limit + opengraph-image.tsx nodejs runtime + Static Maps grayscale embed + 3중 fallback; Kakao share preview UAT deferred to end-of-phase batch) |
 | VIEW-04 | Phase 4 | Pending |
 | VIEW-05 | Phase 4 | Pending |
 | VIEW-06 | Phase 4 | Complete (04-02, 2026-05-26) |

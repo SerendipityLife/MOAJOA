@@ -3,15 +3,15 @@ gsd-state-version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-26T03:15:00.000Z"
+last_updated: "2026-05-26T03:18:30.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
   partial_plans: 0
-  percent: 87
-stopped_at: Phase 4 Wave 2 partial — 04-02 ✓ 2026-05-26 (apps/web/app/api/revalidate/route.ts Node-runtime + zod body + node:crypto timingSafeEqual + revalidateTag(BOARD_REVALIDATE_TAG(slug)); supabase/functions/extract-youtube/index.ts +26 lines fire-and-forget POST after broadcastStep('done') with visibility='public' gate + Deno.env WEB_BASE_URL/REVALIDATE_SECRET guards; 9/9 new tests pass — 8 api-revalidate matrix + 1 cache-key isolation Pitfall 1 guard; total 34/34 tests pass; 4 commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 webhook; deferred-items.md tracks 9 pre-existing deno check errors in extract-youtube/index.ts — unrelated to my changes). 04-03 still in progress (page.tsx/layout.tsx/metadata.test.ts uncommitted in working tree). Wave 3 (04-04 OG image) unblocked.
+  percent: 94
+stopped_at: Phase 4 Wave 3 ✓ — 04-04 완료 2026-05-26 (~3분, 2 tasks + 1 deferred UAT checkpoint; commits 9bec7e2 + 1b6fed1). Pretendard KS X 1001 subset woff2 (Regular 156KB + SemiBold 160KB = 317KB combined, well under ImageResponse 500KB hard limit) generated via fontTools.subset; opengraph-image.tsx 파일 컨벤션 OG route (runtime='nodejs', 1200×630 ImageResponse, 좌측 텍스트 stack 보드제목/도시/핀수/MOAJOA wordmark + 우측 Static Maps grayscale PNG ≤10마커 brand-500 또는 '지도 미리보기 준비 중' fallback, 3중 fallback view-null/key-missing/places-empty); lib/og/pretendard.ts 모듈 캐시 readFile loader (한 번만 readFile, process.cwd() 기반 path traversal-safe); og-image.test.ts 4/4 PASS (전체 apps/web 41/41); typecheck exit 0; build green (route 131B 103kB). Rule 1 fix: vi.mock('node:fs/promises') 양쪽 default + named export 필요 (vitest CJS interop). Rule 1 documented: 한글 KS X 1001 2,350글자 밀도 floor — per-file 156/160KB로 plan soft target 150KB을 약간 초과하지만 combined < 500KB 하드 게이트는 만족. 실제 브라우저 UAT (Kakao 미리보기, GCP Maps Static API enable 확인, dev fetch) end-of-phase batch로 deferred. Phase 4 4/4 code-complete.
 ---
 
 # STATE: MOAJOA v1
@@ -46,8 +46,10 @@ stopped_at: Phase 4 Wave 2 partial — 04-02 ✓ 2026-05-26 (apps/web/app/api/re
 - **Phase 4 Wave 2:** ✓ 2026-05-26
   - 04-02 완료 2026-05-26 (~3분, 3 tasks TDD; commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 Edge Function webhook). /api/revalidate Node-runtime route + timing-safe secret + Edge Function fire-and-forget POST after done broadcast. 9/9 new tests (8 api-revalidate matrix + 1 cache-key Pitfall 1 guard).
   - 04-03 완료 2026-05-26 (~12분, 2 implemented tasks + 1 deferred UAT checkpoint; commits ef951e0 + 4704faa). layout.tsx viewport (maximumScale:5 WCAG-safe) + metadataBase; page.tsx surgical rewrite — getCachedPublicBoard wrap, extended generateMetadata (description templates city有/無 + twitter:summary_large_image + alternates.canonical + robots.index=true), UI-SPEC §1 reassignment audit on 7 sites (text-3xl→2xl, font-medium→semibold, uppercase 제거, h-[420px]→h-[60vh], video card hover, footer brand-500 wordmark + "이 보드는 MOAJOA로 만들었어요"), empty state (places.length===0); PublicBoardMap +links prop + gestureHandling 'greedy' + clickableIcons false + marker click → window.open(buildYouTubeWatchUrl(...)) D-14/D-15/D-16; not-found.tsx + error.tsx (UI-SPEC §5/§6); 8 new vitest (metadata 5 + map-options 3) — 37/37 total pass; typecheck + build clean. Rule 3 fixes: vitest esbuild.jsx 'automatic' (React 19 auto JSX runtime), cache-key.test.ts non-null assertions (pre-existing 04-02 strict-TS gap). Real-browser UAT deferred to end-of-phase batch per auto mode.
-- **Next action:** Phase 4 Wave 3 — `/gsd-execute-phase 4` for 04-04 (OG image: Pretendard subset + opengraph-image.tsx Static Maps embed + fallback + smoke test).
-- **Progress:** [██████████░] Overall 14/16 plans (Phase 1 + 2 완료 + Phase 3 5/5 code-complete + Phase 4 3/4 done; UAT-pending for Phase 3 + Phase 4).
+- **Phase 4 Wave 3:** ✓ 2026-05-26
+  - 04-04 완료 2026-05-26 (~3분, 2 tasks + 1 deferred UAT checkpoint; commits 9bec7e2 + 1b6fed1). Pretendard KS X 1001 subset woff2 (Regular 156KB + SemiBold 160KB = 317KB combined, well under ImageResponse 500KB 하드 limit) via fontTools.subset + text-file (2,350 한글 + ASCII + Latin-1 + jamo + CJK punct). apps/web/app/b/[slug]/opengraph-image.tsx Next 파일 컨벤션 OG route (runtime='nodejs', 1200×630 ImageResponse, 좌측 텍스트 stack 보드제목 48/600 + city_ko 28/400 + 핀 N개 24/400 + MOAJOA wordmark 24/600 brand-500, 우측 Static Maps grayscale PNG ≤10마커 brand-500 또는 '지도 미리보기 준비 중' fallback, 3중 fallback view-null/key-missing/places-empty, title 80-char substring clamp Satori CJK-safe). lib/og/pretendard.ts 모듈 캐시 readFile loader (한 번만 readFile per process, process.cwd() 기반 hardcoded path). og-image.test.ts 4/4 PASS — 전체 apps/web 41/41 (4 신규 + 37 기존). typecheck exit 0; build green (route 131B 103kB First Load, no 500KB warning). Rule 1 fix on vi.mock('node:fs/promises') needing both default + named export (vitest CJS interop). Rule 1 documented: 한글 KS X 1001 2,350글자 밀도 floor — per-file 156/160KB로 plan soft target 150KB 약간 초과하지만 combined < 500KB 하드 게이트는 만족. 실제 브라우저 UAT (Kakao 미리보기, GCP Maps Static API enable 확인, dev fetch) end-of-phase batch로 deferred per auto mode.
+- **Next action:** Phase 4 끝까지 진행 — 4/4 plans code-complete. 다음 Phase 5 (Trust UI) 또는 end-of-phase UAT batch (Phase 3 manual scenarios + Phase 4 real-browser checks: Kakao share preview, viewport mobile, OG fetch).
+- **Progress:** [███████████] Overall 15/16 plans (Phase 1 + 2 완료 + Phase 3 5/5 code-complete + Phase 4 4/4 code-complete; UAT-pending for Phase 3 + Phase 4). 94%.
 
 ---
 
@@ -68,6 +70,7 @@ stopped_at: Phase 4 Wave 2 partial — 04-02 ✓ 2026-05-26 (apps/web/app/api/re
 - Phase 4 Plan 04-01 완료: 2026-05-26 (~7분, 3 tasks TDD RED→GREEN; commits f155efb + d790bfc + 5647451 + 3257f35 + 55b64d4; 20/20 vitest tests pass; Rule 1 fix on plan's contradictory 12-char YouTube ID fixture vs 11-char regex)
 - Phase 4 Plan 04-02 완료: 2026-05-26 (~3분, 3 tasks TDD; commits 3cf1899 RED + 9d5164f GREEN + 060484f cache-key + c87fd59 Edge Function; 9/9 new vitest tests pass — 34/34 total; no deviations from plan; pre-existing deno check errors in extract-youtube/index.ts logged to deferred-items.md)
 - Phase 4 Plan 04-03 완료: 2026-05-26 (~12분, 2 implemented tasks + 1 deferred UAT checkpoint; commits ef951e0 + 4704faa; metadata 5 + map-options 3 = 8 new vitest, 37/37 total pass; typecheck + build green; Rule 3 vitest esbuild.jsx automatic + Rule 3 cache-key non-null assertions; real-browser UAT deferred to end-of-phase batch per auto mode)
+- Phase 4 Plan 04-04 완료: 2026-05-26 (~3분, 2 tasks + 1 deferred UAT checkpoint; commits 9bec7e2 + 1b6fed1; og-image 4/4 새로 = 41/41 total vitest pass; Pretendard KS X 1001 subset woff2 317KB combined < 500KB ImageResponse 하드 limit; opengraph-image.tsx Next 파일 컨벤션 OG route runtime='nodejs' + 좌측 텍스트 stack + 우측 Static Maps grayscale embed + 3중 fallback; lib/og/pretendard.ts 모듈 캐시 readFile loader; build 131B route 103kB First Load no 500KB warning; Rule 1 vi.mock node:fs/promises default+named exports + Rule 1 documented KS X 1001 density floor; real-browser UAT deferred per auto mode)
 
 ---
 
