@@ -206,6 +206,7 @@ Deno.serve(async (req) => {
         source_quote: r.cand.source_quote ?? null,
         source_kind: 'ai',
         inferred_city: r.cand.inferred_city ?? null,
+        confidence: r.cand.confidence,
       }));
 
       const { error: insertErr } = await admin
