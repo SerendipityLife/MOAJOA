@@ -68,7 +68,7 @@ export type Database = {
           duration_ms: number | null
           id: string
           input_tokens: number | null
-          link_id: string
+          link_id: string | null
           model: string | null
           output_tokens: number | null
           provider: string
@@ -79,7 +79,7 @@ export type Database = {
           duration_ms?: number | null
           id?: string
           input_tokens?: number | null
-          link_id: string
+          link_id?: string | null
           model?: string | null
           output_tokens?: number | null
           provider: string
@@ -90,7 +90,7 @@ export type Database = {
           duration_ms?: number | null
           id?: string
           input_tokens?: number | null
-          link_id?: string
+          link_id?: string | null
           model?: string | null
           output_tokens?: number | null
           provider?: string
@@ -232,6 +232,7 @@ export type Database = {
           address: string | null
           board_id: string
           category: string | null
+          confidence: number | null
           created_at: string
           geog: unknown
           google_place_id: string | null
@@ -254,6 +255,7 @@ export type Database = {
           address?: string | null
           board_id: string
           category?: string | null
+          confidence?: number | null
           created_at?: string
           geog?: unknown
           google_place_id?: string | null
@@ -276,6 +278,7 @@ export type Database = {
           address?: string | null
           board_id?: string
           category?: string | null
+          confidence?: number | null
           created_at?: string
           geog?: unknown
           google_place_id?: string | null
@@ -563,6 +566,7 @@ export type Database = {
           address: string | null
           board_id: string
           category: string | null
+          confidence: number | null
           created_at: string
           geog: unknown
           google_place_id: string | null
