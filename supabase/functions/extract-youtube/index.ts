@@ -16,7 +16,7 @@
 // =============================================================================
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { z } from 'npm:zod@3';
 
 import { extractCandidatesFromContext } from './pipeline/claude.ts';
@@ -281,8 +281,14 @@ Deno.serve(async (req) => {
 
 // ---- Broadcast + Cost helpers -----------------------------------------------
 
+// Helper admin type matches call-site inference at line 53 (createClient without
+// Database generic resolves to <any, "public", "public", any, any>). Using
+// ReturnType<typeof createClient> here would resolve generics to bare defaults
+// (<unknown, never, never...>) and mismatch — see Phase 4 deferred-items.md.
+type AdminClient = SupabaseClient<any, "public", "public", any, any>;
+
 async function broadcastStep(
-  admin: ReturnType<typeof createClient>,
+  admin: AdminClient,
   linkId: string,
   step: string,
   progressPct: number,
@@ -302,7 +308,7 @@ async function broadcastStep(
 }
 
 async function logCost(
-  admin: ReturnType<typeof createClient>,
+  admin: AdminClient,
   linkId: string,
   entry: {
     provider: string;
