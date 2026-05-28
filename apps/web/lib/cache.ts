@@ -1,7 +1,7 @@
+import { createClient } from '@supabase/supabase-js';
 import { unstable_cache } from 'next/cache';
 import type { PublicBoardView } from '@moajoa/core';
-import { getPublicBoardBySlug } from '@moajoa/api';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getPublicBoardBySlug, type Database } from '@moajoa/api';
 
 /**
  * Revalidate tag for a public board page + OG image (per Phase 4 CONTEXT D-03/D-04).
@@ -21,16 +21,26 @@ export const BOARD_REVALIDATE_TAG = (slug: string): string => `board:${slug}`;
  * - `revalidate: 3600` = 1h fallback TTL per D-03 (stale-while-revalidate fallback
  *   when the explicit webhook fails per D-05).
  *
- * Note on cookies/headers: `getSupabaseServer()` reads cookies, but the
- * `public_board_view` RPC is SECURITY DEFINER and bypasses RLS, so the cookie
- * state does not affect the result. If Next.js build complains about dynamic
- * APIs inside cache scope, refactor to create the client outside and pass
- * `slug` only (see RESEARCH Pattern 1 variant).
+ * Cache-scope contract (RESEARCH Pattern 1 variant — see commit history for
+ * the original cookies-based variant): we build a cookies-free anon client
+ * INSIDE the cache callback. The `public_board_view` RPC is SECURITY DEFINER
+ * and bypasses RLS, so the request user is irrelevant. The prior implementation
+ * called `getSupabaseServer()` which awaits `cookies()` (a dynamic API);
+ * Next.js 15 forbids dynamic APIs inside `unstable_cache` scope and throws
+ * `Route /b/[slug] used cookies inside unstable_cache` → HTTP 500 on every
+ * public board view. Dogfooding P0 hotfix on 2026-05-28.
  */
 export async function getCachedPublicBoard(slug: string): Promise<PublicBoardView | null> {
   const fetcher = unstable_cache(
     async () => {
-      const supabase = await getSupabaseServer();
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (!url || !anonKey) {
+        throw new Error(
+          'NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY not configured',
+        );
+      }
+      const supabase = createClient<Database>(url, anonKey);
       return getPublicBoardBySlug(supabase, slug);
     },
     ['public-board', slug],
