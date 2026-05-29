@@ -18,10 +18,24 @@ interface Props {
 
 export default async function Image({ params }: Props) {
   const { slug } = await params;
-  const [view, fonts] = await Promise.all([
-    getCachedPublicBoard(slug),
-    loadPretendardFonts(),
-  ]);
+  // P0 #5 diag — surface function entry + Promise.all branch failures
+  // so the Vercel runtime log narrows down where the throw originates.
+  console.log('[og-image] start', { slug, runtime: 'nodejs' });
+  let view, fonts;
+  try {
+    [view, fonts] = await Promise.all([
+      getCachedPublicBoard(slug),
+      loadPretendardFonts(),
+    ]);
+    console.log('[og-image] deps ready', { hasView: !!view, fontsRegular: fonts?.regular?.length, fontsSemibold: fonts?.semibold?.length });
+  } catch (err) {
+    console.error('[og-image] deps failed', {
+      slug,
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack?.split('\n').slice(0, 5).join(' | ') : undefined,
+    });
+    throw err;
+  }
 
   const fontOptions = [
     { name: 'Pretendard', data: fonts.regular, weight: 400 as const, style: 'normal' as const },
