@@ -1,0 +1,10 @@
+{
+  "name": "shared-defaults",
+  "version": "0.0.0",
+  "description": "Local Expo native module — App Group UserDefaults bridge (iOS).",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "author": "MOAJOA",
+  "homepage": "https://github.com/SerendipityLife/MOAJOA",
+  "private": true
+}

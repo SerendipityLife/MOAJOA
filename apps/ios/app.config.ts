@@ -18,6 +18,15 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.serendipitylife.moajoa',
     supportsTablet: false,
+    // P0 hotfix #3 (2026-05-28): Hermes bytecode compiler fails on
+    // @supabase/supabase-js@2.106.1's dynamic OTEL_PKG import which uses
+    // /* webpackIgnore */ /* turbopackIgnore */ /* @vite-ignore */ magic
+    // comments. JSC handles dynamic import() with such comments cleanly.
+    // v2-backlog: re-enable Hermes once supabase-js drops the OTEL magic
+    // comments, or once Hermes supports them (RN 0.78+ work in progress),
+    // or via a babel transform that strips webpackIgnore/turbopackIgnore
+    // comments before Hermes runs.
+    jsEngine: 'jsc',
     config: {
       googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_KEY,
     },
