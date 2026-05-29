@@ -15,10 +15,27 @@ let cached: { regular: Buffer; semibold: Buffer } | null = null;
 
 export async function loadPretendardFonts(): Promise<{ regular: Buffer; semibold: Buffer }> {
   if (cached) return cached;
-  const [regular, semibold] = await Promise.all([
-    readFile(join(process.cwd(), 'public/fonts/Pretendard-Regular.subset.woff2')),
-    readFile(join(process.cwd(), 'public/fonts/Pretendard-SemiBold.subset.woff2')),
-  ]);
-  cached = { regular, semibold };
-  return cached;
+  const cwd = process.cwd();
+  const regularPath = join(cwd, 'public/fonts/Pretendard-Regular.subset.woff2');
+  const semiboldPath = join(cwd, 'public/fonts/Pretendard-SemiBold.subset.woff2');
+  try {
+    const [regular, semibold] = await Promise.all([readFile(regularPath), readFile(semiboldPath)]);
+    cached = { regular, semibold };
+    return cached;
+  } catch (err) {
+    // Dogfooding P0 #5 diagnostic — uncaught throw made Vercel logs empty.
+    // Surface cwd + attempted paths so the next runtime log entry pinpoints
+    // the issue (likely Vercel monorepo lambda cwd != apps/web).
+    console.error(
+      '[og-image] loadPretendardFonts failed',
+      JSON.stringify({
+        cwd,
+        regularPath,
+        semiboldPath,
+        message: err instanceof Error ? err.message : String(err),
+        code: (err as NodeJS.ErrnoException)?.code,
+      }),
+    );
+    throw err;
+  }
 }
