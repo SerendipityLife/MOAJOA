@@ -39,8 +39,14 @@ interface ResponseBody {
 
 // ---- Main handler -----------------------------------------------------------
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders() });
+  }
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'method not allowed' }), { status: 405 });
+    return new Response(JSON.stringify({ error: 'method not allowed' }), {
+      status: 405,
+      headers: { 'content-type': 'application/json', ...corsHeaders() },
+    });
   }
 
   // Use service role inside the function — RLS is bypassed for writes after
@@ -335,16 +341,24 @@ async function logCost(
 }
 
 // ---- Helpers ---------------------------------------------------------------
+function corsHeaders(): HeadersInit {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
+
 function jsonError(status: number, message: string): Response {
   return new Response(JSON.stringify({ error: message }), {
     status,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...corsHeaders() },
   });
 }
 
 function jsonOk(body: ResponseBody): Response {
   return new Response(JSON.stringify(body), {
     status: 200,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...corsHeaders() },
   });
 }
