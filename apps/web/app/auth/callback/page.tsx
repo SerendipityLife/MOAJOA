@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 
@@ -23,8 +23,14 @@ function CallbackHandler() {
   const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  // StrictMode runs effects twice in dev; the PKCE code + verifier are
+  // single-use, so a second exchangeCodeForSession() call fails with
+  // "both auth code and code verifier should be non-empty". Run exactly once.
+  const ran = useRef(false);
 
   useEffect(() => {
+    if (ran.current) return;
+    ran.current = true;
     const supabase = getSupabaseBrowser();
     const next = params.get('next') ?? '/boards';
     const code = params.get('code');

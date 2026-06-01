@@ -11,6 +11,7 @@ import type { Place } from '@moajoa/core';
  */
 export function PlaceMap({ places }: { places: Place[] }) {
   const ref = useRef<HTMLDivElement>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -37,6 +38,9 @@ export function PlaceMap({ places }: { places: Place[] }) {
         zoom: places.length > 0 ? 13 : 11,
         disableDefaultUI: true,
         zoomControl: true,
+        // greedy: 한 손가락 드래그로 패닝 (cooperative 기본값은 "두 손가락" 오버레이를 띄움)
+        gestureHandling: 'greedy',
+        clickableIcons: false,
       });
 
       for (const p of places) {
@@ -46,31 +50,42 @@ export function PlaceMap({ places }: { places: Place[] }) {
           title: p.name_local,
         });
       }
+
+      // 컨테이너가 리사이즈되면 지도가 잘리므로(Maps JS는 자동 reflow 안 함)
+      // 중심을 유지한 채 다시 그려준다.
+      const ro = new ResizeObserver(() => {
+        const c = map.getCenter();
+        g.event.trigger(map, 'resize');
+        if (c) map.setCenter(c);
+      });
+      ro.observe(ref.current);
+      cleanupRef.current = () => ro.disconnect();
     };
 
     if (winAny.google?.maps) {
       init();
-      return;
+    } else {
+      const existing = document.querySelector<HTMLScriptElement>('script[data-moajoa-gmaps]');
+      if (existing) {
+        existing.addEventListener('load', init, { once: true });
+      } else {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker`;
+        script.async = true;
+        script.defer = true;
+        script.dataset.moajoaGmaps = '1';
+        script.addEventListener('load', init, { once: true });
+        document.head.appendChild(script);
+      }
     }
 
-    const existing = document.querySelector<HTMLScriptElement>('script[data-moajoa-gmaps]');
-    if (existing) {
-      existing.addEventListener('load', init, { once: true });
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&libraries=marker`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.moajoaGmaps = '1';
-    script.addEventListener('load', init, { once: true });
-    document.head.appendChild(script);
+    return () => cleanupRef.current?.();
   }, [places]);
 
   return (
     <div
       ref={ref}
-      className="w-full aspect-square md:aspect-auto md:h-[480px] rounded-lg border border-neutral-200 bg-neutral-50"
+      className="w-full h-full min-h-0 rounded-lg border border-neutral-200 bg-neutral-50"
     />
   );
 }

@@ -93,7 +93,7 @@ export function PublicBoardMap({ places, links }: Props) {
       return;
     }
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&libraries=marker`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker`;
     script.async = true;
     script.defer = true;
     script.dataset.moajoaGmaps = '1';

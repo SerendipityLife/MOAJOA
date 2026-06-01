@@ -24,26 +24,28 @@ export default async function BoardDetailPage({ params }: { params: Promise<{ id
   ]);
 
   return (
-    <main className="min-h-screen px-6 py-8 max-w-5xl mx-auto">
-      <header className="mb-6">
+    <main className="flex flex-col px-6 py-6 max-w-5xl mx-auto">
+      <header className="mb-4">
         <h1 className="text-2xl font-semibold">{board.title}</h1>
         {board.description && (
           <p className="text-neutral-600 mt-1">{board.description}</p>
         )}
       </header>
 
-      <section className="mb-6">
+      <section className="mb-4">
         <AddLinkForm boardId={board.id} />
       </section>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <section>
+      <div className="flex flex-col md:flex-row gap-6">
+        <section className="min-w-0 md:flex-1">
           <h2 className="text-sm font-medium text-neutral-700 mb-3">링크 ({links.length})</h2>
           <LinkList links={links} />
         </section>
-        <section>
+        <section className="min-w-0 md:flex-1">
           <h2 className="text-sm font-medium text-neutral-700 mb-3">장소 ({places.length})</h2>
-          <PlaceMap places={places} />
+          <div className="h-[38dvh] md:h-[480px]">
+            <PlaceMap places={places} />
+          </div>
         </section>
       </div>
     </main>
