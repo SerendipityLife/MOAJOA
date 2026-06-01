@@ -69,3 +69,5 @@ packages/api/src/types/database.ts
 .nyc_output/
 playwright-report/
 test-results/
+.claude/settings.local.json
+.vercel
