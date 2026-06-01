@@ -103,7 +103,7 @@ Extract physical places visited or recommended in this YouTube video. Skip gener
       "name_local": "<canonical name in original script — Japanese kanji/hiragana for Japan, Korean for Korea>",
       "name_ko": "<Korean reading or translation if mentioned in subtitles>",
       "source_timestamp_sec": <integer seconds from video start when place is first shown/mentioned>,
-      "source_quote": "<short quote from transcript supporting this extraction (max 200 chars)>",
+      "source_quote": "<short quote from the transcript or description supporting this extraction (max 200 chars)>",
       "confidence": <0.0-1.0, how sure you are this is a real specific place>,
       "inferred_city": "<city or region where this place is located, e.g. 'Tokyo', 'Osaka', 'Seoul'>"
     }
@@ -114,8 +114,8 @@ Extract physical places visited or recommended in this YouTube video. Skip gener
 - Output JSON only. No markdown fence required, but if you use one, use \`\`\`json.
 - Max 30 places. Pick the most distinct.
 - confidence < 0.4 → skip the entry entirely (don't include it).
-- If transcript is empty, rely on description and title. Lower confidence accordingly.
-- Every place MUST include source_quote — a short excerpt from the transcript proving the place was mentioned. Omitting source_quote will cause the entry to be discarded.
+- If transcript is empty, rely on the description and title. The description often lists places with timestamps (e.g. "00:35 스시집"). Lower confidence accordingly.
+- Every place MUST include source_quote — a short excerpt from the transcript OR the description proving the place was mentioned. Omitting source_quote will cause the entry to be discarded.
 
 # Context
 City hint: ${inputs.cityHint ?? '(unknown)'}
