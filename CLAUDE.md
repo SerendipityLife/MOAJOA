@@ -211,7 +211,9 @@ moajoa/
 - ❌ 기존 마이그레이션 SQL 수정 (한 번 prod 적용되면 영구)
 - ❌ 워크스페이스 패키지 import에 `.js` extension 추가
 - ❌ Web에 *새로운* "보드 생성"·"링크 추가" UI 추가 — 그건 iOS 전용
-  (현재 web에 있는 폼은 임시 dev tool. Phase 1.5에 정리할 예정.)
+  (현재 web에 있는 폼은 **dev tool**. `NEXT_PUBLIC_ENABLE_DEV_TOOLS=1`
+  로 local dev + Vercel Preview에선 열림, production main은 닫힘 —
+  Windows 동료가 iOS 없이 보드 관리 가능. 자세히는 `apps/web/.env.local.example`.)
 - ❌ RLS 정책에서 다른 테이블 직접 EXISTS — SECURITY DEFINER 헬퍼 경유
 - ❌ 서비스 롤 키를 클라이언트 번들에 노출
 - ❌ `.env.local` 커밋
