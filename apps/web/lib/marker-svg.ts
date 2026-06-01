@@ -7,10 +7,10 @@ import { LOW_CONFIDENCE_THRESHOLD } from '@moajoa/core';
  * Color/opacity matrix (web parity with iOS — D-24):
  * | source_kind | confidence              | fill      | fill-opacity | "?" badge |
  * |-------------|-------------------------|-----------|--------------|-----------|
- * | manual      | (any — null/undefined)  | #0F172A   | 1.0          | no        |
- * | ai          | null/undefined          | #F97316   | 1.0          | no        |
- * | ai          | >= 0.7                  | #F97316   | 1.0          | no        |
- * | ai          | <  0.7                  | #F97316   | 0.45         | yes       |
+ * | manual      | (any — null/undefined)  | #111827   | 1.0          | no        |
+ * | ai          | null/undefined          | #2979FF   | 1.0          | no        |
+ * | ai          | >= 0.7                  | #2979FF   | 1.0          | no        |
+ * | ai          | <  0.7                  | #2979FF   | 0.45         | yes       |
  *
  * Stale-payload fallback (D-15 + plan note): undefined confidence on AI pin
  * is treated as high-confidence so Vercel ISR misses during 0006 rollout
@@ -29,7 +29,7 @@ export function buildMarkerIconUrl(input: {
   const isLowConf =
     isAi && typeof conf === 'number' && conf < LOW_CONFIDENCE_THRESHOLD;
 
-  const fill = isAi ? '#F97316' : '#0F172A';
+  const fill = isAi ? '#2979FF' : '#111827'; // brand-500 (AI) · neutral-900 (manual)
   const fillOpacity = isLowConf ? 0.45 : 1.0;
   const showQ = isLowConf;
 

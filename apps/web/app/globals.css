@@ -2,7 +2,8 @@
 @config "../tailwind.config.ts";
 
 @theme {
-  --font-sans: var(--font-pretendard), 'IBM Plex Sans KR', 'Noto Sans JP', system-ui, sans-serif;
+  --font-sans: var(--font-sans-kr), 'IBM Plex Sans KR', 'IBM Plex Sans JP',
+    'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
 }
 
 :root {
@@ -14,11 +15,13 @@ body {
   height: 100%;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss01', 'kern';
+  text-rendering: optimizeLegibility;
 }
 
 body {
   background: #fff;
-  color: #0f172a;
+  color: #111827; /* neutral-900 */
 }
 
 /* Keep focus visible only for keyboard nav */

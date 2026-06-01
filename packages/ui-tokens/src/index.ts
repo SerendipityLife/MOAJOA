@@ -10,47 +10,69 @@
  */
 
 export const colors = {
-  // Brand
+  // Brand — MOAJOA Blue (ported from MOAJOA Design System app_theme).
+  // 500 = signature #2979FF, 600 = button-primary #2563EB, 700 = #1D4ED8.
   brand: {
-    50: '#FFF7ED',
-    100: '#FFEDD5',
-    200: '#FED7AA',
-    300: '#FDBA74',
-    400: '#FB923C',
-    500: '#F97316', // primary accent — warm travel orange
-    600: '#EA580C',
-    700: '#C2410C',
-    800: '#9A3412',
-    900: '#7C2D12',
+    50: '#F5F7FF', // primary-surface
+    100: '#E0EAFF', // primary-light
+    200: '#B3C8FF', // primary-medium
+    300: '#93B4FF',
+    400: '#5C93FF',
+    500: '#2979FF', // primary accent — MOAJOA blue
+    600: '#2563EB', // button-primary
+    700: '#1D4ED8', // primary-dark / button-hover
+    800: '#1E40AF',
+    900: '#1B3A8F',
   },
-  // Map pin states
+  // Map pin states (vote-trust semantics — distinct from the place-category
+  // palette below). loved tracks brand-500.
   pin: {
-    candidate: '#94A3B8', // slate-400 — extracted but no votes
-    loved: '#F97316', // brand-500
+    candidate: '#94A3B8', // gray-400 — extracted but no votes
+    loved: '#2979FF', // brand-500
     confirmed: '#16A34A', // green-600 — majority loved
-    hidden: '#CBD5E1', // slate-300
+    hidden: '#D1D5DB', // gray-300
   },
-  // Neutral grayscale (uses Tailwind slate as base)
+  // Neutral grayscale (Tailwind gray — matches design system neutrals)
   neutral: {
     0: '#FFFFFF',
-    50: '#F8FAFC',
-    100: '#F1F5F9',
-    200: '#E2E8F0',
-    300: '#CBD5E1',
-    400: '#94A3B8',
-    500: '#64748B',
-    600: '#475569',
-    700: '#334155',
-    800: '#1E293B',
-    900: '#0F172A',
-    950: '#020617',
+    50: '#F9FAFB',
+    100: '#F3F4F6',
+    200: '#E5E7EB',
+    300: '#D1D5DB',
+    400: '#9CA3AF',
+    500: '#6B7280',
+    600: '#4B5563',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
+    950: '#030712',
+  },
+  // App scaffold vs card/sheet surfaces (design system: tinted scaffold,
+  // white-only cards/dialogs/sheets).
+  surface: {
+    background: '#F5F6F8',
+    raised: '#FFFFFF',
   },
   // Semantic
   semantic: {
-    success: '#16A34A',
+    success: '#10B981',
     warning: '#F59E0B',
-    danger: '#DC2626',
-    info: '#0284C7',
+    danger: '#EF4444',
+    info: '#3B82F6',
+  },
+  // Place-category badge palette (chips on place cards)
+  category: {
+    nature: '#43A047',
+    food: '#FF8F00',
+    culture: '#5C6BC0',
+    wellness: '#26A69A',
+    shopping: '#8D6E63',
+  },
+  // Leaderboard / ranking medals
+  medal: {
+    gold: '#FFD700',
+    silver: '#C0C0C0',
+    bronze: '#CD7F32',
   },
 } as const;
 
@@ -76,16 +98,25 @@ export const radii = {
   none: '0',
   sm: '0.25rem',
   md: '0.5rem',
-  lg: '0.75rem',
-  xl: '1rem',
-  '2xl': '1.5rem',
-  full: '9999px',
+  lg: '0.75rem', // 12px — buttons & inputs
+  xl: '1rem', // 16px — cards
+  '2xl': '1.5rem', // 24px — dialogs
+  '3xl': '1.75rem', // 28px — bottom-sheet (top corners)
+  full: '9999px', // chips (stadium) & FAB
 } as const;
 
 export const typography = {
   fonts: {
-    // Korean primary, Japanese fallback. Loaded via next/font on web, expo-font on iOS.
-    sans: ['Pretendard', 'IBM Plex Sans KR', 'Noto Sans JP', 'system-ui', 'sans-serif'],
+    // Korean-first, Japanese fallback (MOAJOA Design System). Loaded via
+    // next/font on web, expo-font on iOS.
+    sans: [
+      'IBM Plex Sans KR',
+      'IBM Plex Sans JP',
+      'Apple SD Gothic Neo',
+      'Noto Sans KR',
+      'system-ui',
+      'sans-serif',
+    ],
     mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
   },
   sizes: {
@@ -116,6 +147,9 @@ export const shadows = {
   sm: '0 1px 2px 0 rgba(15, 23, 42, 0.05)',
   md: '0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05)',
   lg: '0 10px 15px -3px rgba(15, 23, 42, 0.10), 0 4px 6px -4px rgba(15, 23, 42, 0.05)',
+  // Flat design — shadows only on floating elements (FAB, bottom-nav).
+  fab: '0 4px 16px rgba(41, 121, 255, 0.30)',
+  nav: '0 -2px 20px rgba(25, 28, 30, 0.10)',
 } as const;
 
 export const breakpoints = {

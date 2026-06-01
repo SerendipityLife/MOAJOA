@@ -1,16 +1,18 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { getBaseUrl } from '@/lib/env';
+import { ToastProvider } from '@/components/toast';
 import './globals.css';
 
-const pretendard = localFont({
+// MOAJOA Design System primary typeface — IBM Plex Sans KR (Korean-first).
+const ibmPlexSansKr = localFont({
   src: [
-    { path: '../public/fonts/Pretendard-Regular.otf', weight: '400', style: 'normal' },
-    { path: '../public/fonts/Pretendard-Medium.otf', weight: '500', style: 'normal' },
-    { path: '../public/fonts/Pretendard-SemiBold.otf', weight: '600', style: 'normal' },
-    { path: '../public/fonts/Pretendard-Bold.otf', weight: '700', style: 'normal' },
+    { path: '../public/fonts/IBMPlexSansKR-w400.ttf', weight: '400', style: 'normal' },
+    { path: '../public/fonts/IBMPlexSansKR-w500.ttf', weight: '500', style: 'normal' },
+    { path: '../public/fonts/IBMPlexSansKR-w600.ttf', weight: '600', style: 'normal' },
+    { path: '../public/fonts/IBMPlexSansKR-w700.ttf', weight: '700', style: 'normal' },
   ],
-  variable: '--font-pretendard',
+  variable: '--font-sans-kr',
   display: 'swap',
 });
 
@@ -34,8 +36,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={pretendard.variable}>
-      <body>{children}</body>
+    <html lang="ko" className={ibmPlexSansKr.variable}>
+      <body>
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }
