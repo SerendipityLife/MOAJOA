@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { Button, Input, useToast } from '@/components';
 
 type Mode = 'password' | 'magic';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,7 +75,8 @@ export default function LoginPage() {
         redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback`,
       },
     });
-    if (error) setError(error.message);
+    // On success the browser redirects away; an error means we never left.
+    if (error) toast(error.message, { variant: 'error' });
   }
 
   return (
@@ -100,16 +103,15 @@ export default function LoginPage() {
           </div>
         ) : mode === 'password' ? (
           <form onSubmit={signIn} className="space-y-3">
-            <input
+            <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="이메일 주소"
               required
               autoComplete="email"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-brand-500 focus:outline-none"
             />
-            <input
+            <Input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -117,24 +119,20 @@ export default function LoginPage() {
               required
               minLength={6}
               autoComplete="current-password"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-brand-500 focus:outline-none"
             />
             <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={pending}
-                className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-medium disabled:opacity-50"
-              >
+              <Button type="submit" disabled={pending} className="flex-1">
                 {pending ? '...' : '로그인'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
                 onClick={signUp}
                 disabled={pending || !email || password.length < 6}
-                className="flex-1 py-3 border border-brand-500 text-brand-600 hover:bg-brand-50 rounded-lg font-medium disabled:opacity-50"
+                className="flex-1"
               >
                 가입하기
-              </button>
+              </Button>
             </div>
             <button
               type="button"
@@ -150,22 +148,21 @@ export default function LoginPage() {
         ) : (
           // magic-link mode
           <form onSubmit={sendMagicLink} className="space-y-3">
-            <input
+            <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="이메일 주소"
               required
               autoComplete="email"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-brand-500 focus:outline-none"
             />
-            <button
+            <Button
               type="submit"
               disabled={pending || !email}
-              className="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-medium disabled:opacity-50"
+              className="w-full"
             >
               {pending ? '...' : '메일로 로그인 링크 받기'}
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => {
