@@ -1,4 +1,5 @@
 import type { Link as LinkRow } from '@moajoa/core';
+import { RetryExtractionButton } from './retry-extraction-button';
 
 const STATUS_LABEL: Record<LinkRow['extraction_status'], string> = {
   pending: '대기 중',
@@ -43,28 +44,34 @@ export function LinkList({ links }: { links: LinkRow[] }) {
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{link.title ?? link.url}</p>
-            <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
-              <span>{KIND_LABEL[link.source_kind]}</span>
-              <span>·</span>
+            <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500 min-w-0">
+              <span className="shrink-0">{KIND_LABEL[link.source_kind]}</span>
+              <span className="shrink-0">·</span>
               <span
                 className={
-                  link.extraction_status === 'ready'
+                  'shrink-0 ' +
+                  (link.extraction_status === 'ready'
                     ? 'text-success'
                     : link.extraction_status === 'failed'
                       ? 'text-danger'
-                      : 'text-neutral-500'
+                      : 'text-neutral-500')
                 }
               >
                 {STATUS_LABEL[link.extraction_status]}
               </span>
               {link.author_name && (
                 <>
-                  <span>·</span>
-                  <span>{link.author_name}</span>
+                  <span className="shrink-0">·</span>
+                  <span className="truncate min-w-0">{link.author_name}</span>
                 </>
               )}
             </div>
           </div>
+          {link.source_kind === 'youtube' &&
+            link.extraction_status !== 'processing' &&
+            link.extraction_status !== 'ready' && (
+              <RetryExtractionButton linkId={link.id} />
+            )}
         </li>
       ))}
     </ul>

@@ -47,13 +47,19 @@ export async function deleteLink(client: MoajoaSupabaseClient, id: string): Prom
  * Trigger extraction for a link (idempotent — Edge Function checks current status).
  * Called automatically after addLink for youtube; can be called manually to retry.
  */
+export interface ExtractionResult {
+  status: 'ready' | 'failed' | 'manual_review';
+  places_extracted: number;
+  error: string | null;
+}
+
 export async function triggerExtraction(
   client: MoajoaSupabaseClient,
   linkId: string,
-): Promise<{ status: string }> {
+): Promise<ExtractionResult> {
   const { data, error } = await client.functions.invoke('extract-youtube', {
     body: { link_id: linkId },
   });
   if (error) throw error;
-  return data as { status: string };
+  return data as ExtractionResult;
 }
