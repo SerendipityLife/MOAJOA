@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { Button, Input, useToast } from '@/components';
@@ -16,6 +16,18 @@ export default function LoginPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [magicSent, setMagicSent] = useState(false);
+
+  // Surface failures bounced here by the auth callback route (/login?error=...),
+  // then strip the param so a refresh doesn't re-show it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const callbackError = params.get('error');
+    if (!callbackError) return;
+    toast(callbackError, { variant: 'error' });
+    params.delete('error');
+    const query = params.toString();
+    router.replace(`/login${query ? `?${query}` : ''}` as never);
+  }, [router, toast]);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -156,11 +168,7 @@ export default function LoginPage() {
               required
               autoComplete="email"
             />
-            <Button
-              type="submit"
-              disabled={pending || !email}
-              className="w-full"
-            >
+            <Button type="submit" disabled={pending || !email} className="w-full">
               {pending ? '...' : '메일로 로그인 링크 받기'}
             </Button>
             <button
