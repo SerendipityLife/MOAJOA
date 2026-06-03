@@ -16,7 +16,7 @@
 
 ## 1️⃣ iOS 앱 — 저장/공유/투표 (Owner: 모바일)
 
-**상태:** 스캐폴드만 됨. **로컬 빌드 미완** (pnpm 모노레포 + RN podspec 경로 이슈).
+**상태:** **로컬 시뮬 빌드·실행 동작** (2026-06-03 — iPhone 17 Pro 시뮬에 로그인 화면까지 렌더 확인). 네이티브 모듈(expo-share-intent 등) 포함 빌드 OK.
 
 **파일 영역 (배타적):**
 ```
@@ -25,10 +25,11 @@ apps/ios/**          ← 전부
 
 **해야 할 일 (우선순위 순):**
 
-1. **로컬 빌드 통과 (블로커)**
-   - 옵션 A: `shamefully-hoist=true` apps/ios에 npmrc → react-native-reanimated podspec 경로 문제 해결
-   - 옵션 B: EAS Build (클라우드) → 로컬 toolchain 우회. Apple Developer 계정 필요
-   - 옵션 C: yarn workspaces로 iOS만 분리
+1. **로컬 시뮬 실행 — 동작함 ✅ (2026-06-03)**
+   - 일상 개발: `cd apps/ios && EXPO_NO_WATCHMAN=1 pnpm start` → Metro hot reload (앱은 시뮬에 이미 설치됨)
+   - 네이티브 재빌드 (네이티브 의존성/prebuild 변경 시만): `xcodebuild -workspace ios/MOAJOA.xcworkspace -scheme MOAJOA -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO build` → `xcrun simctl install booted ios/build/Build/Products/Debug-iphonesimulator/MOAJOA.app`
+   - ⚠️ `pnpm ios`(expo run:ios)는 **Xcode 26 ↔ Expo CLI `devicectl` 버그**로 안 됨 → 위 `xcodebuild`로 대체 (expo 54.0.35+ 업그레이드 시 해결 가능성)
+   - 적용된 Metro 우회 (`apps/ios/metro.config.js`, 각 why 주석 참고): `useWatchman`(env-gated, 콜드 watchman 행 회피) · `disableHierarchicalLookup=false`(pnpm 심링크 해석) · `ws`→empty stub(supabase realtime의 Node `ws` 의존 제거)
 2. **첫 화면 동작 확인** — login → boards 탭 → 보드 상세
 3. **링크 추가 → Edge Function 호출** — 이미 코드 있음 (`apps/ios/app/boards/[id].tsx`)
 4. **Share Extension** — 카톡/사파리에서 URL 받기 → 보드 선택 → 저장 (Phase 1.5 핵심)
