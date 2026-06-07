@@ -341,7 +341,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. 추출 깊이 (장소·영상 해설) | 0/4 | Not started (planned) | - |
+| 8. 추출 깊이 (장소·영상 해설) | 3/4 | Code complete · 08-04 모닝 게이트 | 2026-06-08 (code) |
 | 9. 소스 넓이 (블로그·인스타) | 0/? | Not started | - |
 | 10. 웹 투표 (협업) | 0/? | Not started | - |
 
