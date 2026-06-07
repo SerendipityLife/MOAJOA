@@ -21,6 +21,9 @@
 | D3 | 06-07 night | v1.0 미완(도그푸딩) 처리 | **archive 안 함 / complete-milestone 안 돌림 / phase 번호 8부터 이어감** | §4: 도그푸딩 의도적 병행·나중. v1 phase 1~7 작업 보존, 번호 충돌 없음(continue numbering). |
 | D4 | 06-07 night | 마일스톤 레벨 도메인 리서치(new-milestone Step 8) | **SKIP** | ② 설계가 §2에 잠겨 있음. per-phase 리서치(config.workflow.research=true)는 /gsd-plan-phase에서 유지되므로 손실 없음. |
 | D5 | 06-07 night | v1.1 요구사항 REQ-ID | **신규 EXTRACT-12/13/14, VIEW-08, SRC-01/02 + COLLAB-01/02 승격** | 기존 v2-defer의 COLLAB-01/02를 v1.1로 승격. 해설(②)은 신규 EXTRACT-12+. ①은 신규 SRC 카테고리(기존 EXTRACT-10 manual-queue와 구분 — v1.1은 자동 추출). |
+| D6 | 06-07 night | 로드맵 granularity | **3 phases (패딩 없음)** | gsd-roadmapper 추천. 좁은 증분 마일스톤이 ②/①/투표 3개 자연 경계로 떨어짐. 8→9 의존, 10 독립. |
+| D7 | 06-07 night | REQUIREMENTS.md L5 헤더(`Milestone: v1`) | **v1.1 active로 갱신 (surgical)** | roadmapper가 flag. doc이 이제 v1+v1.1 포함하므로 헤더만 최소 수정. |
+| D8 | 06-07 night | Phase 8 discuss-phase | **생략 → plan 직행** | 설계가 SESSION-NOTES §2 + ROADMAP "Design lock"에 이미 잠김. 회색지대 적음 → /gsd-plan-phase 8로 직행 (per-phase research는 plan 단계에서 유지). |
 
 *(이후 결정은 아래에 계속 append)*
 
@@ -47,3 +50,4 @@
 ## Progress timeline
 
 - **2026-06-07 night** — 자동 모드 진입. 마일스톤 스캐폴딩 시작(PROJECT.md·REQUIREMENTS.md·decision log).
+- **2026-06-07 night** — 스캐폴딩 커밋 `4764464`. gsd-roadmapper로 v1.1 로드맵 생성: Phase 8(② 추출 깊이)·9(① 소스 넓이)·10(웹 투표). STATE → Phase 8, v1.0 history archived. 다음: Phase 8 plan.

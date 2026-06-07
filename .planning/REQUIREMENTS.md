@@ -2,7 +2,7 @@
 
 **Defined:** 2026-05-25
 **Core Value:** 링크 → 30초 안에 지도 위의 핀
-**Milestone:** v1 (MVP, self-dogfooding 가능선)
+**Milestone:** v1.1 (추출 고도화 + 협업) — active. v1(MVP) requirements는 아래 "## v1 Requirements"에 보존.
 
 리서치 산출물(`.planning/research/SUMMARY.md`)에서 도출. v1은 **단독 저장 + 공개 열람** 범위. 협업·투표는 Phase 1.5.
 
@@ -171,9 +171,24 @@ Roadmap (2026-05-25)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | ONBOARD-02 | Phase 5 | Complete (2026-05-26, 05-06) |
 | EXTRACT-07 | Phase 6 | Pending |
 
+### v1.1 Traceability (Milestone v1.1 — 추출 고도화 + 협업)
+
+Roadmap (2026-06-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADMAP.md` "# Milestone v1.1".
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| EXTRACT-12 | Phase 8 | Pending |
+| EXTRACT-13 | Phase 8 | Pending |
+| EXTRACT-14 | Phase 8 | Pending |
+| VIEW-08 | Phase 8 | Pending |
+| SRC-01 | Phase 9 | Pending |
+| SRC-02 | Phase 9 | Pending |
+| COLLAB-01 | Phase 10 | Pending |
+| COLLAB-02 | Phase 10 | Pending |
+
 **Coverage:**
-- v1 requirements: 29 total
-- Mapped to phases: 29 ✓
+- v1 requirements: 29 total → mapped to phases 1~6: 29 ✓
+- v1.1 requirements: 8 total → mapped to phases 8~10: 8 ✓
 - Unmapped: 0
 - Duplicate mappings: 0
 

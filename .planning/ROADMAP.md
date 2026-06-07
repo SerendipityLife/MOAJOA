@@ -254,3 +254,133 @@ Plans:
 *Phase 6 planned: 2026-05-26 (5 plans in 2 waves)*
 *Phase 7 planned: 2026-06-07 (1 plan in 1 wave)*
 *Next: `/gsd-execute-phase 7`*
+
+---
+
+# Milestone v1.1 — 추출 고도화 + 협업
+
+**Created:** 2026-06-07
+**Milestone:** v1.1
+**Core Value:** 링크 → 30초 안에 지도 위의 핀 (+ 사람이 읽는 해설 + 친구가 무설치로 투표)
+**Granularity:** standard (5-8 phases) → **3 phases** (좁은 증분 마일스톤 — 작업량이 3개 자연 경계로 떨어짐, 패딩 금지)
+**Requirements covered:** 8/8 v1.1 ✓
+**Design source:** `docs/SESSION-NOTES-2026-06-07.md` (§2 = ② 설계 잠금, §3 = 웹 범위, §4 = 라우팅) · 결정 로그 `.planning/AUTONOMOUS-LOG-2026-06-08.md`
+
+> v1.0 (Phase 1~7) 내용은 위에 보존됨. 이 마일스톤은 Phase **8**부터 번호를 이어간다.
+
+## v1.1 결정 근거 요약
+
+순서 **② → ① → 투표** (SESSION-NOTES §1 모으기 우선). ②(추출 깊이)가 "좋은 추출 결과물 = 장소 + 해설"이라는 출력 계약을 먼저 정의하면, ①(소스 넓이)이 그 계약을 그대로 재사용한다 → 9는 8에 의존. 웹 투표(10)는 추출 파이프라인과 직교(협업 surface)라 8/9와 거의 독립적으로 진행 가능하다.
+
+## Phases (v1.1)
+
+- [ ] **Phase 8: 추출 깊이 (장소·영상 해설)** — 단일 Claude 호출 확장으로 `places.summary_ko` + `links.summary_ko` 생성, nullable 추가형, 반환각 규칙 유지, 해설 실패가 추출을 실패시키지 않음, 웹 조건부 노출
+- [ ] **Phase 9: 소스 넓이 (블로그·인스타)** — 블로그/인스타 URL을 동일 파이프라인(장소+해설)으로 자동 추출, 추출 불가 소스는 명시적 실패 사유 반환
+- [ ] **Phase 10: 웹 투표 (협업)** — 공유 보드 slug로 멤버 참여 + 웹에서 핀 ❤️ 투표 + love/멤버 ≥ 0.5 "확정" 필터
+
+---
+
+## Phase Details (v1.1)
+
+### Phase 8: 추출 깊이 (장소·영상 해설)
+
+**Goal:** 추출 파이프라인이 장소별 1~2문장 한국어 해설과 영상 TL;DR을 출력 계약에 추가해, 사용자가 핀마다 "여기가 어떤 곳인지"를 자막 근거 기반으로 읽을 수 있고, 공개 보드(web)에 그 해설이 노출된다. 해설은 부가 기능이라 절대 추출 자체를 실패시키지 않는다.
+**Depends on:** Nothing (v1.1 첫 phase — 기존 v1 추출 파이프라인 위에 증분)
+**Why first:** "좋은 추출 결과물 = 장소 + 해설"이라는 출력 계약을 정의해야 Phase 9(블로그·인스타)가 그 계약을 재사용할 수 있다. 설계가 SESSION-NOTES §2에 잠겨 있어 회색지대가 적고 저위험.
+**Requirements:** EXTRACT-12, EXTRACT-13, EXTRACT-14, VIEW-08
+**Owners:** Backend (EXTRACT-12/13/14), Web (VIEW-08)
+**Design lock (SESSION-NOTES §2):** 단일 Claude 호출 출력 스키마 확장(새 호출/레이턴시 X). 새 nullable text 컬럼 2개(`places.summary_ko`, `links.summary_ko`)를 **새 append-only 마이그레이션** `supabase/migrations/NNNN_extraction_summaries.sql`로 추가. 반환각 규칙(자막 근거 범위 내, 근거 없으면 비움) + 기존 `source_quote` 필수·confidence 필터 유지. 한국어 출력(영상이 JP/EN이어도). 손댈 파일: `supabase/functions/extract-youtube/pipeline/claude.ts`, `.../index.ts`, `packages/core/src/schemas/{place,link,extraction}.ts`, 새 마이그레이션, 웹 공개 보드 UI.
+**Success Criteria** (what must be TRUE):
+  1. 자막 있는 여행 영상을 추출하면 각 장소에 비어있지 않은 `places.summary_ko`(1~2문장 한국어)가 채워지고, 해당 영상(link)에 2~3문장 한국어 TL;DR(`links.summary_ko`)이 생성된다
+  2. 생성된 해설이 자막·설명 근거 범위 내에 머무른다 (스팟체크 시 환각 없음 — 근거 없는 장소는 해설이 짧거나 비어있음)
+  3. 자막이 빈약한 영상은 해설이 짧거나 비어도 장소 추출 자체는 성공한다 (해설/요약 누락 시 NULL 저장, 기존 confidence 필터·source_quote 필수 유지)
+  4. 공개 보드(web)에서 장소 해설과 영상 요약이 노출되며, summary_ko 값이 없는 레거시 데이터에서도 레이아웃이 깨지지 않는다 (조건부 렌더)
+**Plans:** TBD
+**UI hint:** yes
+
+---
+
+### Phase 9: 소스 넓이 (블로그·인스타)
+
+**Goal:** 사용자가 유튜브 외에 블로그(네이버/티스토리 등)와 인스타그램 게시물 URL을 던져도, MOAJOA가 본문·캡션 텍스트를 추출해 동일한 파이프라인으로 장소 + 해설을 생성한다. 추출 불가능한 소스는 묵묵부답 대신 명시적 실패 사유를 돌려준다.
+**Depends on:** Phase 8 (②의 출력 계약 — `summary_ko` 포함 장소+해설 스키마 — 을 재사용)
+**Why now:** "모으기" 입구를 유튜브 너머로 넓혀 acquisition surface를 키운다. Phase 8이 출력 계약을 먼저 굳혀야 소스별 파서가 같은 결과 shape로 수렴한다.
+**Requirements:** SRC-01, SRC-02
+**Owners:** Backend
+**Note:** 기존 v2-defer의 EXTRACT-10(manual-queue 운영진 추출)과 구분 — v1.1 SRC는 **자동** 추출.
+**Success Criteria** (what must be TRUE):
+  1. 블로그(네이버/티스토리 등) URL을 던지면 본문 텍스트가 추출되어 유튜브와 동일한 파이프라인으로 장소 + `summary_ko` 해설이 생성된다
+  2. 인스타그램 게시물 URL을 던지면 캡션/본문에서 장소 + 해설이 생성된다
+  3. 추출 불가능한 소스(로그인 벽·본문 없음 등)는 추출이 묵묵부답으로 멈추지 않고 명시적 실패 사유를 반환한다 (TRUST-03 실패 사유 노출 동선 재사용)
+**Plans:** TBD
+
+---
+
+### Phase 10: 웹 투표 (협업)
+
+**Goal:** 공유 보드 링크를 받은 친구가 앱 설치 없이 웹에서 멤버로 참여하고, 보드의 핀에 ❤️로 투표해 "같이 갈 곳"을 함께 고를 수 있다. 충분한 지지(love/멤버 ≥ 0.5)를 받은 핀은 "확정"으로 필터되어 한눈에 보인다.
+**Depends on:** Nothing hard (8/9와 거의 독립 — 협업 surface). 단 의미 있는 투표 대상이 되려면 추출된 핀이 보드에 있어야 하므로 v1 추출·열람 위에 얹힌다.
+**Why now:** SESSION-NOTES §3 웹 범위 결정 — 웹 = 조회+공유+**투표**. 초대받은 친구가 무설치로 "여기 가자" 참여하는 것이 소셜 루프(같이 고르기)의 핵심. iOS는 캡처/편집 전담으로 남는다.
+**Requirements:** COLLAB-01, COLLAB-02
+**Owners:** Web + Backend (멤버십 RLS)
+**Note (CLAUDE.md 갱신 플래그):** 실제 빌드 시 CLAUDE.md `web/ = 열람·공개 보드` → `열람·공개 + 투표 참여`로 확장. 단 하드룰(웹에 보드 생성·링크 추가 UI 금지)은 **유지** — 추가하는 건 투표/참여지 생성이 아님 (SESSION-NOTES §3).
+**Success Criteria** (what must be TRUE):
+  1. 공유 보드 링크(slug)로 들어온 사용자가 멤버로 참여(수락)할 수 있고, 멤버 목록에 반영된다
+  2. 멤버가 웹에서 보드의 핀에 ❤️ 투표할 수 있고, 투표가 즉시(또는 새로고침 시) 반영된다
+  3. love/총멤버 ≥ 0.5인 핀이 "확정"으로 필터·표시되어, 멤버가 합의된 장소를 한눈에 구분할 수 있다
+**Plans:** TBD
+**UI hint:** yes
+
+---
+
+## Progress Table (v1.1)
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 8. 추출 깊이 (장소·영상 해설) | 0/? | Not started | - |
+| 9. 소스 넓이 (블로그·인스타) | 0/? | Not started | - |
+| 10. 웹 투표 (협업) | 0/? | Not started | - |
+
+---
+
+## Phase Ordering Rationale (v1.1)
+
+```
+Phase 8 (② 추출 깊이 — 출력 계약 정의: 장소+해설)
+   │
+   ▼
+Phase 9 (① 소스 넓이 — ②의 출력 계약 재사용: 블로그·인스타)
+
+Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
+```
+
+**핵심 의존 관계:**
+
+- **8 → 9:** Phase 9의 소스별 파서가 Phase 8이 정의한 "장소 + summary_ko" 출력 계약으로 수렴해야 함. 8 없이 9를 하면 출력 shape이 두 번 바뀐다.
+- **10 독립:** 웹 투표는 추출 파이프라인이 아니라 멤버십·투표 surface. 8/9와 파일 경계가 거의 겹치지 않아 병렬 가능. 단 투표 대상 핀은 기존 v1 추출·열람으로 이미 존재.
+
+**병렬 권장 (2인 팀):**
+
+- Phase 10 ∥ Phase 8/9 (협업 surface vs 추출 파이프라인 — 파일 경계 분리)
+
+---
+
+## Coverage (v1.1)
+
+✓ All 8 v1.1 requirements mapped
+✓ No orphaned requirements
+✓ No duplicate mappings
+
+| Category | Requirements | Phase |
+|----------|--------------|-------|
+| EXTRACT (12/13/14) | 3 | 8 |
+| VIEW (08) | 1 | 8 |
+| SRC (01/02) | 2 | 9 |
+| COLLAB (01/02) | 2 | 10 |
+| **Total** | **8** | -- |
+
+---
+
+*v1.1 Roadmap created: 2026-06-07 by roadmapper (autonomous mode — recommended defaults)*
+*Design source: `docs/SESSION-NOTES-2026-06-07.md` §2/§3/§4*
+*Next: `/gsd-discuss-phase 8` 또는 `/gsd-plan-phase 8`*

@@ -1,21 +1,21 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
+milestone: v1.1
+milestone_name: 추출 고도화 + 협업
 status: in_progress
-last_updated: "2026-06-07T04:34:20.242Z"
+last_updated: "2026-06-07T00:00:00.000Z"
 progress:
-  total_phases: 7
-  completed_phases: 6
-  total_plans: 28
-  completed_plans: 27
-  percent: 86
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
-# STATE: MOAJOA v1
+# STATE: MOAJOA v1.1
 
-**Last updated:** 2026-05-25
-**Milestone:** v1 (MVP — self-dogfooding 가능선)
+**Last updated:** 2026-06-07
+**Milestone:** v1.1 (추출 고도화 + 협업)
 
 ---
 
@@ -30,6 +30,18 @@ progress:
 ---
 
 ## Current Position
+
+**Milestone:** v1.1 (추출 고도화 + 협업)
+Phase: 8 — 추출 깊이 (장소·영상 해설) — **Not started (planning)**
+Plan: — (아직 plan 없음)
+
+- **Next action:** `/gsd-discuss-phase 8` (설계는 SESSION-NOTES §2에 잠겨 있어 회색지대 적음) → `/gsd-plan-phase 8` → `/gsd-execute-phase 8`
+- **v1.1 phase 순서:** 8 (② 추출 깊이) → 9 (① 소스 넓이, depends 8) → 10 (웹 투표, 거의 독립)
+- **v1.1 progress:** [          ] 0% (0/3 phases)
+
+> **참고:** v1.0 도그푸딩 게이트(Phase 6 실행)는 의도적으로 병행/나중 (SESSION-NOTES §4 라우팅 결정). v1.0 phase 1~7 작업은 보존됨 — 아래 archived 로그 참조.
+
+### v1.0 Phase History (archived)
 
 Phase: 07 (pending-failed-links-screen) — EXECUTING
 Plan: 1 of 1
@@ -97,6 +109,7 @@ Plan: 1 of 1
 
 ### Roadmap Evolution
 
+- **Milestone v1.1 시작 (2026-06-07): 추출 고도화 + 협업.** Phase 8~10 추가 (번호는 v1.0에서 이어감). Phase 8 ② 추출 깊이(EXTRACT-12/13/14 + VIEW-08) → Phase 9 ① 소스 넓이(SRC-01/02, depends 8) → Phase 10 웹 투표(COLLAB-01/02). 설계 source: SESSION-NOTES §2/§3/§4. v1.0 도그푸딩(Phase 6 실행)은 의도적 병행/나중.
 - Phase 7 added: 저장 실패 링크 목록 화면 (Pending-Failed Links Screen) — Phase 3에서 만든 pending-failed 배너의 누락된 목적지 화면을 구현해 깨진 동선 완성. Depends on Phase 3.
 
 ### Decisions (Roadmap 단계에서 확정)
@@ -177,16 +190,29 @@ Plan: 1 of 1
 
 ## Phase Snapshot
 
+### v1.1 (active milestone)
+
+| Phase | Goal | Requirements | Status |
+|-------|------|--------------|--------|
+| 8 | 추출 깊이 (장소·영상 해설) | EXTRACT-12/13/14, VIEW-08 (4) | Not started (planning) |
+| 9 | 소스 넓이 (블로그·인스타) | SRC-01/02 (2) | Not started |
+| 10 | 웹 투표 (협업) | COLLAB-01/02 (2) | Not started |
+
+**v1.1 Coverage:** 8/8 ✓
+
+### v1.0 (archived)
+
 | Phase | Goal | Requirements | Status |
 |-------|------|--------------|--------|
 | 1 | Build Unblock & Hygiene | BUILD-01..03, WEB-01..02 (5) | ✓ Complete |
 | 2 | Extraction Pipeline Hardening | EXTRACT-01..06 (6) | ✓ Complete |
 | 3 | iOS Save Flow | SAVE-01..05 (5) | Code-complete (UAT pending) |
-| 4 | Public Board (Web) | VIEW-01..06 (6) | **Current (Wave 1 done)** |
-| 5 | Trust UI & Onboarding | TRUST-01..04, ONBOARD-01..02 (6) | **Current (Wave 1+2+3+4 done — 5/6)** |
-| 6 | Dogfooding Gate | EXTRACT-07 + 7일 실사용 (1) | Pending |
+| 4 | Public Board (Web) | VIEW-01..06 (6) | Code-complete (UAT pending) |
+| 5 | Trust UI & Onboarding | TRUST-01..04, ONBOARD-01..02 (6) | Complete (code) |
+| 6 | Dogfooding Gate | EXTRACT-07 + 7일 실사용 (1) | Pending (의도적 병행/나중) |
+| 7 | Pending-Failed Links Screen | (미할당) | ✓ Complete |
 
-**Coverage:** 29/29 ✓
+**v1.0 Coverage:** 29/29 ✓
 
 ---
 
