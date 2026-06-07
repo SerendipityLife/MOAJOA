@@ -10,7 +10,7 @@ interface PendingLink {
   retry_count: number;
 }
 
-interface FailedPendingLink extends PendingLink {
+export interface FailedPendingLink extends PendingLink {
   failed_at: string;
   reason: 'network' | 'auth' | 'api' | 'unknown';
 }
@@ -130,6 +130,17 @@ export function deleteFailedPending(url: string): void {
     SharedDefaultsKeys.PendingLinksFailed,
     failed.filter((f) => f.url !== url),
   );
+}
+
+/**
+ * Re-add a previously deleted failed entry (D-08 실행취소). Symmetric with
+ * deleteFailedPending — single entry point so the screen never imports
+ * SharedDefaults/constants directly to undo a swipe-delete.
+ */
+export function restoreFailedPending(item: FailedPendingLink): void {
+  const failed = listFailedPending();
+  failed.push(item);
+  SharedDefaults.set(SharedDefaultsKeys.PendingLinksFailed, failed);
 }
 
 function classifyError(e: unknown): FailedPendingLink['reason'] {
