@@ -213,6 +213,7 @@ Deno.serve(async (req) => {
         source_kind: 'ai',
         inferred_city: r.cand.inferred_city ?? null,
         confidence: r.cand.confidence,
+        summary_ko: r.cand.summary_ko ?? null,
       }));
 
       const { error: insertErr } = await admin
@@ -235,6 +236,7 @@ Deno.serve(async (req) => {
         external_id: meta.videoId,
         extraction_confidence: avgConfidence,
         extracted_at: new Date().toISOString(),
+        summary_ko: candidates.video_summary_ko ?? null,
       })
       .eq('id', link_id);
 
