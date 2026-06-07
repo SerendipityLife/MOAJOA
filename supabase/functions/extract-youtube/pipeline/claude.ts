@@ -38,6 +38,12 @@ export interface ExtractInputs {
   transcript: string;
   /** ISO-ish city hint, e.g. "tokyo", "osaka". Helps LLM disambiguate. */
   cityHint: string | null;
+  /**
+   * Source of the body text. Default 'youtube' keeps the prompt byte-identical
+   * (regression 0). 'blog'/'instagram' only change the body label + the
+   * timestamp-guidance line; schema + grounding rules are unchanged.
+   */
+  sourceKind?: 'youtube' | 'blog' | 'instagram';
 }
 
 export async function extractCandidatesFromContext(
@@ -93,7 +99,24 @@ export async function extractCandidatesFromContext(
 
 const SYSTEM_PROMPT = `You are a precise extractor of physical places (restaurants, cafes, shops, attractions) from Korean and Japanese travel YouTube content. You output ONLY a JSON object matching the provided schema. You never invent places that aren't actually mentioned. You include the timestamp where each place first appears. You also write short Korean commentary grounded strictly in the provided transcript/description; if there is no grounding, you leave it empty rather than inventing.`;
 
-function buildPrompt(inputs: ExtractInputs): string {
+/**
+ * Build the user prompt. Exported for the youtube regression-0 snapshot test.
+ * Only the body-section label and the timestamp-guidance constraint line vary by
+ * sourceKind; the default 'youtube' path is byte-identical to the original prompt.
+ */
+export function buildPrompt(inputs: ExtractInputs): string {
+  const kind = inputs.sourceKind ?? 'youtube';
+
+  // Body-section label: youtube transcripts vs. blog article body vs. IG caption.
+  // Colon is part of the label so the youtube line stays byte-identical (`Transcript:`).
+  const bodyLabel = kind === 'blog' ? 'Article body:' : kind === 'instagram' ? 'Caption:' : 'Transcript:';
+
+  // Timestamp guidance only makes sense for youtube (timestamped transcripts).
+  // For article/caption sources, tell the LLM there are no timestamps to rely on.
+  const timestampGuidance = kind === 'youtube'
+    ? `- If transcript is empty, rely on the description and title. The description often lists places with timestamps (e.g. "00:35 스시집"). Lower confidence accordingly.`
+    : `- This source is a ${kind === 'blog' ? 'blog article' : 'social caption'} with no timestamps. Leave source_timestamp_sec out. If the body is sparse, rely on the description and title.`;
+
   return `# Task
 Extract physical places visited or recommended in this YouTube video. Skip generic mentions ("일본 음식", "in Japan") — only specific named places.
 
@@ -118,7 +141,7 @@ Extract physical places visited or recommended in this YouTube video. Skip gener
 - Output JSON only. No markdown fence required, but if you use one, use \`\`\`json.
 - Max 30 places. Pick the most distinct.
 - confidence < 0.4 → skip the entry entirely (don't include it).
-- If transcript is empty, rely on the description and title. The description often lists places with timestamps (e.g. "00:35 스시집"). Lower confidence accordingly.
+${timestampGuidance}
 - Every place MUST include source_quote — a short excerpt from the transcript OR the description proving the place was mentioned. Omitting source_quote will cause the entry to be discarded.
 - summary_ko / video_summary_ko: 반드시 한국어로. 영상이 일본어/영어여도 한국어로 작성.
 - 해설은 자막·설명에 실제 근거가 있을 때만 작성. 근거 없으면 비워라(지어내지 마라). source_quote 규칙과 동일한 grounding.
@@ -130,7 +153,7 @@ Title: ${inputs.videoTitle}
 Description:
 ${inputs.description.slice(0, 4000)}
 
-Transcript:
+${bodyLabel}
 ${inputs.transcript.slice(0, 12000)}`;
 }
 
