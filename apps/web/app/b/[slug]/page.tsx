@@ -4,6 +4,7 @@ import { CITY_KO_MAP } from '@moajoa/core';
 import { getCachedPublicBoard } from '@/lib/cache';
 import { PublicBoardMap } from './_components/public-board-map';
 import { PlaceSummaryList } from './_components/place-summary-list';
+import { VoteIsland } from './_components/vote-island';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -93,6 +94,10 @@ export default async function PublicBoardPage({ params }: Props) {
           <div className="mt-6 w-full h-[60vh] md:h-[520px] rounded-lg border border-neutral-200 bg-neutral-50 overflow-hidden">
             <PublicBoardMap places={view.places} links={view.links} />
           </div>
+        )}
+
+        {view.board.id && (
+          <VoteIsland slug={slug} boardId={view.board.id} places={view.places} />
         )}
 
         <PlaceSummaryList places={view.places} />

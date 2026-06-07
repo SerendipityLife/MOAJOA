@@ -31,18 +31,24 @@ vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({ auth: { getUser: authGetUser } }),
 }));
 
-const joinSharedBoard = vi.fn(async () => 'board-1');
-const getAcceptedMemberCount = vi.fn(async () => 0);
-const getVoteCounts = vi.fn(async () => ({}) as Record<string, number>);
-const castVote = vi.fn(async () => ({}));
-const retractVote = vi.fn(async () => undefined);
+const joinSharedBoard = vi.fn(async (_client: unknown, _slug: string) => 'board-1');
+const getAcceptedMemberCount = vi.fn(async (_client: unknown, _boardId: string) => 0);
+const getVoteCounts = vi.fn(
+  async (_client: unknown, _placeIds: string[]) => ({}) as Record<string, number>,
+);
+const castVote = vi.fn(
+  async (_client: unknown, _input: { place_id: string; kind: string }) => ({}),
+);
+const retractVote = vi.fn(async (_client: unknown, _placeId: string) => undefined);
 
 vi.mock('@moajoa/api', () => ({
-  joinSharedBoard: (...a: unknown[]) => joinSharedBoard(...a),
-  getAcceptedMemberCount: (...a: unknown[]) => getAcceptedMemberCount(...a),
-  getVoteCounts: (...a: unknown[]) => getVoteCounts(...a),
-  castVote: (...a: unknown[]) => castVote(...a),
-  retractVote: (...a: unknown[]) => retractVote(...a),
+  joinSharedBoard: (client: unknown, slug: string) => joinSharedBoard(client, slug),
+  getAcceptedMemberCount: (client: unknown, boardId: string) =>
+    getAcceptedMemberCount(client, boardId),
+  getVoteCounts: (client: unknown, placeIds: string[]) => getVoteCounts(client, placeIds),
+  castVote: (client: unknown, input: { place_id: string; kind: string }) =>
+    castVote(client, input),
+  retractVote: (client: unknown, placeId: string) => retractVote(client, placeId),
 }));
 
 // next/navigation router.refresh
@@ -110,7 +116,7 @@ describe('VoteIsland', () => {
     fireEvent.click(joinBtn);
 
     await waitFor(() => expect(joinSharedBoard).toHaveBeenCalledTimes(1));
-    expect(joinSharedBoard.mock.calls[0][1]).toBe('shareslug1');
+    expect(joinSharedBoard.mock.calls[0]?.[1]).toBe('shareslug1');
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 
@@ -127,7 +133,7 @@ describe('VoteIsland', () => {
 
     fireEvent.click(voteBtn);
     await waitFor(() => expect(retractVote).toHaveBeenCalledTimes(1));
-    expect(retractVote.mock.calls[0][1]).toBe('p1');
+    expect(retractVote.mock.calls[0]?.[1]).toBe('p1');
     expect(castVote).not.toHaveBeenCalled();
   });
 
@@ -143,7 +149,7 @@ describe('VoteIsland', () => {
 
     fireEvent.click(voteBtn);
     await waitFor(() => expect(castVote).toHaveBeenCalledTimes(1));
-    expect(castVote.mock.calls[0][1]).toMatchObject({ place_id: 'p1', kind: 'love' });
+    expect(castVote.mock.calls[0]?.[1]).toMatchObject({ place_id: 'p1', kind: 'love' });
     expect(retractVote).not.toHaveBeenCalled();
   });
 
