@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-06-07T04:14:53.424Z"
+last_updated: "2026-06-07T04:34:20.242Z"
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 27
-  completed_plans: 26
-  percent: 71
+  completed_phases: 6
+  total_plans: 28
+  completed_plans: 27
+  percent: 86
 ---
 
 # STATE: MOAJOA v1
@@ -30,6 +30,9 @@ progress:
 ---
 
 ## Current Position
+
+Phase: 07 (pending-failed-links-screen) — EXECUTING
+Plan: 1 of 1
 
 - **Phase 1:** ✓ COMPLETE 2026-05-25 (01-01 design assets · 01-02 iOS smoke screen on real device · 01-03 web dev-tool gate · 01-04 N/A EAS fallback unused). BUILD-01/02/03 + WEB-01/02 모두 통과.
 - **Phase 2:** ✓ COMPLETE 2026-05-25 (동료: migration 0004, Edge Function broadcast/citation/cost-logging, schema push + billing alert). EXTRACT-01~06 모두 통과.
@@ -56,7 +59,7 @@ progress:
 - **Next action:** Phase 5 Wave 5 — 05-06 (lib/onboarding.ts AsyncStorage wrapper + OnboardCard component + [id].tsx visibility wire — ONBOARD-02). After that, end-of-phase UAT batch covers all Phase 5 live verification.
 - **Phase 6: Dogfooding Gate** — ✓ TEMPLATES COMPLETE 2026-05-26 (5/5 plans, ~14분 total, 10 commits 1137306+8591d0f+ed9f644+6df9283+c08802a+145d099+b654978+5b3a609+e11400c+97e225a). 06-01 pre-dogfooding-checklist (D-01 6 그룹 A~F + D-02 sign-off, 105 lines) + manual-uat-phase3.md N2 SQL substitute (set_config + 42501 expected) + 7 Evidence: 라인. 06-02 sample-videos.md 12-row matrix (D-04) + samples.json (D-05 schema, JSON.parse 12 entries) + ground-truth/_template.json (confidence_label high/medium/low) + ground-truth/README.md (per-video procedure, D-06 매칭, quality bar). 06-03 daily-log-template.md (7 Day blocks + End-of-Week SQL Snapshot + 7일 Pass/Fail Summary, D-10/D-11/D-12/D-13) + incidents.md (4-label policy P0/P1/expected-v1-limit/noise) + scripts/dogfooding/{p90-duration,daily-aggregate,measure-accuracy}.sql 3종 (percentile_cont + hidden_at IS NULL + jsonb_agg FILTER) + scripts/dogfooding/README.md (setup/args/output destinations). 06-04 friend-share-checklist.md (Friend A/B 양식 × D-15 5체크 + device meta + locale + 피드백, 97 lines) + screenshots/README.md (D-16 layout + NN-step.png 명명 + locale labeling). 06-05 pass-evaluator.md (D-20 11 criteria + D-21 4 fail → next phase mapping + decision tree) + extraction-baseline-TEMPLATE.md (D-09 5-part: Meta/Per-video/Aggregate/Top5/v2 시드) + PASS-TEMPLATE.md (D-22 sign-off 13 필드 + Phase 1.5 unlock) + PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append (D-19, idempotent). 모든 5 plans `autonomous: true` — production code 수정 0건, documentation/SQL templates only. Phase 6 dogfooding 실행 (7일 본인 여행 + 12 영상 ground truth + 친구 2명 share + baseline measurement)은 user-side work — 본 5 plans는 그 양식과 SQL을 미리 준비하는 것이 scope.
 - **Next action:** Phase 6 dogfooding execution (user-side) — pre-dogfooding-checklist.md sign-off → 7일 daily-log + incidents append → Day 5~6 친구 share → Day 7+1 baseline 측정 + pass-evaluator 평가 → PASS.md (또는 FAIL-YYYY-MM-DD.md) 작성 → Phase 1.5 unlock (협업·투표).
-- **Progress:** [████████████░] Overall 26/27 plans (Phase 1 + 2 완료 + Phase 3 5/5 + Phase 4 4/4 code-complete + Phase 5 6/6 code-complete + Phase 6 5/5 templates; Phase 3/4/5 UAT + Phase 6 dogfooding execution은 user-side deferred). 96%.
+- **Progress:** [██████████] 96%
 
 ---
 
@@ -184,6 +187,21 @@ progress:
 | 6 | Dogfooding Gate | EXTRACT-07 + 7일 실사용 (1) | Pending |
 
 **Coverage:** 29/29 ✓
+
+---
+
+## Phase 7 Execution Metrics
+
+| Phase 7 P1 | 5min | 3 tasks | 6 files |
+
+- Phase 7 Plan 07-01 완료: 2026-06-07 (~5분, 3 tasks; commits beca22d feat(헬퍼+export) + 3049f0c feat(failed.tsx 화면) + 104f410 fix(배너 동선 + 스모크 테스트); jest 38/38 PASS 8 suites — +8 신규 회귀 0; typecheck exit 0; zero deviations; 저장-실패 배너 not-found 동선 복구 + 실패 목록 화면 신설(리스트·사유배지·상대시각·행별/전체 재시도·스와이프 삭제·실행취소·empty state); FailedPendingLink export + restoreFailedPending 단일 진입점, drain/classifyError/enqueue 본문 불변; Swipeable는 화면-로컬 GestureHandlerRootView 래핑으로 root _layout.tsx 불변; react-native-gesture-handler/jestSetup import으로 native install() 회피 — 신규 패키지 0; 실기기 UAT는 end-of-phase batch deferred)
+
+## Phase 7 Decisions
+
+- [Phase 7]: FailedPendingLink interface에 export 추가(ReturnType 트릭 대신) — 화면 타입 가독성
+- [Phase 7]: 실행취소는 restoreFailedPending(item) 단일 진입점 — 화면이 SharedDefaults/constants 직접 import 회피
+- [Phase 7]: Swipeable는 화면-로컬 GestureHandlerRootView로 래핑 — root _layout.tsx 불변(Karpathy §3.3)
+- [Phase 7]: gesture-handler 컴포넌트 렌더 테스트는 import 'react-native-gesture-handler/jestSetup' 한 줄로 native install() 회피(신규 패키지 0)
 
 ---
 
