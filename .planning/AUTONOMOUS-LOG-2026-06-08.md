@@ -39,6 +39,13 @@
 | D19 | 06-08 | Phase 9 plan 구조 | **5 plans / 4 waves 승인** | gsd-plan-checker VERIFICATION PASSED (0 blocker). SSRF 가드, youtube 회귀-0 스냅샷, 마이그레이션 없음, IG graceful. 09-05(iOS+라이브)=autonomous:false 모닝 게이트. |
 | D20 | 06-08 | checker 2 warnings | **실행 시 inline 반영** | W1: claude.ts SYSTEM_PROMPT는 모든 sourceKind에 byte-identical 유지(executor가 '개선' 못 하게 가드; source_timestamp_sec optional이라 blog 타임스탬프 미포함 무해). W2: blog 분기 description='' → article excerpt 매핑(긴 글 recall, RESEARCH Pitfall 5). |
 
+| D21 | 06-08 | Phase 10 인증 모델 (회색지대) | **로그인 멤버만 투표 (익명 X)** | RLS/트리거가 `auth.uid()` 의존, 익명은 중복표/어뷰즈. 흐름: 공유링크→로그인→자가참여→투표. 기존 web auth 재사용. |
+| D22 | 06-08 | 자가참여 (COLLAB-01) | **slug = bearer 초대 → SECURITY DEFINER RPC `join_shared_board`, role='voter'** | 기존 membership insert는 owner만 → 자가참여 RPC 필요. 친구 여행 공유 모델 = slug 소지가 초대. 새 마이그레이션 0009(적용=모닝). |
+| D23 | 06-08 | 투표 표면 (COLLAB-02) | **기존 `/b/[slug]`에 클라 island** | 단일 공유 URL + 공개 SSR 캐시 유지(새 라우트 X). 투표 affordance는 브라우저 세션 확인 클라 컴포넌트로 하이드레이트. |
+| D24 | 06-08 | Phase 10 범위 인식 | **백엔드 대부분 기존 재사용** | votes RLS·`can_vote_board`·`castVote/retractVote/getVoteCounts`·`isPlaceConfirmed` 전부 존재 → Phase 10 = 자가참여 RPC + api 헬퍼 + 웹 island가 핵심(스코프 축소). |
+| D25 | 06-08 | Phase 10 research·UI-SPEC | **생략** | 백엔드 존재 + Next 클라 island 패턴 알려짐(retry-extraction-button analog) + pattern-mapper가 grounding. 투표 UI는 기존 토큰 재사용 → 별도 ceremony 불필요. |
+| D26 | 06-08 | CLAUDE.md 웹 역할 갱신 | **모닝 게이트(자동 편집 X)** | SESSION-NOTES §3 사전지정 diff(web=열람+투표, 하드룰 유지)지만 거버넌스 문서라 추측 자동편집 대신 추천 diff를 Morning to-dos에 제시→사용자 적용. |
+
 *(이후 결정은 아래에 계속 append)*
 
 ---
