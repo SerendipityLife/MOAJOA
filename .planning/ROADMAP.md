@@ -316,7 +316,12 @@ Plans:
   1. 블로그(네이버/티스토리 등) URL을 던지면 본문 텍스트가 추출되어 유튜브와 동일한 파이프라인으로 장소 + `summary_ko` 해설이 생성된다
   2. 인스타그램 게시물 URL을 던지면 캡션/본문에서 장소 + 해설이 생성된다
   3. 추출 불가능한 소스(로그인 벽·본문 없음 등)는 추출이 묵묵부답으로 멈추지 않고 명시적 실패 사유를 반환한다 (TRUST-03 실패 사유 노출 동선 재사용)
-**Plans:** TBD
+**Plans:** 5 plans (4 autonomous + 1 blocking morning gate · 4 waves)
+  - [ ] 09-01-PLAN.md — source.ts 계약(SourceContent + SSRF guard) + instagram.ts graceful-fail + claude.ts optional sourceKind(youtube 회귀 0) + deno 테스트 [SRC-02] (Wave 1)
+  - [ ] 09-02-PLAN.md — blog.ts 어댑터(deno-dom WASM + @mozilla/readability + naver PostView rewrite + EUC-KR + SSRF) + mocked-fetch deno 테스트 [SRC-01] (Wave 2, depends 09-01)
+  - [ ] 09-03-PLAN.md — index.ts source-router(youtube 그대로 + blog/insta 분기 + manual→400) [SRC-01/02] (Wave 3, depends 09-01·02)
+  - [ ] 09-04-PLAN.md — 웹 dev-tool add-link 트리거 확장(youtube→blog/insta) + 안내문구 [SRC-01/02] (Wave 1, file-disjoint)
+  - [ ] 09-05-PLAN.md — [BLOCKING, autonomous:false] iOS 트리거 확장 + 라이브 blog/insta 스팟체크(실기기 + 실네트워크, 08-04 선행) [SRC-01/02] (Wave 4, depends 09-03·04)
 
 ---
 
