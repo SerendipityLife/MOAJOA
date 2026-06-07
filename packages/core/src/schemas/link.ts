@@ -13,6 +13,8 @@ export const LinkSchema = z.object({
   title: z.string().max(300).nullable(),
   thumbnail_url: z.string().url().nullable(),
   author_name: z.string().max(100).nullable(),
+  /** 2~3문장 한국어 영상 TL;DR (Phase 8 EXTRACT-13). null = legacy/없음. */
+  summary_ko: z.string().max(800).nullable(),
   /** youtube video id, instagram shortcode, etc — for de-duplication. */
   external_id: z.string().max(100).nullable(),
   extraction_status: z.enum(ExtractionStatus),

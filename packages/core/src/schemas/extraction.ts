@@ -29,6 +29,7 @@ export type ExtractYouTubeResponse = z.infer<typeof ExtractYouTubeResponseSchema
 export const LLMExtractionOutputSchema = z.object({
   reasoning: z.string().max(2000).optional(),
   ...ExtractedPlacesPayloadSchema.shape,
+  video_summary_ko: z.string().max(800).optional(),
 });
 
 export type LLMExtractionOutput = z.infer<typeof LLMExtractionOutputSchema>;

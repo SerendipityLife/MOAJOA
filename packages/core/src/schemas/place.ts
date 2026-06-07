@@ -37,6 +37,9 @@ export const PlaceSchema = z.object({
   /** Quote from the source explaining context ("...라멘이 진짜 맛있어요"). */
   source_quote: z.string().max(500).nullable(),
 
+  /** 1~2문장 한국어 해설 (Phase 8 EXTRACT-12). null = legacy/근거 없음. */
+  summary_ko: z.string().max(500).nullable(),
+
   /** User notes attached after adding. */
   note: z.string().max(500).nullable(),
 
@@ -83,6 +86,7 @@ export const ExtractedPlaceCandidateSchema = z.object({
   name_ko: z.string().max(200).optional(),
   source_timestamp_sec: z.number().int().nonnegative().optional(),
   source_quote: z.string().max(500).optional(),
+  summary_ko: z.string().max(500).optional(),
   /** LLM's confidence 0-1 that this is a real place. */
   confidence: z.number().min(0).max(1).default(0.5),
 });
