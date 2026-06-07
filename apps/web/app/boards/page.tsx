@@ -16,7 +16,7 @@ export default async function BoardsPage() {
   const boards = await listMyBoards(supabase);
 
   return (
-    <main className="min-h-screen px-6 py-8 max-w-3xl mx-auto">
+    <main className="min-h-screen px-6 py-8 pb-24 max-w-3xl mx-auto">
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold">내 보드</h1>
         <CreateBoardButton />
