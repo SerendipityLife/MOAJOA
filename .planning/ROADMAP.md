@@ -337,7 +337,10 @@ Plans:
   1. 공유 보드 링크(slug)로 들어온 사용자가 멤버로 참여(수락)할 수 있고, 멤버 목록에 반영된다
   2. 멤버가 웹에서 보드의 핀에 ❤️ 투표할 수 있고, 투표가 즉시(또는 새로고침 시) 반영된다
   3. love/총멤버 ≥ 0.5인 핀이 "확정"으로 필터·표시되어, 멤버가 합의된 장소를 한눈에 구분할 수 있다
-**Plans:** TBD
+**Plans:** 3 plans (2 autonomous + 1 blocking morning gate)
+- [ ] 10-01-PLAN.md — 백엔드: 마이그레이션 0009 (join_shared_board + accepted_member_count + public_board_view 재발행: id 노출 + shared 가시성) + api 헬퍼 memberships.ts (joinSharedBoard, getAcceptedMemberCount)
+- [ ] 10-02-PLAN.md — 웹 투표 island: /b/[slug] 클라 컴포넌트 (비로그인/멤버/비멤버 분기 + ❤️ 토글 + 확정 필터, isPlaceConfirmed·castVote 재사용) + page 배선 + vitest
+- [ ] 10-03-PLAN.md — [BLOCKING, autonomous:false] supabase db push (0009) + supabase:types 재생성 + 라이브 브라우저 흐름(로그인→참여→투표→확정) + 가시성 확장 사용자 확인 + CLAUDE.md 웹 역할 문서 갱신(추천 diff)
 **UI hint:** yes
 
 ---
