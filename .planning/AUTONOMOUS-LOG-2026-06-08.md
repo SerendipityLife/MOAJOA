@@ -28,6 +28,13 @@
 | D10 | 06-08 | Phase 8 UI-SPEC(gsd-ui-phase) | **생략** | VIEW-08은 기존 공개보드 페이지에 조건부 해설 텍스트 블록 추가(새 화면 X, 새 생성/추가 UI X). planner가 PATTERNS 기반 인라인 명세(링크카드 토큰 재사용) → 별도 UI-SPEC ceremony 과함. |
 | D11 | 06-08 | Phase 8 plan 구조 | **4 plans / 3 waves 승인** | gsd-plan-checker VERIFICATION PASSED (4-link 웹 체인 닫힘, 4 REQ-ID 커버, CLAUDE.md 준수). 08-04 = autonomous:false 모닝 게이트. |
 
+| D12 | 06-08 | Phase 9 아키텍처 | **source-adapter 패턴** (Edge Function 일반화: youtube 게이트→source-router, 소스별 텍스트 어댑터 → 동일 claude.ts 재사용) | 정찰: `source_kind`·`detectSourceKind` 이미 존재, `extractCandidatesFromContext`는 텍스트만 받음 → 최소 변경으로 일반화. youtube 회귀 0. |
+| D13 | 06-08 | Edge Function 이름 | **`extract-youtube` 유지** | rename은 클라 `functions.invoke('extract-youtube')` 계약 깸(되돌리기 어려움). 내부만 일반 추출기로 확장 = reversible. |
+| D14 | 06-08 | 인스타(SRC-02) 범위 | **graceful-failure 우선** + best-effort | 무인증 IG 캡션 fetch 불안정/ToS 리스크. SRC-02 자체가 "추출 불가 소스는 명시적 실패 사유" 허용. 견고한 IG는 Graph API 토큰 → 추후. 블로그(SRC-01)는 풀 구현. |
+| D15 | 06-08 | 클라이언트 트리거 | **web dev-tool만 자동 확장 · iOS는 모닝 게이트** | web add-link은 dev-tool(저위험, build 검증가능). iOS 트리거+라이브 추출은 실기기/네트워크 검증 필요 → 미검증 iOS 코드 안 보냄(autonomous:false). |
+| D16 | 06-08 | Phase 9 마이그레이션 | **불필요** | `source_kind` enum 기존(0001). Phase 8 `summary_ko` 컬럼 라이브 적용(08-04)이 선행돼야 blog 추출 summary 저장 → 라이브 검증은 08-04 이후. |
+| D17 | 06-08 | Phase 9 research | **실행** | 설계 미잠금(Phase 8과 다름) → research가 추천 기본값. Deno 블로그 본문 추출·네이버 iframe·IG 실현가능성 확정. |
+
 *(이후 결정은 아래에 계속 append)*
 
 ---
