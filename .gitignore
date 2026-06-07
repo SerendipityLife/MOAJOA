@@ -1,6 +1,9 @@
 # Local ASIS archive — never push
 _archive_asis/
 
+# Design reference screenshots (Refero/Mozi) — local only, regenerable via Refero
+design_references/
+
 # Dependencies
 node_modules/
 .pnpm-store/

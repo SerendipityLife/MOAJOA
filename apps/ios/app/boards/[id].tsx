@@ -1,4 +1,10 @@
-import { addLink, listLinksByBoard, listPlacesByBoard, getBoard, triggerExtraction } from '@moajoa/api';
+import {
+  addLink,
+  listLinksByBoard,
+  listPlacesByBoard,
+  getBoard,
+  triggerExtraction,
+} from '@moajoa/api';
 import {
   detectSourceKind,
   SharedDefaultsKeys,
@@ -8,16 +14,8 @@ import {
   type Place,
 } from '@moajoa/core';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  RefreshControl,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList, Modal, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
@@ -42,7 +40,11 @@ function mapErrorReason(raw?: string): string {
 }
 
 export default function BoardDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // pendingUrl: set when the user added a link on the "새 여행" screen — the
+  // board was just created and we replay the exact same add-link + extract path
+  // here so the flow is identical to typing a link on this screen.
+  const { id, pendingUrl } = useLocalSearchParams<{ id: string; pendingUrl?: string }>();
+  const pendingConsumed = useRef(false);
   const [board, setBoard] = useState<Board | null>(null);
   const [links, setLinks] = useState<Link[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
@@ -131,10 +133,11 @@ export default function BoardDetailScreen() {
     };
   }, [analyzing, load]);
 
-  async function onAddLink() {
-    if (!url.trim() || !id) return;
+  async function onAddLink(explicitUrl?: string) {
+    const value = (explicitUrl ?? url).trim();
+    if (!value || !id) return;
     try {
-      const link = await addLink(supabase, { board_id: id, url: url.trim() });
+      const link = await addLink(supabase, { board_id: id, url: value });
       setUrl('');
       // D-02: mirror last_board_id to App Group SharedDefaults so the Share
       // Extension knows where to enqueue subsequent shares.
@@ -167,8 +170,23 @@ export default function BoardDetailScreen() {
     }
   }
 
+  // Replay a link handed off from the "새 여행" screen exactly once. Guarded by
+  // a ref so re-renders don't re-add it, and the param is cleared after use.
+  useEffect(() => {
+    if (!pendingUrl || pendingConsumed.current || !id) return;
+    pendingConsumed.current = true;
+    void onAddLink(pendingUrl);
+    router.setParams({ pendingUrl: '' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingUrl, id]);
+
   const region = places[0]
-    ? { latitude: places[0].lat, longitude: places[0].lng, latitudeDelta: 0.05, longitudeDelta: 0.05 }
+    ? {
+        latitude: places[0].lat,
+        longitude: places[0].lng,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }
     : { latitude: 35.68, longitude: 139.69, latitudeDelta: 0.5, longitudeDelta: 0.5 };
 
   const detected = url ? detectSourceKind(url) : null;
@@ -176,8 +194,7 @@ export default function BoardDetailScreen() {
   // Phase 5 ONBOARD-02 (D-19/D-21): only render when explicitly known not
   // dismissed AND the board is empty on both axes (links and places). null
   // (loading) is excluded so users who already dismissed never see a flash.
-  const showOnboardCard =
-    linkCardDismissed === false && places.length === 0 && links.length === 0;
+  const showOnboardCard = linkCardDismissed === false && places.length === 0 && links.length === 0;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -217,7 +234,7 @@ export default function BoardDetailScreen() {
             className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
           />
           <Pressable
-            onPress={onAddLink}
+            onPress={() => onAddLink()}
             disabled={!url.trim()}
             className="bg-brand-500 px-4 rounded-lg justify-center disabled:opacity-50"
           >
@@ -287,11 +304,14 @@ export default function BoardDetailScreen() {
         keyExtractor={(l) => l.id}
         contentContainerClassName="px-6 pb-12"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={async () => {
-            setRefreshing(true);
-            await load();
-            setRefreshing(false);
-          }} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await load();
+              setRefreshing(false);
+            }}
+          />
         }
         ListHeaderComponent={
           <Text className="text-sm font-medium text-neutral-700 mb-2">
@@ -304,12 +324,17 @@ export default function BoardDetailScreen() {
           const status = item.extraction_status;
           const isFailed = status === 'failed';
           const statusKo =
-            status === 'pending' ? '분석 대기'
-            : status === 'processing' ? '분석 중...'
-            : status === 'ready' ? '분석 완료'
-            : status === 'failed' ? '분석 실패 — 탭하여 재시도'
-            : status === 'manual_review' ? '재추출 필요'
-            : status;
+            status === 'pending'
+              ? '분석 대기'
+              : status === 'processing'
+                ? '분석 중...'
+                : status === 'ready'
+                  ? '분석 완료'
+                  : status === 'failed'
+                    ? '분석 실패 — 탭하여 재시도'
+                    : status === 'manual_review'
+                      ? '재추출 필요'
+                      : status;
           const onRowPress = () => {
             if (!isFailed) return;
             setAnalyzing(item.id);
@@ -330,9 +355,7 @@ export default function BoardDetailScreen() {
               </Text>
               <Text className="text-xs text-neutral-500 mt-1">
                 {item.source_kind} ·{' '}
-                <Text className={isFailed ? 'text-danger' : 'text-neutral-500'}>
-                  {statusKo}
-                </Text>
+                <Text className={isFailed ? 'text-danger' : 'text-neutral-500'}>{statusKo}</Text>
               </Text>
             </Pressable>
           );
@@ -370,13 +393,7 @@ export default function BoardDetailScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setAddPinOpen(false)}
       >
-        {id && (
-          <PinAddModal
-            boardId={id}
-            onClose={() => setAddPinOpen(false)}
-            onAdded={load}
-          />
-        )}
+        {id && <PinAddModal boardId={id} onClose={() => setAddPinOpen(false)} onAdded={load} />}
       </Modal>
     </SafeAreaView>
   );

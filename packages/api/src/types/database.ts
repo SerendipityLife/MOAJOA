@@ -20,9 +20,11 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           description: string | null
+          end_date: string | null
           id: string
           owner_id: string
           share_slug: string | null
+          start_date: string | null
           title: string
           updated_at: string
           visibility: string
@@ -32,9 +34,11 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
           id?: string
           owner_id?: string
           share_slug?: string | null
+          start_date?: string | null
           title: string
           updated_at?: string
           visibility?: string
@@ -44,9 +48,11 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
           id?: string
           owner_id?: string
           share_slug?: string | null
+          start_date?: string | null
           title?: string
           updated_at?: string
           visibility?: string

@@ -1,5 +1,28 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
+import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+// Mozi식 가운데 ＋ FAB. 탭 슬롯 전체를 차지하되, 탭 전환 대신 새 보드 작성으로 보냄.
+function NewBoardFab() {
+  return (
+    <Pressable
+      onPress={() => router.push('/boards/new')}
+      className="flex-1 items-center justify-center"
+    >
+      <View
+        className="w-14 h-14 rounded-full bg-brand-500 items-center justify-center"
+        style={{
+          shadowColor: '#2979FF',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.35,
+          shadowRadius: 8,
+        }}
+      >
+        <Ionicons name="add" size={30} color="#FFFFFF" />
+      </View>
+    </Pressable>
+  );
+}
 
 export default function TabsLayout() {
   return (
@@ -13,7 +36,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="boards"
         options={{
-          title: '보드',
+          title: '내 여행',
           tabBarIcon: ({ color, size }) => <Ionicons name="bookmarks-outline" color={color} size={size} />,
         }}
       />
@@ -22,6 +45,20 @@ export default function TabsLayout() {
         options={{
           title: '둘러보기',
           tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="new"
+        options={{
+          title: '',
+          tabBarButton: () => <NewBoardFab />,
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: '내 친구',
+          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" color={color} size={size} />,
         }}
       />
       <Tabs.Screen

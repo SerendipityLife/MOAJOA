@@ -16,7 +16,10 @@ export async function getBoard(client: MoajoaSupabaseClient, id: string): Promis
   return (data as Board | null) ?? null;
 }
 
-export async function createBoard(client: MoajoaSupabaseClient, input: BoardCreate): Promise<Board> {
+export async function createBoard(
+  client: MoajoaSupabaseClient,
+  input: BoardCreate,
+): Promise<Board> {
   const { data, error } = await client
     .from('boards')
     .insert({
@@ -24,6 +27,8 @@ export async function createBoard(client: MoajoaSupabaseClient, input: BoardCrea
       description: input.description ?? null,
       visibility: input.visibility,
       city_code: input.city_code ?? null,
+      start_date: input.start_date ?? null,
+      end_date: input.end_date ?? null,
     })
     .select('*')
     .single();
@@ -43,6 +48,8 @@ export async function updateBoard(
       ...(patch.description !== undefined && { description: patch.description }),
       ...(patch.visibility !== undefined && { visibility: patch.visibility }),
       ...(patch.city_code !== undefined && { city_code: patch.city_code }),
+      ...(patch.start_date !== undefined && { start_date: patch.start_date }),
+      ...(patch.end_date !== undefined && { end_date: patch.end_date }),
     })
     .eq('id', id)
     .select('*')
