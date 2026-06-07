@@ -32,10 +32,10 @@ progress:
 ## Current Position
 
 **Milestone:** v1.1 (추출 고도화 + 협업)
-Phase: 8 — 추출 깊이 (장소·영상 해설) — **Not started (planning)**
-Plan: — (아직 plan 없음)
+Phase: 8 — 추출 깊이 (장소·영상 해설) — **Executing (plans ready · checker PASSED)**
+Plan: 4 plans / 3 waves. Wave 1 (08-01 foundation) → Wave 2 (08-02 backend ∥ 08-03 web) autonomous · Wave 3 (08-04) = autonomous:false 모닝 게이트
 
-- **Next action:** `/gsd-discuss-phase 8` (설계는 SESSION-NOTES §2에 잠겨 있어 회색지대 적음) → `/gsd-plan-phase 8` → `/gsd-execute-phase 8`
+- **Next action:** Wave 1·2 자동 실행 중. 08-04(supabase db push + `pnpm supabase:types` + 라이브 스팟체크)는 아침에 사용자 처리 — `.planning/AUTONOMOUS-LOG-2026-06-08.md` Morning to-dos 참조.
 - **v1.1 phase 순서:** 8 (② 추출 깊이) → 9 (① 소스 넓이, depends 8) → 10 (웹 투표, 거의 독립)
 - **v1.1 progress:** [          ] 0% (0/3 phases)
 

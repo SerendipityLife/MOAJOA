@@ -24,6 +24,9 @@
 | D6 | 06-07 night | 로드맵 granularity | **3 phases (패딩 없음)** | gsd-roadmapper 추천. 좁은 증분 마일스톤이 ②/①/투표 3개 자연 경계로 떨어짐. 8→9 의존, 10 독립. |
 | D7 | 06-07 night | REQUIREMENTS.md L5 헤더(`Milestone: v1`) | **v1.1 active로 갱신 (surgical)** | roadmapper가 flag. doc이 이제 v1+v1.1 포함하므로 헤더만 최소 수정. |
 | D8 | 06-07 night | Phase 8 discuss-phase | **생략 → plan 직행** | 설계가 SESSION-NOTES §2 + ROADMAP "Design lock"에 이미 잠김. 회색지대 적음 → /gsd-plan-phase 8로 직행 (per-phase research는 plan 단계에서 유지). |
+| D9 | 06-08 | Phase 8 standalone 리서치(gsd-phase-researcher) | **생략** | 설계 §2 잠금 + gsd-pattern-mapper가 코드베이스 analog(claude.ts·schemas·migration·web) 정확히 매핑 → 별도 RESEARCH.md 불필요. §2를 08-CONTEXT.md로 승격해 파이프라인에 공급. |
+| D10 | 06-08 | Phase 8 UI-SPEC(gsd-ui-phase) | **생략** | VIEW-08은 기존 공개보드 페이지에 조건부 해설 텍스트 블록 추가(새 화면 X, 새 생성/추가 UI X). planner가 PATTERNS 기반 인라인 명세(링크카드 토큰 재사용) → 별도 UI-SPEC ceremony 과함. |
+| D11 | 06-08 | Phase 8 plan 구조 | **4 plans / 3 waves 승인** | gsd-plan-checker VERIFICATION PASSED (4-link 웹 체인 닫힘, 4 REQ-ID 커버, CLAUDE.md 준수). 08-04 = autonomous:false 모닝 게이트. |
 
 *(이후 결정은 아래에 계속 append)*
 
@@ -41,9 +44,12 @@
 
 > 자동으로 못 하는 것들. 아침에 사용자가 처리.
 
-- (채워질 예정) `supabase db push` + `pnpm supabase:types` — 새 마이그레이션 적용 시
-- (채워질 예정) 실기기/실브라우저 UAT
-- (채워질 예정) 추출 스팟체크(환각 점검)
+### Phase 8 (08-04 — autonomous:false BLOCKING gate)
+- [ ] `supabase db push` — 마이그레이션 `0008_extraction_summaries.sql` 적용 (SUPABASE_ACCESS_TOKEN/linked project 필요. 이 세션엔 미인증)
+- [ ] `pnpm supabase:types` → `packages/api/src/types/database.ts` 재생성 (08-04에 wc -l 가드 + git checkout 복구 절차 명시됨)
+- [ ] **라이브 스팟체크:** 자막 풍부한 여행 영상 1개 추출 → 각 장소 비어있지 않은 `summary_ko` + 링크 `summary_ko` 확인, **환각 없음** 스팟체크 (ROADMAP 성공기준 1·2)
+- [ ] 자막 빈약 영상 1개 → 해설 짧/빈 채로 추출은 성공 (성공기준 3, EXTRACT-14)
+- [ ] 웹 공개 보드에서 해설/요약 노출 + 레거시(summary 없는) 보드 레이아웃 안 깨짐 확인 (성공기준 4, VIEW-08)
 
 ---
 
@@ -51,3 +57,4 @@
 
 - **2026-06-07 night** — 자동 모드 진입. 마일스톤 스캐폴딩 시작(PROJECT.md·REQUIREMENTS.md·decision log).
 - **2026-06-07 night** — 스캐폴딩 커밋 `4764464`. gsd-roadmapper로 v1.1 로드맵 생성: Phase 8(② 추출 깊이)·9(① 소스 넓이)·10(웹 투표). STATE → Phase 8, v1.0 history archived. 다음: Phase 8 plan.
+- **2026-06-08 (자정 무렵)** — Phase 8: 08-CONTEXT 승격(커밋 후) → pattern-mapper(08-PATTERNS, 4-link 웹 체인 발견) → planner(4 plans/3 waves) → plan-checker **VERIFICATION PASSED**. 다음: Wave 1·2 자동 실행 (08-01 → 08-02∥08-03), 08-04는 모닝 게이트.
