@@ -1,4 +1,4 @@
-// Unit test for StepIndicator (Plan 05-02 _step-indicator.tsx).
+// Unit test for StepIndicator (Plan 05-02 components/boards/step-indicator.tsx).
 //
 // Why: the contract that matters to BoardDetailScreen is that the 4 Korean
 // labels render unconditionally, and that the visual "current" reassignment
@@ -8,7 +8,7 @@
 
 import { render } from '@testing-library/react-native';
 import { EXTRACT_STEP_KO } from '@moajoa/core';
-import { StepIndicator } from '@/app/boards/_step-indicator';
+import { StepIndicator } from '@/components/boards/step-indicator';
 
 const ALL_LABELS = [
   EXTRACT_STEP_KO.metadata,

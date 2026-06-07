@@ -25,10 +25,10 @@ import { subscribeExtractProgress, type ExtractProgress } from '@/lib/realtime';
 import { showToast } from '@/lib/toast';
 import { SharedDefaults } from '@/lib/shared-defaults';
 import { isLinkCardDismissed, dismissLinkCard } from '@/lib/onboarding';
-import { PinBottomSheet } from './_pin-sheet';
-import { PinAddModal } from './_pin-add-modal';
-import { StepIndicator, type Step } from './_step-indicator';
-import { OnboardCard } from './_onboard-card';
+import { PinBottomSheet } from '@/components/boards/pin-sheet';
+import { PinAddModal } from '@/components/boards/pin-add-modal';
+import { StepIndicator, type Step } from '@/components/boards/step-indicator';
+import { OnboardCard } from '@/components/boards/onboard-card';
 
 // UI-SPEC §1 error reason mapping fixture. Broadcast 'error' payloads from
 // Phase 2 extract-youtube carry a raw error string; we map a few known prefixes

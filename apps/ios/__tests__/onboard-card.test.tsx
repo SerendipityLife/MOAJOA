@@ -8,7 +8,7 @@
 // - Tapping the × button invokes onDismiss exactly once.
 
 import { fireEvent, render } from '@testing-library/react-native';
-import { OnboardCard } from '@/app/boards/_onboard-card';
+import { OnboardCard } from '@/components/boards/onboard-card';
 
 describe('OnboardCard', () => {
   test('renders both Korean copy lines + 💡 icon', () => {
