@@ -298,7 +298,7 @@ Plans:
 **Plans:** 4 plans (3 autonomous + 1 blocking morning gate)
 - [ ] 08-01-PLAN.md — 스키마·마이그레이션 기반 (0008 컬럼 + public_board_view RPC 재발행 + Zod/타입 4-link 계약)
 - [ ] 08-02-PLAN.md — 백엔드 LLM 파이프라인 (claude.ts 출력 스키마/프롬프트 확장 + index.ts ?? null 저장 + deno 테스트)
-- [ ] 08-03-PLAN.md — 웹 노출 (장소 해설 리스트 + 영상 TL;DR 조건부 렌더 + vitest, VIEW-08)
+- [x] 08-03-PLAN.md — 웹 노출 (장소 해설 리스트 + 영상 TL;DR 조건부 렌더 + vitest, VIEW-08) ✓ 2026-06-08 (7889a4a test + db01535 component + 16bd93c page; place-summary-list.test.tsx 4/4 PASS; tsc + build green; T-08-06 XSS 완화 grep-asserted; 표시 전용 CLAUDE.md §5; 라이브 UAT는 08-04 게이트)
 - [ ] 08-04-PLAN.md — [BLOCKING, autonomous:false] supabase db push + supabase:types 재생성 + 라이브 스팟체크
 **UI hint:** yes
 
