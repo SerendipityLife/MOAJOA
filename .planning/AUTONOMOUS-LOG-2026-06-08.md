@@ -89,3 +89,37 @@
 - **2026-06-08 (자정 무렵)** — Phase 8: 08-CONTEXT 승격(커밋 후) → pattern-mapper(08-PATTERNS, 4-link 웹 체인 발견) → planner(4 plans/3 waves) → plan-checker **VERIFICATION PASSED**. 다음: Wave 1·2 자동 실행 (08-01 → 08-02∥08-03), 08-04는 모닝 게이트.
 - **2026-06-08** — Phase 8 Wave 1·2 실행 완료: 08-01(foundation `91fcb69`/`307f4de`/`c347837`) → 08-02(backend `4443bb6`/`0100086`, deno 11/11) → 08-03(web `7889a4a`/`db01535`/`16bd93c`, vitest 4/4). tsc·build green, 0 regression. **Phase 8 code-complete.** 08-04(db push+types+라이브)는 모닝 게이트. 다음: Phase 9.
 - **2026-06-08 (새벽)** — Phase 9 자동 waves 완료: 09-01(SSRF+IG graceful+claude sourceKind `36214bb`/`8402be2`/`529549b`) → 09-02(blog.ts `33185ac`/`138ad1a`) → 09-03(router `2aa5847`, youtube 회귀0) → 09-04(web trigger `784b138`). deno 36/36·web build green. **Phase 9 code-complete.** 09-05(iOS+라이브)=모닝 게이트. 다음: Phase 10(웹 투표).
+
+---
+
+## ✅ v1.1 MILESTONE — CODE COMPLETE (자동 완료 요약, 2026-06-08 새벽)
+
+**3/3 phases 코드·오프라인 검증 완료.** 라이브 적용(DB push·types·실브라우저·실기기)만 user-side 모닝 게이트로 남음.
+
+### Phase별 결과
+- **Phase 8 — ② 추출 깊이:** `places.summary_ko`+`links.summary_ko` 단일 Claude 호출 출력 확장(반환각 유지, 추출 실패 안 시킴) + 마이그레이션 0008(컬럼 2 + public_board_view 재발행) + 웹 조건부 노출. deno 11/11·web vitest 4/4. 커밋 `91fcb69`→`16bd93c`.
+- **Phase 9 — ① 소스 넓이:** Edge Function source-router(youtube 회귀0) + blog.ts(Readability+deno-dom WASM·네이버 PostView·SSRF 가드) + instagram graceful 실패 + claude.ts `sourceKind` + web dev-tool 트리거 확장. deno 36/36. 커밋 `36214bb`→`784b138`.
+- **Phase 10 — 웹 투표:** 마이그레이션 0009(`join_shared_board`·`accepted_member_count`·public_board_view 재발행=shared 가시성) + memberships api 헬퍼 + `/b/[slug]` 클라 투표 island(로그인/멤버/비멤버 분기·❤️·확정 필터, `isPlaceConfirmed` 재사용). web vitest 7/7. 커밋 `c6c9df7`→`0c62429`.
+
+### 통합 검증 (오프라인)
+- deno(extract-youtube) **36/36 pass**, `@moajoa/core`·`@moajoa/api`·web **tsc exit 0**, web **build green**.
+- web vitest: Phase 8/10 신규 테스트 통과. (5건 pre-existing 실패 = `marker-svg.test.ts` 팔레트 mismatch, v1.1과 무관 — 아래 별도.)
+
+### 🌅 MORNING GATES (통합 — user-side, autonomous:false)
+> 마이그레이션은 0008·0009 둘 다 미적용 상태. **한 번에** 적용 가능.
+
+1. **DB 적용 (한 번):** `supabase db push` → 0008(summary_ko 컬럼) + 0009(투표 RPC·뷰 재발행) 함께 적용.
+2. **타입 재생성 (한 번):** `pnpm supabase:types` → `packages/api/src/types/database.ts`. (08-04에 wc -l 가드+git checkout 복구 절차 있음.)
+3. **Phase 8 라이브 (08-04):** 자막 풍부 영상 추출 → 장소별 `summary_ko`+영상 요약 + 환각 없음 스팟체크. 자막 빈약 영상도 추출 성공. 웹 노출+레거시 안 깨짐.
+4. **Phase 9 라이브 (09-05):** iOS 트리거 youtube→blog/insta 확장(`apps/ios` boards/[id].tsx·pending.ts) + 실기기 검증. 실제 블로그(티스토리/velog/네이버) URL 추출 스팟체크. 네이버 PostView가 hosted Edge에서 차단되면 graceful-fail 후퇴. IG는 명시적 실패 확인.
+5. **Phase 10 라이브 (10-03):** shared `/b/[slug]` → 로그인 → 참여 → ❤️ → 확정 흐름 실브라우저 검증. **+ visibility 확대(`/b/[slug]`가 shared 보드 노출) 의도 맞는지 사람 확인.**
+6. **CLAUDE.md 웹 역할 갱신 (추천 diff — 사람이 적용):**
+   - §4.1: `web/  Next.js 15 (열람·공개 보드)` → `web/  Next.js 15 (열람·공개 보드 + 투표 참여)`
+   - §4.1: `ios/  Expo SDK 54 (저장·공유·투표)` → `ios/  Expo SDK 54 (저장·공유·캡처·편집)`
+   - §5 하드룰(웹 보드생성·링크추가 UI 금지)은 **유지**(투표/참여는 예외).
+
+### 별도 (v1.1과 무관, pre-existing)
+- `apps/web/__tests__/marker-svg.test.ts` 5건 실패 — Phase 5는 `#0F172A` 기대인데 이후 `feat(ui)` 팔레트가 `#111827` 방출. v1.1 빌드 전부터 깨져 있음(검증됨). 테스트 기대값 또는 토큰 정합 1줄 수정 필요 — 범위 외라 자동 수정 안 함. `.planning/phases/08-extraction-depth/deferred-items.md`.
+
+### 결정 로그
+자동 선택 결정 **D1~D28** 전부 위 표에 기록(③ 제외, v1.1 버전, 도그푸딩 병행, 소스-어댑터, IG graceful, 투표 인증 모델, visibility 확대 등).
