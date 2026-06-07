@@ -295,7 +295,11 @@ Plans:
   2. 생성된 해설이 자막·설명 근거 범위 내에 머무른다 (스팟체크 시 환각 없음 — 근거 없는 장소는 해설이 짧거나 비어있음)
   3. 자막이 빈약한 영상은 해설이 짧거나 비어도 장소 추출 자체는 성공한다 (해설/요약 누락 시 NULL 저장, 기존 confidence 필터·source_quote 필수 유지)
   4. 공개 보드(web)에서 장소 해설과 영상 요약이 노출되며, summary_ko 값이 없는 레거시 데이터에서도 레이아웃이 깨지지 않는다 (조건부 렌더)
-**Plans:** TBD
+**Plans:** 4 plans (3 autonomous + 1 blocking morning gate)
+- [ ] 08-01-PLAN.md — 스키마·마이그레이션 기반 (0008 컬럼 + public_board_view RPC 재발행 + Zod/타입 4-link 계약)
+- [ ] 08-02-PLAN.md — 백엔드 LLM 파이프라인 (claude.ts 출력 스키마/프롬프트 확장 + index.ts ?? null 저장 + deno 테스트)
+- [ ] 08-03-PLAN.md — 웹 노출 (장소 해설 리스트 + 영상 TL;DR 조건부 렌더 + vitest, VIEW-08)
+- [ ] 08-04-PLAN.md — [BLOCKING, autonomous:false] supabase db push + supabase:types 재생성 + 라이브 스팟체크
 **UI hint:** yes
 
 ---
@@ -337,7 +341,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. 추출 깊이 (장소·영상 해설) | 0/? | Not started | - |
+| 8. 추출 깊이 (장소·영상 해설) | 0/4 | Not started (planned) | - |
 | 9. 소스 넓이 (블로그·인스타) | 0/? | Not started | - |
 | 10. 웹 투표 (협업) | 0/? | Not started | - |
 
