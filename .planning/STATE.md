@@ -31,17 +31,17 @@ progress:
 
 ## Current Position
 
-**Milestone:** v1.1 (추출 고도화 + 협업)
-Phase: 9 — 소스 넓이 (블로그·인스타) — **Code complete (autonomous waves) · 09-05 = 모닝 게이트**
-Plan: 4/5 — 09-01·02·03·04 ✓ 커밋·오프라인 검증. 09-05(iOS+라이브, autonomous:false)는 아침(deps 08-04).
+**Milestone:** v1.1 (추출 고도화 + 협업) — **코드 전체 완료 (3/3 phases) · 라이브 적용 = 모닝 게이트**
+Phase: 10 — 웹 투표 — Code complete (waves 1-2) · 10-03 = 모닝 게이트
+Plan: v1.1 모든 phase 코드·오프라인 검증 완료. 남은 건 user-side 모닝 게이트뿐.
 
-- **Phase 8:** code-complete (08-04 모닝 게이트 — db push+types+라이브).
-- **Phase 9 자동 완료:** Edge Function source-router(youtube 회귀 0) + blog.ts(Readability+deno-dom WASM·naver PostView·SSRF 가드) + instagram graceful 실패 + claude.ts sourceKind + web dev-tool 트리거 확장. deno 36/36 · web build green.
-- **09-05 모닝 게이트(사용자):** iOS 트리거 확장 + 라이브 blog/insta 추출 스팟체크(deps 08-04). AUTONOMOUS-LOG Morning to-dos.
-- **다음 자동 작업:** Phase 10 (웹 투표, COLLAB-01/02).
-- **v1.1 progress:** Phase 8·9 code-complete (2/3 · 라이브 검증 대기)
+- **Phase 8 (② 추출 깊이):** code-complete. 모닝 08-04.
+- **Phase 9 (① 소스 넓이):** code-complete. 모닝 09-05 (deps 08-04).
+- **Phase 10 (웹 투표):** code-complete. 모닝 10-03.
+- **모닝 게이트 통합:** `supabase db push`(0008+0009 함께 적용) → `pnpm supabase:types` → phase별 라이브 스팟체크(08-04/09-05/10-03). 상세: `.planning/AUTONOMOUS-LOG-2026-06-08.md` Morning to-dos. 결정 D1~D28 동일 로그.
+- **v1.1 progress:** 코드 3/3 완료 · 라이브 검증 대기.
 
-> **참고:** v1.0 도그푸딩 게이트 의도적 병행/나중. v1.0 phase 1~7 보존 — 아래 archived.
+> v1.0 도그푸딩 게이트 의도적 병행/나중. v1.0 phase 1~7 보존 — 아래 archived.
 
 ### v1.0 Phase History (archived)
 
