@@ -24,7 +24,10 @@ export interface BoardWithContents {
 /** Public board view — what an unauthenticated visitor sees via share link. */
 export interface PublicBoardView {
   board: Pick<Board, 'id' | 'title' | 'description' | 'city_code' | 'cover_image_url' | 'updated_at'>;
-  links: Pick<Link, 'id' | 'source_kind' | 'url' | 'title' | 'thumbnail_url' | 'author_name'>[];
+  links: Pick<
+    Link,
+    'id' | 'source_kind' | 'url' | 'title' | 'thumbnail_url' | 'author_name' | 'summary_ko'
+  >[];
   places: Pick<
     Place,
     | 'id'
@@ -38,6 +41,7 @@ export interface PublicBoardView {
     | 'source_timestamp_sec'
     | 'source_kind'
     | 'confidence'
+    | 'summary_ko'
   >[];
   owner_display_name: string;
 }
