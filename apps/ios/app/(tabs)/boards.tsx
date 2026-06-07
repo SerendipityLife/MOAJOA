@@ -55,7 +55,7 @@ export default function BoardsTab() {
 
       {failedCount > 0 && (
         <Pressable
-          onPress={() => router.push('/boards/_failed')}
+          onPress={() => router.push('/boards/failed')}
           className="mx-6 mb-4 bg-danger/5 border border-danger/20 rounded-lg px-4 py-3 flex-row items-center"
         >
           <View className="w-2 h-2 rounded-full bg-danger mr-3" />
