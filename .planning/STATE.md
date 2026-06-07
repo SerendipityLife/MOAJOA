@@ -32,15 +32,16 @@ progress:
 ## Current Position
 
 **Milestone:** v1.1 (추출 고도화 + 협업)
-Phase: 8 — 추출 깊이 (장소·영상 해설) — **Code complete (waves 1-2) · 08-04 = 모닝 게이트**
-Plan: 3/4 — 08-01·02·03 ✓ 커밋·오프라인 검증 통과. 08-04(autonomous:false)는 아침.
+Phase: 9 — 소스 넓이 (블로그·인스타) — **Code complete (autonomous waves) · 09-05 = 모닝 게이트**
+Plan: 4/5 — 09-01·02·03·04 ✓ 커밋·오프라인 검증. 09-05(iOS+라이브, autonomous:false)는 아침(deps 08-04).
 
-- **Phase 8 자동 완료:** 0008 마이그레이션(summary_ko 컬럼 2 + public_board_view RPC 재발행) 작성, claude.ts 단일 호출 출력 확장(summary_ko/video_summary_ko, 반환각 규칙 유지), index.ts 영속화, 웹 조건부 해설 렌더. deno 11/11 · web vitest 4/4 · tsc·build green.
-- **08-04 모닝 게이트(사용자):** `supabase db push`(0008) → `pnpm supabase:types` → 라이브 스팟체크(환각 점검)+웹 확인. 상세: AUTONOMOUS-LOG Morning to-dos.
-- **다음 자동 작업:** Phase 9 (① 소스 넓이) → Phase 10 (웹 투표).
-- **v1.1 progress:** Phase 8 code-complete (1/3 phases 코드 · 라이브 검증 대기)
+- **Phase 8:** code-complete (08-04 모닝 게이트 — db push+types+라이브).
+- **Phase 9 자동 완료:** Edge Function source-router(youtube 회귀 0) + blog.ts(Readability+deno-dom WASM·naver PostView·SSRF 가드) + instagram graceful 실패 + claude.ts sourceKind + web dev-tool 트리거 확장. deno 36/36 · web build green.
+- **09-05 모닝 게이트(사용자):** iOS 트리거 확장 + 라이브 blog/insta 추출 스팟체크(deps 08-04). AUTONOMOUS-LOG Morning to-dos.
+- **다음 자동 작업:** Phase 10 (웹 투표, COLLAB-01/02).
+- **v1.1 progress:** Phase 8·9 code-complete (2/3 · 라이브 검증 대기)
 
-> **참고:** v1.0 도그푸딩 게이트는 의도적으로 병행/나중. v1.0 phase 1~7 보존 — 아래 archived.
+> **참고:** v1.0 도그푸딩 게이트 의도적 병행/나중. v1.0 phase 1~7 보존 — 아래 archived.
 
 ### v1.0 Phase History (archived)
 

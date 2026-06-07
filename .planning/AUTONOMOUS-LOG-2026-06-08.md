@@ -62,6 +62,11 @@
 - [ ] 자막 빈약 영상 1개 → 해설 짧/빈 채로 추출은 성공 (성공기준 3, EXTRACT-14)
 - [ ] 웹 공개 보드에서 해설/요약 노출 + 레거시(summary 없는) 보드 레이아웃 안 깨짐 확인 (성공기준 4, VIEW-08)
 
+### Phase 9 (09-05 — autonomous:false, deps 08-04)
+- [ ] **iOS 트리거 확장:** `apps/ios/app/boards/[id].tsx`·`lib/pending.ts`의 youtube-only 트리거를 blog/insta까지 확장 (09-05 PLAN). 실기기 검증 필요.
+- [ ] **라이브 blog 추출 스팟체크:** 실제 블로그(티스토리/velog/네이버) URL 1~2개 → 본문 추출 → 장소+`summary_ko` 생성 확인. 네이버 PostView가 hosted Edge에서 차단되면 graceful-fail로 후퇴(연구 Open Q1).
+- [ ] **인스타 확인:** IG URL → 명시적 실패 사유 반환(never ready) 확인 (SRC-02).
+
 ### 기타 (선택, Phase 8과 무관)
 - [ ] **pre-existing 실패:** `apps/web/__tests__/marker-svg.test.ts` 5개 실패 — Phase 5는 `#0F172A` 기대인데 이후 `feat(ui)` 팔레트 변경이 `#111827` 방출. Phase 8과 독립(검증됨). 테스트 기대값 또는 토큰 정합 필요. 상세 `.planning/phases/08-extraction-depth/deferred-items.md`.
 
@@ -73,3 +78,4 @@
 - **2026-06-07 night** — 스캐폴딩 커밋 `4764464`. gsd-roadmapper로 v1.1 로드맵 생성: Phase 8(② 추출 깊이)·9(① 소스 넓이)·10(웹 투표). STATE → Phase 8, v1.0 history archived. 다음: Phase 8 plan.
 - **2026-06-08 (자정 무렵)** — Phase 8: 08-CONTEXT 승격(커밋 후) → pattern-mapper(08-PATTERNS, 4-link 웹 체인 발견) → planner(4 plans/3 waves) → plan-checker **VERIFICATION PASSED**. 다음: Wave 1·2 자동 실행 (08-01 → 08-02∥08-03), 08-04는 모닝 게이트.
 - **2026-06-08** — Phase 8 Wave 1·2 실행 완료: 08-01(foundation `91fcb69`/`307f4de`/`c347837`) → 08-02(backend `4443bb6`/`0100086`, deno 11/11) → 08-03(web `7889a4a`/`db01535`/`16bd93c`, vitest 4/4). tsc·build green, 0 regression. **Phase 8 code-complete.** 08-04(db push+types+라이브)는 모닝 게이트. 다음: Phase 9.
+- **2026-06-08 (새벽)** — Phase 9 자동 waves 완료: 09-01(SSRF+IG graceful+claude sourceKind `36214bb`/`8402be2`/`529549b`) → 09-02(blog.ts `33185ac`/`138ad1a`) → 09-03(router `2aa5847`, youtube 회귀0) → 09-04(web trigger `784b138`). deno 36/36·web build green. **Phase 9 code-complete.** 09-05(iOS+라이브)=모닝 게이트. 다음: Phase 10(웹 투표).

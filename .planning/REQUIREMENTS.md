@@ -181,8 +181,8 @@ Roadmap (2026-06-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | EXTRACT-13 | Phase 8 | Code complete (waves 1-2; 라이브 @ 08-04) |
 | EXTRACT-14 | Phase 8 | Code complete (waves 1-2; 라이브 @ 08-04) |
 | VIEW-08 | Phase 8 | Code complete (waves 1-2; 라이브 @ 08-04) |
-| SRC-01 | Phase 9 | Pending |
-| SRC-02 | Phase 9 | Pending |
+| SRC-01 | Phase 9 | Code complete (blog 자동·IG graceful; 라이브 @ 09-05) |
+| SRC-02 | Phase 9 | Code complete (blog 자동·IG graceful; 라이브 @ 09-05) |
 | COLLAB-01 | Phase 10 | Pending |
 | COLLAB-02 | Phase 10 | Pending |
 
