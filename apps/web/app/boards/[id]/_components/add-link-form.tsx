@@ -29,9 +29,9 @@ export function AddLinkForm({ boardId }: { boardId: string }) {
       kind === 'youtube'
         ? '유튜브 — 분석을 자동 시작합니다.'
         : kind === 'blog'
-          ? '블로그 — 큐레이션 대기열에 추가됩니다.'
+          ? '블로그 — 본문을 분석해 장소를 추출합니다.'
           : kind === 'instagram'
-            ? '인스타 — 큐레이션 대기열에 추가됩니다.'
+            ? '인스타 — 분석을 시도합니다 (캡션 추출이 제한될 수 있어요).'
             : '링크 인식 불가 — 그래도 저장 가능합니다.',
     );
   }
@@ -43,7 +43,10 @@ export function AddLinkForm({ boardId }: { boardId: string }) {
     try {
       const client = getSupabaseBrowser();
       const link = await addLink(client, { board_id: boardId, url: url.trim() });
-      if (link.source_kind === 'youtube') {
+      if (link.source_kind !== 'manual') {
+        // youtube/blog/instagram all auto-extract server-side (Plan 03 router).
+        // instagram may resolve to extraction_status='failed' (Plan 01 graceful fail);
+        // the explicit failure surfaces via existing status UI — trigger still fires.
         // Fire and forget — user sees "processing" status, page refreshes when done.
         triggerExtraction(client, link.id).catch((err) => {
           console.error(err);
