@@ -35,6 +35,10 @@
 | D16 | 06-08 | Phase 9 마이그레이션 | **불필요** | `source_kind` enum 기존(0001). Phase 8 `summary_ko` 컬럼 라이브 적용(08-04)이 선행돼야 blog 추출 summary 저장 → 라이브 검증은 08-04 이후. |
 | D17 | 06-08 | Phase 9 research | **실행** | 설계 미잠금(Phase 8과 다름) → research가 추천 기본값. Deno 블로그 본문 추출·네이버 iframe·IG 실현가능성 확정. |
 
+| D18 | 06-08 | Phase 9 pattern-mapper | **생략** | analog이 `youtube.ts` 단일·명확 + 09-RESEARCH가 구조/임포트 커버. planner가 youtube.ts 직접 읽음. |
+| D19 | 06-08 | Phase 9 plan 구조 | **5 plans / 4 waves 승인** | gsd-plan-checker VERIFICATION PASSED (0 blocker). SSRF 가드, youtube 회귀-0 스냅샷, 마이그레이션 없음, IG graceful. 09-05(iOS+라이브)=autonomous:false 모닝 게이트. |
+| D20 | 06-08 | checker 2 warnings | **실행 시 inline 반영** | W1: claude.ts SYSTEM_PROMPT는 모든 sourceKind에 byte-identical 유지(executor가 '개선' 못 하게 가드; source_timestamp_sec optional이라 blog 타임스탬프 미포함 무해). W2: blog 분기 description='' → article excerpt 매핑(긴 글 recall, RESEARCH Pitfall 5). |
+
 *(이후 결정은 아래에 계속 append)*
 
 ---
