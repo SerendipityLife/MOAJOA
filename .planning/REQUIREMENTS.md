@@ -74,10 +74,38 @@ AI 추출 결과를 사용자가 믿을 수 있어야 dogfooding 성립.
 - [ ] **WEB-01**: 현재 Web에 있는 "보드 생성·링크 추가" 폼이 `NEXT_PUBLIC_ENABLE_DEV_TOOLS=1`일 때만 노출됨
 - [ ] **WEB-02**: 공개 환경(`NEXT_PUBLIC_ENABLE_DEV_TOOLS` 미설정)에서 web의 1차 진입은 `/b/[slug]` 또는 로그인 페이지에 한정됨
 
+## v1.1 Requirements (Active Milestone — 추출 고도화 + 협업)
+
+**Defined:** 2026-06-07. 근거: `docs/SESSION-NOTES-2026-06-07.md`. 순서 ② → ① → 투표. 자세한 phase 매핑은 하단 Traceability.
+
+### Extraction Depth (EXTRACT) — ② 추출 깊이
+
+자막·설명 근거 기반 "사람이 읽는 해설"을 출력 계약에 추가. 단일 Claude 호출 확장(새 호출/레이턴시 X). 반환각 규칙 유지.
+
+- [ ] **EXTRACT-12**: 추출된 각 장소에 자막·설명 근거 범위 내 1~2문장 한국어 해설(`places.summary_ko`)이 생성됨 (근거 없으면 짧거나 비움, 환각 금지)
+- [ ] **EXTRACT-13**: 각 영상(link)에 2~3문장 한국어 TL;DR 요약(`links.summary_ko`)이 생성됨
+- [ ] **EXTRACT-14**: 해설/요약 생성 실패가 장소 추출 자체를 실패시키지 않음 (누락 시 NULL 저장, 기존 confidence 필터·source_quote 필수 유지)
+
+### Depth Exposure (VIEW) — 해설 노출
+
+- [ ] **VIEW-08**: 공개 보드(web)에서 장소 해설(`summary_ko`)과 영상 요약이 노출되며, 값이 없는 레거시 데이터에서도 레이아웃이 깨지지 않음 (조건부 렌더)
+
+### Source Breadth (SRC) — ① 소스 넓이
+
+유튜브 외 소스로 입구 확장. ②의 출력 계약(장소+해설) 재사용. (기존 v2 EXTRACT-10 manual-queue와 구분 — v1.1은 자동 추출)
+
+- [ ] **SRC-01**: 블로그(네이버/티스토리 등) URL을 던지면 본문 텍스트를 추출해 동일 파이프라인으로 장소+해설을 생성함
+- [ ] **SRC-02**: 인스타그램 게시물 URL을 던지면 캡션/본문에서 장소+해설을 생성함 (추출 불가 소스는 명시적 실패 사유 반환)
+
+### Web Collaboration (COLLAB) — 웹 투표
+
+웹 = 조회+공유+투표. 초대받은 친구 무설치 참여. (v2-defer에서 v1.1로 승격)
+
+- [ ] **COLLAB-01**: 공유 보드 링크(slug)로 들어온 사용자가 멤버로 참여(수락)할 수 있음
+- [ ] **COLLAB-02**: 멤버가 웹에서 핀에 ❤️ 투표할 수 있고, love/총멤버 ≥ 0.5인 핀이 "확정"으로 필터됨
+
 ## v2 Requirements (defer)
 
-- **COLLAB-01**: 공유 보드 멤버 초대 (link slug + 멤버십 수락)
-- **COLLAB-02**: 핀 ❤️ 투표 + "확정" 필터 (love/총멤버 ≥ 0.5)
 - **EXTRACT-08**: 추출 정확도 evaluation 데이터셋 정형화 + 회귀 측정
 - **EXTRACT-09**: LLM 프롬프트 자동 튜닝 (eval 기반)
 - **EXTRACT-10**: 블로그·인스타 manual extraction queue (운영진 어드민)
@@ -159,4 +187,4 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 ---
 *Requirements defined: 2026-05-25*
-*Last updated: 2026-05-25 — traceability filled after roadmap creation*
+*Last updated: 2026-06-07 — v1.1 requirements 추가 (EXTRACT-12/13/14, VIEW-08, SRC-01/02, COLLAB-01/02 승격). Traceability는 v1.1 roadmap 생성 후 채움*

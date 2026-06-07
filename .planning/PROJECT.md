@@ -8,6 +8,21 @@
 
 **"링크 → 30초 안에 지도 위의 핀."** 사용자가 영상 URL을 던지면 손대지 않아도 그 안의 장소가 정확히 지도 위에 떠야 한다. 이게 안 되면 나머지(공유·투표·UI)는 의미 없음.
 
+## Current Milestone: v1.1 — 추출 고도화 + 협업
+
+**Goal:** 영상에서 "장소 + 사람이 읽는 해설"까지 뽑아내고(추출 깊이), 소스를 넓히고(블로그·인스타), 친구가 무설치로 웹에서 투표하게 한다. "모으기" 입구 강화 + 협업 루프 시작.
+
+**Target features (순서 ② → ① → 투표):**
+- **② 추출 깊이** — `places.summary_ko`(장소당 1~2문장 한국어 해설) + `links.summary_ko`(영상 TL;DR). 단일 Claude 호출 확장, nullable 추가형, 반환각 규칙 유지, 해설이 추출을 실패시키지 않음. *(설계 잠금: `docs/SESSION-NOTES-2026-06-07.md` §2)*
+- **① 소스 넓이** — 블로그·인스타 자동 추출. ②의 출력 계약 재사용.
+- **웹 투표 (협업)** — 웹 = 조회+공유+투표. 초대받은 친구가 무설치로 "여기 가자" 참여.
+
+**범위 외 (이번 마일스톤):**
+- **③ 캡처 마찰**(Share Extension 개선) — v1 Phase 3에서 config 완료, 남은 실기기 스모크는 도그푸딩 UAT와 동반.
+- **v1 도그푸딩 게이트** — 의도적 병행/나중 (SESSION-NOTES §4).
+
+*세부 결정·근거: `docs/SESSION-NOTES-2026-06-07.md`, `.planning/AUTONOMOUS-LOG-2026-06-08.md`*
+
 ## Requirements
 
 ### Validated
@@ -96,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-25 after initialization (brownfield, post-pivot)*
+*Last updated: 2026-06-07 — milestone v1.1 시작 (추출 고도화 + 협업). 이전: 2026-05-25 brownfield init*
