@@ -22,6 +22,9 @@ import { z } from 'npm:zod@3';
 import { extractCandidatesFromContext } from './pipeline/claude.ts';
 import type { ExtractResult } from './pipeline/claude.ts';
 import { fetchYouTubeMetadata, fetchYouTubeTranscript, normalizeYouTubeUrl } from './pipeline/youtube.ts';
+import { fetchBlogContent } from './pipeline/blog.ts';
+import { fetchInstagramContent } from './pipeline/instagram.ts';
+import type { SourceContent } from './pipeline/source.ts';
 import { resolveGooglePlace } from './pipeline/places.ts';
 
 // ---- Request contract -------------------------------------------------------
@@ -85,7 +88,11 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (linkErr) return jsonError(500, linkErr.message);
   if (!link) return jsonError(404, 'link not found');
-  if (link.source_kind !== 'youtube') {
+  // Source-router (replaces the youtube-only gate): only youtube/blog/instagram
+  // are auto-extractable. manual/null/unknown reject below in the switch default
+  // WITHOUT a fetch (SSRF allowlist-ish — threat T-09-01).
+  const KNOWN_SOURCES = new Set(['youtube', 'blog', 'instagram']);
+  if (!KNOWN_SOURCES.has(link.source_kind)) {
     return jsonError(400, `cannot auto-extract source_kind=${link.source_kind}`);
   }
   if (link.extraction_status === 'processing') {
@@ -99,26 +106,67 @@ Deno.serve(async (req) => {
     .eq('id', link_id);
 
   try {
-    // ---- 1. Normalize URL + fetch metadata ----
-    const canonical = normalizeYouTubeUrl(link.url);
-    const meta = await fetchYouTubeMetadata(canonical);
-    await broadcastStep(admin, link_id, 'metadata', 10);
+    // ---- 1. Source-router: load + normalize to SourceContent by source_kind ----
+    // Each branch broadcasts 'metadata' 10 then 'transcript' 30 (channel/contract
+    // unchanged) and produces { content, description, sourceKind }. The youtube
+    // branch is byte-for-byte the original logic (regression 0).
+    let content: SourceContent;
+    let description: string;
+    let sourceKind: 'youtube' | 'blog' | 'instagram';
+    const cityHint: string | null = null; // TODO: derive from board.city_code via link.board_id
 
-    // ---- 2. Fetch transcript ----
-    const transcript = await fetchYouTubeTranscript(meta.videoId);
-    await broadcastStep(admin, link_id, 'transcript', 30);
+    switch (link.source_kind) {
+      case 'youtube': {
+        const canonical = normalizeYouTubeUrl(link.url);
+        const meta = await fetchYouTubeMetadata(canonical);
+        await broadcastStep(admin, link_id, 'metadata', 10);
+        const transcript = await fetchYouTubeTranscript(meta.videoId);
+        await broadcastStep(admin, link_id, 'transcript', 30);
+        content = {
+          title: meta.title,
+          bodyText: transcript,
+          thumbnail: meta.thumbnail,
+          author: meta.author,
+          externalId: meta.videoId,
+        };
+        description = meta.description; // regression 0 — description still reaches claude
+        sourceKind = 'youtube';
+        break;
+      }
+      case 'blog': {
+        await broadcastStep(admin, link_id, 'metadata', 10);
+        content = await fetchBlogContent(link.url); // assertFetchableUrl runs inside
+        await broadcastStep(admin, link_id, 'transcript', 30);
+        // W2: claude.ts slices transcript to ≤12000 chars; for long posts a leading
+        // body excerpt in `description` preserves place-dense intro recall.
+        description = content.bodyText.slice(0, 300);
+        sourceKind = 'blog';
+        break;
+      }
+      case 'instagram': {
+        // Throws an explicit Korean reason → existing catch → status='failed'.
+        content = await fetchInstagramContent(link.url);
+        description = '';
+        sourceKind = 'instagram';
+        break;
+      }
+      default:
+        // Unreachable: KNOWN_SOURCES gate above already rejected manual/null/unknown.
+        return jsonError(400, `cannot auto-extract source_kind=${link.source_kind}`);
+    }
 
-    // ---- 3. LLM extraction ----
+    // ---- 2. LLM extraction ----
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY not set');
 
     const t0 = performance.now();
     const { candidates, usage } = await extractCandidatesFromContext({
       anthropicKey,
-      videoTitle: meta.title,
-      description: meta.description,
-      transcript,
-      cityHint: null, // TODO: derive from board.city_code via link.board_id
+      videoTitle: content.title,
+      description,
+      transcript: content.bodyText,
+      cityHint,
+      sourceKind,
     });
     const anthropicDurationMs = Math.round(performance.now() - t0);
 
@@ -151,10 +199,10 @@ Deno.serve(async (req) => {
         .update({
           extraction_status: 'manual_review',
           extraction_error: 'no places found by LLM',
-          title: meta.title,
-          thumbnail_url: meta.thumbnail,
-          author_name: meta.author,
-          external_id: meta.videoId,
+          title: content.title,
+          thumbnail_url: content.thumbnail,
+          author_name: content.author,
+          external_id: content.externalId ?? null,
           extracted_at: new Date().toISOString(),
         })
         .eq('id', link_id);
@@ -230,10 +278,10 @@ Deno.serve(async (req) => {
       .from('links')
       .update({
         extraction_status: resolved.length > 0 ? 'ready' : 'manual_review',
-        title: meta.title,
-        thumbnail_url: meta.thumbnail,
-        author_name: meta.author,
-        external_id: meta.videoId,
+        title: content.title,
+        thumbnail_url: content.thumbnail,
+        author_name: content.author,
+        external_id: content.externalId ?? null,
         extraction_confidence: avgConfidence,
         extracted_at: new Date().toISOString(),
         summary_ko: candidates.video_summary_ko ?? null,
