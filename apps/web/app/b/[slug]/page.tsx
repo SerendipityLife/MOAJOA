@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { CITY_KO_MAP } from '@moajoa/core';
 import { getCachedPublicBoard } from '@/lib/cache';
 import { PublicBoardMap } from './_components/public-board-map';
+import { PlaceSummaryList } from './_components/place-summary-list';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -94,6 +95,8 @@ export default async function PublicBoardPage({ params }: Props) {
           </div>
         )}
 
+        <PlaceSummaryList places={view.places} />
+
         {view.links.length > 0 && (
           <section className="mt-8">
             <h2 className="text-lg font-semibold text-neutral-900 mb-3">
@@ -123,6 +126,11 @@ export default async function PublicBoardPage({ params }: Props) {
                         </p>
                         {link.author_name && (
                           <p className="text-sm text-neutral-500 mt-1">{link.author_name}</p>
+                        )}
+                        {link.summary_ko && (
+                          <p className="text-sm text-neutral-600 mt-1 line-clamp-3">
+                            {link.summary_ko}
+                          </p>
                         )}
                       </div>
                     </div>
