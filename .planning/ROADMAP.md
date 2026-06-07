@@ -233,6 +233,16 @@ Phase 1 (Foundation: iOS build + design assets + web hygiene)
 | ONBOARD | 2 | 5 |
 | **Total** | **29** | -- |
 
+### Phase 7: 저장 실패 링크 목록 화면 (Pending-Failed Links Screen)
+
+**Goal:** 저장 대기열(pending) 링크가 4회 재시도 후 실패하면, 사용자가 boards 탭의 "저장 실패 N개" 배너를 탭해 실패 목록 화면을 열고 각 항목의 실패 사유를 확인한 뒤 재시도하거나 삭제할 수 있다. (Phase 3에서 배너만 만들고 목적지 화면이 누락돼 생긴 깨진 동선을 완성한다.)
+**Requirements**: TBD
+**Depends on:** Phase 3 (ios-save-flow — pending 큐 + 배너 진입점)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 7 to break down)
+
 ---
 
 *Roadmap created: 2026-05-25 by roadmapper*
