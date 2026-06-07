@@ -46,6 +46,9 @@
 | D25 | 06-08 | Phase 10 research·UI-SPEC | **생략** | 백엔드 존재 + Next 클라 island 패턴 알려짐(retry-extraction-button analog) + pattern-mapper가 grounding. 투표 UI는 기존 토큰 재사용 → 별도 ceremony 불필요. |
 | D26 | 06-08 | CLAUDE.md 웹 역할 갱신 | **모닝 게이트(자동 편집 X)** | SESSION-NOTES §3 사전지정 diff(web=열람+투표, 하드룰 유지)지만 거버넌스 문서라 추측 자동편집 대신 추천 diff를 Morning to-dos에 제시→사용자 적용. |
 
+| D27 | 06-08 | `/b/[slug]` 가시성 확대 | **`public_board_view` 0009 재발행: visibility public→public+shared** | 초대 친구가 shared 보드를 slug로 열람·투표하려면 필요(협업 핵심). board.id는 0008에 이미 존재. 프라이버시 함의 = 모닝 사람 확인(10-03 체크포인트). 적용=db push 모닝. |
+| D28 | 06-08 | Phase 10 plan 구조 | **3 plans / 3 waves 승인** | gsd-plan-checker VERIFICATION PASSED (0 blocker). join_shared_board DEFINER·role='voter' 고정·idempotent, public_board_view verbatim+2변경(Phase 8 회귀0), island SSR 캐시 안 깸, isPlaceConfirmed 재사용. 10-03=autonomous:false 모닝 게이트. |
+
 *(이후 결정은 아래에 계속 append)*
 
 ---
