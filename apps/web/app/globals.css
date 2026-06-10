@@ -1,9 +1,30 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 @config "../tailwind.config.ts";
 
 @theme {
   --font-sans: var(--font-sans-kr), 'IBM Plex Sans KR', 'IBM Plex Sans JP',
     'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+
+  /* shadcn-compatible semantic colors → MOAJOA brand tokens.
+   * Web-only (intentionally NOT in packages/ui-tokens) so iOS is unaffected.
+   * Light mode only — matches the app's color-scheme: light. Lets shadcn/Radix
+   * components render on-brand without per-component re-theming. */
+  --color-background: #ffffff;
+  --color-foreground: #111827; /* neutral-900 */
+  --color-primary: #2563eb; /* brand-600 */
+  --color-primary-foreground: #ffffff;
+  --color-muted: #f3f4f6; /* neutral-100 */
+  --color-muted-foreground: #6b7280; /* neutral-500 */
+  --color-accent: #f5f7ff; /* brand-50 */
+  --color-accent-foreground: #1d4ed8; /* brand-700 */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #111827; /* neutral-900 */
+  --color-border: #e5e7eb; /* neutral-200 */
+  --color-input: #d1d5db; /* neutral-300 */
+  --color-ring: #2979ff; /* brand-500 */
+  --color-destructive: #ef4444; /* danger */
+  --color-destructive-foreground: #ffffff;
 }
 
 :root {
@@ -27,4 +48,72 @@ body {
 /* Keep focus visible only for keyboard nav */
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Brand-tinted text selection (brand-100 / brand-700). */
+::selection {
+  background: #e0eaff;
+  color: #1d4ed8;
+}
+
+/* ── Entrance micro-interactions ──────────────────────────────────────────
+ * Pure-CSS keyframes (no JS dep). Longhand props (not the `animation`
+ * shorthand) so an `[animation-delay:Nms]` utility can stagger without
+ * being clobbered. Easing = a soft "out-expo" for a settled, non-bouncy
+ * feel matching the design system's dialog motion. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@utility animate-fade-in {
+  animation-name: fade-in;
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+@utility animate-fade-up {
+  animation-name: fade-up;
+  animation-duration: 500ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+@utility animate-scale-in {
+  animation-name: scale-in;
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+/* Respect users who opt out of motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-fade-up,
+  .animate-scale-in {
+    animation: none;
+  }
 }

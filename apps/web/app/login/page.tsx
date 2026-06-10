@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MapPin } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { Button, Input, useToast } from '@/components';
 
@@ -93,8 +94,16 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold mb-6 text-center">로그인</h1>
+      <div className="animate-fade-up w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <div className="grid size-12 place-items-center rounded-2xl bg-brand-600 text-white shadow-fab">
+            <MapPin className="size-6" strokeWidth={2} />
+          </div>
+          <h1 className="mt-4 text-xl font-bold tracking-tight text-neutral-900">
+            MOAJOA
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500">여행 정보를 모아두는 지도</p>
+        </div>
 
         {mode === 'magic' && magicSent ? (
           <div className="text-center">
@@ -195,13 +204,13 @@ export default function LoginPage() {
         <div className="space-y-2">
           <button
             onClick={() => oauth('google')}
-            className="w-full py-3 border border-neutral-300 hover:bg-neutral-50 rounded-lg font-medium"
+            className="w-full rounded-lg border border-neutral-300 py-3 font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-50"
           >
             Google로 계속
           </button>
           <button
             onClick={() => oauth('apple')}
-            className="w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg font-medium"
+            className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition-colors hover:bg-neutral-800"
           >
             Apple로 계속
           </button>
