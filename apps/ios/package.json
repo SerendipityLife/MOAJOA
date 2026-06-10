@@ -6,6 +6,7 @@
   "scripts": {
     "start": "expo start",
     "ios": "expo run:ios",
+    "sim": "bash scripts/ios-sim.sh",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",

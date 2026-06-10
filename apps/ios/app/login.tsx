@@ -1,66 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AUTH_REDIRECT, mapAuthError, signInWithGoogle } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
-// Finishes any pending web auth session — no-op on a fresh native launch, but
-// required so WebBrowser.openAuthSessionAsync resolves reliably.
-WebBrowser.maybeCompleteAuthSession();
-
-const AUTH_REDIRECT = 'moajoa://auth-callback';
-
 /**
- * Login screen (Phase 3 SAVE-01, UI-SPEC §6).
+ * Email login screen (Phase 3 SAVE-01, UI-SPEC §6).
  *
- * Email + password is the primary flow; magic link is a toggle; Google is an
- * OAuth flow via the system browser. After sign-in we `router.replace('/')` and
- * let app/index.tsx route to /(tabs)/boards from the new session.
+ * Reached from the welcome carousel via "이메일로 계속". Email + password is the
+ * primary flow here; magic link is a toggle. Social sign-in (Apple/Google) now
+ * lives on the welcome screen, but Google stays here too as a fallback. After
+ * sign-in we `router.replace('/')` and let app/index.tsx route from the session.
  *
- * Visual tone follows the MOAJOA design system (moajoa_total): white/airy
- * surface, MOAJOA-blue accent (#2979FF), gradient CTA, 12dp radii, brand mark
- * over a blue disc.
- *
- * NOTE: Google sign-in needs the Google provider enabled in the Supabase
- * dashboard (Google Cloud OAuth client). Until then signInWithOAuth returns
- * "provider is not enabled" — surfaced as a friendly inline message below.
+ * Visual tone follows the MOAJOA design system: white/airy surface, MOAJOA-blue
+ * accent (#2979FF), 12dp radii, brand mark over a blue disc.
  *
  * Sign-up is out of Phase 3 scope (SESSION-NOTES 2026-05-25); the copy renders
  * per UI-SPEC §6 but taps a placeholder until Phase 4.
  */
-function mapAuthError(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes('invalid login credentials')) return '이메일 또는 비밀번호가 틀려요';
-  if (m.includes('email not confirmed') || m.includes('confirm your email'))
-    return '이메일 확인 메일을 먼저 열어주세요';
-  if (m.includes('provider is not enabled') || m.includes('unsupported provider'))
-    return 'Google 로그인이 아직 설정되지 않았어요 (Supabase provider 설정 필요)';
-  return message;
-}
-
-// Parse the OAuth redirect URL and establish a session. Handles both the PKCE
-// (?code=) and implicit (#access_token=) shapes, so it works regardless of the
-// supabase-js flowType default.
-async function createSessionFromUrl(url: string) {
-  const { params, errorCode } = QueryParams.getQueryParams(url);
-  if (errorCode) throw new Error(errorCode);
-  if (params.code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(params.code);
-    if (error) throw error;
-    return;
-  }
-  if (params.access_token) {
-    const { error } = await supabase.auth.setSession({
-      access_token: params.access_token,
-      refresh_token: params.refresh_token,
-    });
-    if (error) throw error;
-  }
-}
-
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,30 +64,10 @@ export default function Login() {
   async function onGoogle() {
     setInlineError(null);
     setPending(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: AUTH_REDIRECT, skipBrowserRedirect: true },
-      });
-      if (error) {
-        setInlineError(mapAuthError(error.message));
-        return;
-      }
-      if (!data?.url) {
-        setInlineError('로그인 URL을 받지 못했어요');
-        return;
-      }
-      const result = await WebBrowser.openAuthSessionAsync(data.url, AUTH_REDIRECT);
-      if (result.type === 'success' && result.url) {
-        await createSessionFromUrl(result.url);
-        router.replace('/');
-      }
-      // 'cancel' / 'dismiss' → user closed the sheet; stay on login.
-    } catch (e) {
-      setInlineError(mapAuthError(e instanceof Error ? e.message : '로그인에 실패했어요'));
-    } finally {
-      setPending(false);
-    }
+    const res = await signInWithGoogle();
+    if (res.ok) router.replace('/');
+    else if (res.error) setInlineError(res.error);
+    setPending(false);
   }
 
   const submitDisabled = pending || !email || (!magicLinkMode && !password);
@@ -142,9 +81,7 @@ export default function Login() {
             <Ionicons name="map-outline" size={30} color="#2979FF" />
           </View>
           <Text className="text-3xl font-extrabold tracking-wider text-brand-500">MOAJOA</Text>
-          <Text className="mt-2 text-sm text-neutral-500">
-            로그인하고 여행 정보를 공유해보세요
-          </Text>
+          <Text className="mt-2 text-sm text-neutral-500">로그인하고 여행 정보를 공유해보세요</Text>
         </View>
 
         {magicLinkSent ? (

@@ -24,5 +24,5 @@ export default function Index() {
   }, []);
 
   if (authed === null) return null;
-  return authed ? <Redirect href="/(tabs)/boards" /> : <Redirect href="/login" />;
+  return authed ? <Redirect href="/(tabs)/boards" /> : <Redirect href="/welcome" />;
 }
