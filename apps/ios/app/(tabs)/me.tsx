@@ -74,7 +74,7 @@ export default function MeTab() {
 
   async function signOut() {
     await supabase.auth.signOut();
-    router.replace('/login');
+    router.replace('/welcome');
   }
 
   const soon = () => Alert.alert('준비 중', '곧 지원될 기능이에요');
