@@ -103,15 +103,38 @@ Deno.serve(async (req) => {
   if (!KNOWN_SOURCES.has(link.source_kind)) {
     return jsonError(400, `cannot auto-extract source_kind=${link.source_kind}`);
   }
-  if (link.extraction_status === 'processing') {
+  // ---- Claim the link (atomic) -------------------------------------------
+  // Single conditional UPDATE replaces the old check-then-set, which raced:
+  // two concurrent triggers could both pass the check and double-spend on
+  // Anthropic/Places. Claimable when:
+  //   - status is pending/failed/manual_review ('ready' is NOT re-extractable
+  //     — it already cost money and produced pins), or
+  //   - status is 'processing' but stale: extraction_started_at older than the
+  //     extractor's runtime ceiling, or NULL (claimed by pre-0010 code) — so a
+  //     crashed invocation no longer wedges the link forever.
+  const STALE_PROCESSING_MS = 10 * 60 * 1000;
+  const staleBefore = new Date(Date.now() - STALE_PROCESSING_MS).toISOString();
+  const { data: claimed, error: claimErr } = await admin
+    .from('links')
+    .update({
+      extraction_status: 'processing',
+      extraction_error: null,
+      extraction_started_at: new Date().toISOString(),
+    })
+    .eq('id', link_id)
+    .or(
+      'extraction_status.in.(pending,failed,manual_review),' +
+        `and(extraction_status.eq.processing,extraction_started_at.lt."${staleBefore}"),` +
+        'and(extraction_status.eq.processing,extraction_started_at.is.null)',
+    )
+    .select('id');
+  if (claimErr) return jsonError(500, claimErr.message);
+  if (!claimed || claimed.length === 0) {
+    if (link.extraction_status === 'ready') {
+      return jsonError(409, 'already extracted (status=ready) — re-extraction disabled');
+    }
     return jsonOk({ link_id, status: 'manual_review', places_extracted: 0, confidence: null, error: 'already processing' });
   }
-
-  // Mark processing
-  await admin
-    .from('links')
-    .update({ extraction_status: 'processing', extraction_error: null })
-    .eq('id', link_id);
 
   try {
     // ---- 1. Source-router: load + normalize to SourceContent by source_kind ----
