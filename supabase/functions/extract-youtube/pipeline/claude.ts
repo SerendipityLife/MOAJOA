@@ -60,7 +60,10 @@ export async function extractCandidatesFromContext(
     },
     body: JSON.stringify({
       model: EXTRACTION_MODEL,
-      max_tokens: 2048,
+      // Phase 8 added per-place summary_ko (≤500 chars) + video_summary_ko (≤800
+      // chars); Korean is token-dense, so 30 places can far exceed the old 2048.
+      // A truncated response fails JSON.parse and the whole extraction with it.
+      max_tokens: 8192,
       temperature: 0,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
@@ -77,6 +80,12 @@ export async function extractCandidatesFromContext(
   // Extract usage with fallback to 0 if missing (Pitfall 2)
   const inputTokens = data?.usage?.input_tokens ?? 0;
   const outputTokens = data?.usage?.output_tokens ?? 0;
+
+  // A max_tokens stop means the JSON is cut mid-stream — parsing would fail with
+  // a confusing syntax error. Surface the real cause instead.
+  if (data?.stop_reason === 'max_tokens') {
+    throw new Error('anthropic output truncated at max_tokens — raise the limit or reduce place count');
+  }
 
   const text = data?.content?.[0]?.text;
   if (typeof text !== 'string') {
