@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createBoard } from '@moajoa/api';
 import { isDevToolsEnabled } from '@/lib/env';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { Button, Input } from '@/components';
 
 export function CreateBoardButton() {
   // D-09 defense in depth — page gate 우회 시에도 컴포넌트가 차단
@@ -38,39 +39,28 @@ export function CreateBoardButton() {
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-medium text-sm"
-      >
+      <Button size="sm" onClick={() => setOpen(true)}>
         새 보드
-      </button>
+      </Button>
     );
   }
 
   return (
-    <form onSubmit={submit} className="flex gap-2 items-center">
-      <input
+    <form onSubmit={submit} className="flex items-center gap-2">
+      <Input
         autoFocus
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="보드 이름 (예: 도쿄 5월)"
         maxLength={60}
-        className="px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:border-brand-500 focus:outline-none"
+        className="w-56"
       />
-      <button
-        type="submit"
-        disabled={pending || !title.trim()}
-        className="px-3 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm disabled:opacity-50"
-      >
+      <Button type="submit" size="sm" disabled={pending || !title.trim()}>
         만들기
-      </button>
-      <button
-        type="button"
-        onClick={() => setOpen(false)}
-        className="px-3 py-2 text-neutral-500 text-sm"
-      >
+      </Button>
+      <Button type="button" variant="text" size="sm" onClick={() => setOpen(false)}>
         취소
-      </button>
+      </Button>
     </form>
   );
 }

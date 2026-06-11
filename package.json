@@ -12,6 +12,7 @@
     "web:build": "pnpm --filter @moajoa/web build",
     "ios:start": "pnpm --filter @moajoa/ios start",
     "ios:run": "pnpm --filter @moajoa/ios ios",
+    "ios:sim": "pnpm --filter @moajoa/ios sim",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",

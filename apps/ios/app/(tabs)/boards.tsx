@@ -41,6 +41,7 @@ function pickGreeting(): string {
 
 export default function BoardsTab() {
   const [boards, setBoards] = useState<Board[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
   const [name, setName] = useState<string | null>(null);
@@ -54,6 +55,8 @@ export default function BoardsTab() {
       setBoards(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -167,8 +170,25 @@ export default function BoardsTab() {
       <FlatList
         data={boards}
         keyExtractor={(b) => b.id}
-        contentContainerClassName="px-6 pb-12"
+        contentContainerClassName="px-6 pb-12 grow"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={
+          loaded ? (
+            <View className="flex-1 items-center justify-center px-8 pt-16">
+              <View className="w-20 h-20 rounded-full bg-brand-50 items-center justify-center mb-5">
+                <Ionicons name="map-outline" size={36} color="#2979FF" />
+              </View>
+              <Text className="text-xl font-bold text-neutral-900">아직 만든 여행이 없어요</Text>
+              <Text className="mt-2 text-base text-neutral-500 text-center leading-relaxed">
+                첫 여행을 만들고 유튜브·블로그 링크를 더하면{'\n'}영상 속 장소가 지도로 모여요
+              </Text>
+              <View className="flex-row items-center mt-6">
+                <Text className="text-sm font-medium text-brand-500">아래 ＋ 를 눌러 시작하기</Text>
+                <Ionicons name="arrow-down" size={16} color="#2979FF" style={{ marginLeft: 4 }} />
+              </View>
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => (
           <View className="flex-row items-center border border-neutral-200 rounded-lg mb-3 pl-1 pr-4">
             {/* 왼쪽: 수정 · 삭제 */}

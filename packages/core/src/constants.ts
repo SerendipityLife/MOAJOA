@@ -187,4 +187,6 @@ export const LOW_CONFIDENCE_THRESHOLD = 0.7;
 export const OnboardKeys = {
   /** '@moajoa/onboard:link_card_dismissed' — global once, all boards (D-20). */
   LinkCardDismissed: '@moajoa/onboard:link_card_dismissed',
+  /** '@moajoa/onboard:walkthrough_done' — first-run tab coachmark completed. */
+  WalkthroughDone: '@moajoa/onboard:walkthrough_done',
 } as const;

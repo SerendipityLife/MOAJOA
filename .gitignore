@@ -3,6 +3,7 @@ _archive_asis/
 
 # Design reference screenshots (Refero/Mozi) — local only, regenerable via Refero
 design_references/
+references/
 
 # Dependencies
 node_modules/

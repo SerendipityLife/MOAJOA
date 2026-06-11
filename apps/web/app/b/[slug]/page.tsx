@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { MapPin } from 'lucide-react';
 import { CITY_KO_MAP } from '@moajoa/core';
 import { getCachedPublicBoard } from '@/lib/cache';
 import { PublicBoardMap } from './_components/public-board-map';
@@ -65,33 +66,41 @@ export default async function PublicBoardPage({ params }: Props) {
   if (!view) notFound();
 
   const cityKo = view.board.city_code ? CITY_KO_MAP[view.board.city_code] : null;
-  const metaLine = cityKo
-    ? `${cityKo} · 핀 ${view.places.length}개`
-    : `핀 ${view.places.length}개`;
 
   return (
     <main className="min-h-screen bg-white">
       <div className="px-4 md:px-6 py-6 md:py-8 max-w-5xl mx-auto">
-        <header className="mb-6">
-          <p className="text-sm text-neutral-500 mb-1">
+        <header className="animate-fade-up mb-6">
+          <p className="text-sm text-neutral-500">
             {view.owner_display_name}님의 보드
           </p>
-          <h1 className="text-2xl font-semibold text-neutral-900 leading-tight">
+          <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-neutral-900">
             {view.board.title}
           </h1>
           {view.board.description && (
-            <p className="text-base text-neutral-600 mt-2">{view.board.description}</p>
+            <p className="mt-2 text-base leading-relaxed text-neutral-600">
+              {view.board.description}
+            </p>
           )}
-          <p className="text-sm text-neutral-600 mt-2">{metaLine}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {cityKo && (
+              <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700">
+                {cityKo}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+              <MapPin className="size-3" strokeWidth={2.2} />핀 {view.places.length}개
+            </span>
+          </div>
         </header>
 
         {view.places.length === 0 ? (
-          <div className="mt-6 py-16 px-6 bg-neutral-50 rounded-lg border border-neutral-200 text-center">
+          <div className="animate-fade-in mt-6 rounded-xl border border-neutral-200 bg-neutral-50 px-6 py-16 text-center">
             <p className="text-lg font-semibold text-neutral-900">아직 분석 중이에요</p>
-            <p className="text-sm text-neutral-500 mt-2">잠시 후 다시 열어주세요</p>
+            <p className="mt-2 text-sm text-neutral-500">잠시 후 다시 열어주세요</p>
           </div>
         ) : (
-          <div className="mt-6 w-full h-[60vh] md:h-[520px] rounded-lg border border-neutral-200 bg-neutral-50 overflow-hidden">
+          <div className="animate-fade-in mt-6 h-[60vh] w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 [animation-delay:80ms] md:h-[520px]">
             <PublicBoardMap places={view.places} links={view.links} />
           </div>
         )}
@@ -104,17 +113,21 @@ export default async function PublicBoardPage({ params }: Props) {
 
         {view.links.length > 0 && (
           <section className="mt-8">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-3">
+            <h2 className="mb-3 text-lg font-semibold text-neutral-900">
               영상 출처 {view.links.length}개
             </h2>
             <ul className="space-y-2">
-              {view.links.map((link) => (
-                <li key={link.id}>
+              {view.links.map((link, i) => (
+                <li
+                  key={link.id}
+                  className="animate-fade-up"
+                  style={{ animationDelay: `${Math.min(i * 50, 300)}ms` }}
+                >
                   <a
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block p-3 border border-neutral-200 rounded-lg hover:border-brand-300 hover:bg-brand-50 transition-colors"
+                    className="group block rounded-xl border border-neutral-200 bg-white p-3 transition-colors hover:border-brand-300 hover:bg-brand-50/40"
                   >
                     <div className="flex gap-3">
                       {link.thumbnail_url && (
@@ -122,15 +135,15 @@ export default async function PublicBoardPage({ params }: Props) {
                         <img
                           src={link.thumbnail_url}
                           alt=""
-                          className="w-24 h-14 object-cover rounded shrink-0"
+                          className="h-14 w-24 shrink-0 rounded-lg object-cover"
                         />
                       )}
                       <div className="min-w-0">
-                        <p className="text-base font-semibold text-neutral-900 line-clamp-2">
+                        <p className="line-clamp-2 text-base font-semibold text-neutral-900 transition-colors group-hover:text-brand-700">
                           {link.title ?? link.url}
                         </p>
                         {link.author_name && (
-                          <p className="text-sm text-neutral-500 mt-1">{link.author_name}</p>
+                          <p className="mt-1 text-sm text-neutral-500">{link.author_name}</p>
                         )}
                         {link.summary_ko && (
                           <p className="text-sm text-neutral-600 mt-1 line-clamp-3">
@@ -146,14 +159,14 @@ export default async function PublicBoardPage({ params }: Props) {
           </section>
         )}
 
-        <footer className="mt-12 py-8 border-t border-neutral-200 text-center">
+        <footer className="mt-12 border-t border-neutral-200 py-8 text-center">
           <a
             href="/"
-            className="inline-block text-base font-semibold text-brand-500 hover:underline"
+            className="inline-block text-base font-semibold text-brand-600 hover:underline"
           >
             MOAJOA
           </a>
-          <p className="text-sm text-neutral-500 mt-2">이 보드는 MOAJOA로 만들었어요</p>
+          <p className="mt-2 text-sm text-neutral-500">이 보드는 MOAJOA로 만들었어요</p>
         </footer>
       </div>
     </main>

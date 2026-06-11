@@ -1,6 +1,6 @@
 // apps/ios/app/index.tsx
 // Phase 3 (SAVE-01): auth-gated redirect — Phase 1 D-13 restoration.
-// Session present → /(tabs)/boards. No session → /login. Re-evaluates on
+// Session present → /(tabs)/boards. No session → /welcome. Re-evaluates on
 // auth state changes so sign-out from anywhere redirects back here.
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -24,5 +24,5 @@ export default function Index() {
   }, []);
 
   if (authed === null) return null;
-  return authed ? <Redirect href="/(tabs)/boards" /> : <Redirect href="/login" />;
+  return authed ? <Redirect href="/(tabs)/boards" /> : <Redirect href="/welcome" />;
 }
