@@ -233,11 +233,16 @@ Deno.serve(async (req) => {
     await broadcastStep(admin, link_id, 'llm', 60);
 
     if (validPlaces.length === 0) {
+      // Self-describing failure: input sizes distinguish "LLM saw nothing"
+      // (metadata fetch degraded) from "LLM declined to extract" (grounding).
+      const noPlacesDiag =
+        `no places found by LLM (desc=${description.length} chars, body=${content.bodyText.length} chars, ` +
+        `candidates_discarded=${candidates.places.length - validPlaces.length})`;
       await admin
         .from('links')
         .update({
           extraction_status: 'manual_review',
-          extraction_error: 'no places found by LLM',
+          extraction_error: noPlacesDiag,
           title: content.title,
           thumbnail_url: content.thumbnail,
           author_name: content.author,

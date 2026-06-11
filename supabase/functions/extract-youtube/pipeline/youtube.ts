@@ -115,18 +115,39 @@ async function fetchInnerTubeDetails(
   videoId: string,
 ): Promise<{ title: string; description: string; author: string | null; thumbnail: string | null } | null> {
   try {
-    const res = await fetch('https://www.youtube.com/youtubei/v1/player', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        videoId,
-        context: { client: { clientName: 'WEB', clientVersion: '2.20250101.00.00' } },
-      }),
-    });
-    if (!res.ok) return null;
+    // The key below is YouTube's own public WEB-client key (embedded in every
+    // youtube.com page; standard in OSS transcript libs). Browser-like headers
+    // reduce datacenter-IP bot gating on the Edge runtime.
+    const res = await fetch(
+      'https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8&prettyPrint=false',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          origin: 'https://www.youtube.com',
+          referer: `https://www.youtube.com/watch?v=${videoId}`,
+        },
+        body: JSON.stringify({
+          videoId,
+          context: { client: { clientName: 'WEB', clientVersion: '2.20250101.00.00' } },
+        }),
+      },
+    );
+    if (!res.ok) {
+      console.warn(`[innertube] player endpoint ${res.status} for ${videoId}`);
+      return null;
+    }
     const data = await res.json();
     const vd = data?.videoDetails;
-    if (!vd?.title) return null;
+    if (!vd?.title) {
+      console.warn(
+        `[innertube] no videoDetails for ${videoId} (playability=${data?.playabilityStatus?.status ?? 'unknown'})`,
+      );
+      return null;
+    }
+    console.log(`[innertube] ok for ${videoId} — description ${String(vd.shortDescription ?? '').length} chars`);
     const thumbs: { url?: string }[] = vd.thumbnail?.thumbnails ?? [];
     return {
       title: vd.title,
