@@ -46,6 +46,13 @@ export async function fetchYouTubeMetadata(canonicalUrl: string): Promise<YouTub
 
   // Prefer YouTube Data API if available — gives full description.
   const ytKey = Deno.env.get('YOUTUBE_API_KEY');
+  if (!ytKey) {
+    // oEmbed has no description, and timedtext transcripts are best-effort —
+    // without the key the LLM may see title-only input. Loud so ops notices.
+    console.warn(
+      '[youtube] YOUTUBE_API_KEY not set — falling back to oEmbed (no description; extraction quality degraded)',
+    );
+  }
   if (ytKey) {
     const apiUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
     apiUrl.searchParams.set('id', videoId);
