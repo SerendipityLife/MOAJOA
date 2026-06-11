@@ -38,7 +38,7 @@ Plan: v1.1 모든 phase 코드·오프라인 검증 완료. 남은 건 user-side
 - **Phase 8 (② 추출 깊이):** code-complete. 모닝 08-04.
 - **Phase 9 (① 소스 넓이):** code-complete. 모닝 09-05 (deps 08-04).
 - **Phase 10 (웹 투표):** code-complete. 모닝 10-03.
-- **모닝 게이트 통합:** `supabase db push`(0008+0009 함께 적용) → `pnpm supabase:types` → phase별 라이브 스팟체크(08-04/09-05/10-03). 상세: `.planning/AUTONOMOUS-LOG-2026-06-08.md` Morning to-dos. 결정 D1~D28 동일 로그.
+- **모닝 게이트 통합:** `supabase db push`(0008+0009+**0010** 함께 적용) → `pnpm supabase:types` → `supabase functions deploy extract-youtube`(quick-260612-0cx 픽스 반영) → phase별 라이브 스팟체크(08-04/09-05/10-03). 상세: `.planning/AUTONOMOUS-LOG-2026-06-08.md` Morning to-dos + `.planning/quick/260612-0cx-youtube-pipeline-fixes/260612-0cx-SUMMARY.md` Deployment notes. 결정 D1~D28 동일 로그.
 - **v1.1 progress:** 코드 3/3 완료 · 라이브 검증 대기.
 
 > v1.0 도그푸딩 게이트 의도적 병행/나중. v1.0 phase 1~7 보존 — 아래 archived.
@@ -169,6 +169,12 @@ Plan: 1 of 1
 ### Blockers
 
 (없음 — Apple Developer 계정은 가입됨 $99/yr, Share Extension/EAS 게이트 해소됨)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260612-0cx | 유튜브 추출 파이프라인 리뷰 픽스 #1~#6 (max_tokens 잘림·anon 어뷰즈·클레임 레이스/고착·cityHint·키 경고) | 2026-06-12 | f8919bd | [260612-0cx-youtube-pipeline-fixes](./quick/260612-0cx-youtube-pipeline-fixes/) |
 
 ### Open questions (research/SUMMARY.md gaps)
 
