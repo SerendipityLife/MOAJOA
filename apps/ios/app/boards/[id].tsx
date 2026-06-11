@@ -142,7 +142,11 @@ export default function BoardDetailScreen() {
       // D-02: mirror last_board_id to App Group SharedDefaults so the Share
       // Extension knows where to enqueue subsequent shares.
       SharedDefaults.set(SharedDefaultsKeys.LastBoardId, id);
-      if (detectSourceKind(link.url) === 'youtube') {
+      // 09-05: fire for any auto-extractable kind (youtube|blog|instagram).
+      // manual/null stay untriggered; instagram resolves to failed server-side
+      // and rides the existing TRUST-03 failed-row retry UI.
+      const addedKind = detectSourceKind(link.url);
+      if (addedKind !== null && addedKind !== 'manual') {
         setAnalyzing(link.id);
         triggerExtraction(supabase, link.id).catch((err) => {
           console.warn('[triggerExtraction] failed:', err);

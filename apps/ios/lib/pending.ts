@@ -71,7 +71,9 @@ export async function drainPendingLinks(): Promise<DrainResult> {
 
       try {
         const link = await addLink(supabase, { board_id: item.board_id, url: item.url });
-        if (detectSourceKind(item.url) === 'youtube') {
+        // 09-05: drain triggers any auto-extractable kind (youtube|blog|instagram).
+        const drainKind = detectSourceKind(item.url);
+        if (drainKind !== null && drainKind !== 'manual') {
           // Fire-and-forget — UI subscribes to extract:{id} broadcast (Plan 03-05).
           triggerExtraction(supabase, link.id).catch((e) =>
             console.warn('[drain] triggerExtraction failed:', e),
