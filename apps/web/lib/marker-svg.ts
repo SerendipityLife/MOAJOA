@@ -1,4 +1,5 @@
 import { LOW_CONFIDENCE_THRESHOLD } from '@moajoa/core';
+import { colors } from '@moajoa/ui-tokens';
 
 /**
  * Build a Google Maps Marker icon URL (SVG data URL) that visually encodes
@@ -29,7 +30,8 @@ export function buildMarkerIconUrl(input: {
   const isLowConf =
     isAi && typeof conf === 'number' && conf < LOW_CONFIDENCE_THRESHOLD;
 
-  const fill = isAi ? '#2979FF' : '#111827'; // brand-500 (AI) · neutral-900 (manual)
+  // Single source: ui-tokens — palette changes propagate without touching this file.
+  const fill = isAi ? colors.brand[500] : colors.neutral[900]; // brand-500 (AI) · neutral-900 (manual)
   const fillOpacity = isLowConf ? 0.45 : 1.0;
   const showQ = isLowConf;
 
