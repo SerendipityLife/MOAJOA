@@ -136,6 +136,14 @@ Deno.serve(async (req) => {
     return jsonOk({ link_id, status: 'manual_review', places_extracted: 0, confidence: null, error: 'already processing' });
   }
 
+  // Board row feeds the LLM city hint, the Places language choice, and the
+  // revalidate webhook at the end (single fetch, reused).
+  const { data: board } = await admin
+    .from('boards')
+    .select('city_code, share_slug, visibility')
+    .eq('id', link.board_id)
+    .maybeSingle();
+
   try {
     // ---- 1. Source-router: load + normalize to SourceContent by source_kind ----
     // Each branch broadcasts 'metadata' 10 then 'transcript' 30 (channel/contract
@@ -144,7 +152,7 @@ Deno.serve(async (req) => {
     let content: SourceContent;
     let description: string;
     let sourceKind: 'youtube' | 'blog' | 'instagram';
-    const cityHint: string | null = null; // TODO: derive from board.city_code via link.board_id
+    const cityHint: string | null = board?.city_code ?? null;
 
     switch (link.source_kind) {
       case 'youtube': {
@@ -250,13 +258,20 @@ Deno.serve(async (req) => {
     const placesKey = Deno.env.get('GOOGLE_PLACES_SERVER_KEY');
     if (!placesKey) throw new Error('GOOGLE_PLACES_SERVER_KEY not set');
 
+    // displayName language follows the board's city: Korean boards get Korean
+    // names, everything else keeps the previous 'ja' default (Japan-first v1).
+    const KO_CITIES = new Set(['seoul', 'busan', 'jeju']);
+    const languageCode = cityHint && KO_CITIES.has(cityHint) ? 'ko' : 'ja';
+
     const resolved = [];
     for (const cand of validPlaces) {
       try {
         const place = await resolveGooglePlace({
           apiKey: placesKey,
-          query: cand.name_local,
-          languageCode: 'ja',
+          // Appending the LLM's inferred city disambiguates chain stores and
+          // same-name places across cities (e.g. "一蘭" → 후쿠오카 본점 vs 도쿄점).
+          query: cand.inferred_city ? `${cand.name_local} ${cand.inferred_city}` : cand.name_local,
+          languageCode,
         });
         if (place) {
           resolved.push({ cand, place });
@@ -322,15 +337,10 @@ Deno.serve(async (req) => {
     await broadcastStep(admin, link_id, 'done', 100, { places_extracted: resolved.length });
 
     // Fire-and-forget webhook to web /api/revalidate (per CONTEXT D-04, D-05).
-    // Lookup board.share_slug — only POST when visibility=public + slug present.
+    // Uses the board row loaded before extraction — only POST when
+    // visibility=public + slug present.
     // Local dev: WEB_BASE_URL unset → skip silently (RESEARCH Pitfall 6).
     try {
-      const { data: board } = await admin
-        .from('boards')
-        .select('share_slug, visibility')
-        .eq('id', link.board_id)
-        .maybeSingle();
-
       if (board?.visibility === 'public' && board.share_slug) {
         const webBase = Deno.env.get('WEB_BASE_URL');
         const revalidateSecret = Deno.env.get('REVALIDATE_SECRET');
