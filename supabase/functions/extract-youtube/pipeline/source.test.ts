@@ -53,3 +53,40 @@ Deno.test('assertFetchableUrl rejects ::1 IPv6 loopback', () => {
 Deno.test('assertFetchableUrl rejects malformed URL', () => {
   assertThrows(() => assertFetchableUrl('not a url'));
 });
+
+// --- numeric/shorthand IPv4 + mapped-IPv6 bypass hardening (2026-06-12) ------
+
+Deno.test('assertFetchableUrl rejects decimal-integer loopback (2130706433)', () => {
+  assertThrows(() => assertFetchableUrl('http://2130706433/x'));
+});
+
+Deno.test('assertFetchableUrl rejects hex loopback (0x7f000001)', () => {
+  assertThrows(() => assertFetchableUrl('http://0x7f000001/x'));
+});
+
+Deno.test('assertFetchableUrl rejects octal loopback (017700000001)', () => {
+  assertThrows(() => assertFetchableUrl('http://017700000001/x'));
+});
+
+Deno.test('assertFetchableUrl rejects shorthand 127.1', () => {
+  assertThrows(() => assertFetchableUrl('http://127.1/x'));
+});
+
+Deno.test('assertFetchableUrl rejects IPv4-mapped IPv6 loopback (::ffff:127.0.0.1)', () => {
+  assertThrows(() => assertFetchableUrl('http://[::ffff:127.0.0.1]/x'));
+});
+
+Deno.test('assertFetchableUrl rejects 0.0.0.0', () => {
+  assertThrows(() => assertFetchableUrl('http://0.0.0.0/x'));
+});
+
+Deno.test('assertFetchableUrl still accepts a public decimal-looking domain label', () => {
+  // 123456789012345678901.com is a hostname, not a numeric IP — must pass.
+  const u = assertFetchableUrl('https://12345678901234567890.com/x');
+  assertEquals(u.hostname, '12345678901234567890.com');
+});
+
+Deno.test('assertFetchableUrl still accepts a public IPv4 literal', () => {
+  const u = assertFetchableUrl('http://93.184.216.34/x');
+  assertEquals(u.hostname, '93.184.216.34');
+});

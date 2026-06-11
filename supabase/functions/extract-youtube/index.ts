@@ -133,7 +133,9 @@ Deno.serve(async (req) => {
     if (link.extraction_status === 'ready') {
       return jsonError(409, 'already extracted (status=ready) — re-extraction disabled');
     }
-    return jsonOk({ link_id, status: 'manual_review', places_extracted: 0, confidence: null, error: 'already processing' });
+    // Previously a 200 with status:'manual_review', which misreported the
+    // link's real state to clients. 409 matches the ready case above.
+    return jsonError(409, 'already processing');
   }
 
   // Board row feeds the LLM city hint, the Places language choice, and the
@@ -144,12 +146,15 @@ Deno.serve(async (req) => {
     .eq('id', link.board_id)
     .maybeSingle();
 
+  // Declared outside try so the catch handler can persist whatever metadata
+  // was fetched before the failure (failed rows show a title, not a bare URL).
+  let content: SourceContent | undefined;
+
   try {
     // ---- 1. Source-router: load + normalize to SourceContent by source_kind ----
     // Each branch broadcasts 'metadata' 10 then 'transcript' 30 (channel/contract
     // unchanged) and produces { content, description, sourceKind }. The youtube
     // branch is byte-for-byte the original logic (regression 0).
-    let content: SourceContent;
     let description: string;
     let sourceKind: 'youtube' | 'blog' | 'instagram';
     const cityHint: string | null = board?.city_code ?? null;
@@ -375,7 +380,20 @@ Deno.serve(async (req) => {
     await broadcastStep(admin, link_id, 'error', 0, { error: message });
     await admin
       .from('links')
-      .update({ extraction_status: 'failed', extraction_error: message })
+      .update({
+        extraction_status: 'failed',
+        extraction_error: message,
+        // Keep whatever metadata was fetched before the failure — the iOS
+        // failed-links screen shows a recognizable title instead of a bare URL.
+        ...(content
+          ? {
+              title: content.title,
+              thumbnail_url: content.thumbnail,
+              author_name: content.author,
+              external_id: content.externalId ?? null,
+            }
+          : {}),
+      })
       .eq('id', link_id);
     return jsonOk({ link_id, status: 'failed', places_extracted: 0, confidence: null, error: message });
   }
