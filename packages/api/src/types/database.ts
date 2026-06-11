@@ -121,10 +121,12 @@ export type Database = {
           extracted_at: string | null
           extraction_confidence: number | null
           extraction_error: string | null
+          extraction_started_at: string | null
           extraction_status: string
           id: string
           original_url: string
           source_kind: string
+          summary_ko: string | null
           thumbnail_url: string | null
           title: string | null
           url: string
@@ -138,10 +140,12 @@ export type Database = {
           extracted_at?: string | null
           extraction_confidence?: number | null
           extraction_error?: string | null
+          extraction_started_at?: string | null
           extraction_status?: string
           id?: string
           original_url: string
           source_kind: string
+          summary_ko?: string | null
           thumbnail_url?: string | null
           title?: string | null
           url: string
@@ -155,10 +159,12 @@ export type Database = {
           extracted_at?: string | null
           extraction_confidence?: number | null
           extraction_error?: string | null
+          extraction_started_at?: string | null
           extraction_status?: string
           id?: string
           original_url?: string
           source_kind?: string
+          summary_ko?: string | null
           thumbnail_url?: string | null
           title?: string | null
           url?: string
@@ -255,6 +261,7 @@ export type Database = {
           source_kind: string
           source_quote: string | null
           source_timestamp_sec: number | null
+          summary_ko: string | null
         }
         Insert: {
           added_by: string
@@ -278,6 +285,7 @@ export type Database = {
           source_kind?: string
           source_quote?: string | null
           source_timestamp_sec?: number | null
+          summary_ko?: string | null
         }
         Update: {
           added_by?: string
@@ -301,6 +309,7 @@ export type Database = {
           source_kind?: string
           source_quote?: string | null
           source_timestamp_sec?: number | null
+          summary_ko?: string | null
         }
         Relationships: [
           {
@@ -554,6 +563,7 @@ export type Database = {
         Returns: unknown
       }
       _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      accepted_member_count: { Args: { p_board_id: string }; Returns: number }
       add_manual_place: {
         Args: {
           p_address?: string
@@ -589,6 +599,7 @@ export type Database = {
           source_kind: string
           source_quote: string | null
           source_timestamp_sec: number | null
+          summary_ko: string | null
         }
         SetofOptions: {
           from: "*"
@@ -772,6 +783,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
+      join_shared_board: { Args: { p_share_slug: string }; Returns: string }
       longtransactionsenabled: { Args: never; Returns: boolean }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
