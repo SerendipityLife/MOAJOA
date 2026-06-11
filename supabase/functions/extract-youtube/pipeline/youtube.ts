@@ -78,7 +78,24 @@ export async function fetchYouTubeMetadata(canonicalUrl: string): Promise<YouTub
     }
   }
 
-  // Fallback: oEmbed (no key, title + author only — no description)
+  // Keyless fallback: InnerTube player endpoint. videoDetails (incl. full
+  // description) is returned even when playabilityStatus is UNPLAYABLE for
+  // bot-gated clients, and 맛집/여행 영상 descriptions typically carry the
+  // timestamped place list the LLM prompt is built to exploit. Verified live
+  // 2026-06-12: timedtext transcripts are bot-gated to empty from server IPs,
+  // so description is the primary grounding when YOUTUBE_API_KEY is absent.
+  const innertube = await fetchInnerTubeDetails(videoId);
+  if (innertube) {
+    return {
+      videoId,
+      title: innertube.title,
+      description: innertube.description,
+      author: innertube.author,
+      thumbnail: innertube.thumbnail ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    };
+  }
+
+  // Last resort: oEmbed (no key, title + author only — no description)
   const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(canonicalUrl)}&format=json`;
   const res = await fetch(oembedUrl);
   if (!res.ok) throw new Error(`oEmbed failed: ${res.status}`);
@@ -90,6 +107,36 @@ export async function fetchYouTubeMetadata(canonicalUrl: string): Promise<YouTub
     author: data.author_name ?? null,
     thumbnail: data.thumbnail_url ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
   };
+}
+
+/** InnerTube WEB-client video details. Returns null on any failure so the
+ * caller's fallback chain (Data API → InnerTube → oEmbed) degrades gracefully. */
+async function fetchInnerTubeDetails(
+  videoId: string,
+): Promise<{ title: string; description: string; author: string | null; thumbnail: string | null } | null> {
+  try {
+    const res = await fetch('https://www.youtube.com/youtubei/v1/player', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        videoId,
+        context: { client: { clientName: 'WEB', clientVersion: '2.20250101.00.00' } },
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const vd = data?.videoDetails;
+    if (!vd?.title) return null;
+    const thumbs: { url?: string }[] = vd.thumbnail?.thumbnails ?? [];
+    return {
+      title: vd.title,
+      description: vd.shortDescription ?? '',
+      author: vd.author ?? null,
+      thumbnail: thumbs.length > 0 ? (thumbs[thumbs.length - 1].url ?? null) : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
