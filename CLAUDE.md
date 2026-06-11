@@ -141,8 +141,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ```
 moajoa/
 ├── apps/
-│   ├── web/           Next.js 15 (열람·공개 보드)
-│   └── ios/           Expo SDK 54 (저장·공유·투표) — local build 보류 중
+│   ├── web/           Next.js 15 (열람·공개 보드 + 투표 참여)
+│   └── ios/           Expo SDK 54 (저장·공유·캡처·편집) — local build 보류 중
 ├── packages/
 │   ├── core/          Zod 스키마 + 도메인 상수 (web/iOS/Edge 공유)
 │   ├── api/           Supabase 클라이언트 + 타입드 쿼리
