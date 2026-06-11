@@ -61,10 +61,18 @@ Deno.serve(async (req) => {
   }
   const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
 
-  // Verify caller is authenticated. We don't need their JWT for the work, but
-  // we don't want anon traffic firing the extractor.
+  // Verify caller is a real signed-in user — not just any Bearer token. The
+  // public anon key is itself a valid JWT (passes verify_jwt), and link ids
+  // are exposed to anonymous visitors via public_board_view, so a prefix-only
+  // check would let anyone re-fire paid extractions (T: cost abuse).
+  // auth.getUser() only accepts user session tokens; anon/service keys fail.
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
+    return jsonError(401, 'unauthorized');
+  }
+  const callerToken = authHeader.slice('Bearer '.length);
+  const { data: caller, error: callerErr } = await admin.auth.getUser(callerToken);
+  if (callerErr || !caller?.user) {
     return jsonError(401, 'unauthorized');
   }
 
