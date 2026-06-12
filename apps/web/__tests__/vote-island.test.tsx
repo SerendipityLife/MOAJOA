@@ -18,6 +18,8 @@ function makePlace(overrides: Partial<ViewPlace>): ViewPlace {
     source_kind: 'ai',
     confidence: 0.9,
     summary_ko: null,
+    google_place_id: 'gpid-1',
+    address: null,
     ...overrides,
   };
 }
@@ -197,6 +199,102 @@ describe('VoteIsland', () => {
 
     await screen.findByTestId('vote-toggle-p1');
     expect(screen.queryByTestId('confirmed-badge-p1')).toBeNull();
+  });
+
+  it('row expand: shows detail with Google Maps deep link + timestamped source jump', async () => {
+    mockUser = { id: 'u1' };
+    render(
+      <VoteIsland
+        {...baseProps}
+        places={[makePlace({ id: 'p1', source_timestamp_sec: 240, summary_ko: '참치가 유명해요' })]}
+        links={[
+          {
+            id: 'l1',
+            source_kind: 'youtube',
+            url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            title: null,
+            thumbnail_url: null,
+            author_name: null,
+            summary_ko: null,
+          },
+        ]}
+        initialJoined
+        initialMyVotes={{}}
+      />,
+    );
+    fireEvent.click(await screen.findByTestId('place-row-p1'));
+    const maps = screen.getByTestId('maps-link-p1');
+    expect(maps.getAttribute('href')).toContain('query_place_id=gpid-1');
+    expect(maps.getAttribute('href')).toContain('google.com/maps/search');
+    const source = screen.getByTestId('source-link-p1');
+    expect(source.textContent).toContain('영상 4:00');
+    expect(source.getAttribute('href')).toContain('t=240s');
+  });
+
+  it('blog-sourced place: detail shows 원문 보기 to the post URL', async () => {
+    render(
+      <VoteIsland
+        {...baseProps}
+        places={[makePlace({ id: 'p1' })]}
+        links={[
+          {
+            id: 'l1',
+            source_kind: 'blog',
+            url: 'https://example.tistory.com/1',
+            title: null,
+            thumbnail_url: null,
+            author_name: null,
+            summary_ko: null,
+          },
+        ]}
+        initialJoined
+        initialMyVotes={{}}
+      />,
+    );
+    fireEvent.click(await screen.findByTestId('place-row-p1'));
+    const source = screen.getByTestId('source-link-p1');
+    expect(source.textContent).toContain('원문 보기');
+    expect(source.getAttribute('href')).toBe('https://example.tistory.com/1');
+  });
+
+  it('renders commentary inline when summary_ko present (VIEW-08 carryover)', async () => {
+    render(
+      <VoteIsland
+        {...baseProps}
+        places={[makePlace({ summary_ko: '여기 라멘이 유명해요' })]}
+        initialJoined
+        initialMyVotes={{}}
+      />,
+    );
+    expect(await screen.findByText('여기 라멘이 유명해요')).toBeInTheDocument();
+  });
+
+  it('hides summary block when summary_ko is null (legacy row)', async () => {
+    render(<VoteIsland {...baseProps} initialJoined initialMyVotes={{}} />);
+    expect(await screen.findByText('스시집')).toBeInTheDocument();
+    expect(screen.queryByTestId('place-summary')).toBeNull();
+  });
+
+  it('renders name_ko over name_local when present', async () => {
+    render(
+      <VoteIsland
+        {...baseProps}
+        places={[makePlace({ name_ko: '스시야', name_local: '寿司屋' })]}
+        initialJoined
+        initialMyVotes={{}}
+      />,
+    );
+    expect(await screen.findByText('스시야')).toBeInTheDocument();
+    expect(screen.queryByText('寿司屋')).toBeNull();
+  });
+
+  it('escapes HTML in summary_ko (no XSS)', async () => {
+    const payload = '<img src=x onerror=alert(1)>';
+    const { container } = render(
+      <VoteIsland {...baseProps} places={[makePlace({ summary_ko: payload })]} initialJoined initialMyVotes={{}} />,
+    );
+    expect(await screen.findByText(payload)).toBeInTheDocument();
+    expect(container.querySelector('img')).toBeNull();
   });
 
   it('legacy zero-members: memberCount=0 → no 확정, list renders without crash', async () => {

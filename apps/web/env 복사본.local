@@ -1,0 +1,8 @@
+# MOAJOA Web — local dev. NOT committed (gitignored).
+
+NEXT_PUBLIC_SUPABASE_URL=https://xfoauhsraguyrifingct.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable__s6DHENRX0MVtlQ1Ln09PA_Eo0FG51c
+
+NEXT_PUBLIC_GOOGLE_MAPS_KEY=AIzaSyB9IdYZtgFInzGOSt60DBHnGfihwMiHKV4
+
+NEXT_PUBLIC_APP_URL=http://localhost:3100

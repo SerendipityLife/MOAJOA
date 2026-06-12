@@ -4,7 +4,6 @@ import { MapPin } from 'lucide-react';
 import { CITY_KO_MAP } from '@moajoa/core';
 import { getCachedPublicBoard } from '@/lib/cache';
 import { PublicBoardMap } from './_components/public-board-map';
-import { PlaceSummaryList } from './_components/place-summary-list';
 import { VoteIsland } from './_components/vote-island';
 
 interface Props {
@@ -105,11 +104,16 @@ export default async function PublicBoardPage({ params }: Props) {
           </div>
         )}
 
+        {/* 장소 상세 UX: 단일 리스트(해설+펼침 상세+지도/영상 버튼+❤️) —
+            기존 VoteIsland(투표) + PlaceSummaryList(장소) 중복 리스트 통합. */}
         {view.board.id && (
-          <VoteIsland slug={slug} boardId={view.board.id} places={view.places} />
+          <VoteIsland
+            slug={slug}
+            boardId={view.board.id}
+            places={view.places}
+            links={view.links}
+          />
         )}
-
-        <PlaceSummaryList places={view.places} />
 
         {view.links.length > 0 && (
           <section className="mt-8">

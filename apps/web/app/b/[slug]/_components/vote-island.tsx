@@ -14,34 +14,67 @@ import {
   retractVote,
 } from '@moajoa/api';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { buildYouTubeWatchUrl } from '@/lib/youtube';
+import { buildGoogleMapsPlaceUrl } from '@/lib/maps-url';
 import { Button, useToast } from '@/components';
 
 type VotePlace = PublicBoardView['places'][number];
+type ViewLink = PublicBoardView['links'][number];
 
 interface Props {
   slug: string;
   boardId: string;
   places: VotePlace[];
+  /** Source links from the same view — powers the per-place 출처 점프 button. */
+  links?: ViewLink[];
   /** Test seam: render member view directly (skip session detect). */
   initialJoined?: boolean;
   /** Test seam: seed the current user's votes keyed by place_id. */
   initialMyVotes?: Record<string, boolean>;
 }
 
+/** `4:00` style label for the 출처 영상 jump. */
+function tsLabel(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+/** The place's source jump: youtube → timestamped watch URL, blog/IG → the post. */
+function sourceAction(
+  place: VotePlace,
+  linksById: Map<string, ViewLink>,
+): { href: string; label: string } | null {
+  if (!place.link_id) return null;
+  const link = linksById.get(place.link_id);
+  if (!link) return null;
+  if (link.source_kind === 'youtube') {
+    const href = buildYouTubeWatchUrl(link.url, place.source_timestamp_sec ?? null);
+    if (!href) return null;
+    const ts = place.source_timestamp_sec;
+    return { href, label: ts != null && ts > 0 ? `▶ 영상 ${tsLabel(ts)}` : '▶ 영상 보기' };
+  }
+  return { href: link.url, label: link.source_kind === 'blog' ? '원문 보기' : '게시물 보기' };
+}
+
 /**
- * Web voting island for /b/[slug]. Hydrates client-side so the public SSR cache
- * (unstable_cache, anon, cookies-free) is never touched — all session reads run
- * in the browser via auth.getUser() (10-PATTERNS GOTCHA 3).
+ * Unified place list + voting island for /b/[slug] (장소 상세 UX, 2026-06-12).
+ * Replaces the old VoteIsland(투표 리스트) + PlaceSummaryList(장소 리스트) pair —
+ * one list where a visitor reads the 해설, expands a row for the full detail
+ * ([Google 지도] photos/ratings deep link + [영상 N:NN] source jump), and votes
+ * right there. Inline-vote decision: 친구 투표자는 라이트 유저 — 본 자리에서
+ * 즉시 ❤️ (별도 화면은 컨텍스트 스위치 = 참여율 하락).
  *
- * Branches:
- *  - logged-out         → "참여해서 투표하기" CTA → /login (magic-link flow).
- *  - logged-in non-member → "이 보드에 참여하기" → joinSharedBoard(slug) (idempotent).
- *  - logged-in member   → per-place ❤️ toggle + love count + 확정 filter.
+ * Hydration stays client-side so the public SSR cache (unstable_cache, anon,
+ * cookies-free) is never touched (10-PATTERNS GOTCHA 3). Names/summaries/
+ * detail buttons come from cached props and render for everyone (incl. SSR
+ * first paint); counts/확정 hydrate for all visitors (anon-granted RPCs);
+ * ❤️ affordances appear only for members.
  *
  * 확정 uses the shared isPlaceConfirmed(loveCount, memberCount) rule — never
  * re-implemented here (single source: @moajoa/core/vote.ts).
  */
-export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVotes }: Props) {
+export function VoteIsland({ slug, boardId, places, links, initialJoined, initialMyVotes }: Props) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -53,9 +86,13 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
 
   const [memberCount, setMemberCount] = useState(0);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [countsReady, setCountsReady] = useState(false);
   const [myVotes, setMyVotes] = useState<Record<string, boolean>>(initialMyVotes ?? {});
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [confirmedOnly, setConfirmedOnly] = useState(false);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+
+  const linksById = new Map((links ?? []).map((l) => [l.id, l]));
 
   // Session + membership + count hydration (skipped when a test seeds initialJoined).
   // 10-03 live finding: without the role check, a returning member (or the
@@ -77,8 +114,10 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
         const role = await getMyBoardRole(client, boardId, uid).catch(() => null);
         if (!active) return;
         if (role) setJoined(true);
-        await hydrateCounts(uid);
       }
+      // Counts/확정 are public social proof — hydrate for anon visitors too
+      // (both RPCs are granted to anon; see 0009/0001 grants).
+      await hydrateCounts(uid ?? undefined);
       if (active) setResolved(true);
     })();
     return () => {
@@ -97,6 +136,7 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
     ]);
     setMemberCount(mc);
     setCounts(vc);
+    setCountsReady(true);
     if (uid && mine.length > 0) {
       setMyVotes((v) => ({ ...v, ...Object.fromEntries(mine.map((id) => [id, true])) }));
     }
@@ -142,35 +182,24 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
     }
   }
 
-  // --- Branch: session not resolved yet → render nothing (no flicker). ---
-  if (!resolved && !joined) return null;
+  if (places.length === 0) return null;
 
-  // --- Branch: logged-out → login CTA. ---
-  if (!joined && !userId) {
-    return (
-      <section className="mt-8">
-        <a
-          href={`/login?next=${encodeURIComponent(`/b/${slug}`)}`}
-          className="inline-block p-3 text-base font-semibold text-brand-500 border border-neutral-200 rounded-lg hover:border-brand-300 hover:bg-brand-50 transition-colors"
-        >
-          참여해서 투표하기
-        </a>
-      </section>
-    );
-  }
+  // CTA strip above the list — varies by session state; the list itself
+  // renders for everyone (SSR included).
+  const cta =
+    resolved && !joined && !userId ? (
+      <a
+        href={`/login?next=${encodeURIComponent(`/b/${slug}`)}`}
+        className="inline-block p-3 text-base font-semibold text-brand-500 border border-neutral-200 rounded-lg hover:border-brand-300 hover:bg-brand-50 transition-colors"
+      >
+        참여해서 투표하기
+      </a>
+    ) : resolved && !joined && userId ? (
+      <Button onClick={onJoin} disabled={joining}>
+        {joining ? '...' : '이 보드에 참여하기'}
+      </Button>
+    ) : null;
 
-  // --- Branch: logged-in non-member → join CTA (read-only counts shown). ---
-  if (!joined) {
-    return (
-      <section className="mt-8">
-        <Button onClick={onJoin} disabled={joining}>
-          {joining ? '...' : '이 보드에 참여하기'}
-        </Button>
-      </section>
-    );
-  }
-
-  // --- Branch: member → per-place ❤️ toggle + count + 확정 filter. ---
   const visible = confirmedOnly
     ? places.filter((p) => isPlaceConfirmed(counts[p.id] ?? 0, memberCount))
     : places;
@@ -178,7 +207,7 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-neutral-900">투표 {places.length}곳</h2>
+        <h2 className="text-lg font-semibold text-neutral-900">장소 {places.length}곳</h2>
         <button
           type="button"
           aria-pressed={confirmedOnly}
@@ -192,39 +221,95 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
           확정만 보기
         </button>
       </div>
+      {cta && <div className="mb-3">{cta}</div>}
       <ul className="space-y-2">
         {visible.map((p) => {
           const love = counts[p.id] ?? 0;
           const voted = myVotes[p.id] ?? false;
-          const confirmed = isPlaceConfirmed(love, memberCount);
+          const confirmed = countsReady && isPlaceConfirmed(love, memberCount);
+          const isOpen = open[p.id] ?? false;
+          const source = sourceAction(p, linksById);
           return (
-            <li
-              key={p.id}
-              className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg"
-            >
-              <button
-                type="button"
-                data-testid={`vote-toggle-${p.id}`}
-                aria-pressed={voted}
-                disabled={pending[p.id]}
-                onClick={() => onToggleVote(p.id)}
-                className="text-xl leading-none shrink-0"
-              >
-                {voted ? '❤️' : '🤍'}
-              </button>
-              <span data-testid={`love-count-${p.id}`} className="text-sm text-neutral-600 w-6">
-                {love}
-              </span>
-              <span className="text-base font-semibold text-neutral-900 line-clamp-2 min-w-0">
-                {p.name_ko ?? p.name_local}
-              </span>
-              {confirmed && (
-                <span
-                  data-testid={`confirmed-badge-${p.id}`}
-                  className="ml-auto text-sm font-semibold text-brand-500 shrink-0"
+            <li key={p.id} className="border border-neutral-200 rounded-lg">
+              <div className="flex items-center gap-3 p-3">
+                {joined && (
+                  <button
+                    type="button"
+                    data-testid={`vote-toggle-${p.id}`}
+                    aria-pressed={voted}
+                    disabled={pending[p.id]}
+                    onClick={() => onToggleVote(p.id)}
+                    className="text-xl leading-none shrink-0"
+                  >
+                    {voted ? '❤️' : '🤍'}
+                  </button>
+                )}
+                {countsReady && (
+                  <span data-testid={`love-count-${p.id}`} className="text-sm text-neutral-600 w-6 shrink-0">
+                    {love}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  data-testid={`place-row-${p.id}`}
+                  aria-expanded={isOpen}
+                  onClick={() => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }))}
+                  className="flex-1 min-w-0 text-left"
                 >
-                  확정
-                </span>
+                  <span className="block text-base font-semibold text-neutral-900 line-clamp-2">
+                    {p.name_ko ?? p.name_local}
+                  </span>
+                  {p.summary_ko && !isOpen && (
+                    <span
+                      data-testid="place-summary"
+                      className="block text-sm text-neutral-600 mt-1 line-clamp-2"
+                    >
+                      {p.summary_ko}
+                    </span>
+                  )}
+                </button>
+                {confirmed && (
+                  <span
+                    data-testid={`confirmed-badge-${p.id}`}
+                    className="ml-auto text-sm font-semibold text-brand-500 shrink-0"
+                  >
+                    확정
+                  </span>
+                )}
+              </div>
+              {isOpen && (
+                <div data-testid={`place-detail-${p.id}`} className="px-3 pb-3">
+                  {p.summary_ko && (
+                    <p data-testid="place-summary" className="text-sm text-neutral-600">
+                      {p.summary_ko}
+                    </p>
+                  )}
+                  {p.address && (
+                    <p className="text-xs text-neutral-500 mt-2">{p.address}</p>
+                  )}
+                  <div className="flex gap-2 mt-3">
+                    <a
+                      href={buildGoogleMapsPlaceUrl(p.name_local, p.google_place_id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid={`maps-link-${p.id}`}
+                      className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-neutral-200 text-neutral-700 hover:border-brand-300 hover:bg-brand-50 transition-colors"
+                    >
+                      📍 Google 지도
+                    </a>
+                    {source && (
+                      <a
+                        href={source.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid={`source-link-${p.id}`}
+                        className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-neutral-200 text-neutral-700 hover:border-brand-300 hover:bg-brand-50 transition-colors"
+                      >
+                        {source.label}
+                      </a>
+                    )}
+                  </div>
+                </div>
               )}
             </li>
           );
