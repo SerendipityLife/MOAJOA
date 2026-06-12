@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 import { CITY_KO_MAP } from '@moajoa/core';
 import { getCachedPublicBoard } from '@/lib/cache';
-import { PublicBoardMap } from './_components/public-board-map';
+import { MapSection } from './_components/map-section';
 import { VoteIsland } from './_components/vote-island';
 
 interface Props {
@@ -66,32 +66,49 @@ export default async function PublicBoardPage({ params }: Props) {
 
   const cityKo = view.board.city_code ? CITY_KO_MAP[view.board.city_code] : null;
 
+  const ownerInitial = (view.owner_display_name || 'M').trim().charAt(0).toUpperCase();
+  const inviteLine = cityKo
+    ? `${view.owner_display_name}님이 ${cityKo} 여행 후보 ${view.places.length}곳을 모았어요`
+    : `${view.owner_display_name}님이 여행 후보 ${view.places.length}곳을 모았어요`;
+
   return (
     <main className="min-h-screen bg-white">
-      <div className="px-4 md:px-6 py-6 md:py-8 max-w-5xl mx-auto">
-        <header className="animate-fade-up mb-6">
-          <p className="text-sm text-neutral-500">
-            {view.owner_display_name}님의 보드
-          </p>
-          <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-neutral-900">
+      <div className="px-4 md:px-6 py-5 md:py-8 max-w-5xl mx-auto">
+        {/* A안 리디자인 (2026-06-12): 첫 화면이 3초 안에 ①무엇인지 ②누가 보냈는지
+            ③뭘 하면 되는지 답하도록 — 브랜드 한 줄 + 초대 카드가 그 역할. */}
+        <a href="/" className="animate-fade-up flex items-center gap-1.5">
+          <span className="grid size-5 place-items-center rounded-md bg-brand-600 text-white">
+            <MapPin className="size-3" strokeWidth={2.4} />
+          </span>
+          <span className="text-xs font-semibold text-brand-600">MOAJOA</span>
+          <span className="text-xs text-neutral-400">링크를 모아 여행 지도로</span>
+        </a>
+
+        <header className="animate-fade-up mt-4">
+          <h1 className="text-xl md:text-2xl font-bold leading-tight tracking-tight text-neutral-900">
             {view.board.title}
           </h1>
           {view.board.description && (
-            <p className="mt-2 text-base leading-relaxed text-neutral-600">
+            <p className="mt-1.5 text-sm md:text-base leading-relaxed text-neutral-600">
               {view.board.description}
             </p>
           )}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {cityKo && (
-              <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700">
-                {cityKo}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
-              <MapPin className="size-3" strokeWidth={2.2} />핀 {view.places.length}개
-            </span>
-          </div>
         </header>
+
+        <section className="animate-fade-up mt-4 rounded-2xl bg-brand-50 p-4 [animation-delay:40ms]">
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-500 text-sm font-semibold text-white">
+              {ownerInitial}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[15px] font-semibold leading-snug text-brand-900">{inviteLine}</p>
+              <p className="mt-1 text-sm leading-relaxed text-brand-700">
+                가고 싶은 곳에 <span className="font-semibold">가고싶어!</span>를 눌러주세요.
+                많이 모인 곳으로 같이 정해요.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {view.places.length === 0 ? (
           <div className="animate-fade-in mt-6 rounded-xl border border-neutral-200 bg-neutral-50 px-6 py-16 text-center">
@@ -99,9 +116,7 @@ export default async function PublicBoardPage({ params }: Props) {
             <p className="mt-2 text-sm text-neutral-500">잠시 후 다시 열어주세요</p>
           </div>
         ) : (
-          <div className="animate-fade-in mt-6 h-[60vh] w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 [animation-delay:80ms] md:h-[520px]">
-            <PublicBoardMap places={view.places} links={view.links} />
-          </div>
+          <MapSection places={view.places} links={view.links} />
         )}
 
         {/* 장소 상세 UX: 단일 리스트(해설+펼침 상세+지도/영상 버튼+❤️) —
@@ -116,10 +131,11 @@ export default async function PublicBoardPage({ params }: Props) {
         )}
 
         {view.links.length > 0 && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-lg font-semibold text-neutral-900">
-              영상 출처 {view.links.length}개
-            </h2>
+          <details className="mt-8 group">
+            <summary className="cursor-pointer list-none mb-3 flex items-center gap-1.5 text-base font-semibold text-neutral-700 hover:text-brand-600 transition-colors">
+              <span className="text-neutral-400 transition-transform group-open:rotate-90">▸</span>
+              이 보드의 출처 {view.links.length}개
+            </summary>
             <ul className="space-y-2">
               {view.links.map((link, i) => (
                 <li
@@ -160,7 +176,7 @@ export default async function PublicBoardPage({ params }: Props) {
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         )}
 
         <footer className="mt-12 border-t border-neutral-200 py-8 text-center">

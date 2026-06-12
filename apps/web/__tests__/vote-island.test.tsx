@@ -117,11 +117,9 @@ describe('VoteIsland', () => {
     mockUser = null;
     render(<VoteIsland {...baseProps} />);
 
-    const cta = await screen.findByText('참여해서 투표하기');
-    expect(cta.closest('a')?.getAttribute('href')).toBe('/login?next=%2Fb%2Fshareslug1');
-
-    const heart = screen.getByTestId('vote-toggle-p1');
-    fireEvent.click(heart);
+    const pill = await screen.findByTestId('vote-toggle-p1');
+    expect(pill.textContent).toContain('가고싶어');
+    fireEvent.click(pill);
     await waitFor(() => expect(push).toHaveBeenCalledWith('/login?next=%2Fb%2Fshareslug1'));
     expect(castVote).not.toHaveBeenCalled();
     expect(joinSharedBoard).not.toHaveBeenCalled();
@@ -139,18 +137,6 @@ describe('VoteIsland', () => {
     expect(castVote.mock.calls[0]?.[1]).toMatchObject({ place_id: 'p1', kind: 'love' });
   });
 
-  it('logged-in non-member: shows 이 보드에 참여하기, click calls joinSharedBoard with slug', async () => {
-    mockUser = { id: 'u1' };
-    render(<VoteIsland {...baseProps} />);
-
-    const joinBtn = await screen.findByText('이 보드에 참여하기');
-    fireEvent.click(joinBtn);
-
-    await waitFor(() => expect(joinSharedBoard).toHaveBeenCalledTimes(1));
-    expect(joinSharedBoard.mock.calls[0]?.[1]).toBe('shareslug1');
-    await waitFor(() => expect(refresh).toHaveBeenCalled());
-  });
-
   it('returning member: role=member renders voting UI without 참여하기 + hydrates my ❤️', async () => {
     mockUser = { id: 'u1' };
     getMyBoardRole.mockResolvedValueOnce('member');
@@ -159,7 +145,7 @@ describe('VoteIsland', () => {
     render(<VoteIsland {...baseProps} />);
 
     // No join prompt — straight to the member view with the prior vote filled.
-    await screen.findByText('❤️ 많은 순');
+    await screen.findByText('가고싶어 순');
     expect(screen.queryByText('이 보드에 참여하기')).toBeNull();
     const voteBtn = await screen.findByTestId('vote-toggle-p1');
     await waitFor(() => expect(voteBtn).toHaveAttribute('aria-pressed', 'true'));
@@ -198,7 +184,7 @@ describe('VoteIsland', () => {
     expect(retractVote).not.toHaveBeenCalled();
   });
 
-  it('❤️ 많은 순 toggle: re-sorts rows by love count desc (확정 수식 제거 — 사람이 결정)', async () => {
+  it('가고싶어 순 toggle: re-sorts rows by love count desc (확정 수식 제거 — 사람이 결정)', async () => {
     mockUser = { id: 'u1' };
     getVoteCounts.mockResolvedValue({ p1: 0, p2: 3 });
 
@@ -217,7 +203,7 @@ describe('VoteIsland', () => {
     );
     expect(namesBefore[0]).toContain('스시집');
 
-    fireEvent.click(screen.getByText('❤️ 많은 순'));
+    fireEvent.click(screen.getByText('가고싶어 순'));
     const namesAfter = [...document.querySelectorAll('[data-testid^="place-row-"]')].map(
       (b) => b.textContent,
     );

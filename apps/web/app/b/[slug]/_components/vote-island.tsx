@@ -11,10 +11,12 @@ import {
   joinSharedBoard,
   retractVote,
 } from '@moajoa/api';
+import { Heart } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { categoryVisual } from '@/lib/category-icon';
 import { buildYouTubeWatchUrl } from '@/lib/youtube';
 import { buildGoogleMapsPlaceUrl } from '@/lib/maps-url';
-import { Button, useToast } from '@/components';
+import { useToast } from '@/components';
 
 type VotePlace = PublicBoardView['places'][number];
 type ViewLink = PublicBoardView['links'][number];
@@ -77,7 +79,6 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   const [userId, setUserId] = useState<string | null>(initialJoined ? 'seed' : null);
   const [resolved, setResolved] = useState<boolean>(Boolean(initialJoined));
   const [joined, setJoined] = useState<boolean>(Boolean(initialJoined));
-  const [joining, setJoining] = useState(false);
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [countsReady, setCountsReady] = useState(false);
@@ -134,22 +135,6 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
     }
   }
 
-  async function onJoin() {
-    setJoining(true);
-    try {
-      await joinSharedBoard(getSupabaseBrowser(), slug);
-      setJoined(true);
-      await hydrateCounts(userId ?? undefined);
-      toast('보드에 참여했어요.', { variant: 'success' });
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-      toast('참여하지 못했어요.', { variant: 'error' });
-    } finally {
-      setJoining(false);
-    }
-  }
-
   async function onToggleVote(placeId: string) {
     // Hearts render for every visitor (가시성 피드백 2026-06-12). The tap
     // resolves the missing prerequisite instead of hiding the affordance:
@@ -198,21 +183,7 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
 
   if (places.length === 0) return null;
 
-  // CTA strip above the list — varies by session state; the list itself
-  // renders for everyone (SSR included).
-  const cta =
-    resolved && !joined && !userId ? (
-      <a
-        href={`/login?next=${encodeURIComponent(`/b/${slug}`)}`}
-        className="inline-block p-3 text-base font-semibold text-brand-500 border border-neutral-200 rounded-lg hover:border-brand-300 hover:bg-brand-50 transition-colors"
-      >
-        참여해서 투표하기
-      </a>
-    ) : resolved && !joined && userId ? (
-      <Button onClick={onJoin} disabled={joining}>
-        {joining ? '...' : '이 보드에 참여하기'}
-      </Button>
-    ) : null;
+  const totalLove = Object.values(counts).reduce((a, n) => a + n, 0);
 
   // 확정 뱃지/필터 제거 (2026-06-12 사용자 결정): 멤버가 공유링크로 수시 합류해
   // 분모가 불안정 → 수식 확정 대신 ❤️ 개수 + 정렬로 사람이 결정한다.
@@ -224,21 +195,27 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-neutral-900">장소 {places.length}곳</h2>
+        <h2 className="text-lg font-semibold text-neutral-900">
+          장소 {places.length}곳
+          {countsReady && totalLove > 0 && (
+            <span className="ml-2 text-sm font-medium text-neutral-400">
+              가고싶어 {totalLove}개
+            </span>
+          )}
+        </h2>
         <button
           type="button"
           aria-pressed={sortByLove}
           onClick={() => setSortByLove((v) => !v)}
           className={`text-sm font-semibold px-3 py-1 rounded-lg border transition-colors ${
             sortByLove
-              ? 'text-brand-500 border-brand-300 bg-brand-50'
+              ? 'text-brand-600 border-brand-300 bg-brand-50'
               : 'text-neutral-600 border-neutral-200 hover:border-brand-300 hover:bg-brand-50'
           }`}
         >
-          ❤️ 많은 순
+          가고싶어 순
         </button>
       </div>
-      {cta && <div className="mb-3">{cta}</div>}
       <ul className="space-y-2">
         {visible.map((p) => {
           const love = counts[p.id] ?? 0;
@@ -246,6 +223,8 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
           const isOpen = open[p.id] ?? false;
           const source = sourceAction(p, linksById);
           const toggleOpen = () => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }));
+          const cat = categoryVisual(p.category);
+          const CatIcon = cat.icon;
           return (
             <li
               key={p.id}
@@ -260,25 +239,12 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                 className="flex items-center gap-3 p-3 cursor-pointer"
                 onClick={toggleOpen}
               >
-                <button
-                  type="button"
-                  data-testid={`vote-toggle-${p.id}`}
-                  aria-pressed={voted}
-                  aria-label="좋아요"
-                  disabled={pending[p.id]}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void onToggleVote(p.id);
-                  }}
-                  className="text-xl leading-none shrink-0"
+                <span
+                  aria-hidden
+                  className={`grid size-9 shrink-0 place-items-center rounded-lg ${cat.tone}`}
                 >
-                  {voted ? '❤️' : '🤍'}
-                </button>
-                {countsReady && (
-                  <span data-testid={`love-count-${p.id}`} className="text-sm text-neutral-600 w-6 shrink-0">
-                    {love}
-                  </span>
-                )}
+                  <CatIcon className="size-4" strokeWidth={2} />
+                </span>
                 <button
                   type="button"
                   data-testid={`place-row-${p.id}`}
@@ -289,15 +255,43 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                   }}
                   className="flex-1 min-w-0 text-left"
                 >
-                  <span className="block text-base font-semibold text-neutral-900 line-clamp-2">
+                  <span className="text-base font-semibold text-neutral-900 line-clamp-2">
                     {p.name_ko ?? p.name_local}
                   </span>
                   {p.summary_ko && !isOpen && (
                     <span
                       data-testid="place-summary"
-                      className="block text-sm text-neutral-600 mt-1 line-clamp-2"
+                      className="text-sm text-neutral-600 mt-1 line-clamp-2"
                     >
                       {p.summary_ko}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  data-testid={`vote-toggle-${p.id}`}
+                  aria-pressed={voted}
+                  aria-label="가고싶어"
+                  disabled={pending[p.id]}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void onToggleVote(p.id);
+                  }}
+                  className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors border ${
+                    voted
+                      ? 'bg-brand-500 border-brand-500 text-white'
+                      : 'bg-white border-neutral-200 text-neutral-600 hover:border-brand-300 hover:text-brand-600'
+                  }`}
+                >
+                  <Heart
+                    className="size-3.5"
+                    strokeWidth={2.2}
+                    fill={voted ? 'currentColor' : 'none'}
+                  />
+                  가고싶어
+                  {countsReady && (
+                    <span data-testid={`love-count-${p.id}`} className={voted ? 'text-white/90' : 'text-neutral-400'}>
+                      {love}
                     </span>
                   )}
                 </button>
