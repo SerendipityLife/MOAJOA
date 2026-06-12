@@ -179,6 +179,8 @@ Plan: 1 of 1
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260612-0cx | 유튜브 추출 파이프라인 리뷰 픽스 #1~#6 (max_tokens 잘림·anon 어뷰즈·클레임 레이스/고착·cityHint·키 경고) | 2026-06-12 | f8919bd | [260612-0cx-youtube-pipeline-fixes](./quick/260612-0cx-youtube-pipeline-fixes/) |
+| 260612-p0p1 | 도그푸딩 P0/P1: OG 이미지 500(Satori woff2+flex) + 로그인→/boards 루프(?next=+안내 페이지) — 라이브 검증 | 2026-06-12 | 08cb410 | v2-backlog #4·#6 해소 |
+| 260612-place | 장소 상세 UX: 통합 리스트(해설+펼침+Google지도/영상점프+inline ❤️) + 0013 view 필드 — 라이브 검증 | 2026-06-12 | 1131357 | 사용자 결정: 투표는 인라인 |
 
 ### Open questions (research/SUMMARY.md gaps)
 
