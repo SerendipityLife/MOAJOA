@@ -38,7 +38,7 @@ Plan: v1.1 모든 phase 코드·오프라인 검증 완료. 남은 건 user-side
 - **Phase 8 (② 추출 깊이):** code-complete. 모닝 08-04.
 - **Phase 9 (① 소스 넓이):** code-complete. 모닝 09-05 (deps 08-04).
 - **Phase 10 (웹 투표):** code-complete. 모닝 10-03.
-- **모닝 게이트 진행 (2026-06-12 자율 세션):** db push 0008~0010 ✅ 적용 · types 재생성 ✅ · extract-youtube 배포 ✅ · 블로그 추출 풀 파이프라인 라이브 검증 ✅ (10곳, conf 0.94, 환각 0) · IG 명시적 실패 ✅ · join_shared_board+투표+shared 가시성 ✅ · 보안(anon 401/ready 409) ✅. YOUTUBE_API_KEY 설정 ✅(사용자 원격 제공) → **08-04 유튜브 추출 라이브 PASS** (9곳 ready, conf 0.85, 환각 0, 타임스탬프 정확). **남은 사용자 판단:** ① migration 0011 prod 적용(확정 분모 owner 포함) ② 실기기 검증(09-05 iOS + 10-03 확정 토글). 상세: `docs/SESSION-NOTES-2026-06-12.md`.
+- **모닝 게이트 진행 (2026-06-12 자율 세션):** db push 0008~0010 ✅ 적용 · types 재생성 ✅ · extract-youtube 배포 ✅ · 블로그 추출 풀 파이프라인 라이브 검증 ✅ (10곳, conf 0.94, 환각 0) · IG 명시적 실패 ✅ · join_shared_board+투표+shared 가시성 ✅ · 보안(anon 401/ready 409) ✅. YOUTUBE_API_KEY 설정 ✅(사용자 원격 제공) → **08-04 유튜브 추출 라이브 PASS** (9곳 ready, conf 0.85, 환각 0, 타임스탬프 정확). 0011 적용 ✅(분모=owner 포함, 라이브 2 확인). **남은 것: 실기기/브라우저 검증만** — 09-05 iOS 트리거(blog/insta) 실기기 + 10-03 VoteIsland 확정 토글 눈 확인. 상세: `docs/SESSION-NOTES-2026-06-12.md`.
 - **v1.1 progress:** 코드 3/3 완료 · 라이브 검증 대기.
 
 > v1.0 도그푸딩 게이트 의도적 병행/나중. v1.0 phase 1~7 보존 — 아래 archived.
