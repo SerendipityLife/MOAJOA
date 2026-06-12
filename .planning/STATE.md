@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: 추출 고도화 + 협업
+milestone: v1.2
+milestone_name: Expo SDK 54 → 56 업그레이드
 status: in_progress
-last_updated: "2026-06-07T00:00:00.000Z"
+last_updated: "2026-06-12T00:00:00.000Z"
 progress:
   total_phases: 3
   completed_phases: 0
@@ -12,10 +12,10 @@ progress:
   percent: 0
 ---
 
-# STATE: MOAJOA v1.1
+# STATE: MOAJOA v1.2
 
-**Last updated:** 2026-06-07
-**Milestone:** v1.1 (추출 고도화 + 협업)
+**Last updated:** 2026-06-12
+**Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드)
 
 ---
 
@@ -31,9 +31,21 @@ progress:
 
 ## Current Position
 
-**Milestone:** v1.1 (추출 고도화 + 협업) — **라이브 검증 완료 (3/3 phases) · 잔여 = iOS 실기기 share-sheet 1건**
+**Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **착수 (2026-06-12 discuss 완료)**
+Branch: `gsd/v1.2-sdk-upgrade`
+Phase: 11 — SDK 54 → 55 — CONTEXT 작성 완료, plan 대기 (`/gsd-plan-phase 11`)
+
+**discuss 잠금 결정 (2026-06-12):** JS 엔진 Hermes 복귀 · 풀 범위(업그레이드+우회 제거+실기기 UAT+문서) · 마일스톤 브랜치.
+**리스크 흡수:** 이미 New Arch 사용 중(Reanimated 4) → SDK 55 Legacy 폐지 무해. **블로커:** JSC→Hermes 전환 시 supabase-js OTEL 동적 import 재검증(babel transform fallback).
+**배경:** `expo run:ios`가 Xcode 26서 깨짐(SDK 56에만 수정) → 현재 pnpm sim 우회 + v1.1 실기기 share-sheet 미검증. SDK 56 도달이 표준 경로 복귀 + 잔여 UAT의 전제.
+
+상세: `.planning/phases/11-sdk-55-upgrade/11-CONTEXT.md` · ROADMAP "Milestone v1.2" 섹션.
+
+### v1.1 종료 상태 (직전 마일스톤)
+
+**Milestone v1.1 (추출 고도화 + 협업) — 라이브 검증 완료 (3/3 phases).** 유일 잔여였던 **iOS 실기기 share-sheet 추출 트리거 UAT**는 EAS 표준 빌드가 필요해 미검증 → **v1.2 Phase 13으로 흡수**(SDK 56 표준 경로 복귀 후 검증).
 Phase: 10 — 웹 투표 — 라이브 PASS (브라우저 검증 + 버그 2건 수정)
-Plan: v1.1 전 phase 라이브 검증 통과. 유일 잔여 = 실기기 share-sheet leg (시뮬레이터 불가, EAS 빌드 필요).
+Plan: v1.1 전 phase 라이브 검증 통과.
 
 - **Phase 8 (② 추출 깊이):** ✅ 라이브 PASS — 유튜브 9곳 ready(conf 0.85, 환각 0, 타임스탬프 정확) + 블로그 10곳(conf 0.94). VIEW-08 해설/요약 웹 노출 확인.
 - **Phase 9 (① 소스 넓이):** ✅ 라이브 PASS — 블로그(디에디트) 풀 추출, IG 명시적 실패, 트리거 코드 검증(grep+tsc+jest 38/38). drain의 blog 처리는 시뮬레이터에서 부분 확인(addLink까지). **잔여: 실기기 share-sheet.**
