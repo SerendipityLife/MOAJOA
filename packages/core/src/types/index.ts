@@ -42,6 +42,8 @@ export interface PublicBoardView {
     | 'source_kind'
     | 'confidence'
     | 'summary_ko'
+    | 'google_place_id'
+    | 'address'
   >[];
   owner_display_name: string;
 }
