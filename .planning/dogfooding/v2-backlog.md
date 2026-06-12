@@ -150,3 +150,17 @@ show fallback or broken card. Public board page itself renders fine.
 ---
 
 *Document created 2026-05-27. Updated 2026-05-29 / 2026-06-01.*
+
+---
+
+## 7. 확정(confirmed)을 주인 수동 마킹으로 재설계 (v2 — 2026-06-12 결정)
+
+**Background:** 수식 확정(❤️ ≥ 멤버 절반)은 멤버가 공유링크로 수시 합류하는
+구조에서 분모가 불안정 — 2명일 때 확정된 곳이 3번째 합류로 해제되는 출렁임.
+2026-06-12 사용자 결정으로 웹에서 수식 확정 제거, ❤️ 개수 + "많은 순" 정렬로
+대체 (commit c90dadc).
+
+**v2 idea:** 확정은 수식이 아니라 의사결정 — 보드 주인이(또는 멤버 합의로)
+장소에 직접 '확정' 마킹. isPlaceConfirmed/accepted_member_count는 core/api에
+보존돼 있어 재사용 가능. 확정 마킹 시 핀 색상 전환(colors.pin.confirmed)과
+iOS 동기화까지 함께 설계.
