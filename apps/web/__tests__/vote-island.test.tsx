@@ -66,8 +66,9 @@ vi.mock('@moajoa/api', () => ({
 
 // next/navigation router.refresh
 const refresh = vi.fn();
+const push = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ refresh }),
+  useRouter: () => ({ refresh, push }),
 }));
 
 // useToast — swallow toasts but keep the API shape.
@@ -94,6 +95,7 @@ beforeEach(() => {
   castVote.mockClear();
   retractVote.mockClear();
   refresh.mockClear();
+  push.mockClear();
   authGetUser.mockClear();
   getAcceptedMemberCount.mockResolvedValue(0);
   getVoteCounts.mockResolvedValue({});
@@ -111,14 +113,30 @@ const baseProps = {
 };
 
 describe('VoteIsland', () => {
-  it('logged-out: shows 참여해서 투표하기 CTA linking to /login, no ❤️ toggle', async () => {
+  it('logged-out: CTA + visible 🤍 that routes to /login?next= on tap (no vote cast)', async () => {
     mockUser = null;
     render(<VoteIsland {...baseProps} />);
 
     const cta = await screen.findByText('참여해서 투표하기');
-    expect(cta).toBeInTheDocument();
     expect(cta.closest('a')?.getAttribute('href')).toBe('/login?next=%2Fb%2Fshareslug1');
-    expect(screen.queryByRole('button', { name: /❤️|좋아요|투표/ })).toBeNull();
+
+    const heart = screen.getByTestId('vote-toggle-p1');
+    fireEvent.click(heart);
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/login?next=%2Fb%2Fshareslug1'));
+    expect(castVote).not.toHaveBeenCalled();
+    expect(joinSharedBoard).not.toHaveBeenCalled();
+  });
+
+  it('logged-in non-member: heart tap auto-joins then casts the vote', async () => {
+    mockUser = { id: 'u1' };
+    render(<VoteIsland {...baseProps} />);
+
+    const heart = await screen.findByTestId('vote-toggle-p1');
+    fireEvent.click(heart);
+
+    await waitFor(() => expect(joinSharedBoard).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(castVote).toHaveBeenCalledTimes(1));
+    expect(castVote.mock.calls[0]?.[1]).toMatchObject({ place_id: 'p1', kind: 'love' });
   });
 
   it('logged-in non-member: shows 이 보드에 참여하기, click calls joinSharedBoard with slug', async () => {

@@ -159,7 +159,29 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   }
 
   async function onToggleVote(placeId: string) {
+    // Hearts render for every visitor (가시성 피드백 2026-06-12). The tap
+    // resolves the missing prerequisite instead of hiding the affordance:
+    //   logged-out  → /login?next= back to this board
+    //   non-member  → auto-join (slug = bearer invite, D-22) then vote
+    if (!resolved) return;
+    if (!userId) {
+      router.push(`/login?next=${encodeURIComponent(`/b/${slug}`)}` as never);
+      return;
+    }
     const client = getSupabaseBrowser();
+    if (!joined) {
+      setPending((p) => ({ ...p, [placeId]: true }));
+      try {
+        await joinSharedBoard(client, slug);
+        setJoined(true);
+        void hydrateCounts(userId);
+      } catch (err) {
+        console.error(err);
+        setPending((p) => ({ ...p, [placeId]: false }));
+        toast('참여하지 못했어요.', { variant: 'error' });
+        return;
+      }
+    }
     const wasVoted = myVotes[placeId] ?? false;
     setPending((p) => ({ ...p, [placeId]: true }));
     // Optimistic local update; server truth reconciled below.
@@ -229,21 +251,35 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
           const confirmed = countsReady && isPlaceConfirmed(love, memberCount);
           const isOpen = open[p.id] ?? false;
           const source = sourceAction(p, linksById);
+          const toggleOpen = () => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }));
           return (
-            <li key={p.id} className="border border-neutral-200 rounded-lg">
-              <div className="flex items-center gap-3 p-3">
-                {joined && (
-                  <button
-                    type="button"
-                    data-testid={`vote-toggle-${p.id}`}
-                    aria-pressed={voted}
-                    disabled={pending[p.id]}
-                    onClick={() => onToggleVote(p.id)}
-                    className="text-xl leading-none shrink-0"
-                  >
-                    {voted ? '❤️' : '🤍'}
-                  </button>
-                )}
+            <li
+              key={p.id}
+              className={`border rounded-lg transition-colors ${
+                isOpen ? 'border-brand-300 bg-brand-50/30' : 'border-neutral-200 hover:border-brand-300 hover:bg-brand-50/40'
+              }`}
+            >
+              {/* Whole card header toggles (affordance 피드백: 탭 영역을 넓게).
+                  The heart is a sibling with stopPropagation so voting never
+                  accidentally expands/collapses. */}
+              <div
+                className="flex items-center gap-3 p-3 cursor-pointer"
+                onClick={toggleOpen}
+              >
+                <button
+                  type="button"
+                  data-testid={`vote-toggle-${p.id}`}
+                  aria-pressed={voted}
+                  aria-label="좋아요"
+                  disabled={pending[p.id]}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void onToggleVote(p.id);
+                  }}
+                  className="text-xl leading-none shrink-0"
+                >
+                  {voted ? '❤️' : '🤍'}
+                </button>
                 {countsReady && (
                   <span data-testid={`love-count-${p.id}`} className="text-sm text-neutral-600 w-6 shrink-0">
                     {love}
@@ -253,7 +289,10 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                   type="button"
                   data-testid={`place-row-${p.id}`}
                   aria-expanded={isOpen}
-                  onClick={() => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOpen();
+                  }}
                   className="flex-1 min-w-0 text-left"
                 >
                   <span className="block text-base font-semibold text-neutral-900 line-clamp-2">
@@ -271,14 +310,26 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                 {confirmed && (
                   <span
                     data-testid={`confirmed-badge-${p.id}`}
-                    className="ml-auto text-sm font-semibold text-brand-500 shrink-0"
+                    className="text-sm font-semibold text-brand-500 shrink-0"
                   >
                     확정
                   </span>
                 )}
+                <span
+                  aria-hidden
+                  className={`shrink-0 text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                >
+                  ▾
+                </span>
               </div>
               {isOpen && (
-                <div data-testid={`place-detail-${p.id}`} className="px-3 pb-3">
+                // Tapping the expanded body also collapses (닫기 피드백) —
+                // the action links stopPropagation so they still open.
+                <div
+                  data-testid={`place-detail-${p.id}`}
+                  className="px-3 pb-3 cursor-pointer"
+                  onClick={toggleOpen}
+                >
                   {p.summary_ko && (
                     <p data-testid="place-summary" className="text-sm text-neutral-600">
                       {p.summary_ko}
@@ -293,7 +344,8 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                       target="_blank"
                       rel="noopener noreferrer"
                       data-testid={`maps-link-${p.id}`}
-                      className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-neutral-200 text-neutral-700 hover:border-brand-300 hover:bg-brand-50 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-700 hover:border-brand-300 hover:bg-brand-50 transition-colors"
                     >
                       📍 Google 지도
                     </a>
@@ -303,7 +355,8 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                         target="_blank"
                         rel="noopener noreferrer"
                         data-testid={`source-link-${p.id}`}
-                        className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-neutral-200 text-neutral-700 hover:border-brand-300 hover:bg-brand-50 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-700 hover:border-brand-300 hover:bg-brand-50 transition-colors"
                       >
                         {source.label}
                       </a>
