@@ -140,7 +140,9 @@ export default async function Image({ params }: Props) {
                 marginTop: cityKo ? 16 : 24,
               }}
             >
-              핀 {pinCount}개
+              {/* Single template string on purpose: `핀 {n}개` interpolation
+                  creates 3 child nodes and Satori requires explicit flex then. */}
+              {`핀 ${pinCount}개`}
             </div>
           </div>
           <div style={{ fontSize: 24, fontWeight: 600, color: '#F97316' }}>MOAJOA</div>
