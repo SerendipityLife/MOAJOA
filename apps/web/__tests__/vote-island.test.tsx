@@ -115,7 +115,7 @@ describe('VoteIsland', () => {
 
     const cta = await screen.findByText('참여해서 투표하기');
     expect(cta).toBeInTheDocument();
-    expect(cta.closest('a')?.getAttribute('href')).toBe('/login');
+    expect(cta.closest('a')?.getAttribute('href')).toBe('/login?next=%2Fb%2Fshareslug1');
     expect(screen.queryByRole('button', { name: /❤️|좋아요|투표/ })).toBeNull();
   });
 

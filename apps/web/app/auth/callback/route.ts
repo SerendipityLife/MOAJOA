@@ -28,7 +28,16 @@ interface CookieToSet {
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/boards';
+  // Validated relative path only (no //host open redirect). Default mirrors
+  // postLoginDestination(): /boards is a dev-tool surface — prod users land
+  // on / instead of bouncing off the /boards gate back to /login (P1 #4).
+  const rawNext = searchParams.get('next');
+  const next =
+    rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
+      ? rawNext
+      : process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === '1'
+        ? '/boards'
+        : '/';
   const errorDescription = searchParams.get('error_description') ?? searchParams.get('error');
 
   const base = process.env.NEXT_PUBLIC_APP_URL ?? origin;

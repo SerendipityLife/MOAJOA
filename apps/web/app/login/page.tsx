@@ -8,6 +8,29 @@ import { Button, Input, useToast } from '@/components';
 
 type Mode = 'password' | 'magic';
 
+/**
+ * Where to land after auth. Honors a validated ?next= (vote flow passes
+ * /login?next=/b/<slug>); otherwise dev-tool users go to /boards and everyone
+ * else to / — never bounce a prod user into the /boards dev gate (P1 #4:
+ * the silent /login → /boards → /login loop).
+ */
+function postLoginDestination(): string {
+  const next = new URLSearchParams(window.location.search).get('next');
+  if (next && next.startsWith('/') && !next.startsWith('//')) return next;
+  return process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === '1' ? '/boards' : '/';
+}
+
+/** /auth/callback target carrying ?next= through the e-mail/OAuth round-trip. */
+function callbackUrl(): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+  const next = new URLSearchParams(window.location.search).get('next');
+  const qs =
+    next && next.startsWith('/') && !next.startsWith('//')
+      ? `?next=${encodeURIComponent(next)}`
+      : '';
+  return `${base}/auth/callback${qs}`;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -40,7 +63,7 @@ export default function LoginPage() {
       setError(error.message);
       return;
     }
-    router.replace('/boards');
+    router.replace(postLoginDestination() as never);
   }
 
   async function signUp() {
@@ -50,7 +73,7 @@ export default function LoginPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl(),
       },
     });
     setPending(false);
@@ -59,7 +82,7 @@ export default function LoginPage() {
       return;
     }
     // With Confirm Email off, signUp returns a session immediately.
-    router.replace('/boards');
+    router.replace(postLoginDestination() as never);
   }
 
   async function sendMagicLink(e: React.FormEvent) {
@@ -69,7 +92,7 @@ export default function LoginPage() {
     const { error } = await getSupabaseBrowser().auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl(),
       },
     });
     setPending(false);
@@ -85,7 +108,7 @@ export default function LoginPage() {
     const { error } = await getSupabaseBrowser().auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl(),
       },
     });
     // On success the browser redirects away; an error means we never left.

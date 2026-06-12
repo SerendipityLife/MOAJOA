@@ -150,7 +150,7 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
     return (
       <section className="mt-8">
         <a
-          href="/login"
+          href={`/login?next=${encodeURIComponent(`/b/${slug}`)}`}
           className="inline-block p-3 text-base font-semibold text-brand-500 border border-neutral-200 rounded-lg hover:border-brand-300 hover:bg-brand-50 transition-colors"
         >
           참여해서 투표하기

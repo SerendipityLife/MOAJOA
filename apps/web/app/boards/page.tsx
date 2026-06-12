@@ -14,8 +14,34 @@ const VISIBILITY: Record<string, { label: string; cls: string }> = {
 };
 
 export default async function BoardsPage() {
-  // WEB-01/WEB-02: dev-tool gate — env 미설정 시 즉시 /login으로 (auth 게이트 이전)
-  if (!isDevToolsEnabled()) redirect('/login');
+  // WEB-01/WEB-02: dev-tool gate. P1 #4 fix — the old redirect('/login') made
+  // a silent login → /boards → /login loop in prod. Render the role notice
+  // instead: web is 열람+투표; board management lives in the iOS app.
+  if (!isDevToolsEnabled()) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6">
+        <div className="animate-fade-up max-w-sm text-center">
+          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-brand-600 text-white shadow-fab">
+            <MapPin className="size-6" strokeWidth={2} />
+          </div>
+          <h1 className="mt-4 text-xl font-bold tracking-tight text-neutral-900">
+            보드 만들기는 iOS 앱에서
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+            웹에서는 친구가 공유한 보드를 열람하고 투표할 수 있어요.
+            <br />
+            공유받은 링크(/b/…)를 열어 시작해보세요.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-block text-sm font-medium text-brand-500 hover:text-brand-600"
+          >
+            홈으로 가기
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   const supabase = await getSupabaseServer();
   const { data } = await supabase.auth.getUser();
