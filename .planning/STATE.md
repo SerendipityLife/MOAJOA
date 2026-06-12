@@ -31,15 +31,19 @@ progress:
 
 ## Current Position
 
-**Milestone:** v1.1 (추출 고도화 + 협업) — **코드 전체 완료 (3/3 phases) · 라이브 적용 = 모닝 게이트**
-Phase: 10 — 웹 투표 — Code complete (waves 1-2) · 10-03 = 모닝 게이트
-Plan: v1.1 모든 phase 코드·오프라인 검증 완료. 남은 건 user-side 모닝 게이트뿐.
+**Milestone:** v1.1 (추출 고도화 + 협업) — **라이브 검증 완료 (3/3 phases) · 잔여 = iOS 실기기 share-sheet 1건**
+Phase: 10 — 웹 투표 — 라이브 PASS (브라우저 검증 + 버그 2건 수정)
+Plan: v1.1 전 phase 라이브 검증 통과. 유일 잔여 = 실기기 share-sheet leg (시뮬레이터 불가, EAS 빌드 필요).
 
-- **Phase 8 (② 추출 깊이):** code-complete. 모닝 08-04.
-- **Phase 9 (① 소스 넓이):** code-complete. 모닝 09-05 (deps 08-04).
-- **Phase 10 (웹 투표):** code-complete. 모닝 10-03.
-- **모닝 게이트 진행 (2026-06-12 자율 세션):** db push 0008~0010 ✅ 적용 · types 재생성 ✅ · extract-youtube 배포 ✅ · 블로그 추출 풀 파이프라인 라이브 검증 ✅ (10곳, conf 0.94, 환각 0) · IG 명시적 실패 ✅ · join_shared_board+투표+shared 가시성 ✅ · 보안(anon 401/ready 409) ✅. YOUTUBE_API_KEY 설정 ✅(사용자 원격 제공) → **08-04 유튜브 추출 라이브 PASS** (9곳 ready, conf 0.85, 환각 0, 타임스탬프 정확). 0011 적용 ✅(분모=owner 포함, 라이브 2 확인). **남은 것: 실기기/브라우저 검증만** — 09-05 iOS 트리거(blog/insta) 실기기 + 10-03 VoteIsland 확정 토글 눈 확인. 상세: `docs/SESSION-NOTES-2026-06-12.md`.
-- **v1.1 progress:** 코드 3/3 완료 · 라이브 검증 대기.
+- **Phase 8 (② 추출 깊이):** ✅ 라이브 PASS — 유튜브 9곳 ready(conf 0.85, 환각 0, 타임스탬프 정확) + 블로그 10곳(conf 0.94). VIEW-08 해설/요약 웹 노출 확인.
+- **Phase 9 (① 소스 넓이):** ✅ 라이브 PASS — 블로그(디에디트) 풀 추출, IG 명시적 실패, 트리거 코드 검증(grep+tsc+jest 38/38). drain의 blog 처리는 시뮬레이터에서 부분 확인(addLink까지). **잔여: 실기기 share-sheet.**
+- **Phase 10 (웹 투표):** ✅ 라이브 PASS — join_shared_board + 투표 2계정 + 확정 뱃지/필터 + shared 가시성. **브라우저 검증 중 버그 2건 발견·수정**(0012: votes UPDATE RLS 누락, owner self-join 이중계산; +멤버십/내-투표 하이드레이션).
+- **모닝 게이트 (2026-06-12 자율 세션):** db push 0008~0012 ✅ · types 재생성 ✅ · extract-youtube 배포 ✅ · YOUTUBE_API_KEY 설정 ✅(사용자 원격) · 보안(anon 401/ready 409) ✅. 상세: `docs/SESSION-NOTES-2026-06-12.md`.
+- **v1.1 progress:** 라이브 검증 3/3 통과 · 잔여 1건(실기기 share-sheet, EAS).
+
+### 잔여 작업 (v1.1 닫기 전 또는 후속)
+
+- **[실기기] iOS share-sheet 추출 트리거** — 공유시트로 youtube/blog/insta 링크 던지기 → 추출 발화 확인. 시뮬레이터에 share extension 없음 → EAS dev build(`eas build -p ios --profile development`) + 폰 설치 필요. `eas login` 상태 확인 선행. 09-05 in-app 트리거 코드는 검증됨, share-sheet 경로만 미검증.
 
 > v1.0 도그푸딩 게이트 의도적 병행/나중. v1.0 phase 1~7 보존 — 아래 archived.
 
@@ -203,11 +207,11 @@ Plan: 1 of 1
 
 | Phase | Goal | Requirements | Status |
 |-------|------|--------------|--------|
-| 8 | 추출 깊이 (장소·영상 해설) | EXTRACT-12/13/14, VIEW-08 (4) | Not started (planning) |
-| 9 | 소스 넓이 (블로그·인스타) | SRC-01/02 (2) | Not started |
-| 10 | 웹 투표 (협업) | COLLAB-01/02 (2) | Not started |
+| 8 | 추출 깊이 (장소·영상 해설) | EXTRACT-12/13/14, VIEW-08 (4) | ✓ 라이브 PASS |
+| 9 | 소스 넓이 (블로그·인스타) | SRC-01/02 (2) | ✓ 라이브 PASS (실기기 share-sheet 잔여) |
+| 10 | 웹 투표 (협업) | COLLAB-01/02 (2) | ✓ 라이브 PASS (버그 2건 수정) |
 
-**v1.1 Coverage:** 8/8 ✓
+**v1.1 Coverage:** 8/8 ✓ · 라이브 검증 3/3 (실기기 share-sheet 1건 후속)
 
 ### v1.0 (archived)
 
