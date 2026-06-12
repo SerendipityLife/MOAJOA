@@ -71,7 +71,7 @@ a 1-line gitignore entry before `vercel link`.
 
 ---
 
-## 4. Web `/login` → `/boards` silent dead-end (P1 UX)
+## 4. ~~Web `/login` → `/boards` silent dead-end (P1 UX)~~ ✅ RESOLVED 2026-06-12 (commit 08cb410 — /login?next= + /boards 안내 페이지)
 
 **Discovered:** Dogfooding day 1, 2026-06-01.
 
@@ -129,7 +129,7 @@ transcript_source는 본인 best guess로 채움 (extraction-baseline은
 
 ---
 
-## 6. OG image route 500 (P0 — incidents.md #5 mirror)
+## 6. ~~OG image route 500 (P0 — incidents.md #5 mirror)~~ ✅ RESOLVED 2026-06-12 (Satori woff2 미지원 + 핀{n}개 multi-child div — TTF 변환 + 단일 문자열. 라이브 200 확인)
 
 **Discovered:** Dogfooding day 1, 2026-05-29.
 
