@@ -7,6 +7,8 @@ import { isPlaceConfirmed } from '@moajoa/core';
 import {
   castVote,
   getAcceptedMemberCount,
+  getMyBoardRole,
+  getMyVotedPlaceIds,
   getVoteCounts,
   joinSharedBoard,
   retractVote,
@@ -55,7 +57,10 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [confirmedOnly, setConfirmedOnly] = useState(false);
 
-  // Session + count hydration (skipped when a test seeds initialJoined).
+  // Session + membership + count hydration (skipped when a test seeds initialJoined).
+  // 10-03 live finding: without the role check, a returning member (or the
+  // owner) was re-prompted with 참여하기 on every visit; without my-vote
+  // hydration, an existing ❤️ rendered as 🤍 and the toggle re-inserted.
   useEffect(() => {
     if (initialJoined) {
       void hydrateCounts();
@@ -68,8 +73,13 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
       if (!active) return;
       const uid = data.user?.id ?? null;
       setUserId(uid);
-      setResolved(true);
-      if (uid) await hydrateCounts();
+      if (uid) {
+        const role = await getMyBoardRole(client, boardId, uid).catch(() => null);
+        if (!active) return;
+        if (role) setJoined(true);
+        await hydrateCounts(uid);
+      }
+      if (active) setResolved(true);
     })();
     return () => {
       active = false;
@@ -77,17 +87,19 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function hydrateCounts() {
+  async function hydrateCounts(uid?: string) {
     const client = getSupabaseBrowser();
-    const [mc, vc] = await Promise.all([
+    const placeIds = places.map((p) => p.id);
+    const [mc, vc, mine] = await Promise.all([
       getAcceptedMemberCount(client, boardId),
-      getVoteCounts(
-        client,
-        places.map((p) => p.id),
-      ),
+      getVoteCounts(client, placeIds),
+      uid ? getMyVotedPlaceIds(client, placeIds, uid).catch(() => []) : Promise.resolve([]),
     ]);
     setMemberCount(mc);
     setCounts(vc);
+    if (uid && mine.length > 0) {
+      setMyVotes((v) => ({ ...v, ...Object.fromEntries(mine.map((id) => [id, true])) }));
+    }
   }
 
   async function onJoin() {
@@ -95,7 +107,7 @@ export function VoteIsland({ slug, boardId, places, initialJoined, initialMyVote
     try {
       await joinSharedBoard(getSupabaseBrowser(), slug);
       setJoined(true);
-      await hydrateCounts();
+      await hydrateCounts(userId ?? undefined);
       toast('보드에 참여했어요.', { variant: 'success' });
       router.refresh();
     } catch (err) {

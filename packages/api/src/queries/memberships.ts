@@ -15,6 +15,34 @@ export async function joinSharedBoard(
 }
 
 /**
+ * The caller's relationship to a board: 'owner' (no memberships row by design),
+ * 'member' (accepted memberships row), or null. Lets vote surfaces render the
+ * member view on revisit instead of re-prompting 참여하기 (and prevents owners
+ * from creating a redundant voter membership for themselves).
+ */
+export async function getMyBoardRole(
+  client: MoajoaSupabaseClient,
+  boardId: string,
+  userId: string,
+): Promise<'owner' | 'member' | null> {
+  const [{ data: own, error: ownErr }, { data: mem, error: memErr }] = await Promise.all([
+    client.from('boards').select('id').eq('id', boardId).eq('owner_id', userId).maybeSingle(),
+    client
+      .from('memberships')
+      .select('board_id')
+      .eq('board_id', boardId)
+      .eq('user_id', userId)
+      .not('accepted_at', 'is', null)
+      .maybeSingle(),
+  ]);
+  if (ownErr) throw ownErr;
+  if (memErr) throw memErr;
+  if (own) return 'owner';
+  if (mem) return 'member';
+  return null;
+}
+
+/**
  * Count of accepted members — the 확정 denominator. Coalesces null → 0 for legacy/empty boards.
  */
 export async function getAcceptedMemberCount(

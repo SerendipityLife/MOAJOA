@@ -40,6 +40,13 @@ const castVote = vi.fn(
   async (_client: unknown, _input: { place_id: string; kind: string }) => ({}),
 );
 const retractVote = vi.fn(async (_client: unknown, _placeId: string) => undefined);
+const getMyBoardRole = vi.fn(
+  async (_client: unknown, _boardId: string, _userId: string) =>
+    null as 'owner' | 'member' | null,
+);
+const getMyVotedPlaceIds = vi.fn(
+  async (_client: unknown, _placeIds: string[], _userId: string) => [] as string[],
+);
 
 vi.mock('@moajoa/api', () => ({
   joinSharedBoard: (client: unknown, slug: string) => joinSharedBoard(client, slug),
@@ -49,6 +56,10 @@ vi.mock('@moajoa/api', () => ({
   castVote: (client: unknown, input: { place_id: string; kind: string }) =>
     castVote(client, input),
   retractVote: (client: unknown, placeId: string) => retractVote(client, placeId),
+  getMyBoardRole: (client: unknown, boardId: string, userId: string) =>
+    getMyBoardRole(client, boardId, userId),
+  getMyVotedPlaceIds: (client: unknown, placeIds: string[], userId: string) =>
+    getMyVotedPlaceIds(client, placeIds, userId),
 }));
 
 // next/navigation router.refresh
@@ -118,6 +129,20 @@ describe('VoteIsland', () => {
     await waitFor(() => expect(joinSharedBoard).toHaveBeenCalledTimes(1));
     expect(joinSharedBoard.mock.calls[0]?.[1]).toBe('shareslug1');
     await waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+
+  it('returning member: role=member renders voting UI without 참여하기 + hydrates my ❤️', async () => {
+    mockUser = { id: 'u1' };
+    getMyBoardRole.mockResolvedValueOnce('member');
+    getMyVotedPlaceIds.mockResolvedValueOnce(['p1']);
+    getVoteCounts.mockResolvedValueOnce({ p1: 2 });
+    render(<VoteIsland {...baseProps} />);
+
+    // No join prompt — straight to the member view with the prior vote filled.
+    await screen.findByText('확정만 보기');
+    expect(screen.queryByText('이 보드에 참여하기')).toBeNull();
+    const voteBtn = await screen.findByTestId('vote-toggle-p1');
+    await waitFor(() => expect(voteBtn).toHaveAttribute('aria-pressed', 'true'));
   });
 
   it('member + voted place: ❤️ filled + count, click calls retractVote', async () => {

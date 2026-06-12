@@ -36,6 +36,26 @@ export async function retractVote(
 }
 
 /**
+ * Place ids (within the given set) the user has already loved. Hydrates the
+ * ❤️ state on revisit so the toggle retracts instead of re-inserting.
+ */
+export async function getMyVotedPlaceIds(
+  client: MoajoaSupabaseClient,
+  placeIds: string[],
+  userId: string,
+): Promise<string[]> {
+  if (placeIds.length === 0) return [];
+  const { data, error } = await client
+    .from('votes')
+    .select('place_id')
+    .in('place_id', placeIds)
+    .eq('user_id', userId)
+    .eq('kind', 'love');
+  if (error) throw error;
+  return ((data ?? []) as { place_id: string }[]).map((r) => r.place_id);
+}
+
+/**
  * Get aggregated vote counts for a set of places. Returns { place_id: love_count }.
  * Uses an RPC for efficient batching.
  */
