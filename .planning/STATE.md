@@ -31,9 +31,15 @@ progress:
 
 ## Current Position
 
-**Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **착수 (2026-06-12 discuss 완료)**
+**Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **진행 중 (2026-06-12)**
 Branch: `gsd/v1.2-sdk-upgrade`
-Phase: 11 — SDK 54 → 55 — CONTEXT 작성 완료, plan 대기 (`/gsd-plan-phase 11`)
+Phase: 11 — SDK 54 → 55 — **11-01 완료(커밋) · 11-02 1차 시도 후 롤백 · 11-03 대기**
+
+- **11-01 (Hermes 격리 검증) ✅ DONE (커밋 fa9c1c2):** app.config.ts에서 `jsEngine:'jsc'` 제거 → SDK 54 위 Hermes 클린 빌드 BUILD SUCCEEDED + 웰컴 화면 런타임 렌더(supabase OTEL 회귀 0, babel transform 불필요) + jest 38/38 + tsc clean. **과거 JSC 우회의 근본 사유 해소 검증됨.**
+- **11-02 (SDK 55 lockstep) ⏸ 롤백:** `expo install expo@^55`가 메이저를 안 넘어 54.0.35로만 올라감 + 좀비 install 프로세스 경합 → 11-01 클린 상태로 복원(expo 54.0.34, git clean, jest 38/38). **다음 시도 명령은 11-02-PLAN.md "실행 노트"에 기록** (`pnpm add expo@~55.0.26` 직접 핀 → `expo install --fix` 포그라운드 1회).
+- **11-03 대기:** SDK 55 prebuild + 네이티브 회귀 검증.
+
+**다음 액션:** 11-02 재시도 — 11-02-PLAN.md 실행 노트의 명령으로 SDK 55 직접 핀.
 
 **discuss 잠금 결정 (2026-06-12):** JS 엔진 Hermes 복귀 · 풀 범위(업그레이드+우회 제거+실기기 UAT+문서) · 마일스톤 브랜치.
 **리스크 흡수:** 이미 New Arch 사용 중(Reanimated 4) → SDK 55 Legacy 폐지 무해. **블로커:** JSC→Hermes 전환 시 supabase-js OTEL 동적 import 재검증(babel transform fallback).
