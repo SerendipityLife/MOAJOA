@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { PublicBoardView } from '@moajoa/core';
-import { isPlaceConfirmed } from '@moajoa/core';
 import {
   castVote,
-  getAcceptedMemberCount,
   getMyBoardRole,
   getMyVotedPlaceIds,
   getVoteCounts,
@@ -70,9 +68,6 @@ function sourceAction(
  * detail buttons come from cached props and render for everyone (incl. SSR
  * first paint); counts/확정 hydrate for all visitors (anon-granted RPCs);
  * ❤️ affordances appear only for members.
- *
- * 확정 uses the shared isPlaceConfirmed(loveCount, memberCount) rule — never
- * re-implemented here (single source: @moajoa/core/vote.ts).
  */
 export function VoteIsland({ slug, boardId, places, links, initialJoined, initialMyVotes }: Props) {
   const router = useRouter();
@@ -84,12 +79,11 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   const [joined, setJoined] = useState<boolean>(Boolean(initialJoined));
   const [joining, setJoining] = useState(false);
 
-  const [memberCount, setMemberCount] = useState(0);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [countsReady, setCountsReady] = useState(false);
   const [myVotes, setMyVotes] = useState<Record<string, boolean>>(initialMyVotes ?? {});
   const [pending, setPending] = useState<Record<string, boolean>>({});
-  const [confirmedOnly, setConfirmedOnly] = useState(false);
+  const [sortByLove, setSortByLove] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   const linksById = new Map((links ?? []).map((l) => [l.id, l]));
@@ -129,12 +123,10 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   async function hydrateCounts(uid?: string) {
     const client = getSupabaseBrowser();
     const placeIds = places.map((p) => p.id);
-    const [mc, vc, mine] = await Promise.all([
-      getAcceptedMemberCount(client, boardId),
+    const [vc, mine] = await Promise.all([
       getVoteCounts(client, placeIds),
       uid ? getMyVotedPlaceIds(client, placeIds, uid).catch(() => []) : Promise.resolve([]),
     ]);
-    setMemberCount(mc);
     setCounts(vc);
     setCountsReady(true);
     if (uid && mine.length > 0) {
@@ -222,8 +214,11 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
       </Button>
     ) : null;
 
-  const visible = confirmedOnly
-    ? places.filter((p) => isPlaceConfirmed(counts[p.id] ?? 0, memberCount))
+  // 확정 뱃지/필터 제거 (2026-06-12 사용자 결정): 멤버가 공유링크로 수시 합류해
+  // 분모가 불안정 → 수식 확정 대신 ❤️ 개수 + 정렬로 사람이 결정한다.
+  // (v2 후보: 주인이 직접 '확정' 마킹 — .planning/dogfooding/v2-backlog.md)
+  const visible = sortByLove
+    ? [...places].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0))
     : places;
 
   return (
@@ -232,15 +227,15 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
         <h2 className="text-lg font-semibold text-neutral-900">장소 {places.length}곳</h2>
         <button
           type="button"
-          aria-pressed={confirmedOnly}
-          onClick={() => setConfirmedOnly((v) => !v)}
+          aria-pressed={sortByLove}
+          onClick={() => setSortByLove((v) => !v)}
           className={`text-sm font-semibold px-3 py-1 rounded-lg border transition-colors ${
-            confirmedOnly
+            sortByLove
               ? 'text-brand-500 border-brand-300 bg-brand-50'
               : 'text-neutral-600 border-neutral-200 hover:border-brand-300 hover:bg-brand-50'
           }`}
         >
-          확정만 보기
+          ❤️ 많은 순
         </button>
       </div>
       {cta && <div className="mb-3">{cta}</div>}
@@ -248,7 +243,6 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
         {visible.map((p) => {
           const love = counts[p.id] ?? 0;
           const voted = myVotes[p.id] ?? false;
-          const confirmed = countsReady && isPlaceConfirmed(love, memberCount);
           const isOpen = open[p.id] ?? false;
           const source = sourceAction(p, linksById);
           const toggleOpen = () => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }));
@@ -307,14 +301,6 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                     </span>
                   )}
                 </button>
-                {confirmed && (
-                  <span
-                    data-testid={`confirmed-badge-${p.id}`}
-                    className="text-sm font-semibold text-brand-500 shrink-0"
-                  >
-                    확정
-                  </span>
-                )}
                 <span
                   aria-hidden
                   className={`shrink-0 text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}

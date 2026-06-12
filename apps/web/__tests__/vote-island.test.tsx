@@ -159,7 +159,7 @@ describe('VoteIsland', () => {
     render(<VoteIsland {...baseProps} />);
 
     // No join prompt — straight to the member view with the prior vote filled.
-    await screen.findByText('확정만 보기');
+    await screen.findByText('❤️ 많은 순');
     expect(screen.queryByText('이 보드에 참여하기')).toBeNull();
     const voteBtn = await screen.findByTestId('vote-toggle-p1');
     await waitFor(() => expect(voteBtn).toHaveAttribute('aria-pressed', 'true'));
@@ -198,24 +198,30 @@ describe('VoteIsland', () => {
     expect(retractVote).not.toHaveBeenCalled();
   });
 
-  it('확정 true: memberCount=2, loveCount=1 (>=0.5) shows 확정 badge', async () => {
+  it('❤️ 많은 순 toggle: re-sorts rows by love count desc (확정 수식 제거 — 사람이 결정)', async () => {
     mockUser = { id: 'u1' };
-    getAcceptedMemberCount.mockResolvedValue(2);
-    getVoteCounts.mockResolvedValue({ p1: 1 });
+    getVoteCounts.mockResolvedValue({ p1: 0, p2: 3 });
 
-    render(<VoteIsland {...baseProps} initialJoined initialMyVotes={{ p1: true }} />);
+    render(
+      <VoteIsland
+        {...baseProps}
+        places={[makePlace({ id: 'p1', name_local: '스시집' }), makePlace({ id: 'p2', name_local: '카페' })]}
+        initialJoined
+        initialMyVotes={{}}
+      />,
+    );
 
-    expect(await screen.findByTestId('confirmed-badge-p1')).toBeInTheDocument();
-  });
+    await screen.findByTestId('love-count-p2');
+    const namesBefore = [...document.querySelectorAll('[data-testid^="place-row-"]')].map(
+      (b) => b.textContent,
+    );
+    expect(namesBefore[0]).toContain('스시집');
 
-  it('확정 false: memberCount=3, loveCount=1 (<0.5) shows no 확정 badge', async () => {
-    mockUser = { id: 'u1' };
-    getAcceptedMemberCount.mockResolvedValue(3);
-    getVoteCounts.mockResolvedValue({ p1: 1 });
-
-    render(<VoteIsland {...baseProps} initialJoined initialMyVotes={{ p1: true }} />);
-
-    await screen.findByTestId('vote-toggle-p1');
+    fireEvent.click(screen.getByText('❤️ 많은 순'));
+    const namesAfter = [...document.querySelectorAll('[data-testid^="place-row-"]')].map(
+      (b) => b.textContent,
+    );
+    expect(namesAfter[0]).toContain('카페');
     expect(screen.queryByTestId('confirmed-badge-p1')).toBeNull();
   });
 
@@ -315,9 +321,8 @@ describe('VoteIsland', () => {
     expect(container.querySelector('img')).toBeNull();
   });
 
-  it('legacy zero-members: memberCount=0 → no 확정, list renders without crash', async () => {
+  it('legacy empty counts: list renders without crash', async () => {
     mockUser = { id: 'u1' };
-    getAcceptedMemberCount.mockResolvedValue(0);
     getVoteCounts.mockResolvedValue({});
 
     render(
