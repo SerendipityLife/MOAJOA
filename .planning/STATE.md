@@ -6,10 +6,10 @@ status: in_progress
 last_updated: "2026-06-12T00:00:00.000Z"
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 33
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
+  percent: 66
 ---
 
 # STATE: MOAJOA v1.2
@@ -33,19 +33,20 @@ progress:
 
 **Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **진행 중 (2026-06-13)**
 Branch: `gsd/v1.2-sdk-upgrade`
-Phase: 11 — SDK 54 → 55 — **✅ COMPLETE (3/3 plans, 2026-06-13)** · 다음 = Phase 12 (55→56)
+Phase: 12 — SDK 55 → 56 — **SDK 56 bump ✅ · expo run:ios 복귀 ❌ (Xcode 26 한계, SDK 56 미해결)** · 다음 = Phase 13 (재정의 필요)
 
-- **11-01 (Hermes 격리 검증) ✅ (커밋 fa9c1c2):** `jsEngine:'jsc'` 제거 → SDK 54 Hermes 빌드 SUCCEEDED + 웰컴 렌더(OTEL 회귀 0, babel 불필요) + jest 38/38 + tsc. 과거 JSC 우회 근본 사유 해소 검증.
-- **11-02 (SDK 55 lockstep) ✅ (커밋 70b3e8a):** expo 55.0.26 / RN 0.83.6 / react 19.2.0 / 전체 expo-* 55.x + share-intent 6.1.1. `expo install --check` up-to-date + tsc + jest 38/38. (1차 시도 `expo install expo@^55`는 메이저 미통과로 롤백 → `pnpm add expo@~55.0.26` 직접 핀으로 성공. 11-02-PLAN "실행 노트" 참조)
-- **11-03 (prebuild + 회귀) ✅ (커밋 997d855):** SDK 55 prebuild --clean + pod install + BUILD SUCCEEDED + 웰컴/보드 화면 렌더(New Arch 컴포넌트 등록 OK, JS 런타임 에러 0) + 네이티브 보존 grep(GMSApiKey/App Group/Hermes/maps subspec) + tsc/jest. **핵심 픽스: react-native-maps 1.27 Google Maps 설정 교체**(아래 Decisions).
+- **11-01~03 (SDK 54→55) ✅ COMPLETE (커밋 fa9c1c2/70b3e8a/997d855):** Hermes 복귀(OTEL 회귀 0) + expo 55.0.26/RN 0.83.6 + react-native-maps 1.27 Google Maps config plugin 픽스. 상세는 아래 Decisions + ROADMAP.
+- **12-01 (SDK 56 lockstep) ✅ (커밋 334cea1):** expo 56.0.11 / RN 0.85.3 / react 19.2.3 / react-dom 19.2.3(expo-router 56 peer) / expo-* 56.x / share-intent 7.0.0. tsconfig `types:["jest","node"]`(SDK 56 base서 @types/jest 자동포함 깨짐 보정). expo install --check up-to-date + tsc + jest 38/38.
+- **12-02 (prebuild + 빌드 + 회귀) ✅ 부분:** SDK 56 prebuild --clean + pod install + deployment target **16.4** + 네이티브 보존(GMSApiKey/App Group/Hermes/maps subspec) + **pnpm sim BUILD SUCCEEDED + 웰컴/보드 화면 렌더(New Arch 등록 OK, JS 에러 0)**. 추적 코드 변경 0(prebuild는 gitignored ios/).
 
-**Phase 11 범위 내 deferred (Phase 13에서 커버):** 실제 MapView 타일+핀 렌더 시각 확인(로그인 세션 필요) · release/EAS Hermes hermesc 정밀 검증.
+### ⚠️ 핵심 발견 (마일스톤 전제 수정)
+**`expo run:ios`는 SDK 56 + Xcode 26.5 + @expo/cli 56.1.15에서도 여전히 깨짐** — 시뮬레이터(UDID 명시해도)를 물리 기기로 오인해 `No code signing certificates`. 2회 재현(`/tmp/run-ios.log`, `run-ios2.log`). **즉 "SDK 56이 expo run:ios를 고친다"는 전제가 틀렸다.** UPGRADE-04의 "표준 경로 복귀(로컬)"는 **미달성**. → **로컬 시뮬레이터는 pnpm sim(xcodebuild 직접) 우회를 계속 사용해야 함.** 단 SDK 업그레이드 자체의 가치는 유효(SDK 최신화 + Hermes + EAS 클라우드 빌드는 이 로컬 Xcode 버그 무관 → 실기기 share-sheet UAT는 EAS로 진행 가능).
 
-**다음 액션:** Phase 12 — SDK 55 → 56 (RN 0.85, Hermes v1 기본, iOS deployment target 16.4, **expo run:ios 복귀**). 직접 핀 방식: `pnpm add expo@~56.0.11` → `expo install --fix` → expo-share-intent 7.0.0(expo ^56) → prebuild --clean → 빌드. (11-02 실행 노트의 함정 회피 절차 동일 적용)
+**Phase 13 재정의 필요:** 기존 "pnpm sim 우회 제거"는 **불가**(로컬 expo run:ios 미수정) → 우회 유지 + 왜 필요한지 문서화 + EAS dev build로 실기기 share-sheet UAT + 메모리/CLAUDE.md를 "SDK 56이지만 로컬 우회 여전히 필요"로 갱신. **사용자 확인 대기.**
 
-**discuss 잠금 결정 (2026-06-12):** JS 엔진 Hermes 복귀 · 풀 범위(업그레이드+우회 제거+실기기 UAT+문서) · 마일스톤 브랜치.
-**리스크 흡수:** 이미 New Arch 사용 중(Reanimated 4) → SDK 55 Legacy 폐지 무해. **블로커:** JSC→Hermes 전환 시 supabase-js OTEL 동적 import 재검증(babel transform fallback).
-**배경:** `expo run:ios`가 Xcode 26서 깨짐(SDK 56에만 수정) → 현재 pnpm sim 우회 + v1.1 실기기 share-sheet 미검증. SDK 56 도달이 표준 경로 복귀 + 잔여 UAT의 전제.
+**Phase deferred (Phase 13):** 실제 MapView 타일+핀 렌더(로그인 필요) · release/EAS hermesc Hermes 정밀 검증 · 실기기 share-sheet UAT.
+
+**discuss 잠금 결정 (2026-06-12):** JS 엔진 Hermes 복귀 · 풀 범위 · 마일스톤 브랜치.
 
 상세: `.planning/phases/11-sdk-55-upgrade/11-CONTEXT.md` · ROADMAP "Milestone v1.2" 섹션.
 
@@ -141,6 +142,8 @@ Plan: 1 of 1
 
 ### Decisions (Roadmap 단계에서 확정)
 
+- **[v1.2 12-02] `expo run:ios`는 Xcode 26 + SDK 56에서도 시뮬레이터를 물리 기기로 오인 → 로컬은 pnpm sim 유지** — @expo/cli 56.1.15가 Xcode 26.5의 devicectl/CoreDevice 시뮬레이터를 device로 misidentify해 `No code signing certificates`. SDK 56이 고친다는 가정 오류(2회 재현). 로컬 시뮬레이터 = `pnpm sim`(xcodebuild 직접 + CODE_SIGNING_ALLOWED=NO). 실기기/배포 = EAS(클라우드 Xcode라 무관). **scripts/ios-sim.sh 제거하지 말 것.**
+- **[v1.2 12-01] SDK 56 expo-router는 react-dom을 peer로 요구** — 네이티브 앱이어도 `react-dom`(react와 동일 버전)을 deps에 추가해야 expo install/빌드 통과. + tsconfig `types:["jest","node"]` 필요(SDK 56 base가 moduleResolution:bundler라 @types/jest 자동포함 안 됨 → TS2708/2593).
 - **[v1.2 11-03] react-native-maps 1.27 Google Maps = 자체 config plugin (`iosGoogleMapsApiKey`), `ios.config.googleMapsApiKey` 금지** — 1.27은 별도 `react-native-google-maps.podspec`을 폐지하고 메인 podspec의 `Google` subspec(`pod 'react-native-maps/Google'`) + 자체 플러그인으로 전환. Expo built-in `ios.config.googleMapsApiKey`는 폐지된 `pod 'react-native-google-maps'`를 주입해 pod install 실패. app.config.ts에서 후자 제거 + `['react-native-maps', { iosGoogleMapsApiKey: env }]` 추가가 정답(플러그인이 GMSApiKey·AppDelegate·Podfile 전부 구성). **Phase 12(56)에서도 이 설정 유지.**
 - **[v1.2 11-02] Expo SDK 메이저 업그레이드는 `pnpm add expo@~NN.x` 직접 핀 후 `expo install --fix`** — `expo install expo@^NN`은 현재 SDK CLI 기준이라 메이저를 안 넘는다. `expo install --fix`는 포그라운드 1회만(백그라운드 반복 시 좀비 프로세스가 node_modules 경합). 롤백: `git checkout HEAD -- package.json pnpm-lock.yaml` → `pnpm install --frozen-lockfile`.
 - **Phase 수: 6 (architecture 제안 4에서 확장)** — granularity standard 적합. Backend / iOS save / Web public을 별도 phase로 펼쳐 2인 팀 fork-join 가능

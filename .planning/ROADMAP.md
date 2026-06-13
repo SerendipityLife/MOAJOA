@@ -424,8 +424,8 @@ Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
 ## Phases (v1.2)
 
 - [x] **Phase 11: SDK 54 → 55** — New Arch 확정 + Hermes 복귀(supabase OTEL 회귀 0) + RN 0.83/React 19.2 lockstep + expo-share-intent 6.1.1 + react-native-maps 1.27 maps 설정 픽스 + 네이티브 회귀 0 (completed 2026-06-13, 3/3 plans)
-- [ ] **Phase 12: SDK 55 → 56** — RN 0.85 + Hermes v1 기본 + iOS deployment target 16.4 + 표준 `expo run:ios` Xcode 26 복귀
-- [ ] **Phase 13: 우회 제거 + 실기기 검증 + 문서 갱신** — pnpm sim 스크립트 제거 + EAS dev build 실기기 share-sheet UAT(v1.1 잔여) + 메모리/CLAUDE.md 갱신 + main 머지
+- [~] **Phase 12: SDK 55 → 56** — RN 0.85 + Hermes v1 + deployment target 16.4 **✅ (커밋 334cea1)** · 단 표준 `expo run:ios` Xcode 26 복귀는 **❌ 미달성**(@expo/cli 56.1.15도 시뮬레이터를 물리기기로 오인 — SDK 56 미해결). 앱은 pnpm sim으로 빌드·실행 검증됨.
+- [ ] **Phase 13 (재정의): 워크어라운드 유지 문서화 + 실기기 EAS UAT + 문서/메모리 갱신** — (당초 "pnpm sim 제거"는 expo run:ios 미수정으로 불가) pnpm sim 유지 사유 명시 + EAS dev build 실기기 share-sheet UAT(v1.1 잔여) + 메모리/CLAUDE.md 갱신(SDK 56이지만 로컬 우회 필요) + main 머지
 
 ---
 
@@ -463,11 +463,12 @@ Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
 **Success Criteria** (what must be TRUE):
   1. package.json이 expo ~56 / react-native 0.85로 상향되고 `npx expo install --check` 잔여 불일치 0
   2. iOS deployment target이 16.4로 상향된다 (커스텀 모듈 podspec 포함)
-  3. `expo run:ios`가 Xcode 26 시뮬레이터에서 사이닝 에러 없이 빌드·실행되어 첫 화면이 뜬다 (pnpm sim 우회 없이)
-  4. 구글맵·애플로그인·share extension·bottom-sheet·gesture 회귀 0, jest + `tsc --noEmit` 통과
-  5. Hermes v1에서 supabase 로그인+쿼리 런타임 동작 재확인
-**Plans:** TBD (`/gsd-plan-phase 12`에서 생성)
+  3. ~~`expo run:ios`가 Xcode 26 시뮬레이터에서 사이닝 에러 없이 빌드·실행~~ — **❌ 미달성:** @expo/cli 56.1.15가 Xcode 26.5 시뮬레이터를 물리기기로 오인 → `No code signing certificates`(UDID 명시해도 2회 재현). SDK 56 미해결. **로컬은 pnpm sim 유지**(앱은 pnpm sim으로 BUILD SUCCEEDED + 실행 검증).
+  4. 구글맵(빌드/링크)·share extension(소스생성)·bottom-sheet·gesture 회귀 0, jest + `tsc --noEmit` 통과 ✓
+  5. Hermes에서 앱 부팅 + 웰컴/보드 렌더(supabase import 크래시 0) ✓
+**Plans:** 2/2 (12-01 lockstep ✓ 334cea1 · 12-02 prebuild+build+회귀 ✓ 추적변경0). 성공기준 #3은 Xcode 26 한계로 미달 → Phase 13에서 워크어라운드 유지로 재정의.
 **UI hint:** no
+**핵심 발견:** SDK 56이 expo run:ios의 Xcode 26 시뮬레이터 오인을 못 고침 → 마일스톤 전제(UPGRADE-04 로컬 복귀) 수정. EAS 클라우드 빌드는 무관(실기기 UAT는 Phase 13 EAS로 가능).
 
 ---
 
@@ -493,8 +494,8 @@ Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. SDK 54 → 55 | 3/3 | Complete | 2026-06-13 |
-| 12. SDK 55 → 56 | 0/TBD | Not started | - |
-| 13. 우회 제거 + 실기기 검증 + 문서 갱신 | 0/TBD | Not started | - |
+| 12. SDK 55 → 56 | 2/2 | SDK 56 bump 완료 · expo run:ios 복귀 미달(Xcode 26 한계) | 2026-06-13 |
+| 13. 워크어라운드 유지 + 실기기 EAS UAT + 문서 (재정의) | 0/TBD | Not started · 사용자 확인 대기 | - |
 
 ---
 
