@@ -53,19 +53,19 @@ Exceptions:
 
 ## Typography
 
-iOS sizes map to `ui-tokens.typography.sizes` (rem→px). Korean line-heights use `lineHeights.tight` (1.25) for headings, `lineHeights.normal` (1.5) for body — Korean readability rule already in tokens. **3 weights used** (regular 400 default, medium 500, semibold 600); bold 700 is reserved for the home greeting headline only.
+iOS sizes map to `ui-tokens.typography.sizes` (rem→px). Korean line-heights use `lineHeights.tight` (1.25) for headings, `lineHeights.normal` (1.5) for body — Korean readability rule already in tokens. **2 weights used** — regular 400 (body / prose / meta / caption / labels) and semibold 600 (place names, headings, and the home greeting display). Headings are distinguished from body by weight (600) at the shared 16px size, not by a separate size. No medium 500 and no bold 700.
 
 | Role | Size | Weight | Line Height | Where |
 |------|------|--------|-------------|-------|
-| Display (home greeting) | 24px (`2xl`) | bold (700) | 1.25 | `boards.tsx` 인사말 헤더 (existing tone kept) |
-| Heading (vote question / board title) | 18px (`lg`) | semibold (600) | 1.25 | "어디부터 갈까?", board-detail title |
-| Body / place name | 16px (`base`) | semibold (600) for names, regular (400) for prose | 1.5 | place card name, vote option name |
-| Label / meta | 14px (`sm`) | medium (500) | 1.5 | "장소 N · 참여 M명", board subtitle, address |
-| Caption / chip | 12px (`xs`) | medium (500) | 1.25 | category chips, D-카운트 chip, 출처 ▶칩, 표수, 메달 number |
+| Display (home greeting) | 24px (`2xl`) | semibold (600) | 1.25 | `boards.tsx` 인사말 헤더 — 24px size alone carries display prominence |
+| Heading / body / place name | 16px (`base`) | semibold (600) for headings + names, regular (400) for prose | 1.5 (1.25 when used as a heading) | "어디부터 갈까?", board-detail title, place card name, vote option name |
+| Label / meta | 14px (`sm`) | regular (400) | 1.5 | "장소 N · 참여 M명", board subtitle, address |
+| Caption / chip | 12px (`xs`) | regular (400) | 1.25 | category chips, D-카운트 chip, 출처 ▶칩, 표수, 메달 number |
 
 Rules:
 - Place names always `numberOfLines={1}` on cards, `numberOfLines={2}` allowed in sheets.
-- Never exceed these 5 roles. No new font sizes.
+- Never exceed these 4 roles. No new font sizes.
+- Only 2 weights: 400 and 600. Headings/names render at 600; everything else at 400.
 - Korean copy never uppercased (no `text-transform`); rely on weight + size for hierarchy.
 
 ---
@@ -109,7 +109,7 @@ All copy Korean, 토스 톤 (warm, plain, no exclamation spam). Reuses existing 
 | Element | Copy |
 |---------|------|
 | Primary CTA (boards detail → share) | **친구와 정하기** |
-| Secondary share (always-on, header) | share icon (no label) → native `Share.share` sheet (friends.tsx pattern) |
+| Secondary share (always-on, header) | share icon (no visible label) → native `Share.share` sheet (friends.tsx pattern). **`accessibilityLabel="공유하기"`** (icon-only control). |
 | Invite-copy bar (vote screen) | **초대 링크 복사** (success toast: `링크를 복사했어요.`) |
 | Vote screen heading | **어디부터 갈까?** |
 | Vote screen subhead | `{N}명 참여 중 · {M}표 더 모이면 확정` (when no deadline) |
@@ -127,6 +127,10 @@ All copy Korean, 토스 톤 (warm, plain, no exclamation spam). Reuses existing 
 | Loading — video embed | sheet shows a spinner over the player area until `onLoadEnd` |
 | Loading — board detail map | map renders immediately; `fitToCoordinates` runs once places resolve (no full-screen spinner — map is the hero) |
 
+**Icon-only control accessibility labels (Dimension 2):** every glyph-only button carries an `accessibilityLabel`.
+- Detail-screen header share icon → `accessibilityLabel="공유하기"`.
+- Vote-screen secondary share glyph button → `accessibilityLabel="메시지로 공유"`.
+
 **Destructive actions:** none surfaced in-screen this phase. Board 수정/삭제 is swipe-revealed only (locked: "파괴적 액션 전면 배치 제거") and the swipe-delete UI itself is **out of scope** for Phase 14 (CONTEXT 비범위). No destructive confirmation dialog is added here.
 
 ---
@@ -134,8 +138,8 @@ All copy Korean, 토스 톤 (warm, plain, no exclamation spam). Reuses existing 
 ## Screen Contracts
 
 ### Screen 1 — 내 여행 (홈) · `apps/ios/app/(tabs)/boards.tsx`
-- Keep existing greeting header + date-chip tone.
-- Board = **cover card** (`radii.xl`, white, 1px `neutral.200` border): bold title + place-name chips (top 3 + `+N`) + `장소 N · 참여 M명` meta badge.
+- Keep existing greeting header + date-chip tone. Greeting renders at 24px/600 semibold (display role).
+- Board = **cover card** (`radii.xl`, white, 1px `neutral.200` border): title (16/600) + place-name chips (top 3 + `+N`) + `장소 N · 참여 M명` meta badge (14/400).
 - **Hybrid cover:** when a representative place photo exists → hero photo with a translucent bottom bar overlaying title/meta; otherwise the place-name-chip layout is the default identifier. Never a mini-map thumbnail (locked rationale: maps look alike).
 - 수정/삭제 never shown on the card face → swipe-revealed (UI not built this phase).
 - Analyzing board shows inline `분석 중…`.
@@ -144,18 +148,18 @@ All copy Korean, 토스 톤 (warm, plain, no exclamation spam). Reuses existing 
 - **Map is the hero** (full-bleed) + draggable bottom sheet (`@gorhom/bottom-sheet`, 28px top radius, 36×4px handle).
 - Map: `fitToCoordinates` to all places on load (replaces the hard-coded 도쿄 `initialRegion`).
 - Pins: color = `colors.category` (by place category); state = `colors.pin` (candidate gray / loved blue / confirmed green); top-3 by votes carry a `colors.medal` numbered badge.
-- Header: back chevron · board title (18/600) · participant avatar stack (overlapping circles) · share icon (`brand.500`).
-- Sheet top: category filter chips (active = `brand.500` fill / inactive = `neutral.100`). Each place card: medal rank (if top 3) + category dot + name (16/600) + meta (14/500 `neutral.400`) + ❤️ count.
+- Header: back chevron · board title (16/600) · participant avatar stack (overlapping circles) · share icon (`brand.500`, icon-only → `accessibilityLabel="공유하기"`).
+- Sheet top: category filter chips (active = `brand.500` fill / inactive = `neutral.100`). Each place card: medal rank (if top 3) + category dot + name (16/600) + meta (14/400 `neutral.400`) + ❤️ count.
 - Tapping a place card opens the existing `PinBottomSheet`, extended with the embedded video player (Screen 4 detail).
 - Primary CTA "친구와 정하기" lives here (entry into share/vote flow).
 
 ### Screen 3 — 공유 / 투표 (vote screen)
-- Heading "어디부터 갈까?" + subhead participation/deadline line.
-- Each option = card (`radii.xl`): name + ❤️ (one-tap toggle) + live horizontal bar + participant avatar stack + 표수.
+- Heading "어디부터 갈까?" (16/600) + subhead participation/deadline line (14/400).
+- Each option = card (`radii.xl`): name (16/600) + ❤️ (one-tap toggle) + live horizontal bar + participant avatar stack + 표수 (12/400).
 - Leading option bar = `brand.500`; **majority → confirmed**: 2px `pin.confirmed` border + "결정됨" green chip + green bar.
 - Trailing options bar = `neutral.300` track with `brand.500`/`neutral.300` fill by share.
 - Deadline chip top-right (`semantic.warning`).
-- Bottom bar: **초대 링크 복사** (`brand.600` fill, white) + a secondary share glyph button (`neutral.100`).
+- Bottom bar: **초대 링크 복사** (`brand.600` fill, white) + a secondary share glyph button (`neutral.100`, icon-only → `accessibilityLabel="메시지로 공유"`).
 - **Reuse:** the web `vote-island.tsx` already implements ❤️ cast/retract + counts + join. iOS does not re-implement vote tallying; it links into the web vote surface via `shareBoard()` slug (`Constants.expoConfig.extra.webUrl` + `/b/{slug}`). iOS in-app vote-result/confirmed viewing is **out of scope** (CONTEXT 비범위).
 
 ### Screen 4 — 임베드 영상 플레이어 (in `PinBottomSheet`)
