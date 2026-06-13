@@ -26,6 +26,7 @@ import { fetchBlogContent } from './pipeline/blog.ts';
 import { fetchInstagramContent } from './pipeline/instagram.ts';
 import type { SourceContent } from './pipeline/source.ts';
 import { resolveGooglePlace } from './pipeline/places.ts';
+import { normalizeName, resolveDescriptionMapLinks } from './pipeline/maplinks.ts';
 
 // ---- Request contract -------------------------------------------------------
 const RequestSchema = z.object({
@@ -199,6 +200,16 @@ Deno.serve(async (req) => {
         return jsonError(400, `cannot auto-extract source_kind=${link.source_kind}`);
     }
 
+    // ---- 1b. Authoritative places from description map-links (keyless) ----
+    // Korean travel/맛집 descriptions list places as maps.app.goo.gl links. Resolving
+    // them yields exact name+coords+id with NO Places Text Search — which otherwise
+    // fails on the Korean-transliterated names these videos use (e.g. "에비소바 이치겐"
+    // searched in 'ja' matches nothing → 0 places → manual_review). Spike 002.
+    const mapLinkPlaces = await resolveDescriptionMapLinks(description);
+    if (mapLinkPlaces.length > 0) {
+      console.log(`[maplinks] resolved ${mapLinkPlaces.length} place(s) from description links`);
+    }
+
     // ---- 2. LLM extraction ----
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY not set');
@@ -237,12 +248,12 @@ Deno.serve(async (req) => {
 
     await broadcastStep(admin, link_id, 'llm', 60);
 
-    if (validPlaces.length === 0) {
+    if (validPlaces.length === 0 && mapLinkPlaces.length === 0) {
       // Self-describing failure: input sizes distinguish "LLM saw nothing"
       // (metadata fetch degraded) from "LLM declined to extract" (grounding).
       const noPlacesDiag =
         `no places found by LLM (desc=${description.length} chars, body=${content.bodyText.length} chars, ` +
-        `candidates_discarded=${candidates.places.length - validPlaces.length})`;
+        `candidates_discarded=${candidates.places.length - validPlaces.length}, maplinks=0)`;
       await admin
         .from('links')
         .update({
@@ -274,7 +285,43 @@ Deno.serve(async (req) => {
     const languageCode = cityHint && KO_CITIES.has(cityHint) ? 'ko' : 'ja';
 
     const resolved = [];
+
+    // Seed with authoritative map-link places (no Text Search, no cost), and
+    // remember their names so we don't also Text-Search the same place.
+    const mapLinkNames = new Set<string>();
+    for (const mlp of mapLinkPlaces) {
+      if (mlp.label) mapLinkNames.add(normalizeName(mlp.label));
+      mapLinkNames.add(normalizeName(mlp.name));
+      resolved.push({
+        cand: {
+          name_ko: mlp.label || null,
+          source_timestamp_sec: undefined,
+          source_quote: mlp.sourceQuote,
+          inferred_city: undefined,
+          confidence: 0.95,
+          summary_ko: undefined,
+        },
+        place: {
+          placeId: mlp.placeId,
+          displayName: mlp.name,
+          displayNameEn: null,
+          lat: mlp.lat,
+          lng: mlp.lng,
+          primaryType: null,
+          formattedAddress: null,
+          duration_ms: 0,
+        },
+      });
+    }
+
     for (const cand of validPlaces) {
+      // Already covered by an authoritative map-link → skip the lossy Text Search.
+      if (
+        mapLinkNames.has(normalizeName(cand.name_local)) ||
+        (cand.name_ko && mapLinkNames.has(normalizeName(cand.name_ko)))
+      ) {
+        continue;
+      }
       try {
         const place = await resolveGooglePlace({
           apiKey: placesKey,
@@ -327,8 +374,12 @@ Deno.serve(async (req) => {
     }
 
     // ---- 6. Mark link ready ----
+    // Average over what was actually saved (LLM + map-link places); guard /0 for
+    // the map-link-only case where validPlaces can be empty.
     const avgConfidence =
-      validPlaces.reduce((a, p) => a + p.confidence, 0) / validPlaces.length;
+      resolved.length > 0
+        ? resolved.reduce((a, r) => a + (r.cand.confidence ?? 0.5), 0) / resolved.length
+        : 0;
 
     await admin
       .from('links')
