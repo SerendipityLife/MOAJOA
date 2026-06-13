@@ -107,16 +107,9 @@ export const radii = {
 
 export const typography = {
   fonts: {
-    // Korean-first, Japanese fallback (MOAJOA Design System). Loaded via
-    // next/font on web, expo-font on iOS.
-    sans: [
-      'IBM Plex Sans KR',
-      'IBM Plex Sans JP',
-      'Apple SD Gothic Neo',
-      'Noto Sans KR',
-      'system-ui',
-      'sans-serif',
-    ],
+    // Pretendard primary (MOAJOA Design System), then OS Korean fallbacks.
+    // Loaded via next/font on web, expo-font on iOS.
+    sans: ['Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', 'system-ui', 'sans-serif'],
     mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
   },
   sizes: {

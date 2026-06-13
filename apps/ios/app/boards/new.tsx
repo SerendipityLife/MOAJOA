@@ -1,5 +1,5 @@
-import { createBoard } from '@moajoa/api';
-import { detectSourceKind, Limits } from '@moajoa/core';
+import { addLink, createBoard } from '@moajoa/api';
+import { detectSourceKind, Limits, SharedDefaultsKeys } from '@moajoa/core';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -17,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CityPicker } from '@/components/boards/city-picker';
 import { DatePickerSheet } from '@/components/boards/date-picker-sheet';
 import { supabase } from '@/lib/supabase';
+import { SharedDefaults } from '@/lib/shared-defaults';
+import { startExtraction } from '@/lib/extraction-store';
 import { autoBoardTitle, formatDateRangeKo, toYMD } from '@/lib/trip-format';
 
 // Soft ambient card shadow (matches the my-screen design-system cards) so each
@@ -75,16 +77,20 @@ export default function NewBoardScreen() {
         start_date: start ? toYMD(start) : null,
         end_date: end ? toYMD(end) : null,
       });
-      // If a link was entered, hand it to the detail screen via pendingUrl —
-      // it replays the same add-link + extraction path, so a YouTube link gets
-      // its places extracted in one shot. No link → land on the empty board
-      // where the link input is waiting.
+      // If a link was entered, add it and kick off extraction in the background
+      // store, then land on the "내 여행" home so the user isn't stuck watching a
+      // loading screen — the new board shows its live progress there. No link →
+      // land on the empty board where the link input is waiting.
       const trimmedUrl = url.trim();
       if (trimmedUrl) {
-        router.replace({
-          pathname: '/boards/[id]',
-          params: { id: board.id, pendingUrl: trimmedUrl },
-        });
+        const link = await addLink(supabase, { board_id: board.id, url: trimmedUrl });
+        // D-02: mirror last_board_id so the Share Extension defaults here next.
+        SharedDefaults.set(SharedDefaultsKeys.LastBoardId, board.id);
+        const kind = detectSourceKind(trimmedUrl);
+        if (kind !== null && kind !== 'manual') {
+          startExtraction({ linkId: link.id, boardId: board.id, boardTitle: board.title });
+        }
+        router.replace('/(tabs)/boards');
       } else {
         router.replace(`/boards/${board.id}`);
       }
@@ -95,25 +101,14 @@ export default function NewBoardScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
-      {/* Header: 취소 / 새 여행 / 저장 */}
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'bottom']}>
+      {/* Header: 취소 / 새 여행 (저장은 하단으로 이동) */}
       <View className="flex-row items-center justify-between px-5 pt-3 pb-3">
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Text className="text-base text-neutral-700">취소</Text>
         </Pressable>
         <Text className="text-lg font-bold text-neutral-900">새 여행</Text>
-        <Pressable
-          onPress={submit}
-          disabled={!canSave}
-          hitSlop={8}
-          className={`rounded-full px-4 py-1.5 ${canSave ? 'bg-brand-500' : 'bg-neutral-200'}`}
-        >
-          <Text
-            className={`text-base font-semibold ${canSave ? 'text-white' : 'text-neutral-400'}`}
-          >
-            저장
-          </Text>
-        </Pressable>
+        <View className="w-8" />
       </View>
 
       <KeyboardAvoidingView behavior="padding" className="flex-1">
@@ -126,7 +121,7 @@ export default function NewBoardScreen() {
           <Pressable
             onPress={() => setCityOpen(true)}
             style={cardShadow}
-            className="bg-white rounded-2xl px-4 py-4 mb-3 flex-row items-center active:bg-neutral-50"
+            className="bg-white rounded-2xl px-4 py-4 mb-4 flex-row items-center active:bg-neutral-50"
           >
             <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
               <Ionicons name="location" size={20} color="#2979FF" />
@@ -149,7 +144,7 @@ export default function NewBoardScreen() {
           <Pressable
             onPress={() => setDateOpen(true)}
             style={cardShadow}
-            className="bg-white rounded-2xl px-4 py-4 mb-3 flex-row items-center active:bg-neutral-50"
+            className="bg-white rounded-2xl px-4 py-4 mb-4 flex-row items-center active:bg-neutral-50"
           >
             <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
               <Ionicons name="calendar" size={20} color="#2979FF" />
@@ -171,7 +166,7 @@ export default function NewBoardScreen() {
           </Pressable>
 
           {/* 메모 (description) */}
-          <View className="bg-white rounded-2xl px-4 py-4 mb-3" style={cardShadow}>
+          <View className="bg-white rounded-2xl px-4 py-4 mb-4" style={cardShadow}>
             <View className="flex-row items-center mb-3">
               <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
                 <Ionicons name="reader-outline" size={20} color="#2979FF" />
@@ -182,7 +177,7 @@ export default function NewBoardScreen() {
             <TextInput
               value={desc}
               onChangeText={setDesc}
-              placeholder="이번 여행에서 뭘 할 예정인가요?"
+              placeholder="필요한 내용을 적어보세요"
               placeholderTextColor="#9CA3AF"
               multiline
               maxLength={Limits.BoardDescMax}
@@ -195,7 +190,7 @@ export default function NewBoardScreen() {
           </View>
 
           {/* 장소 가져오기 (선택) */}
-          <View className="bg-white rounded-2xl px-4 py-4 mb-3" style={cardShadow}>
+          <View className="bg-white rounded-2xl px-4 py-4 mb-4" style={cardShadow}>
             <View className="flex-row items-center mb-3">
               <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
                 <Ionicons name="link" size={20} color="#2979FF" />
@@ -213,7 +208,7 @@ export default function NewBoardScreen() {
             <TextInput
               value={url}
               onChangeText={setUrl}
-              placeholder="유튜브 / 블로그 / 인스타 링크"
+              placeholder="유튜브 링크를 넣어보세요."
               placeholderTextColor="#9CA3AF"
               autoCapitalize="none"
               autoCorrect={false}
@@ -232,7 +227,7 @@ export default function NewBoardScreen() {
 
           {/* 공개 여부 (Mozi "Is the plan tentative?" 대체) */}
           <View
-            className="bg-white rounded-2xl px-4 py-4 mb-3 flex-row items-center"
+            className="bg-white rounded-2xl px-4 py-4 mb-4 flex-row items-center"
             style={cardShadow}
           >
             <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
@@ -255,9 +250,18 @@ export default function NewBoardScreen() {
             />
           </View>
 
-          <Text className="text-center text-sm text-neutral-400 mt-2">
-            여행을 만들고 링크를 더하면 장소가 지도에 모여요
-          </Text>
+          {/* 저장 — 마지막 카드 바로 아래, 카드들과 동일한 너비 */}
+          <Pressable
+            onPress={submit}
+            disabled={!canSave}
+            className={`rounded-2xl py-4 items-center ${canSave ? 'bg-brand-500' : 'bg-neutral-200'}`}
+          >
+            <Text
+              className={`text-base font-semibold ${canSave ? 'text-white' : 'text-neutral-400'}`}
+            >
+              저장
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
 

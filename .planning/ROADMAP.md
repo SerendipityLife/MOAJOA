@@ -396,3 +396,143 @@ Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
 *v1.1 Roadmap created: 2026-06-07 by roadmapper (autonomous mode — recommended defaults)*
 *Design source: `docs/SESSION-NOTES-2026-06-07.md` §2/§3/§4*
 *Next: `/gsd-discuss-phase 8` 또는 `/gsd-plan-phase 8`*
+
+---
+
+# Milestone v1.2 — Expo SDK 54 → 56 업그레이드
+
+**Created:** 2026-06-12
+**Milestone:** v1.2
+**Core Value:** iOS 표준 빌드 경로(`expo run:ios` / EAS) 복귀 — Xcode 26에서 깨진 추출·공유 동선을 막던 커스텀 우회를 제거하고 최신 SDK 기반으로 정렬
+**Granularity:** standard → **3 phases** (54→55 / 55→56 / 정리·검증 — RN 메이저 경계가 자연 분기)
+**Requirements covered:** 5/5 v1.2 ✓
+**Design source:** 2026-06-12 discuss 세션 (사용자 3개 결정 잠금) · Phase 11 CONTEXT
+
+> v1.0(Phase 1~7) / v1.1(Phase 8~10) 위에 보존됨. 이 마일스톤은 Phase **11**부터 번호를 이어간다.
+
+## v1.2 결정 근거 요약 (배경)
+
+`expo run:ios`가 Xcode 26에서 사이닝 에러로 깨짐(@expo/cli devicectl 버그, SDK 56에만 수정) → 현재는 `pnpm sim`(xcodebuild 직접) 우회로만 빌드 가능하고, 실기기 share-sheet 추출 트리거(v1.1 잔여)는 EAS 표준 경로가 필요해 미검증 상태. **SDK 56까지 올리면 표준 경로가 복귀**하여 우회 제거 + v1.1 잔여 UAT 완료가 가능. Expo는 한 메이저씩(54→55→56) 권장 → 3 phase.
+
+**사용자 잠금 결정 (2026-06-12 discuss):**
+- **JS 엔진:** JSC → **Hermes 복귀** (JSC는 RN 0.81+ first-party 제거; SDK 56 Hermes v1 기본). supabase-js OTEL 회귀는 babel transform fallback.
+- **범위:** 풀 — 업그레이드 + 우회 제거 + 실기기 share-sheet UAT + 메모리/CLAUDE.md 갱신.
+- **브랜치:** `gsd/v1.2-sdk-upgrade` (RN 2메이저 점프 위험도 → main 보호).
+
+**리스크 흡수 사실:** 앱은 **이미 New Architecture 사용 중**(Reanimated 4) → SDK 55의 Legacy Arch 폐지가 무해. 가장 큰 마이그레이션 리스크는 이미 지나감.
+
+## Phases (v1.2)
+
+- [x] **Phase 11: SDK 54 → 55** — New Arch 확정 + Hermes 복귀(supabase OTEL 회귀 0) + RN 0.83/React 19.2 lockstep + expo-share-intent 6.1.1 + react-native-maps 1.27 maps 설정 픽스 + 네이티브 회귀 0 (completed 2026-06-13, 3/3 plans)
+- [~] **Phase 12: SDK 55 → 56** — RN 0.85 + Hermes v1 + deployment target 16.4 **✅ (커밋 334cea1)** · 단 표준 `expo run:ios` Xcode 26 복귀는 **❌ 미달성**(@expo/cli 56.1.15도 시뮬레이터를 물리기기로 오인 — SDK 56 미해결). 앱은 pnpm sim으로 빌드·실행 검증됨.
+- [ ] **Phase 13 (재정의): 워크어라운드 유지 문서화 + 실기기 EAS UAT + 문서/메모리 갱신** — (당초 "pnpm sim 제거"는 expo run:ios 미수정으로 불가) pnpm sim 유지 사유 명시 + EAS dev build 실기기 share-sheet UAT(v1.1 잔여) + 메모리/CLAUDE.md 갱신(SDK 56이지만 로컬 우회 필요) + main 머지
+
+---
+
+## Phase Details (v1.2)
+
+### Phase 11: SDK 54 → 55 (New Arch 확정 + Hermes 복귀 + RN 0.83)
+
+**Goal:** apps/ios가 Expo SDK 55(RN 0.83/React 19.2)에서 빌드·실행되고, JS 엔진이 JSC→Hermes로 전환되어 supabase 인증·쿼리가 런타임에서 회귀 없이 동작하며, 핵심 네이티브 기능(구글맵·애플로그인·share extension·bottom-sheet·gesture)이 회귀 0으로 동작한다.
+**Depends on:** Nothing (마일스톤 첫 phase)
+**Why first:** JSC는 RN 0.81부터 first-party 제거 → SDK 55(RN 0.83)에선 커뮤니티 패키지 없이 불가. SDK 55가 Legacy Arch도 폐지하므로 New Arch 확정 + Hermes 전환을 같은 단계에서 흡수. Hermes/OTEL 변수를 SDK bump와 분리하기 위해 엔진 전환을 SDK 54 위에서 먼저 검증.
+**Requirements:** UPGRADE-01(부분), UPGRADE-02, UPGRADE-03
+**Owners:** iOS
+**Success Criteria** (what must be TRUE):
+  1. SDK 54 위에서 jsEngine을 Hermes로 전환한 빌드가 시뮬레이터에서 실행되고, 로그인(매직링크/애플) + 보드 쿼리가 런타임 에러(OTEL 동적 import 등) 없이 동작한다 (실패 시 babel transform으로 magic comment 제거 적용)
+  2. package.json이 expo ~55 / react-native 0.83 / react 19.2로 lockstep 상향되고 expo-share-intent가 6.x로 올라가며, `npx expo install --check`가 잔여 불일치 0을 보고한다
+  3. `expo prebuild --clean` 재생성 후 ios/ 네이티브 설정(GMSApiKey, App Group entitlement, ShareExtension target)이 보존되고 grep으로 확인된다
+  4. 시뮬레이터 빌드(pnpm sim)가 통과하고 구글맵 렌더링 + 핀 + bottom-sheet + gesture가 회귀 없이 동작한다
+  5. jest(jest-expo 55) + `tsc --noEmit`가 통과한다
+**Plans:** 3/3 complete
+  - [x] 11-01-PLAN.md — Hermes 격리 검증 (SDK 54 위 jsEngine 제거 + prebuild + 빌드 + 웰컴 렌더, OTEL 회귀 0) ✓ 2026-06-13 (커밋 fa9c1c2)
+  - [x] 11-02-PLAN.md — SDK 55 lockstep (expo 55.0.26/RN 0.83.6/react 19.2.0 + 전체 expo-* 55.x + share-intent 6.1.1, expo install --check up-to-date + tsc + jest 38/38) ✓ 2026-06-13 (커밋 70b3e8a)
+  - [x] 11-03-PLAN.md — prebuild --clean + 네이티브 보존 + BUILD SUCCEEDED + 회귀(웰컴/보드 렌더, New Arch 등록 OK) + react-native-maps 1.27 Google Maps config plugin 픽스 ✓ 2026-06-13 (커밋 997d855)
+**UI hint:** no (인프라 — 시각 회귀 확인은 있으나 새 UI 없음)
+**Deferred to Phase 13:** 실제 MapView 타일+핀 렌더(로그인 필요) · release/EAS Hermes hermesc 정밀 검증
+
+---
+
+### Phase 12: SDK 55 → 56 (RN 0.85 + Hermes v1 + expo run:ios 복귀)
+
+**Goal:** apps/ios가 Expo SDK 56(RN 0.85/React 19.2, Hermes v1 기본)에서 빌드·실행되고, iOS deployment target이 16.4로 상향되며, 표준 `expo run:ios`(또는 EAS dev build)가 Xcode 26 시뮬레이터에서 사이닝 에러 없이 동작한다.
+**Depends on:** Phase 11
+**Why now:** @expo/cli의 devicectl/CoreDevice 사이닝 버그 수정이 SDK 56에 있음 → `expo run:ios` 복귀의 분기점. RN 0.85는 0.83 위 증분.
+**Requirements:** UPGRADE-01(완료), UPGRADE-04
+**Owners:** iOS
+**Success Criteria** (what must be TRUE):
+  1. package.json이 expo ~56 / react-native 0.85로 상향되고 `npx expo install --check` 잔여 불일치 0
+  2. iOS deployment target이 16.4로 상향된다 (커스텀 모듈 podspec 포함)
+  3. ~~`expo run:ios`가 Xcode 26 시뮬레이터에서 사이닝 에러 없이 빌드·실행~~ — **❌ 미달성:** @expo/cli 56.1.15가 Xcode 26.5 시뮬레이터를 물리기기로 오인 → `No code signing certificates`(UDID 명시해도 2회 재현). SDK 56 미해결. **로컬은 pnpm sim 유지**(앱은 pnpm sim으로 BUILD SUCCEEDED + 실행 검증).
+  4. 구글맵(빌드/링크)·share extension(소스생성)·bottom-sheet·gesture 회귀 0, jest + `tsc --noEmit` 통과 ✓
+  5. Hermes에서 앱 부팅 + 웰컴/보드 렌더(supabase import 크래시 0) ✓
+**Plans:** 2/2 (12-01 lockstep ✓ 334cea1 · 12-02 prebuild+build+회귀 ✓ 추적변경0). 성공기준 #3은 Xcode 26 한계로 미달 → Phase 13에서 워크어라운드 유지로 재정의.
+**UI hint:** no
+**핵심 발견:** SDK 56이 expo run:ios의 Xcode 26 시뮬레이터 오인을 못 고침 → 마일스톤 전제(UPGRADE-04 로컬 복귀) 수정. EAS 클라우드 빌드는 무관(실기기 UAT는 Phase 13 EAS로 가능).
+
+---
+
+### Phase 13: 우회 제거 + 실기기 검증 + 문서 갱신
+
+**Goal:** SDK 56 표준 빌드 경로가 확정됐으니 pnpm sim 우회 스크립트를 제거·정리하고, v1.1의 잔여였던 실기기 share-sheet 추출 트리거 UAT를 EAS dev build로 완료하며, 관련 메모리/CLAUDE.md를 갱신하고 마일스톤 브랜치를 main에 머지한다.
+**Depends on:** Phase 12
+**Why last:** 표준 경로가 실제 동작해야 우회 제거·실기기 검증이 의미 있음.
+**Requirements:** UPGRADE-04(스크립트 제거), UPGRADE-05
+**Owners:** iOS
+**Success Criteria** (what must be TRUE):
+  1. `scripts/ios-sim.sh` 제거 + package.json `sim` 스크립트 정리(또는 `expo run:ios`로 재정의)되고, 빌드 문서/메모가 표준 경로로 갱신된다
+  2. EAS dev build(`eas build -p ios --profile development`)로 실기기 설치 후, 카톡/사파리 공유시트에서 youtube/blog/insta 링크를 던지면 추출이 발화한다 (v1.1 잔여 UAT 통과)
+  3. `ios-local-build-on-this-mac` 메모리가 "우회 불필요 — 표준 경로 복귀"로 갱신되고, CLAUDE.md의 "local build 보류 중" 문구가 갱신된다
+  4. `gsd/v1.2-sdk-upgrade` 브랜치가 main에 머지된다
+**Plans:** TBD (`/gsd-plan-phase 13`에서 생성)
+**UI hint:** no
+
+---
+
+## Progress Table (v1.2)
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 11. SDK 54 → 55 | 3/3 | Complete | 2026-06-13 |
+| 12. SDK 55 → 56 | 2/2 | SDK 56 bump 완료 · expo run:ios 복귀 미달(Xcode 26 한계) | 2026-06-13 |
+| 13. 워크어라운드 유지 + 실기기 EAS UAT + 문서 (재정의) | 0/TBD | Not started · 사용자 확인 대기 | - |
+
+---
+
+## Phase Ordering Rationale (v1.2)
+
+```
+Phase 11 (54 → 55: New Arch 확정 + Hermes 복귀 + RN 0.83)
+   │  (Hermes/OTEL 변수를 SDK bump와 분리 검증)
+   ▼
+Phase 12 (55 → 56: RN 0.85 + Hermes v1 + expo run:ios 복귀)
+   │  (표준 빌드 경로 복귀 = 우회 제거의 전제)
+   ▼
+Phase 13 (우회 제거 + 실기기 share-sheet UAT + 문서 갱신 + main 머지)
+```
+
+**핵심 의존 관계:**
+- **11 → 12:** Expo 권장 = 한 메이저씩. JSC→Hermes·New Arch 확정을 55에서 먼저 흡수해야 56 점프가 단순 증분이 됨.
+- **12 → 13:** `expo run:ios` 복귀(56)가 실제 동작해야 우회 스크립트 제거·실기기 EAS UAT가 의미. v1.1 잔여(실기기 share-sheet)를 여기서 닫음.
+
+**병렬 불가:** 직렬 의존 체인(각 SDK 위에 다음 SDK). 단일 트랙(apps/ios) 작업.
+
+---
+
+## Coverage (v1.2)
+
+✓ All 5 v1.2 requirements mapped
+✓ No orphaned requirements
+
+| Requirement | 설명 | Phase |
+|----------|--------------|-------|
+| UPGRADE-01 | 앱이 Expo SDK 56 / RN 0.85에서 빌드·실행 | 11(부분)·12 |
+| UPGRADE-02 | JS 엔진 Hermes 전환 + supabase 런타임 회귀 0 | 11 |
+| UPGRADE-03 | 핵심 네이티브 기능(맵·로그인·share·sheet·gesture) 회귀 0 | 11 |
+| UPGRADE-04 | 표준 `expo run:ios` 복귀 + pnpm sim 우회 제거 | 12·13 |
+| UPGRADE-05 | v1.1 잔여 실기기 share-sheet 추출 UAT 통과 | 13 |
+
+---
+
+*v1.2 Roadmap created: 2026-06-12 (discuss 기반 — 사용자 3개 결정 잠금)*
+*Next: `/gsd-plan-phase 11`*

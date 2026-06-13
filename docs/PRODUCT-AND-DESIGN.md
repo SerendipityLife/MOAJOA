@@ -166,7 +166,7 @@ MOAJOA는 이 두 지점을 메운다.
 
 ### 6.3 타이포그래피
 
-- **폰트:** `IBM Plex Sans KR` → `IBM Plex Sans JP` → `Apple SD Gothic Neo` → `Noto Sans KR` → system-ui (한국어 우선, 일본어 폴백). mono는 `JetBrains Mono`.
+- **폰트:** `Pretendard` → `Apple SD Gothic Neo` → `Noto Sans KR` → system-ui (Pretendard 우선, OS 한국어 폴백). mono는 `JetBrains Mono`.
   - Web: `next/font` · iOS: `expo-font`로 로드.
 - **크기:** xs `12px` · sm `14px` · base `16px` · lg `18px` · xl `20px` · 2xl `24px` · 3xl `30px` · 4xl `36px`
 - **굵기:** regular 400 · medium 500 · semibold 600 · bold 700

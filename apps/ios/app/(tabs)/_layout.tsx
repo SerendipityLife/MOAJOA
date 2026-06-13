@@ -1,6 +1,6 @@
 import { Tabs, router } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome6 } from '@expo/vector-icons';
 import { Coachmark } from '@/components/onboarding/coachmark';
 
 // Mozi식 가운데 ＋ FAB. 탭 슬롯 전체를 차지하되, 탭 전환 대신 새 보드 작성으로 보냄.
@@ -39,8 +39,9 @@ export default function TabsLayout() {
           name="boards"
           options={{
             title: '내 여행',
+            // 브랜드 틴트(활성 #1D4ED8 / 비활성 #94A3B8)를 그대로 받도록 color 전달 — 톤앤매너 일관 유지
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="bookmarks-outline" color={color} size={size} />
+              <FontAwesome6 name="map-location-dot" solid color={color} size={size} />
             ),
           }}
         />
@@ -49,7 +50,7 @@ export default function TabsLayout() {
           options={{
             title: '둘러보기',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="compass-outline" color={color} size={size} />
+              <FontAwesome6 name="compass" solid color={color} size={size} />
             ),
           }}
         />
@@ -65,7 +66,7 @@ export default function TabsLayout() {
           options={{
             title: '내 친구',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="people-outline" color={color} size={size} />
+              <FontAwesome6 name="people-group" solid color={color} size={size} />
             ),
           }}
         />
@@ -74,7 +75,7 @@ export default function TabsLayout() {
           options={{
             title: '내 정보',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" color={color} size={size} />
+              <FontAwesome6 name="person" solid color={color} size={size} />
             ),
           }}
         />

@@ -18,18 +18,16 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.serendipitylife.moajoa',
     supportsTablet: false,
-    // P0 hotfix #3 (2026-05-28): Hermes bytecode compiler fails on
-    // @supabase/supabase-js@2.106.1's dynamic OTEL_PKG import which uses
-    // /* webpackIgnore */ /* turbopackIgnore */ /* @vite-ignore */ magic
-    // comments. JSC handles dynamic import() with such comments cleanly.
-    // v2-backlog: re-enable Hermes once supabase-js drops the OTEL magic
-    // comments, or once Hermes supports them (RN 0.78+ work in progress),
-    // or via a babel transform that strips webpackIgnore/turbopackIgnore
-    // comments before Hermes runs.
-    jsEngine: 'jsc',
-    config: {
-      googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_KEY,
-    },
+    // Hermes 복귀 (v1.2 Phase 11, 2026-06-12): jsEngine 제거 = SDK 기본 Hermes.
+    // 과거 JSC로 우회했던 이유는 supabase-js의 dynamic OTEL_PKG import에 붙은
+    // /* webpackIgnore */ 류 magic comment가 Hermes 바이트코드 컴파일러에서
+    // 깨졌기 때문. RN 0.81+가 first-party JSC를 제거했고 SDK 56은 Hermes v1이
+    // 기본이라 더는 JSC 유지가 비용. RN 0.78+ Hermes 개선으로 해소 가정 —
+    // 회귀(hermesc 실패) 시 babel.config.js에 magic comment 제거 transform 적용.
+    // GMSApiKey는 react-native-maps 1.27 config plugin이 주입(아래 plugins 참조).
+    // 옛 ios.config.googleMapsApiKey(Expo built-in)는 1.27에서 폐지된
+    // `pod 'react-native-google-maps'`(존재 안 함)를 주입해 pod install 실패 →
+    // 제거. 1.27은 `react-native-maps/Google` subspec + 자체 플러그인 사용. (v1.2 11-03)
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSLocationWhenInUseUsageDescription: '내 주변 장소를 보여주려면 위치 권한이 필요해요.',
@@ -40,6 +38,12 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    [
+      'react-native-maps',
+      {
+        iosGoogleMapsApiKey: process.env.GOOGLE_MAPS_IOS_KEY,
+      },
+    ],
     [
       'expo-splash-screen',
       {
