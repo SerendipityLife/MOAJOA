@@ -6,10 +6,10 @@ status: in_progress
 last_updated: "2026-06-12T00:00:00.000Z"
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 3
+  completed_plans: 3
+  percent: 33
 ---
 
 # STATE: MOAJOA v1.2
@@ -31,15 +31,17 @@ progress:
 
 ## Current Position
 
-**Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **진행 중 (2026-06-12)**
+**Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **진행 중 (2026-06-13)**
 Branch: `gsd/v1.2-sdk-upgrade`
-Phase: 11 — SDK 54 → 55 — **11-01 완료(커밋) · 11-02 1차 시도 후 롤백 · 11-03 대기**
+Phase: 11 — SDK 54 → 55 — **✅ COMPLETE (3/3 plans, 2026-06-13)** · 다음 = Phase 12 (55→56)
 
-- **11-01 (Hermes 격리 검증) ✅ DONE (커밋 fa9c1c2):** app.config.ts에서 `jsEngine:'jsc'` 제거 → SDK 54 위 Hermes 클린 빌드 BUILD SUCCEEDED + 웰컴 화면 런타임 렌더(supabase OTEL 회귀 0, babel transform 불필요) + jest 38/38 + tsc clean. **과거 JSC 우회의 근본 사유 해소 검증됨.**
-- **11-02 (SDK 55 lockstep) ⏸ 롤백:** `expo install expo@^55`가 메이저를 안 넘어 54.0.35로만 올라감 + 좀비 install 프로세스 경합 → 11-01 클린 상태로 복원(expo 54.0.34, git clean, jest 38/38). **다음 시도 명령은 11-02-PLAN.md "실행 노트"에 기록** (`pnpm add expo@~55.0.26` 직접 핀 → `expo install --fix` 포그라운드 1회).
-- **11-03 대기:** SDK 55 prebuild + 네이티브 회귀 검증.
+- **11-01 (Hermes 격리 검증) ✅ (커밋 fa9c1c2):** `jsEngine:'jsc'` 제거 → SDK 54 Hermes 빌드 SUCCEEDED + 웰컴 렌더(OTEL 회귀 0, babel 불필요) + jest 38/38 + tsc. 과거 JSC 우회 근본 사유 해소 검증.
+- **11-02 (SDK 55 lockstep) ✅ (커밋 70b3e8a):** expo 55.0.26 / RN 0.83.6 / react 19.2.0 / 전체 expo-* 55.x + share-intent 6.1.1. `expo install --check` up-to-date + tsc + jest 38/38. (1차 시도 `expo install expo@^55`는 메이저 미통과로 롤백 → `pnpm add expo@~55.0.26` 직접 핀으로 성공. 11-02-PLAN "실행 노트" 참조)
+- **11-03 (prebuild + 회귀) ✅ (커밋 997d855):** SDK 55 prebuild --clean + pod install + BUILD SUCCEEDED + 웰컴/보드 화면 렌더(New Arch 컴포넌트 등록 OK, JS 런타임 에러 0) + 네이티브 보존 grep(GMSApiKey/App Group/Hermes/maps subspec) + tsc/jest. **핵심 픽스: react-native-maps 1.27 Google Maps 설정 교체**(아래 Decisions).
 
-**다음 액션:** 11-02 재시도 — 11-02-PLAN.md 실행 노트의 명령으로 SDK 55 직접 핀.
+**Phase 11 범위 내 deferred (Phase 13에서 커버):** 실제 MapView 타일+핀 렌더 시각 확인(로그인 세션 필요) · release/EAS Hermes hermesc 정밀 검증.
+
+**다음 액션:** Phase 12 — SDK 55 → 56 (RN 0.85, Hermes v1 기본, iOS deployment target 16.4, **expo run:ios 복귀**). 직접 핀 방식: `pnpm add expo@~56.0.11` → `expo install --fix` → expo-share-intent 7.0.0(expo ^56) → prebuild --clean → 빌드. (11-02 실행 노트의 함정 회피 절차 동일 적용)
 
 **discuss 잠금 결정 (2026-06-12):** JS 엔진 Hermes 복귀 · 풀 범위(업그레이드+우회 제거+실기기 UAT+문서) · 마일스톤 브랜치.
 **리스크 흡수:** 이미 New Arch 사용 중(Reanimated 4) → SDK 55 Legacy 폐지 무해. **블로커:** JSC→Hermes 전환 시 supabase-js OTEL 동적 import 재검증(babel transform fallback).
@@ -139,6 +141,8 @@ Plan: 1 of 1
 
 ### Decisions (Roadmap 단계에서 확정)
 
+- **[v1.2 11-03] react-native-maps 1.27 Google Maps = 자체 config plugin (`iosGoogleMapsApiKey`), `ios.config.googleMapsApiKey` 금지** — 1.27은 별도 `react-native-google-maps.podspec`을 폐지하고 메인 podspec의 `Google` subspec(`pod 'react-native-maps/Google'`) + 자체 플러그인으로 전환. Expo built-in `ios.config.googleMapsApiKey`는 폐지된 `pod 'react-native-google-maps'`를 주입해 pod install 실패. app.config.ts에서 후자 제거 + `['react-native-maps', { iosGoogleMapsApiKey: env }]` 추가가 정답(플러그인이 GMSApiKey·AppDelegate·Podfile 전부 구성). **Phase 12(56)에서도 이 설정 유지.**
+- **[v1.2 11-02] Expo SDK 메이저 업그레이드는 `pnpm add expo@~NN.x` 직접 핀 후 `expo install --fix`** — `expo install expo@^NN`은 현재 SDK CLI 기준이라 메이저를 안 넘는다. `expo install --fix`는 포그라운드 1회만(백그라운드 반복 시 좀비 프로세스가 node_modules 경합). 롤백: `git checkout HEAD -- package.json pnpm-lock.yaml` → `pnpm install --frozen-lockfile`.
 - **Phase 수: 6 (architecture 제안 4에서 확장)** — granularity standard 적합. Backend / iOS save / Web public을 별도 phase로 펼쳐 2인 팀 fork-join 가능
 - **Phase 1에 NativeWind 4.2 업그레이드 포함** — 빌드 디버깅과 silent failure 동시 회피 (Pitfall 6 + 11)
 - **Phase 1에 web dev tool 격리(WEB-01/02) 포함** — 코드 한 줄 + dogfooding 중 친구 공유 혼란 방지

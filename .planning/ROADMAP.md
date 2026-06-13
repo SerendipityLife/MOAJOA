@@ -423,7 +423,7 @@ Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
 
 ## Phases (v1.2)
 
-- [ ] **Phase 11: SDK 54 → 55** — New Arch 확정 + Hermes 복귀(+ supabase OTEL 검증) + RN 0.83/React 19.2 lockstep + expo-share-intent 6.x + 네이티브 회귀 0
+- [x] **Phase 11: SDK 54 → 55** — New Arch 확정 + Hermes 복귀(supabase OTEL 회귀 0) + RN 0.83/React 19.2 lockstep + expo-share-intent 6.1.1 + react-native-maps 1.27 maps 설정 픽스 + 네이티브 회귀 0 (completed 2026-06-13, 3/3 plans)
 - [ ] **Phase 12: SDK 55 → 56** — RN 0.85 + Hermes v1 기본 + iOS deployment target 16.4 + 표준 `expo run:ios` Xcode 26 복귀
 - [ ] **Phase 13: 우회 제거 + 실기기 검증 + 문서 갱신** — pnpm sim 스크립트 제거 + EAS dev build 실기기 share-sheet UAT(v1.1 잔여) + 메모리/CLAUDE.md 갱신 + main 머지
 
@@ -444,8 +444,12 @@ Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
   3. `expo prebuild --clean` 재생성 후 ios/ 네이티브 설정(GMSApiKey, App Group entitlement, ShareExtension target)이 보존되고 grep으로 확인된다
   4. 시뮬레이터 빌드(pnpm sim)가 통과하고 구글맵 렌더링 + 핀 + bottom-sheet + gesture가 회귀 없이 동작한다
   5. jest(jest-expo 55) + `tsc --noEmit`가 통과한다
-**Plans:** TBD (`/gsd-plan-phase 11`에서 생성)
+**Plans:** 3/3 complete
+  - [x] 11-01-PLAN.md — Hermes 격리 검증 (SDK 54 위 jsEngine 제거 + prebuild + 빌드 + 웰컴 렌더, OTEL 회귀 0) ✓ 2026-06-13 (커밋 fa9c1c2)
+  - [x] 11-02-PLAN.md — SDK 55 lockstep (expo 55.0.26/RN 0.83.6/react 19.2.0 + 전체 expo-* 55.x + share-intent 6.1.1, expo install --check up-to-date + tsc + jest 38/38) ✓ 2026-06-13 (커밋 70b3e8a)
+  - [x] 11-03-PLAN.md — prebuild --clean + 네이티브 보존 + BUILD SUCCEEDED + 회귀(웰컴/보드 렌더, New Arch 등록 OK) + react-native-maps 1.27 Google Maps config plugin 픽스 ✓ 2026-06-13 (커밋 997d855)
 **UI hint:** no (인프라 — 시각 회귀 확인은 있으나 새 UI 없음)
+**Deferred to Phase 13:** 실제 MapView 타일+핀 렌더(로그인 필요) · release/EAS Hermes hermesc 정밀 검증
 
 ---
 
@@ -488,7 +492,7 @@ Phase 10 (웹 투표 — 협업 surface, 8/9와 거의 독립)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 11. SDK 54 → 55 | 0/TBD | Not started | - |
+| 11. SDK 54 → 55 | 3/3 | Complete | 2026-06-13 |
 | 12. SDK 55 → 56 | 0/TBD | Not started | - |
 | 13. 우회 제거 + 실기기 검증 + 문서 갱신 | 0/TBD | Not started | - |
 
