@@ -6,6 +6,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { drainPendingLinks } from '@/lib/pending';
 import { supabase } from '@/lib/supabase';
@@ -54,10 +55,12 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
-      <ToastHost />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }} />
+        <ToastHost />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
