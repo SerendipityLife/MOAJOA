@@ -2,6 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // SDK 56(expo/tsconfig.base, moduleResolution: bundler)에서 @types/jest가
+    // 자동 포함되지 않아 ambient jest/expect/describe 글로벌이 사라지고
+    // @jest/globals의 namespace-only `jest`와 충돌(TS2708/2593) → types 명시로 고정. (v1.2 12-01)
+    "types": ["jest", "node"],
     "paths": {
       "@/*": [
         "./*"
