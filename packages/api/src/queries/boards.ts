@@ -10,6 +10,39 @@ export async function listMyBoards(client: MoajoaSupabaseClient): Promise<Board[
   return (data ?? []) as Board[];
 }
 
+/**
+ * A board plus the lightweight preview data the home list (boards.tsx) needs to
+ * render cover cards: how many (non-hidden) places it has and the first few of
+ * their names. Names drive board identity on the card (UI-SPEC §Screen 1) since
+ * mini-map thumbnails look alike. Places embed via the "read if can read board"
+ * RLS — same access as listMyBoards, one round-trip (no N+1).
+ */
+export type BoardPreview = Board & {
+  place_count: number;
+  /** Up to 3 place names (name_ko ?? name_local), non-hidden, for the chip row. */
+  place_names: string[];
+};
+
+export async function listMyBoardsWithPreview(
+  client: MoajoaSupabaseClient,
+): Promise<BoardPreview[]> {
+  const { data, error } = await client
+    .from('boards')
+    .select('*, places(name_ko, name_local, hidden_at)')
+    .order('updated_at', { ascending: false });
+  if (error) throw error;
+  type EmbeddedPlace = { name_ko: string | null; name_local: string; hidden_at: string | null };
+  return (data ?? []).map((row) => {
+    const { places, ...board } = row as Board & { places: EmbeddedPlace[] | null };
+    const visible = (places ?? []).filter((p) => !p.hidden_at);
+    return {
+      ...(board as Board),
+      place_count: visible.length,
+      place_names: visible.slice(0, 3).map((p) => p.name_ko ?? p.name_local),
+    };
+  });
+}
+
 export async function getBoard(client: MoajoaSupabaseClient, id: string): Promise<Board | null> {
   const { data, error } = await client.from('boards').select('*').eq('id', id).maybeSingle();
   if (error) throw error;

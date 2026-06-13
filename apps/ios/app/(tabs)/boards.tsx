@@ -1,4 +1,4 @@
-import { deleteBoard, listMyBoards, updateBoard } from '@moajoa/api';
+import { deleteBoard, listMyBoardsWithPreview, updateBoard, type BoardPreview } from '@moajoa/api';
 import { EXTRACT_STEP_KO, Limits, type Board } from '@moajoa/core';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   Text,
@@ -49,7 +50,7 @@ function pickGreeting(): string {
 }
 
 export default function BoardsTab() {
-  const [boards, setBoards] = useState<Board[]>([]);
+  const [boards, setBoards] = useState<BoardPreview[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
@@ -70,7 +71,7 @@ export default function BoardsTab() {
 
   const load = useCallback(async () => {
     try {
-      const data = await listMyBoards(supabase);
+      const data = await listMyBoardsWithPreview(supabase);
       setBoards(data);
     } catch (err) {
       console.error(err);
@@ -163,6 +164,18 @@ export default function BoardsTab() {
     [load],
   );
 
+  // 카드 면을 깨끗하게 유지 — 수정/삭제는 롱프레스 액션시트로 (스와이프 UI는 이후 phase).
+  const onCardMenu = useCallback(
+    (board: BoardPreview) => {
+      Alert.alert(board.title, undefined, [
+        { text: '이름 수정', onPress: () => onRename(board) },
+        { text: '삭제', style: 'destructive', onPress: () => onDelete(board) },
+        { text: '취소', style: 'cancel' },
+      ]);
+    },
+    [onRename, onDelete],
+  );
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="px-6 pt-10 pb-3">
@@ -212,54 +225,79 @@ export default function BoardsTab() {
             </View>
           ) : null
         }
-        renderItem={({ item }) => (
-          <View className="flex-row items-center border border-neutral-200 rounded-lg mb-3 pl-1 pr-4">
-            {/* 왼쪽: 수정 · 삭제 */}
-            <View className="flex-row items-center">
+        renderItem={({ item }) => {
+          // 추출 진행 중인 보드는 메타 대신 진행 상태를 보여준다.
+          const list = extractionsByBoard.get(item.id);
+          const latest = list && list.length > 0 ? list[list.length - 1] : null;
+          const stepKo = latest
+            ? `${latest.step ? EXTRACT_STEP_KO[latest.step] : '시작하는 중'}${
+                list!.length > 1 ? ` 외 ${list!.length - 1}개` : ''
+              }`
+            : null;
+          const extra = item.place_count - item.place_names.length;
+
+          // 사진 커버(B) — 대표 이미지가 있으면 히어로 + 반투명 오버레이.
+          if (item.cover_image_url) {
+            return (
               <Pressable
-                onPress={() => onRename(item)}
-                hitSlop={6}
-                className="w-9 h-9 items-center justify-center rounded-full active:bg-brand-50"
+                onPress={() => router.push(`/boards/${item.id}`)}
+                onLongPress={() => onCardMenu(item)}
+                className="mb-3 rounded-xl border border-neutral-200 bg-white overflow-hidden active:opacity-90"
               >
-                <Ionicons name="create-outline" size={18} color="#2979FF" />
+                <Image
+                  source={{ uri: item.cover_image_url }}
+                  className="h-32 w-full"
+                  resizeMode="cover"
+                />
+                <View className="absolute inset-x-0 bottom-0 bg-black/55 px-4 py-3">
+                  <Text className="text-base font-semibold text-white" numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text className="text-xs text-neutral-100 mt-1" numberOfLines={1}>
+                    {stepKo ? `분석 중 · ${stepKo}` : `장소 ${item.place_count}곳`}
+                  </Text>
+                </View>
               </Pressable>
-              <Pressable
-                onPress={() => onDelete(item)}
-                hitSlop={6}
-                className="w-9 h-9 items-center justify-center rounded-full active:bg-danger/10"
-              >
-                <Ionicons name="trash-outline" size={18} color="#EF4444" />
-              </Pressable>
-            </View>
-            {/* 본문: 탭하면 상세로 */}
+            );
+          }
+
+          // 제목 중심(C) — 장소명 칩이 보드 식별을 담당(미니지도는 서로 비슷해 구분 안 됨).
+          return (
             <Pressable
               onPress={() => router.push(`/boards/${item.id}`)}
-              className="flex-1 py-4 pl-2 active:opacity-60"
+              onLongPress={() => onCardMenu(item)}
+              className="mb-3 rounded-xl border border-neutral-200 bg-white px-4 py-4 active:opacity-90"
             >
-              <Text className="font-medium text-neutral-900">{item.title}</Text>
-              {item.description && (
-                <Text className="text-sm text-neutral-600 mt-1" numberOfLines={2}>
-                  {item.description}
-                </Text>
+              <Text className="text-base font-semibold text-neutral-900" numberOfLines={1}>
+                {item.title}
+              </Text>
+              {item.place_names.length > 0 && (
+                <View className="flex-row flex-wrap mt-2" style={{ gap: 6 }}>
+                  {item.place_names.map((n, i) => (
+                    <View key={i} className="bg-neutral-100 rounded-full px-2.5 py-1">
+                      <Text className="text-xs text-neutral-700" numberOfLines={1}>
+                        {n}
+                      </Text>
+                    </View>
+                  ))}
+                  {extra > 0 && (
+                    <View className="bg-neutral-50 rounded-full px-2.5 py-1">
+                      <Text className="text-xs text-neutral-400">+{extra}</Text>
+                    </View>
+                  )}
+                </View>
               )}
-              {(() => {
-                const list = extractionsByBoard.get(item.id);
-                if (!list || list.length === 0) return null;
-                const latest = list[list.length - 1];
-                const stepKo = latest.step ? EXTRACT_STEP_KO[latest.step] : '시작하는 중';
-                return (
-                  <View className="flex-row items-center mt-2">
-                    <ActivityIndicator size="small" color="#2979FF" />
-                    <Text className="text-xs font-medium text-brand-500 ml-2">
-                      분석 중 · {stepKo}
-                      {list.length > 1 ? ` 외 ${list.length - 1}개` : ''}
-                    </Text>
-                  </View>
-                );
-              })()}
+              {stepKo ? (
+                <View className="flex-row items-center mt-2.5">
+                  <ActivityIndicator size="small" color="#2979FF" />
+                  <Text className="text-xs font-medium text-brand-500 ml-2">분석 중 · {stepKo}</Text>
+                </View>
+              ) : (
+                <Text className="text-sm text-neutral-500 mt-2.5">장소 {item.place_count}곳</Text>
+              )}
             </Pressable>
-          </View>
-        )}
+          );
+        }}
       />
     </SafeAreaView>
   );
