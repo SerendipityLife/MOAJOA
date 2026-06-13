@@ -299,6 +299,7 @@ export default function BoardDetailScreen() {
 
       <PinBottomSheet
         place={selectedPlace}
+        links={links}
         onClose={() => setSelectedPlace(null)}
         onChanged={load}
       />

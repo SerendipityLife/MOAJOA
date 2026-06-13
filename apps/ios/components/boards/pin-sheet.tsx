@@ -9,19 +9,22 @@
 
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { renamePlace, deletePlace, confirmAiPlace, rejectAiPlace } from '@moajoa/api';
-import { LOW_CONFIDENCE_THRESHOLD, type Place } from '@moajoa/core';
+import { LOW_CONFIDENCE_THRESHOLD, type Link, type Place } from '@moajoa/core';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, Text, TextInput, View } from 'react-native';
 import { showToast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
+import { VideoPreview } from '@/components/boards/video-preview';
 
 interface Props {
   place: Place | null;
+  /** Source links for the board — used to resolve the place's video for preview. */
+  links: Link[];
   onClose: () => void;
   onChanged: () => void; // reload places after rename/delete
 }
 
-export function PinBottomSheet({ place, onClose, onChanged }: Props) {
+export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
   const sheetRef = useRef<BottomSheet>(null);
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState('');
@@ -48,6 +51,12 @@ export function PinBottomSheet({ place, onClose, onChanged }: Props) {
   const isLowConf =
     isAI && place.confidence !== null && place.confidence < LOW_CONFIDENCE_THRESHOLD;
 
+  // Resolve the source video for in-app preview. Link.external_id is the youtube
+  // video id (set by extract-youtube). null for non-youtube/manual → no embed.
+  const link = place.link_id ? links.find((l) => l.id === place.link_id) : undefined;
+  const videoId = link?.source_kind === 'youtube' ? link.external_id : null;
+  const startSec = place.source_timestamp_sec ?? 0;
+
   async function onSaveName() {
     const trimmed = draftName.trim();
     if (trimmed.length === 0 || trimmed === place!.name_local) {
@@ -65,14 +74,22 @@ export function PinBottomSheet({ place, onClose, onChanged }: Props) {
     }
   }
 
-  function onOpenYoutube() {
-    // Phase 3 deferred #1: minimal jump. Phase 5 will refine to in-app player
-    // with direct timestamp jump (place.source_timestamp_sec → &t=Xs). For v1
-    // we open a youtube.com search by place name — gives the user some way to
-    // verify the AI-suggested location against the source video.
-    if (!place) return;
+  function onOpenSource() {
+    // 14-03: the embedded player (above) is the primary preview. This opens the
+    // full source externally — youtube at the exact timestamp, else the post url,
+    // else a name search as a last resort.
+    if (videoId) {
+      Linking.openURL(
+        `https://www.youtube.com/watch?v=${videoId}&t=${Math.floor(startSec)}s`,
+      ).catch(() => {});
+      return;
+    }
+    if (link) {
+      Linking.openURL(link.url).catch(() => {});
+      return;
+    }
     Linking.openURL(
-      `https://www.youtube.com/results?search_query=${encodeURIComponent(place.name_local)}`,
+      `https://www.youtube.com/results?search_query=${encodeURIComponent(place!.name_local)}`,
     ).catch(() => {});
   }
 
@@ -127,7 +144,7 @@ export function PinBottomSheet({ place, onClose, onChanged }: Props) {
     <BottomSheet
       ref={sheetRef}
       index={-1}
-      snapPoints={['25%', '50%']}
+      snapPoints={['40%', '90%']}
       enablePanDownToClose
       onClose={onClose}
       handleStyle={{ backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
@@ -135,6 +152,12 @@ export function PinBottomSheet({ place, onClose, onChanged }: Props) {
     >
       <BottomSheetView>
         <View className="px-6 pt-2 pb-6 bg-white">
+          {videoId && (
+            <View className="mt-3">
+              <VideoPreview videoId={videoId} startSec={startSec} />
+            </View>
+          )}
+
           {editing ? (
             <TextInput
               value={draftName}
@@ -206,10 +229,12 @@ export function PinBottomSheet({ place, onClose, onChanged }: Props) {
 
           {isAI && (
             <Pressable
-              onPress={onOpenYoutube}
+              onPress={onOpenSource}
               className="bg-neutral-100 px-4 py-3 rounded-lg mt-2"
             >
-              <Text className="text-base text-neutral-800 text-center">영상에서 위치 보기</Text>
+              <Text className="text-base text-neutral-800 text-center">
+                {videoId ? '유튜브에서 열기' : link ? '원문 보기' : '영상에서 위치 보기'}
+              </Text>
             </Pressable>
           )}
 
