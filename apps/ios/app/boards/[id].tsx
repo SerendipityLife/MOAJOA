@@ -26,6 +26,7 @@ import { PinAddModal } from '@/components/boards/pin-add-modal';
 import { StepIndicator } from '@/components/boards/step-indicator';
 import { OnboardCard } from '@/components/boards/onboard-card';
 import { PlaceList } from '@/components/boards/place-list';
+import { shareCurrentBoard } from '@/lib/share-board';
 
 export default function BoardDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -104,6 +105,16 @@ export default function BoardDetailScreen() {
     }
   }
 
+  async function onShare() {
+    if (!id) return;
+    try {
+      await shareCurrentBoard(id);
+    } catch (err) {
+      console.warn('[shareBoard] failed:', err);
+      showToast('공유 준비 실패', 'error');
+    }
+  }
+
   const mapRef = useRef<MapView>(null);
 
   // Fit the camera to ALL pins whenever places load/change. initialRegion only
@@ -136,6 +147,9 @@ export default function BoardDetailScreen() {
         <Text className="ml-2 text-lg font-semibold flex-1" numberOfLines={1}>
           {board?.title ?? '...'}
         </Text>
+        <Pressable onPress={onShare} className="px-3 py-2">
+          <Text className="text-brand-500 text-base">공유</Text>
+        </Pressable>
         <Pressable onPress={() => setAddPinOpen(true)} className="px-3 py-2">
           <Text className="text-brand-500 text-base">+ 핀</Text>
         </Pressable>
@@ -229,6 +243,14 @@ export default function BoardDetailScreen() {
           })}
         </MapView>
       </View>
+
+      {places.length > 0 && (
+        <View className="px-6 mb-3">
+          <Pressable onPress={onShare} className="bg-brand-500 px-4 py-3 rounded-lg items-center">
+            <Text className="text-base font-semibold text-white">친구와 정하기</Text>
+          </Pressable>
+        </View>
+      )}
 
       <PlaceList
         places={places}
