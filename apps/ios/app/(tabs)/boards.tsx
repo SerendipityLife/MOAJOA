@@ -1,11 +1,20 @@
 import { deleteBoard, listMyBoards, updateBoard } from '@moajoa/api';
-import { Limits, type Board } from '@moajoa/core';
+import { EXTRACT_STEP_KO, Limits, type Board } from '@moajoa/core';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { listFailedPending } from '@/lib/pending';
+import { useActiveExtractions, onExtractionComplete } from '@/lib/extraction-store';
 import { supabase } from '@/lib/supabase';
 
 // 시간대별 인사말. 같은 시간대 안에서도 매 방문마다 다른 문구가 나오도록 변형을 둠.
@@ -49,6 +58,16 @@ export default function BoardsTab() {
   const [greeting] = useState(pickGreeting);
   const dateLabel = formatToday();
 
+  // Live background extractions, grouped by board so each row can show its
+  // in-progress state. Latest-started entry per board drives the badge label.
+  const activeExtractions = useActiveExtractions();
+  const extractionsByBoard = new Map<string, typeof activeExtractions>();
+  for (const e of activeExtractions) {
+    const list = extractionsByBoard.get(e.boardId);
+    if (list) list.push(e);
+    else extractionsByBoard.set(e.boardId, [e]);
+  }
+
   const load = useCallback(async () => {
     try {
       const data = await listMyBoards(supabase);
@@ -63,6 +82,10 @@ export default function BoardsTab() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // An extraction finishing in the background may add pins / bump updated_at —
+  // refresh the list so counts and ordering stay fresh while we're on this tab.
+  useEffect(() => onExtractionComplete(() => load()), [load]);
 
   // 닉네임은 me.tsx와 동일하게 auth user_metadata에서 파생(폴백 '여행자').
   useEffect(() => {
@@ -178,9 +201,9 @@ export default function BoardsTab() {
               <View className="w-20 h-20 rounded-full bg-brand-50 items-center justify-center mb-5">
                 <Ionicons name="map-outline" size={36} color="#2979FF" />
               </View>
-              <Text className="text-xl font-bold text-neutral-900">아직 만든 여행이 없어요</Text>
+              <Text className="text-xl font-bold text-neutral-900">아직 추가한 여행이 없어요</Text>
               <Text className="mt-2 text-base text-neutral-500 text-center leading-relaxed">
-                첫 여행을 만들고 유튜브·블로그 링크를 더하면{'\n'}영상 속 장소가 지도로 모여요
+                유튜브 링크로 영상 속 장소를 불러올 수 있어요
               </Text>
               <View className="flex-row items-center mt-6">
                 <Text className="text-sm font-medium text-brand-500">아래 ＋ 를 눌러 시작하기</Text>
@@ -219,6 +242,21 @@ export default function BoardsTab() {
                   {item.description}
                 </Text>
               )}
+              {(() => {
+                const list = extractionsByBoard.get(item.id);
+                if (!list || list.length === 0) return null;
+                const latest = list[list.length - 1];
+                const stepKo = latest.step ? EXTRACT_STEP_KO[latest.step] : '시작하는 중';
+                return (
+                  <View className="flex-row items-center mt-2">
+                    <ActivityIndicator size="small" color="#2979FF" />
+                    <Text className="text-xs font-medium text-brand-500 ml-2">
+                      분석 중 · {stepKo}
+                      {list.length > 1 ? ` 외 ${list.length - 1}개` : ''}
+                    </Text>
+                  </View>
+                );
+              })()}
             </Pressable>
           </View>
         )}

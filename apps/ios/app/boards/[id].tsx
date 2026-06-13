@@ -1,10 +1,4 @@
-import {
-  addLink,
-  listLinksByBoard,
-  listPlacesByBoard,
-  getBoard,
-  triggerExtraction,
-} from '@moajoa/api';
+import { addLink, listLinksByBoard, listPlacesByBoard, getBoard } from '@moajoa/api';
 import {
   detectSourceKind,
   SharedDefaultsKeys,
@@ -14,45 +8,35 @@ import {
   type Place,
 } from '@moajoa/core';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Modal, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
-import { subscribeExtractProgress, type ExtractProgress } from '@/lib/realtime';
 import { showToast } from '@/lib/toast';
 import { SharedDefaults } from '@/lib/shared-defaults';
+import {
+  useActiveExtractions,
+  onExtractionComplete,
+  startExtraction,
+} from '@/lib/extraction-store';
 import { isLinkCardDismissed, dismissLinkCard } from '@/lib/onboarding';
 import { PinBottomSheet } from '@/components/boards/pin-sheet';
 import { PinAddModal } from '@/components/boards/pin-add-modal';
-import { StepIndicator, type Step } from '@/components/boards/step-indicator';
+import { StepIndicator } from '@/components/boards/step-indicator';
 import { OnboardCard } from '@/components/boards/onboard-card';
 
-// UI-SPEC §1 error reason mapping fixture. Broadcast 'error' payloads from
-// Phase 2 extract-youtube carry a raw error string; we map a few known prefixes
-// to user-facing copy and fall back to the default for anything unrecognized.
-function mapErrorReason(raw?: string): string {
-  if (!raw) return '잠시 후 다시 시도';
-  if (raw.includes('transcript')) return '자막이 없는 영상';
-  if (raw.includes('no_place') || raw.includes('places_empty')) return '장소를 찾지 못함';
-  if (raw.includes('quota') || raw.includes('429')) return '오늘 할당량 초과';
-  return '잠시 후 다시 시도';
-}
-
 export default function BoardDetailScreen() {
-  // pendingUrl: set when the user added a link on the "새 여행" screen — the
-  // board was just created and we replay the exact same add-link + extract path
-  // here so the flow is identical to typing a link on this screen.
-  const { id, pendingUrl } = useLocalSearchParams<{ id: string; pendingUrl?: string }>();
-  const pendingConsumed = useRef(false);
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [board, setBoard] = useState<Board | null>(null);
   const [links, setLinks] = useState<Link[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
   const [url, setUrl] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [analyzing, setAnalyzing] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<Step | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  // Extractions run in the global store (background), so this list survives
+  // navigating away. Filter to the ones belonging to this board.
+  const boardExtractions = useActiveExtractions().filter((e) => e.boardId === id);
   const [addPinOpen, setAddPinOpen] = useState(false);
   // Phase 5 ONBOARD-02 (D-20): tri-state — null = loading from AsyncStorage,
   // false = not dismissed (card may show), true = dismissed (card never shows).
@@ -85,53 +69,15 @@ export default function BoardDetailScreen() {
     isLinkCardDismissed().then(setLinkCardDismissed);
   }, []);
 
-  // D-10 + Phase 5 TRUST-02: subscribe to extract:{link_id} broadcast.
-  // - done/error: terminal — dismiss overlay + clear step + toast (Phase 3 behavior)
-  // - metadata/transcript/llm/places: advance StepIndicator current step (D-07/D-08)
-  // Pitfall 5: cleanup via supabase.removeChannel(ch) on link_id change/unmount.
+  // The extraction lifecycle (progress steps, done/error toast, retry) now lives
+  // in the global store so it keeps running after the user leaves this screen.
+  // Here we only need to refresh this board's map/links when its own extraction
+  // reaches a terminal state.
   useEffect(() => {
-    if (!analyzing) return;
-    const ch = subscribeExtractProgress(analyzing, (p: ExtractProgress) => {
-      if (p.step === 'done') {
-        setAnalyzing(null);
-        setCurrentStep(null);
-        load();
-        showToast(`${p.places_extracted ?? 0}개 핀 추가됨`);
-      } else if (p.step === 'error') {
-        // D-10/D-12: capture linkId before clearing analyzing so the retry
-        // closure has a stable reference. No automatic retry — user-explicit
-        // [재시도] tap only.
-        const linkId = analyzing;
-        setAnalyzing(null);
-        setCurrentStep(null);
-        showToast(`분석 실패: ${mapErrorReason(p.error)}`, 'error', {
-          action: linkId
-            ? {
-                label: '재시도',
-                onPress: () => {
-                  setAnalyzing(linkId);
-                  triggerExtraction(supabase, linkId).catch((err) => {
-                    console.warn('[retry] failed:', err);
-                    setAnalyzing(null);
-                    showToast('재시도 실패: 잠시 후 다시 시도', 'error');
-                  });
-                },
-              }
-            : undefined,
-        });
-      } else if (
-        p.step === 'metadata' ||
-        p.step === 'transcript' ||
-        p.step === 'llm' ||
-        p.step === 'places'
-      ) {
-        setCurrentStep(p.step);
-      }
+    return onExtractionComplete((boardId) => {
+      if (boardId === id) load();
     });
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [analyzing, load]);
+  }, [id, load]);
 
   async function onAddLink(explicitUrl?: string) {
     const value = (explicitUrl ?? url).trim();
@@ -144,28 +90,11 @@ export default function BoardDetailScreen() {
       SharedDefaults.set(SharedDefaultsKeys.LastBoardId, id);
       // 09-05: fire for any auto-extractable kind (youtube|blog|instagram).
       // manual/null stay untriggered; instagram resolves to failed server-side
-      // and rides the existing TRUST-03 failed-row retry UI.
+      // and rides the existing TRUST-03 failed-row retry UI. Extraction runs in
+      // the global store (background) — the user is free to leave this screen.
       const addedKind = detectSourceKind(link.url);
       if (addedKind !== null && addedKind !== 'manual') {
-        setAnalyzing(link.id);
-        triggerExtraction(supabase, link.id).catch((err) => {
-          console.warn('[triggerExtraction] failed:', err);
-          setAnalyzing(null);
-          // D-10: immediate trigger failure (network/RPC) also gets retry
-          // affordance. linkId is captured in closure from outer scope.
-          showToast('분석 실패: 잠시 후 다시 시도', 'error', {
-            action: {
-              label: '재시도',
-              onPress: () => {
-                setAnalyzing(link.id);
-                triggerExtraction(supabase, link.id).catch(() => {
-                  setAnalyzing(null);
-                  showToast('재시도 실패', 'error');
-                });
-              },
-            },
-          });
-        });
+        startExtraction({ linkId: link.id, boardId: id, boardTitle: board?.title ?? null });
       }
       await load();
     } catch (err) {
@@ -173,16 +102,6 @@ export default function BoardDetailScreen() {
       showToast('링크 추가 실패', 'error');
     }
   }
-
-  // Replay a link handed off from the "새 여행" screen exactly once. Guarded by
-  // a ref so re-renders don't re-add it, and the param is cleared after use.
-  useEffect(() => {
-    if (!pendingUrl || pendingConsumed.current || !id) return;
-    pendingConsumed.current = true;
-    void onAddLink(pendingUrl);
-    router.setParams({ pendingUrl: '' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingUrl, id]);
 
   const region = places[0]
     ? {
@@ -318,9 +237,21 @@ export default function BoardDetailScreen() {
           />
         }
         ListHeaderComponent={
-          <Text className="text-sm font-medium text-neutral-700 mb-2">
-            링크 {links.length}개 · 장소 {places.length}개
-          </Text>
+          <View>
+            {boardExtractions.map((e) => (
+              <View key={e.linkId} className="mb-3">
+                <StepIndicator current={e.step} />
+              </View>
+            ))}
+            {boardExtractions.length > 0 && (
+              <Text className="text-xs text-neutral-400 text-center mb-3">
+                다른 화면으로 이동해도 장소를 불러와요.
+              </Text>
+            )}
+            <Text className="text-sm font-medium text-neutral-700 mb-2">
+              링크 {links.length}개 · 장소 {places.length}개
+            </Text>
+          </View>
         }
         renderItem={({ item }) => {
           // D-11: 5 status copy fixture + failed-row tap retry.
@@ -341,12 +272,7 @@ export default function BoardDetailScreen() {
                       : status;
           const onRowPress = () => {
             if (!isFailed) return;
-            setAnalyzing(item.id);
-            triggerExtraction(supabase, item.id).catch((err) => {
-              console.warn('[row-retry] failed:', err);
-              setAnalyzing(null);
-              showToast('재시도 실패', 'error');
-            });
+            startExtraction({ linkId: item.id, boardId: id, boardTitle: board?.title ?? null });
           };
           return (
             <Pressable
@@ -365,25 +291,6 @@ export default function BoardDetailScreen() {
           );
         }}
       />
-
-      {analyzing && (
-        <View
-          pointerEvents="auto"
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255,255,255,0.7)',
-            zIndex: 50,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <StepIndicator current={currentStep} />
-        </View>
-      )}
 
       <PinBottomSheet
         place={selectedPlace}
