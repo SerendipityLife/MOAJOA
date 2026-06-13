@@ -24,9 +24,10 @@ const config: ExpoConfig = {
     // 깨졌기 때문. RN 0.81+가 first-party JSC를 제거했고 SDK 56은 Hermes v1이
     // 기본이라 더는 JSC 유지가 비용. RN 0.78+ Hermes 개선으로 해소 가정 —
     // 회귀(hermesc 실패) 시 babel.config.js에 magic comment 제거 transform 적용.
-    config: {
-      googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_KEY,
-    },
+    // GMSApiKey는 react-native-maps 1.27 config plugin이 주입(아래 plugins 참조).
+    // 옛 ios.config.googleMapsApiKey(Expo built-in)는 1.27에서 폐지된
+    // `pod 'react-native-google-maps'`(존재 안 함)를 주입해 pod install 실패 →
+    // 제거. 1.27은 `react-native-maps/Google` subspec + 자체 플러그인 사용. (v1.2 11-03)
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSLocationWhenInUseUsageDescription: '내 주변 장소를 보여주려면 위치 권한이 필요해요.',
@@ -37,6 +38,12 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    [
+      'react-native-maps',
+      {
+        iosGoogleMapsApiKey: process.env.GOOGLE_MAPS_IOS_KEY,
+      },
+    ],
     [
       'expo-splash-screen',
       {
