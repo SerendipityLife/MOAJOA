@@ -23,16 +23,17 @@ import { signInWithApple, signInWithGoogle, type SignInResult } from '@/lib/auth
  * slides, sign in whenever. Social only (Apple primary, Google secondary) —
  * the email/password screen was dropped, so this is the sole auth entry.
  *
- * Every slide is an edge-to-edge travel photo with a dark scrim; the chrome
- * (wordmark, dots, CTA) floats on top in white and the per-slide copy sits just
- * above the CTA. Each photo lives inside its own slide, so swiping between them
- * stays in sync (no shared-backdrop pop).
+ * Every slide is an edge-to-edge travel photo with a dark scrim. The brand
+ * wordmark and the per-slide copy sit together as one vertically-centered group
+ * over the scrim (Mozi-style) — wordmark largest, since it's the service name.
+ * Only the dots + social CTA float as fixed chrome pinned to the bottom. Each
+ * photo lives inside its own slide, so swiping between them stays in sync (no
+ * shared-backdrop pop).
  */
 
 interface Slide {
   key: string;
   title: string;
-  sub: string;
   photo: ImageSourcePropType;
 }
 
@@ -40,19 +41,16 @@ const SLIDES: Slide[] = [
   {
     key: 'link',
     title: '유튜브 링크 하나로\n여행 지도 완성',
-    sub: '영상 속 장소들을 AI가 자동으로 찾아\n지도에 콕콕 찍어드려요',
     photo: require('../assets/onboarding/travel-photo.jpg'),
   },
   {
     key: 'share',
     title: '완성된 여행 지도를\n친구와 공유하세요',
-    sub: '유튜브에서 찾은 맛집과 명소를 공유하고\n함께 여행을 계획해보세요',
     photo: require('../assets/onboarding/lake-photo.jpg'),
   },
   {
     key: 'vote',
     title: '친구랑 투표로\n어디 갈지 정해요',
-    sub: '같이 고르고 바로 결정 — 단톡 스크롤은 이제 그만',
     photo: require('../assets/onboarding/fuji-photo.jpg'),
   },
 ];
@@ -84,7 +82,6 @@ export default function Welcome() {
   const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(0);
   const [screenH, setScreenH] = useState(0);
-  const [topH, setTopH] = useState(0); // wordmark band height (incl. top inset)
   const [botH, setBotH] = useState(0); // dots + CTA band height (incl. bottom inset)
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,8 +113,8 @@ export default function Welcome() {
         scrollEventThrottle={16}
         className="flex-1"
         renderItem={({ item }) => (
-          // Photo fills the screen behind the chrome; copy sits just above the
-          // overlaid dots/CTA band, in white over the scrim.
+          // Photo fills the screen behind the chrome; the wordmark + copy group
+          // sits vertically centered in white over the scrim.
           <View style={{ width, height: screenH || undefined }}>
             <Image
               source={item.photo}
@@ -130,43 +127,35 @@ export default function Welcome() {
                 <View key={i} style={{ flex: 1, backgroundColor: `rgba(0,0,0,${a})` }} />
               ))}
             </View>
+            {/* Brand wordmark + per-slide copy as one vertically-centered group
+                (Mozi-style). The wordmark is the largest type since it's the
+                service name — it should outrank the value-prop copy below it. */}
             <View
-              style={{ paddingTop: topH, paddingBottom: botH }}
-              className="flex-1 justify-end px-8"
+              style={{ paddingTop: insets.top, paddingBottom: botH }}
+              className="flex-1 justify-center px-8"
             >
               <Text
-                className="text-3xl font-extrabold leading-tight text-white"
+                className="text-4xl font-extrabold tracking-wider text-white"
+                style={WORDMARK_SHADOW}
+              >
+                MOAJOA
+              </Text>
+              <Text
+                className="mt-5 text-3xl font-extrabold leading-tight text-white"
                 style={TITLE_SHADOW}
               >
                 {item.title}
               </Text>
-              <Text className="mt-2 text-base leading-relaxed text-white/90">{item.sub}</Text>
             </View>
           </View>
         )}
       />
 
-      {/* Chrome overlay — floats above the carousel. box-none lets swipes through
-          to the list; only the CTA buttons capture touches. White throughout
-          since every slide is a photo. */}
-      <View className="absolute inset-0" pointerEvents="box-none">
-        {/* Wordmark */}
-        <View
-          onLayout={(e) => setTopH(e.nativeEvent.layout.height)}
-          style={{ paddingTop: insets.top }}
-          className="items-center pt-4 pb-2"
-          pointerEvents="none"
-        >
-          <Text
-            className="text-2xl font-extrabold tracking-wider text-white"
-            style={WORDMARK_SHADOW}
-          >
-            MOAJOA
-          </Text>
-        </View>
-
-        <View className="flex-1" pointerEvents="none" />
-
+      {/* Chrome overlay — dots + CTA pinned to the bottom. box-none lets swipes
+          pass through to the carousel; only the CTA buttons capture touches. The
+          wordmark now lives inside each slide (centered with the copy), so the
+          only fixed chrome here is the bottom band. */}
+      <View className="absolute inset-0 justify-end" pointerEvents="box-none">
         {/* Dots + CTA */}
         <View
           onLayout={(e) => setBotH(e.nativeEvent.layout.height)}
