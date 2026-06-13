@@ -64,6 +64,38 @@ export async function deleteBoard(client: MoajoaSupabaseClient, id: string): Pro
 }
 
 /**
+ * Flip a board to 'shared' (if still private) and return its `share_slug` for
+ * the `/b/{slug}` link. The DB `boards_share_slug_before_update` trigger (0001)
+ * generates the slug the first time visibility becomes shared/public, so no
+ * extra RPC is needed — owner RLS already permits this update. Idempotent: an
+ * already shared/public board keeps its visibility and returns the existing slug.
+ */
+export async function shareBoard(
+  client: MoajoaSupabaseClient,
+  boardId: string,
+): Promise<string> {
+  const { data: cur, error: readErr } = await client
+    .from('boards')
+    .select('visibility, share_slug')
+    .eq('id', boardId)
+    .single();
+  if (readErr) throw readErr;
+  const existing = (cur as { share_slug: string | null } | null)?.share_slug;
+  if (existing) return existing;
+
+  const { data, error } = await client
+    .from('boards')
+    .update({ visibility: 'shared' })
+    .eq('id', boardId)
+    .select('share_slug')
+    .single();
+  if (error) throw error;
+  const slug = (data as { share_slug: string | null } | null)?.share_slug;
+  if (!slug) throw new Error('share_slug not generated');
+  return slug;
+}
+
+/**
  * Fetch the public view of a board by share slug. Used by Next.js SSR for the
  * /b/[slug] route. Calls the `public_board_view` SQL function which enforces
  * "visibility = public" and joins everything in a single round-trip.
