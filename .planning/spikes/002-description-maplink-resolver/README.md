@@ -62,6 +62,18 @@ Each `Location` also carries the CID (`!1s0x…:0x…`) and exact lat/lng
 (`!3d<lat>!4d<lng>`). Name + coords alone are enough to drop a pin; the place id / CID
 let us normalize via one Places **Details** call if we want canonical address/category.
 
+### End-to-end proof (`e2e.ts`, production module, keyless)
+Real video `l8PRad4T-IY` → InnerTube description → **production `resolveDescriptionMapLinks`**
+→ **18/18 places resolved in ~1.4s** with exact coords. The colleague's failing video now
+extracts fully with no Anthropic, no Places API, no DB. (One place — 미소키친 — resolves
+~30km south; that is faithfully whatever the creator's link points to.)
+
+### Built (2026-06-13)
+- `pipeline/maplinks.ts` + `pipeline/maplinks.test.ts` (7 tests) — resolver.
+- `index.ts` wiring: map-link places seed `resolved` in the same shape as
+  `resolveGooglePlace`, LLM candidates matching a map-link skip Text Search, `/0`
+  guard on avgConfidence. Full suite 51/51 green; claude prompt snapshot unchanged.
+
 ### Signal for the build
 - **Add a description map-link resolver as the PRIMARY place source** when present.
   Parse `maps.app.goo.gl/*` (and bare `google.com/maps/place/*`) from the description,
