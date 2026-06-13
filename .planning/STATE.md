@@ -33,7 +33,13 @@ progress:
 
 **Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **진행 중 (2026-06-13)**
 Branch: `gsd/v1.2-sdk-upgrade`
-Phase: 12 — SDK 55 → 56 — **SDK 56 bump ✅ · expo run:ios 복귀 ❌ (Xcode 26 한계, SDK 56 미해결)** · 다음 = Phase 13 (재정의 필요)
+Phase: 13 — 워크어라운드 유지 + EAS UAT + 문서 (재정의) — **자율 부분 ✅ · EAS 실기기 UAT는 사용자 측 · main 머지 대기**
+
+- **13 자율 완료:** 메모리 `ios-local-build`(SDK 56서도 expo run:ios 깨짐 정정 + maps plugin) · CLAUDE.md §4.1(SDK 56 + pnpm sim/EAS) · scripts/ios-sim.sh 주석 · EAS 설정 검증(eas.json development + appExtensions ↔ share-intent 7 정합).
+- **13 사용자 측 [대기]:** EAS dev build(eas login + 실폰) = release/Hermes 검증(hermesc OTEL 최종 확정) + 공유시트 추출 UAT. 체크리스트: `.planning/phases/13-workaround-eas-docs/13-01-PLAN.md`.
+- **main 머지:** EAS release/Hermes 검증을 권장 게이트로 (사용자 선택 시 선머지 가능 — 시뮬레이터 빌드·실행은 검증됨).
+
+이전 Phase: 12 — SDK 56 bump ✅ (expo run:ios 복귀 ❌ Xcode 26 한계, 위 발견 참조)
 
 - **11-01~03 (SDK 54→55) ✅ COMPLETE (커밋 fa9c1c2/70b3e8a/997d855):** Hermes 복귀(OTEL 회귀 0) + expo 55.0.26/RN 0.83.6 + react-native-maps 1.27 Google Maps config plugin 픽스. 상세는 아래 Decisions + ROADMAP.
 - **12-01 (SDK 56 lockstep) ✅ (커밋 334cea1):** expo 56.0.11 / RN 0.85.3 / react 19.2.3 / react-dom 19.2.3(expo-router 56 peer) / expo-* 56.x / share-intent 7.0.0. tsconfig `types:["jest","node"]`(SDK 56 base서 @types/jest 자동포함 깨짐 보정). expo install --check up-to-date + tsc + jest 38/38.

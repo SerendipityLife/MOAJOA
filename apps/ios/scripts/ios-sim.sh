@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # apps/ios를 iOS 시뮬레이터에 빌드·설치·실행하는 헬퍼.
 #
-# why: expo run:ios(=pnpm ios:run)는 Xcode 26 + Expo SDK 54 조합에서 시뮬레이터를
-# 물리 기기로 오인해 "No code signing certificates" 오류로 멈춘다(통합 devicectl
-# 변경이 SDK 54 @expo/cli 이후라 미지원, 수정은 SDK 55+에만 존재). 그래서 expo를
-# 거치지 않고 xcodebuild로 직접 시뮬레이터 빌드한다.
+# why: expo run:ios는 Xcode 26에서 시뮬레이터를 물리 기기로 오인해
+# "No code signing certificates" 오류로 멈춘다(devicectl/CoreDevice 통합을
+# @expo/cli가 못 따라감). SDK 56(@expo/cli 56.1.15)에서도 여전히 깨짐을 확인함
+# (2026-06-13) — SDK 버전 문제가 아니라 Xcode 26 상위 버그. 그래서 expo를
+# 거치지 않고 xcodebuild로 직접 시뮬레이터 빌드한다. 실기기/배포는 EAS 사용.
 #
-# 사용법:  pnpm ios:sim                 # 기본 "iPhone 17 Pro"
-#          pnpm ios:sim -- "iPhone 17"  # 다른 시뮬레이터 지정
+# 사용법:  pnpm sim                 # 기본 "iPhone 17 Pro"
+#          pnpm sim -- "iPhone 17"  # 다른 시뮬레이터 지정
 set -euo pipefail
 
 DEVICE="${1:-iPhone 17 Pro}"
