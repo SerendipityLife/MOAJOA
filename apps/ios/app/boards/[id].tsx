@@ -10,7 +10,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Modal, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import { showToast } from '@/lib/toast';
@@ -178,7 +178,7 @@ export default function BoardDetailScreen() {
       </View>
 
       <View className="h-64 mx-6 rounded-lg overflow-hidden mb-3">
-        <MapView style={{ flex: 1 }} initialRegion={region}>
+        <MapView style={{ flex: 1 }} provider={PROVIDER_GOOGLE} initialRegion={region}>
           {places.map((p) => {
             // TRUST-01 (D-05) + TRUST-04 (D-13/D-15): marker visual is a pure
             // function of (source_kind, confidence). manual/legacy AI pins
