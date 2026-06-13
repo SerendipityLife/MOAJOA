@@ -21,6 +21,9 @@ export type BoardPreview = Board & {
   place_count: number;
   /** Up to 3 place names (name_ko ?? name_local), non-hidden, for the chip row. */
   place_names: string[];
+  /** Most common raw Google category among visible places — drives the card's
+   *  color/icon "vibe". Null when no place has a category yet. */
+  top_category: string | null;
 };
 
 export async function listMyBoardsWithPreview(
@@ -28,17 +31,36 @@ export async function listMyBoardsWithPreview(
 ): Promise<BoardPreview[]> {
   const { data, error } = await client
     .from('boards')
-    .select('*, places(name_ko, name_local, hidden_at)')
+    .select('*, places(name_ko, name_local, category, hidden_at)')
     .order('updated_at', { ascending: false });
   if (error) throw error;
-  type EmbeddedPlace = { name_ko: string | null; name_local: string; hidden_at: string | null };
+  type EmbeddedPlace = {
+    name_ko: string | null;
+    name_local: string;
+    category: string | null;
+    hidden_at: string | null;
+  };
   return (data ?? []).map((row) => {
     const { places, ...board } = row as Board & { places: EmbeddedPlace[] | null };
     const visible = (places ?? []).filter((p) => !p.hidden_at);
+    // Mode of the non-null categories — the board's dominant vibe.
+    const counts = new Map<string, number>();
+    for (const p of visible) {
+      if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+    }
+    let top_category: string | null = null;
+    let best = 0;
+    for (const [cat, n] of counts) {
+      if (n > best) {
+        best = n;
+        top_category = cat;
+      }
+    }
     return {
       ...(board as Board),
       place_count: visible.length,
       place_names: visible.slice(0, 3).map((p) => p.name_ko ?? p.name_local),
+      top_category,
     };
   });
 }

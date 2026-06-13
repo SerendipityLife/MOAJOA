@@ -17,6 +17,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { listFailedPending } from '@/lib/pending';
 import { useActiveExtractions, onExtractionComplete } from '@/lib/extraction-store';
 import { supabase } from '@/lib/supabase';
+import { vibeOf, VIBE_STYLE } from '@/lib/category';
+
+// 카드에 띄우는 부드러운 그림자(테두리 대신 깊이). iOS shadow + Android elevation.
+const CARD_SHADOW = {
+  shadowColor: '#1E293B',
+  shadowOpacity: 0.08,
+  shadowOffset: { width: 0, height: 4 },
+  shadowRadius: 12,
+  elevation: 3,
+} as const;
 
 // 시간대별 인사말. 같은 시간대 안에서도 매 방문마다 다른 문구가 나오도록 변형을 둠.
 const GREETINGS: Record<'morning' | 'afternoon' | 'evening' | 'night', string[]> = {
@@ -235,67 +245,83 @@ export default function BoardsTab() {
               }`
             : null;
           const extra = item.place_count - item.place_names.length;
+          // 보드의 대표 카테고리로 카드의 색·아이콘 "분위기"를 정한다.
+          const vibe = VIBE_STYLE[vibeOf(item.top_category)];
+          const hasPhoto = !!item.cover_image_url;
 
-          // 사진 커버(B) — 대표 이미지가 있으면 히어로 + 반투명 오버레이.
-          if (item.cover_image_url) {
-            return (
+          return (
+            <View style={CARD_SHADOW} className="mb-4 rounded-2xl bg-white">
               <Pressable
                 onPress={() => router.push(`/boards/${item.id}`)}
                 onLongPress={() => onCardMenu(item)}
-                className="mb-3 rounded-xl border border-neutral-200 bg-white overflow-hidden active:opacity-90"
+                className="rounded-2xl overflow-hidden active:opacity-95"
               >
-                <Image
-                  source={{ uri: item.cover_image_url }}
-                  className="h-32 w-full"
-                  resizeMode="cover"
-                />
-                <View className="absolute inset-x-0 bottom-0 bg-black/55 px-4 py-3">
-                  <Text className="text-base font-semibold text-white" numberOfLines={1}>
+                {/* 커버 — 사진이 있으면 히어로, 없으면 카테고리 색 면 + 아이콘 워터마크 */}
+                <View
+                  style={{ height: 104, backgroundColor: hasPhoto ? '#000' : vibe.tint }}
+                  className="justify-end px-4 pb-3"
+                >
+                  {hasPhoto ? (
+                    <Image
+                      source={{ uri: item.cover_image_url! }}
+                      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Ionicons
+                      name={vibe.icon}
+                      size={78}
+                      color={vibe.color}
+                      style={{ position: 'absolute', right: 10, top: 6, opacity: 0.16 }}
+                    />
+                  )}
+                  <View
+                    className="self-start flex-row items-center rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+                  >
+                    <Ionicons name={vibe.icon} size={12} color={vibe.color} />
+                    <Text className="text-xs font-semibold ml-1" style={{ color: vibe.color }}>
+                      {vibe.labelKo} · {item.place_count}곳
+                    </Text>
+                  </View>
+                </View>
+
+                {/* 본문 — 제목 + 장소명 칩(분위기 색) */}
+                <View className="px-4 pt-3 pb-4">
+                  <Text className="text-lg font-bold text-neutral-900" numberOfLines={1}>
                     {item.title}
                   </Text>
-                  <Text className="text-xs text-neutral-100 mt-1" numberOfLines={1}>
-                    {stepKo ? `분석 중 · ${stepKo}` : `장소 ${item.place_count}곳`}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          }
-
-          // 제목 중심(C) — 장소명 칩이 보드 식별을 담당(미니지도는 서로 비슷해 구분 안 됨).
-          return (
-            <Pressable
-              onPress={() => router.push(`/boards/${item.id}`)}
-              onLongPress={() => onCardMenu(item)}
-              className="mb-3 rounded-xl border border-neutral-200 bg-white px-4 py-4 active:opacity-90"
-            >
-              <Text className="text-base font-semibold text-neutral-900" numberOfLines={1}>
-                {item.title}
-              </Text>
-              {item.place_names.length > 0 && (
-                <View className="flex-row flex-wrap mt-2" style={{ gap: 6 }}>
-                  {item.place_names.map((n, i) => (
-                    <View key={i} className="bg-neutral-100 rounded-full px-2.5 py-1">
-                      <Text className="text-xs text-neutral-700" numberOfLines={1}>
-                        {n}
-                      </Text>
+                  {item.place_names.length > 0 && (
+                    <View className="flex-row flex-wrap mt-2.5" style={{ gap: 6 }}>
+                      {item.place_names.map((n, i) => (
+                        <View
+                          key={i}
+                          className="rounded-full px-2.5 py-1"
+                          style={{ backgroundColor: vibe.tint }}
+                        >
+                          <Text className="text-xs" style={{ color: vibe.textOn }} numberOfLines={1}>
+                            {n}
+                          </Text>
+                        </View>
+                      ))}
+                      {extra > 0 && (
+                        <View className="rounded-full bg-neutral-100 px-2.5 py-1">
+                          <Text className="text-xs text-neutral-500">+{extra}</Text>
+                        </View>
+                      )}
                     </View>
-                  ))}
-                  {extra > 0 && (
-                    <View className="bg-neutral-50 rounded-full px-2.5 py-1">
-                      <Text className="text-xs text-neutral-400">+{extra}</Text>
+                  )}
+                  {stepKo && (
+                    <View className="flex-row items-center mt-2.5">
+                      <ActivityIndicator size="small" color="#2979FF" />
+                      <Text className="text-xs font-medium text-brand-500 ml-2">
+                        분석 중 · {stepKo}
+                      </Text>
                     </View>
                   )}
                 </View>
-              )}
-              {stepKo ? (
-                <View className="flex-row items-center mt-2.5">
-                  <ActivityIndicator size="small" color="#2979FF" />
-                  <Text className="text-xs font-medium text-brand-500 ml-2">분석 중 · {stepKo}</Text>
-                </View>
-              ) : (
-                <Text className="text-sm text-neutral-500 mt-2.5">장소 {item.place_count}곳</Text>
-              )}
-            </Pressable>
+              </Pressable>
+            </View>
           );
         }}
       />
