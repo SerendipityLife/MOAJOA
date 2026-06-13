@@ -275,10 +275,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ---- 4. Resolve via Google Places ----
-    const placesKey = Deno.env.get('GOOGLE_PLACES_SERVER_KEY');
-    if (!placesKey) throw new Error('GOOGLE_PLACES_SERVER_KEY not set');
-
+    // ---- 4. Resolve places ----
     // displayName language follows the board's city: Korean boards get Korean
     // names, everything else keeps the previous 'ja' default (Japan-first v1).
     const KO_CITIES = new Set(['seoul', 'busan', 'jeju']);
@@ -314,17 +311,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    for (const cand of validPlaces) {
-      // Already covered by an authoritative map-link → skip the lossy Text Search.
-      if (
-        mapLinkNames.has(normalizeName(cand.name_local)) ||
-        (cand.name_ko && mapLinkNames.has(normalizeName(cand.name_ko)))
-      ) {
-        continue;
-      }
+    // LLM candidates not already covered by a map-link need a Google Places Text
+    // Search. ONLY these require the API key — a video fully covered by map-links
+    // resolves keyless. Keep the misconfig loud only when a search is actually due.
+    const needSearch = validPlaces.filter(
+      (cand) =>
+        !mapLinkNames.has(normalizeName(cand.name_local)) &&
+        !(cand.name_ko && mapLinkNames.has(normalizeName(cand.name_ko))),
+    );
+    const placesKey = Deno.env.get('GOOGLE_PLACES_SERVER_KEY');
+    if (needSearch.length > 0 && !placesKey) {
+      throw new Error('GOOGLE_PLACES_SERVER_KEY not set');
+    }
+
+    for (const cand of needSearch) {
       try {
         const place = await resolveGooglePlace({
-          apiKey: placesKey,
+          apiKey: placesKey!,
           // Appending the LLM's inferred city disambiguates chain stores and
           // same-name places across cities (e.g. "一蘭" → 후쿠오카 본점 vs 도쿄점).
           query: cand.inferred_city ? `${cand.name_local} ${cand.inferred_city}` : cand.name_local,

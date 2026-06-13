@@ -81,9 +81,11 @@ export async function fetchYouTubeMetadata(canonicalUrl: string): Promise<YouTub
   // Keyless fallback: InnerTube player endpoint. videoDetails (incl. full
   // description) is returned even when playabilityStatus is UNPLAYABLE for
   // bot-gated clients, and 맛집/여행 영상 descriptions typically carry the
-  // timestamped place list the LLM prompt is built to exploit. Verified live
-  // 2026-06-12: timedtext transcripts are bot-gated to empty from server IPs,
-  // so description is the primary grounding when YOUTUBE_API_KEY is absent.
+  // place list (often as maps.app.goo.gl links — see pipeline/maplinks.ts) the
+  // pipeline now resolves directly. NOTE (spike 001, 2026-06-13): timedtext
+  // transcripts come back EMPTY because the endpoint now requires a PoToken — this
+  // fails even from residential IPs, so it is NOT a datacenter-IP gate. Description
+  // (+ map-links) is the primary grounding; transcript is best-effort only.
   const innertube = await fetchInnerTubeDetails(videoId);
   if (innertube) {
     return {
