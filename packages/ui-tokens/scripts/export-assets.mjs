@@ -106,6 +106,13 @@ for (const w of ['Regular', 'Medium', 'SemiBold', 'Bold']) {
 await copyFile(join(PRETENDARD, 'LICENSE.txt'), join(WEB_FONTS, 'LICENSE-Pretendard.txt'));
 console.log('  ✓', join(WEB_FONTS, 'LICENSE-Pretendard.txt').replace(ROOT + '/', ''));
 
+console.log('→ Pretendard Variable (Web .woff2 — UI font via next/font/local)');
+await copyFile(
+  join(PRETENDARD, 'web/variable/woff2/PretendardVariable.woff2'),
+  join(WEB_FONTS, 'PretendardVariable.woff2')
+);
+console.log('  ✓', join(WEB_FONTS, 'PretendardVariable.woff2').replace(ROOT + '/', ''));
+
 console.log('→ Pretendard Bold .ttf for Phase 4 OG (Satori)');
 const WEB_ASSETS = join(ROOT, 'apps/web/assets');
 await mkdir(WEB_ASSETS, { recursive: true });

@@ -3,8 +3,8 @@
 @config "../tailwind.config.ts";
 
 @theme {
-  --font-sans: var(--font-sans-kr), 'IBM Plex Sans KR', 'IBM Plex Sans JP',
-    'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+  --font-sans: var(--font-sans-kr), 'Pretendard', 'Apple SD Gothic Neo',
+    'Noto Sans KR', system-ui, sans-serif;
 
   /* shadcn-compatible semantic colors → MOAJOA brand tokens.
    * Web-only (intentionally NOT in packages/ui-tokens) so iOS is unaffected.

@@ -5,14 +5,12 @@ import { ToastProvider } from '@/components/toast';
 import { BottomNav } from '@/components/bottom-nav';
 import './globals.css';
 
-// MOAJOA Design System primary typeface — IBM Plex Sans KR (Korean-first).
-const ibmPlexSansKr = localFont({
-  src: [
-    { path: '../public/fonts/IBMPlexSansKR-w400.ttf', weight: '400', style: 'normal' },
-    { path: '../public/fonts/IBMPlexSansKR-w500.ttf', weight: '500', style: 'normal' },
-    { path: '../public/fonts/IBMPlexSansKR-w600.ttf', weight: '600', style: 'normal' },
-    { path: '../public/fonts/IBMPlexSansKR-w700.ttf', weight: '700', style: 'normal' },
-  ],
+// MOAJOA primary typeface — Pretendard, matching the iOS app (lib/fonts.ts there).
+// One variable woff2 covers every weight (100–900), so font-extrabold (800) renders
+// a true cut on web. CSS var name kept as --font-sans-kr (consumed in globals.css).
+const pretendard = localFont({
+  src: '../public/fonts/PretendardVariable.woff2',
+  weight: '100 900',
   variable: '--font-sans-kr',
   display: 'swap',
 });
@@ -38,7 +36,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={ibmPlexSansKr.variable}>
+    <html lang="ko" className={pretendard.variable}>
       <body>
         <ToastProvider>
           {children}
