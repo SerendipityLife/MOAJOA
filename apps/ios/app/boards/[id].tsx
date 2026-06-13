@@ -8,8 +8,8 @@ import {
   type Place,
 } from '@moajoa/core';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Modal, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
@@ -25,6 +25,7 @@ import { PinBottomSheet } from '@/components/boards/pin-sheet';
 import { PinAddModal } from '@/components/boards/pin-add-modal';
 import { StepIndicator } from '@/components/boards/step-indicator';
 import { OnboardCard } from '@/components/boards/onboard-card';
+import { PlaceList } from '@/components/boards/place-list';
 
 export default function BoardDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -103,14 +104,21 @@ export default function BoardDetailScreen() {
     }
   }
 
-  const region = places[0]
-    ? {
-        latitude: places[0].lat,
-        longitude: places[0].lng,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }
-    : { latitude: 35.68, longitude: 139.69, latitudeDelta: 0.5, longitudeDelta: 0.5 };
+  const mapRef = useRef<MapView>(null);
+
+  // Fit the camera to ALL pins whenever places load/change. initialRegion only
+  // applies on first mount (places still empty → city default), so without this
+  // the map stays on the default region even after pins arrive (도쿄 고정 버그).
+  useEffect(() => {
+    if (places.length === 0) return;
+    mapRef.current?.fitToCoordinates(
+      places.map((p) => ({ latitude: p.lat, longitude: p.lng })),
+      { edgePadding: { top: 48, right: 48, bottom: 48, left: 48 }, animated: true },
+    );
+  }, [places]);
+
+  // First-mount fallback only — fitToCoordinates takes over once pins exist.
+  const region = { latitude: 35.68, longitude: 139.69, latitudeDelta: 0.5, longitudeDelta: 0.5 };
 
   const detected = url ? detectSourceKind(url) : null;
 
@@ -178,7 +186,7 @@ export default function BoardDetailScreen() {
       </View>
 
       <View className="h-64 mx-6 rounded-lg overflow-hidden mb-3">
-        <MapView style={{ flex: 1 }} provider={PROVIDER_GOOGLE} initialRegion={region}>
+        <MapView ref={mapRef} style={{ flex: 1 }} provider={PROVIDER_GOOGLE} initialRegion={region}>
           {places.map((p) => {
             // TRUST-01 (D-05) + TRUST-04 (D-13/D-15): marker visual is a pure
             // function of (source_kind, confidence). manual/legacy AI pins
@@ -222,21 +230,17 @@ export default function BoardDetailScreen() {
         </MapView>
       </View>
 
-      <FlatList
-        data={links}
-        keyExtractor={(l) => l.id}
-        contentContainerClassName="px-6 pb-12"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              await load();
-              setRefreshing(false);
-            }}
-          />
-        }
-        ListHeaderComponent={
+      <PlaceList
+        places={places}
+        links={links}
+        refreshing={refreshing}
+        onRefresh={async () => {
+          setRefreshing(true);
+          await load();
+          setRefreshing(false);
+        }}
+        onPressPlace={setSelectedPlace}
+        header={
           <View>
             {boardExtractions.map((e) => (
               <View key={e.linkId} className="mb-3">
@@ -248,48 +252,49 @@ export default function BoardDetailScreen() {
                 다른 화면으로 이동해도 장소를 불러와요.
               </Text>
             )}
-            <Text className="text-sm font-medium text-neutral-700 mb-2">
-              링크 {links.length}개 · 장소 {places.length}개
+            {/* Links collapsed to a compact strip; failed rows stay tappable (TRUST-03 retry). */}
+            {links.map((item) => {
+              const status = item.extraction_status;
+              const isFailed = status === 'failed';
+              const statusKo =
+                status === 'pending'
+                  ? '분석 대기'
+                  : status === 'processing'
+                    ? '분석 중...'
+                    : status === 'ready'
+                      ? '분석 완료'
+                      : status === 'failed'
+                        ? '분석 실패 — 탭하여 재시도'
+                        : status === 'manual_review'
+                          ? '재추출 필요'
+                          : status;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => {
+                    if (status === 'failed')
+                      startExtraction({ linkId: item.id, boardId: id, boardTitle: board?.title ?? null });
+                  }}
+                  disabled={!isFailed}
+                  className="flex-row items-center justify-between py-1.5"
+                >
+                  <Text className="text-xs text-neutral-500 flex-1 pr-2" numberOfLines={1}>
+                    {item.title ?? item.url}
+                  </Text>
+                  <Text
+                    className={isFailed ? 'text-xs text-danger' : 'text-xs text-neutral-400'}
+                    numberOfLines={1}
+                  >
+                    {statusKo}
+                  </Text>
+                </Pressable>
+              );
+            })}
+            <Text className="text-sm font-medium text-neutral-700 mt-2 mb-2">
+              장소 {places.length}개
             </Text>
           </View>
         }
-        renderItem={({ item }) => {
-          // D-11: 5 status copy fixture + failed-row tap retry.
-          // Only `failed` rows are interactive; others render as inert info.
-          const status = item.extraction_status;
-          const isFailed = status === 'failed';
-          const statusKo =
-            status === 'pending'
-              ? '분석 대기'
-              : status === 'processing'
-                ? '분석 중...'
-                : status === 'ready'
-                  ? '분석 완료'
-                  : status === 'failed'
-                    ? '분석 실패 — 탭하여 재시도'
-                    : status === 'manual_review'
-                      ? '재추출 필요'
-                      : status;
-          const onRowPress = () => {
-            if (!isFailed) return;
-            startExtraction({ linkId: item.id, boardId: id, boardTitle: board?.title ?? null });
-          };
-          return (
-            <Pressable
-              onPress={onRowPress}
-              disabled={!isFailed}
-              className="p-3 border border-neutral-200 rounded-lg mb-2"
-            >
-              <Text className="text-sm font-medium" numberOfLines={1}>
-                {item.title ?? item.url}
-              </Text>
-              <Text className="text-xs text-neutral-500 mt-1">
-                {item.source_kind} ·{' '}
-                <Text className={isFailed ? 'text-danger' : 'text-neutral-500'}>{statusKo}</Text>
-              </Text>
-            </Pressable>
-          );
-        }}
       />
 
       <PinBottomSheet
