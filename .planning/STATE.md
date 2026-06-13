@@ -143,6 +143,7 @@ Plan: 1 of 1
 
 ### Roadmap Evolution
 
+- **Milestone v1.3 시작 (2026-06-14): 추출→공유→투표 자연 흐름.** Phase 14 추가(번호 이어감). brainstorming spec 승인([docs/superpowers/specs/2026-06-14-extract-to-vote-flow-design.md]). iOS 보드 flat 장소 리스트 + 지도 fitToCoordinates + 장소 영상 인앱 임베드(react-native-webview) + "친구와 정하기"/상시 공유 → `share_board` RPC(0014) → 네이티브 공유. web vote-island 재사용. 4 plans(14-01 백엔드 / 14-02 리스트·지도 / 14-03 영상 / 14-04 공유). **GSD CLI(gsd-sdk) 미설치라 아티팩트 수동 생성.**
 - **Milestone v1.1 시작 (2026-06-07): 추출 고도화 + 협업.** Phase 8~10 추가 (번호는 v1.0에서 이어감). Phase 8 ② 추출 깊이(EXTRACT-12/13/14 + VIEW-08) → Phase 9 ① 소스 넓이(SRC-01/02, depends 8) → Phase 10 웹 투표(COLLAB-01/02). 설계 source: SESSION-NOTES §2/§3/§4. v1.0 도그푸딩(Phase 6 실행)은 의도적 병행/나중.
 - Phase 7 added: 저장 실패 링크 목록 화면 (Pending-Failed Links Screen) — Phase 3에서 만든 pending-failed 배너의 누락된 목적지 화면을 구현해 깨진 동선 완성. Depends on Phase 3.
 
