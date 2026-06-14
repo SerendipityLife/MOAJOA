@@ -17,5 +17,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './'),
     },
+    // Collapse react/react-dom to one instance. With web + ios both pinned to
+    // the same react version (19.2.3) there's a single physical copy, so the
+    // test renderer and components share the hook dispatcher.
+    dedupe: ['react', 'react-dom'],
   },
 });
