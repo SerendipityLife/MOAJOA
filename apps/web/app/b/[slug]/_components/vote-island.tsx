@@ -31,6 +31,8 @@ interface Props {
   initialJoined?: boolean;
   /** Test seam: seed the current user's votes keyed by place_id. */
   initialMyVotes?: Record<string, boolean>;
+  /** Test/preview seam: seed vote counts keyed by place_id (skips network hydrate). */
+  initialCounts?: Record<string, number>;
 }
 
 /** `4:00` style label for the 출처 영상 jump. */
@@ -71,7 +73,15 @@ function sourceAction(
  * first paint); counts/확정 hydrate for all visitors (anon-granted RPCs);
  * ❤️ affordances appear only for members.
  */
-export function VoteIsland({ slug, boardId, places, links, initialJoined, initialMyVotes }: Props) {
+export function VoteIsland({
+  slug,
+  boardId,
+  places,
+  links,
+  initialJoined,
+  initialMyVotes,
+  initialCounts,
+}: Props) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -80,8 +90,8 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   const [resolved, setResolved] = useState<boolean>(Boolean(initialJoined));
   const [joined, setJoined] = useState<boolean>(Boolean(initialJoined));
 
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [countsReady, setCountsReady] = useState(false);
+  const [counts, setCounts] = useState<Record<string, number>>(initialCounts ?? {});
+  const [countsReady, setCountsReady] = useState(Boolean(initialCounts));
   const [myVotes, setMyVotes] = useState<Record<string, boolean>>(initialMyVotes ?? {});
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [sortByLove, setSortByLove] = useState(false);
@@ -94,6 +104,11 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   // owner) was re-prompted with 참여하기 on every visit; without my-vote
   // hydration, an existing ❤️ rendered as 🤍 and the toggle re-inserted.
   useEffect(() => {
+    // Preview/test: counts seeded via props — skip all network hydration.
+    if (initialCounts) {
+      setResolved(true);
+      return;
+    }
     if (initialJoined) {
       void hydrateCounts();
       return;
