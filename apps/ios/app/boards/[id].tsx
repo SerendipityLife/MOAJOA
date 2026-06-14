@@ -10,6 +10,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
@@ -140,18 +141,33 @@ export default function BoardDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center px-4 pt-2 pb-3">
-        <Pressable onPress={() => router.back()} className="px-2 py-1">
-          <Text className="text-brand-500">← 뒤로</Text>
+      <View className="flex-row items-center px-3 pt-2 pb-3">
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={8}
+          accessibilityLabel="뒤로"
+          className="w-9 h-9 items-center justify-center"
+        >
+          <Ionicons name="chevron-back" size={24} color="#374151" />
         </Pressable>
-        <Text className="ml-2 text-lg font-semibold flex-1" numberOfLines={1}>
+        <Text className="ml-1 text-lg font-bold flex-1 text-neutral-900" numberOfLines={1}>
           {board?.title ?? '...'}
         </Text>
-        <Pressable onPress={onShare} className="px-3 py-2">
-          <Text className="text-brand-500 text-base">공유</Text>
+        <Pressable
+          onPress={onShare}
+          hitSlop={8}
+          accessibilityLabel="공유하기"
+          className="w-9 h-9 items-center justify-center"
+        >
+          <Ionicons name="share-outline" size={22} color="#2979FF" />
         </Pressable>
-        <Pressable onPress={() => setAddPinOpen(true)} className="px-3 py-2">
-          <Text className="text-brand-500 text-base">+ 핀</Text>
+        <Pressable
+          onPress={() => setAddPinOpen(true)}
+          hitSlop={8}
+          accessibilityLabel="핀 추가"
+          className="w-9 h-9 items-center justify-center"
+        >
+          <Ionicons name="add" size={26} color="#2979FF" />
         </Pressable>
       </View>
 
@@ -199,7 +215,7 @@ export default function BoardDetailScreen() {
         )}
       </View>
 
-      <View className="h-64 mx-6 rounded-lg overflow-hidden mb-3">
+      <View className="h-64 mx-6 rounded-2xl overflow-hidden mb-3">
         <MapView ref={mapRef} style={{ flex: 1 }} provider={PROVIDER_GOOGLE} initialRegion={region}>
           {places.map((p) => {
             // TRUST-01 (D-05) + TRUST-04 (D-13/D-15): marker visual is a pure
@@ -246,7 +262,18 @@ export default function BoardDetailScreen() {
 
       {places.length > 0 && (
         <View className="px-6 mb-3">
-          <Pressable onPress={onShare} className="bg-brand-500 px-4 py-3 rounded-lg items-center">
+          <Pressable
+            onPress={onShare}
+            style={{
+              shadowColor: '#2979FF',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+            className="bg-brand-500 flex-row gap-2 px-4 py-3.5 rounded-xl items-center justify-center active:opacity-90"
+          >
+            <Ionicons name="people" size={18} color="#FFFFFF" />
             <Text className="text-base font-semibold text-white">친구와 정하기</Text>
           </Pressable>
         </View>
