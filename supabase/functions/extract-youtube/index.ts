@@ -286,9 +286,20 @@ Deno.serve(async (req) => {
     // Seed with authoritative map-link places (no Text Search, no cost), and
     // remember their names so we don't also Text-Search the same place.
     const mapLinkNames = new Set<string>();
+    // Map-link places aren't LLM candidates, so they have no vibe of their own.
+    // Borrow one from a same-named LLM candidate (free, zero extra API calls);
+    // no match → undefined → resolver falls back to 'other' (D4).
+    const llmVibeByName = new Map<string, 'food' | 'cafe' | 'nature' | 'culture' | 'shopping' | 'other'>();
+    for (const c of validPlaces) {
+      if (!c.vibe) continue;
+      llmVibeByName.set(normalizeName(c.name_local), c.vibe);
+      if (c.name_ko) llmVibeByName.set(normalizeName(c.name_ko), c.vibe);
+    }
     for (const mlp of mapLinkPlaces) {
       if (mlp.label) mapLinkNames.add(normalizeName(mlp.label));
       mapLinkNames.add(normalizeName(mlp.name));
+      const borrowedVibe = llmVibeByName.get(normalizeName(mlp.name)) ??
+        (mlp.label ? llmVibeByName.get(normalizeName(mlp.label)) : undefined);
       resolved.push({
         cand: {
           name_ko: mlp.label || null,
@@ -297,6 +308,7 @@ Deno.serve(async (req) => {
           inferred_city: undefined,
           confidence: 0.95,
           summary_ko: undefined,
+          vibe: borrowedVibe,
         },
         place: {
           placeId: mlp.placeId,
@@ -360,7 +372,7 @@ Deno.serve(async (req) => {
         name_en: r.place.displayNameEn ?? null,
         lat: r.place.lat,
         lng: r.place.lng,
-        category: r.place.primaryType ?? null,
+        category: r.place.primaryType ?? r.cand.vibe ?? null,
         address: r.place.formattedAddress ?? null,
         source_timestamp_sec: r.cand.source_timestamp_sec ?? null,
         source_quote: r.cand.source_quote ?? null,
