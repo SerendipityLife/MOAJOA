@@ -16,6 +16,8 @@ const PlaceCandidate = z.object({
   source_quote: z.string().min(1).max(500),
   confidence: z.number().min(0).max(1).default(0.5),
   inferred_city: z.string().max(100).optional(),
+  // keep in sync with @moajoa/core Vibe (Deno can't import the workspace pkg)
+  vibe: z.enum(['food', 'cafe', 'nature', 'culture', 'shopping', 'other']).optional(),
 });
 
 export const LLMOutput = z.object({
@@ -140,7 +142,8 @@ Extract physical places visited or recommended in this YouTube video. Skip gener
       "source_quote": "<short quote from the transcript or description supporting this extraction (max 200 chars)>",
       "confidence": <0.0-1.0, how sure you are this is a real specific place>,
       "summary_ko": "<1~2문장 한국어 해설, 자막·설명 근거 범위 내에서만. 근거 없으면 빈 문자열로 생략>",
-      "inferred_city": "<city or region where this place is located, e.g. 'Tokyo', 'Osaka', 'Seoul'>"
+      "inferred_city": "<city or region where this place is located, e.g. 'Tokyo', 'Osaka', 'Seoul'>",
+      "vibe": "<one of: food, cafe, nature, culture, shopping, other>"
     }
   ],
   "video_summary_ko": "<영상 전체 2~3문장 한국어 TL;DR. 자막·설명 근거 범위 내에서만>"
@@ -154,6 +157,7 @@ ${timestampGuidance}
 - Every place MUST include source_quote — a short excerpt from the transcript OR the description proving the place was mentioned. Omitting source_quote will cause the entry to be discarded.
 - summary_ko / video_summary_ko: 반드시 한국어로. 영상이 일본어/영어여도 한국어로 작성.
 - 해설은 자막·설명에 실제 근거가 있을 때만 작성. 근거 없으면 비워라(지어내지 마라). source_quote 규칙과 동일한 grounding.
+- vibe: classify each place into exactly one of food(맛집·식당·바·이자카야) / cafe(카페·베이커리·디저트) / nature(공원·자연·해변) / culture(명소·박물관·신사·랜드마크) / shopping(쇼핑·상점·마켓) / other(그 외). Coarse color hint only.
 
 # Context
 City hint: ${inputs.cityHint ?? '(unknown)'}
