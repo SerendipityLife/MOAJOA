@@ -5,5 +5,5 @@
 
 Plans:
 - [x] 15-01-PLAN.md — core 단일 resolver: placeVibe + Vibe + VIBE_META (TDD)
-- [ ] 15-02-PLAN.md — Edge 추출: LLM vibe 필드 + 맵링크 vibe 매칭 + category=primaryType??vibe (deploy/UAT 게이트)
+- [x] 15-02-PLAN.md — Edge 추출: LLM vibe 필드 + 맵링크 vibe 매칭 + category=primaryType??vibe (배포 v78 + 라이브 UAT ✅ 2026-06-15: 짧은 영상 추출→맛집/카페 색 카드 확인)
 - [x] 15-03-PLAN.md — iOS/웹 클라이언트 매퍼를 core placeVibe 호출로 교체

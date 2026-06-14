@@ -2,7 +2,7 @@
 phase: 15-llm-vibe-llm-vibe-vibe-core-resolver
 plan: 02
 subsystem: extraction (supabase edge function)
-status: paused-at-checkpoint
+status: complete
 tags: [llm, vibe, category, extract-youtube, edge-function]
 requires: []
 provides:
@@ -31,8 +31,8 @@ decisions:
   - "D5: no confidence gating on vibe — it's color only"
   - "vibe enum defined locally in claude.ts (Deno standalone), kept in sync with core Vibe by comment"
 metrics:
-  duration: ~10m (code+tests; deploy/UAT pending human gate)
-  completed: pending-checkpoint
+  duration: ~10m code+tests; deploy + UAT 2026-06-15
+  completed: yes
 ---
 
 # Phase 15 Plan 02: LLM vibe in extraction pipeline Summary
@@ -65,10 +65,12 @@ Gave the YouTube extraction Edge Function a coarse `vibe` per place at zero adde
 - **Files modified:** none (verification command only).
 - **Commit:** n/a
 
-## Checkpoint Status
+## Checkpoint Status — PASSED (2026-06-15)
 
-**Task 3 (`checkpoint:human-verify`, gate=blocking) is PENDING — not executed by the agent.**
-It requires `supabase functions deploy extract-youtube` (a production deploy) + a real-video extraction UAT, which is a human action. The two code tasks are complete, committed, and locally verified (deno test + deno check). The plan is NOT marked complete until a human deploys and confirms stored categories.
+**Task 3 (`checkpoint:human-verify`, gate=blocking) is COMPLETE.**
+- Deployed: `supabase functions deploy extract-youtube` → version 78 ACTIVE (project xfoauhsraguyrifingct).
+- Live UAT (iOS sim): extracted a short 도쿄 맛집 video → 13 new places, link "분석 완료". New place cards render category colors — 🍴 맛집(amber) for 라멘/우동/꼬치집, ☕ 카페(brown) for 멍커피 — with Korean labels + addresses + ▶timestamps. placeVibe coloring confirmed end-to-end.
+- Note: an earlier test video (ah1GfjuSxkM) returned 0 places → manual_review (content/transcript issue, unrelated to this change). A transiently-stuck "분석중" spinner was a client-side realtime miss (in-memory extraction store didn't receive the terminal broadcast), cleared on app relaunch — not a server hang.
 
 ## Known Stubs
 
