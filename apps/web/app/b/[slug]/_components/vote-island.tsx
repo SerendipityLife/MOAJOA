@@ -184,6 +184,10 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
   if (places.length === 0) return null;
 
   const totalLove = Object.values(counts).reduce((a, n) => a + n, 0);
+  // Relative-popularity bar scale. Widths are love/maxLove so the leading place
+  // fills the track — at-a-glance "어디부터 갈까" without reintroducing the
+  // removed 확정 verdict (denominator stays the max vote, not member count).
+  const maxLove = Math.max(1, ...Object.values(counts));
 
   // 확정 뱃지/필터 제거 (2026-06-12 사용자 결정): 멤버가 공유링크로 수시 합류해
   // 분모가 불안정 → 수식 확정 대신 ❤️ 개수 + 정렬로 사람이 결정한다.
@@ -302,6 +306,19 @@ export function VoteIsland({ slug, boardId, places, links, initialJoined, initia
                   ▾
                 </span>
               </div>
+              {countsReady && totalLove > 0 && (
+                // 상대 인기 막대 — 가장 많이 받은 곳이 꽉 참. 선두는 진하게.
+                <div className="px-3 pb-2.5 -mt-1" aria-hidden>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        love > 0 && love === maxLove ? 'bg-brand-600' : 'bg-brand-300'
+                      }`}
+                      style={{ width: `${Math.round((love / maxLove) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               {isOpen && (
                 // Tapping the expanded body also collapses (닫기 피드백) —
                 // the action links stopPropagation so they still open.
