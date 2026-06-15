@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { type GenderType } from '@moajoa/core';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   BirthdaySheet,
@@ -102,6 +102,12 @@ export default function MeTab() {
   const [uid, setUid] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [editing, setEditing] = useState<'nickname' | 'gender' | 'birthday' | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  function toggleExpand() {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((e) => !e);
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -155,8 +161,8 @@ export default function MeTab() {
             내 정보
           </Text>
 
-          {/* Profile hero card */}
-          <View className="bg-white rounded-3xl p-5 mb-7" style={cardShadow}>
+          {/* Profile hero card — tap the footer to slide the fields open/closed */}
+          <View className="bg-white rounded-3xl p-5 mb-4" style={cardShadow}>
             <View className="flex-row items-center">
               {profile?.avatar_url ? (
                 <Image source={{ uri: profile.avatar_url }} className="w-20 h-20 rounded-full" />
@@ -175,33 +181,38 @@ export default function MeTab() {
                   {profile?.email ?? ''}
                 </Text>
               </View>
-              <Pressable
-                onPress={() => setEditing('nickname')}
-                hitSlop={8}
-                className="w-8 h-8 rounded-full bg-brand-50 items-center justify-center"
-              >
-                <Ionicons name="pencil" size={15} color="#2979FF" />
-              </Pressable>
             </View>
+            <Pressable
+              onPress={toggleExpand}
+              className="flex-row items-center justify-center mt-4 pt-4 border-t border-neutral-100"
+            >
+              <Text className="text-sm font-bold text-brand-600 mr-1">
+                {expanded ? '닫기' : '프로필 수정'}
+              </Text>
+              <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color="#2563EB" />
+            </Pressable>
           </View>
 
-          {/* Editable profile fields */}
-          <View className="mb-6">
-            <Text className="px-2 mb-2 text-xs font-extrabold tracking-[2px] text-neutral-400">
-              프로필
-            </Text>
-            <View className="bg-white rounded-3xl overflow-hidden" style={cardShadow}>
-              <FieldRow
-                label="닉네임"
-                value={profile?.display_name ?? null}
-                onPress={() => setEditing('nickname')}
-              />
-              <View className="h-px bg-neutral-100 ml-5" />
-              <FieldRow label="성별" value={genderLabel} onPress={() => setEditing('gender')} />
-              <View className="h-px bg-neutral-100 ml-5" />
-              <FieldRow label="생일" value={birthdayLabel} onPress={() => setEditing('birthday')} />
+          {/* Editable profile fields — slides open when expanded */}
+          {expanded && (
+            <View className="mb-6">
+              <View className="bg-white rounded-3xl overflow-hidden" style={cardShadow}>
+                <FieldRow
+                  label="닉네임"
+                  value={profile?.display_name ?? null}
+                  onPress={() => setEditing('nickname')}
+                />
+                <View className="h-px bg-neutral-100 ml-5" />
+                <FieldRow label="성별" value={genderLabel} onPress={() => setEditing('gender')} />
+                <View className="h-px bg-neutral-100 ml-5" />
+                <FieldRow
+                  label="생일"
+                  value={birthdayLabel}
+                  onPress={() => setEditing('birthday')}
+                />
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Settings / support / legal */}
           <MenuSection
