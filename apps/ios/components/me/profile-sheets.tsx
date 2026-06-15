@@ -6,7 +6,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Gender, type GenderType } from '@moajoa/core';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 // Korean labels for the gender enum — reused by me.tsx to render the current value.
 export const GENDER_LABELS: Record<GenderType, string> = {
@@ -144,13 +144,18 @@ export function GenderSheet({
 // ----------------------------------------------------------------------------
 // Birthday — custom year/month grid (no native picker dependency).
 // ----------------------------------------------------------------------------
+const MIN_BIRTH_YEAR = 1950;
+// Youngest allowed birth year — someone turning 15 this year.
+const MIN_AGE = 15;
+
+// Always 6 week-rows (42 cells) so the grid height never changes between months.
 function monthCells(year: number, month: number): (Date | null)[] {
   const lead = new Date(year, month, 1).getDay();
   const days = new Date(year, month + 1, 0).getDate();
   const cells: (Date | null)[] = [];
   for (let i = 0; i < lead; i++) cells.push(null);
   for (let d = 1; d <= days; d++) cells.push(new Date(year, month, d));
-  while (cells.length % 7 !== 0) cells.push(null);
+  while (cells.length < 42) cells.push(null);
   return cells;
 }
 
@@ -166,12 +171,14 @@ function Stepper({
   label,
   onPrev,
   onNext,
+  onPressLabel,
   prevDisabled,
   nextDisabled,
 }: {
   label: string;
   onPrev: () => void;
   onNext: () => void;
+  onPressLabel?: () => void;
   prevDisabled?: boolean;
   nextDisabled?: boolean;
 }) {
@@ -180,7 +187,9 @@ function Stepper({
       <Pressable onPress={onPrev} disabled={prevDisabled} hitSlop={8} className="p-1">
         <Ionicons name="chevron-back" size={20} color={prevDisabled ? '#D1D5DB' : '#374151'} />
       </Pressable>
-      <Text className="text-base font-bold text-neutral-900">{label}</Text>
+      <Pressable onPress={onPressLabel} disabled={!onPressLabel} hitSlop={8}>
+        <Text className="text-base font-bold text-neutral-900">{label}</Text>
+      </Pressable>
       <Pressable onPress={onNext} disabled={nextDisabled} hitSlop={8} className="p-1">
         <Ionicons name="chevron-forward" size={20} color={nextDisabled ? '#D1D5DB' : '#374151'} />
       </Pressable>
@@ -201,96 +210,125 @@ export function BirthdaySheet({
   onClose: () => void;
   onConfirm: (ymd: string) => void;
 }) {
-  const today = new Date(todayYMD);
-  const defaultBase = new Date(today.getFullYear() - 20, today.getMonth(), 1);
+  const maxYear = new Date(todayYMD).getFullYear() - MIN_AGE;
+  const clampYear = (y: number) => Math.min(maxYear, Math.max(MIN_BIRTH_YEAR, y));
 
   const [selected, setSelected] = useState<Date | null>(null);
-  const [view, setView] = useState({
-    year: defaultBase.getFullYear(),
-    month: defaultBase.getMonth(),
-  });
+  const [view, setView] = useState({ year: maxYear, month: 0 });
+  const [picking, setPicking] = useState(false); // year-selection mode
 
   useEffect(() => {
     if (!visible) return;
-    const t = new Date(todayYMD);
-    const base = initial ? new Date(initial) : new Date(t.getFullYear() - 20, t.getMonth(), 1);
+    const max = new Date(todayYMD).getFullYear() - MIN_AGE;
+    const clamp = (y: number) => Math.min(max, Math.max(MIN_BIRTH_YEAR, y));
+    const base = initial ? new Date(initial) : new Date(max - 5, 0, 1);
     setSelected(initial ? new Date(initial) : null);
-    setView({ year: base.getFullYear(), month: base.getMonth() });
+    setView({ year: clamp(base.getFullYear()), month: base.getMonth() });
+    setPicking(false);
   }, [visible, initial, todayYMD]);
 
   function shiftMonth(delta: number) {
     setView((v) => {
-      const m = v.month + delta;
-      return { year: v.year + Math.floor(m / 12), month: ((m % 12) + 12) % 12 };
+      const total = v.year * 12 + v.month + delta;
+      const year = Math.floor(total / 12);
+      if (year < MIN_BIRTH_YEAR || year > maxYear) return v; // stay within range
+      return { year, month: ((total % 12) + 12) % 12 };
     });
   }
 
-  // Don't let the user navigate into the future.
-  const atCurrentMonth = view.year === today.getFullYear() && view.month === today.getMonth();
-  const beyondFuture = view.year > today.getFullYear();
   const cells = monthCells(view.year, view.month);
+  // Years descending (most recent first) — most users are closer to maxYear.
+  const years: number[] = [];
+  for (let y = maxYear; y >= MIN_BIRTH_YEAR; y--) years.push(y);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SheetShell title="생일" onClose={onClose}>
-        {/* Year + month steppers */}
+        {/* Year + month steppers (tap the year to pick from a list) */}
         <View className="flex-row gap-3 mb-4">
           <Stepper
             label={`${view.year}년`}
-            onPrev={() => setView((v) => ({ ...v, year: v.year - 1 }))}
-            onNext={() => setView((v) => ({ ...v, year: v.year + 1 }))}
-            nextDisabled={view.year >= today.getFullYear()}
+            onPressLabel={() => setPicking((p) => !p)}
+            onPrev={() => setView((v) => ({ ...v, year: clampYear(v.year - 1) }))}
+            onNext={() => setView((v) => ({ ...v, year: clampYear(v.year + 1) }))}
+            prevDisabled={view.year <= MIN_BIRTH_YEAR}
+            nextDisabled={view.year >= maxYear}
           />
           <Stepper
             label={`${view.month + 1}월`}
             onPrev={() => shiftMonth(-1)}
             onNext={() => shiftMonth(1)}
-            nextDisabled={atCurrentMonth || beyondFuture}
           />
         </View>
 
-        {/* Weekday header */}
-        <View className="flex-row mb-1">
-          {WEEKDAYS.map((w) => (
-            <Text key={w} className="flex-1 text-center text-xs font-medium text-neutral-400 py-1">
-              {w}
-            </Text>
-          ))}
-        </View>
-
-        {/* Day grid */}
-        <View className="flex-row flex-wrap">
-          {cells.map((day, i) => {
-            if (!day) return <View key={`b${i}`} className="basis-[14.28%] h-11" />;
-            const isSel = !!selected && isSameDay(day, selected);
-            const isFuture = day > today;
-            return (
-              <View
-                key={day.toISOString()}
-                className="basis-[14.28%] h-11 items-center justify-center"
-              >
-                <Pressable
-                  onPress={() => !isFuture && setSelected(day)}
-                  disabled={isFuture}
-                  hitSlop={6}
-                >
-                  {isSel ? (
-                    <View className="w-10 h-10 rounded-full bg-brand-500 items-center justify-center">
-                      <Text className="text-base font-bold text-white">{day.getDate()}</Text>
-                    </View>
-                  ) : (
-                    <View className="w-10 h-10 items-center justify-center">
-                      <Text
-                        className={`text-base ${isFuture ? 'text-neutral-300' : 'text-neutral-900'}`}
+        {/* Fixed-height body: either the year picker or the day grid. */}
+        <View className="h-[300px]">
+          {picking ? (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View className="flex-row flex-wrap">
+                {years.map((y) => {
+                  const isSel = y === view.year;
+                  return (
+                    <View key={y} className="basis-1/3 p-1">
+                      <Pressable
+                        onPress={() => {
+                          setView((v) => ({ ...v, year: y }));
+                          setPicking(false);
+                        }}
+                        className={`rounded-xl py-3 items-center ${isSel ? 'bg-brand-500' : 'bg-neutral-50'}`}
                       >
-                        {day.getDate()}
-                      </Text>
+                        <Text
+                          className={`text-base font-bold ${isSel ? 'text-white' : 'text-neutral-900'}`}
+                        >
+                          {y}
+                        </Text>
+                      </Pressable>
                     </View>
-                  )}
-                </Pressable>
+                  );
+                })}
               </View>
-            );
-          })}
+            </ScrollView>
+          ) : (
+            <>
+              {/* Weekday header */}
+              <View className="flex-row mb-1">
+                {WEEKDAYS.map((w) => (
+                  <Text
+                    key={w}
+                    className="flex-1 text-center text-xs font-medium text-neutral-400 py-1"
+                  >
+                    {w}
+                  </Text>
+                ))}
+              </View>
+
+              {/* Day grid */}
+              <View className="flex-row flex-wrap">
+                {cells.map((day, i) => {
+                  if (!day) return <View key={`b${i}`} className="basis-[14.28%] h-11" />;
+                  const isSel = !!selected && isSameDay(day, selected);
+                  return (
+                    <View
+                      key={day.toISOString()}
+                      className="basis-[14.28%] h-11 items-center justify-center"
+                    >
+                      <Pressable onPress={() => setSelected(day)} hitSlop={6}>
+                        {isSel ? (
+                          <View className="w-10 h-10 rounded-full bg-brand-500 items-center justify-center">
+                            <Text className="text-base font-bold text-white">{day.getDate()}</Text>
+                          </View>
+                        ) : (
+                          <View className="w-10 h-10 items-center justify-center">
+                            <Text className="text-base text-neutral-900">{day.getDate()}</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </View>
+            </>
+          )}
         </View>
 
         <Pressable
