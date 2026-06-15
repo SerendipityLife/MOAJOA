@@ -1,10 +1,13 @@
 import { z } from 'zod';
+import { Gender } from '../constants';
 
 export const UserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email().nullable(),
   display_name: z.string().min(1).max(60),
   avatar_url: z.string().url().nullable(),
+  gender: z.enum(Gender).nullable(),
+  birthday: z.string().date().nullable(), // 'YYYY-MM-DD'
   locale: z.enum(['ko', 'ja', 'en']).default('ko'),
   created_at: z.string().datetime(),
 });
@@ -14,6 +17,8 @@ export type User = z.infer<typeof UserSchema>;
 export const UserUpdateSchema = UserSchema.pick({
   display_name: true,
   avatar_url: true,
+  gender: true,
+  birthday: true,
   locale: true,
 }).partial();
 

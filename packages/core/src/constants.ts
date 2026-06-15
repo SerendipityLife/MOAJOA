@@ -41,6 +41,12 @@ export const VoteKind = ['love'] as const;
 export type VoteKindType = (typeof VoteKind)[number];
 
 /**
+ * User profile gender — optional self-identification shown in "내 정보".
+ */
+export const Gender = ['male', 'female', 'other'] as const;
+export type GenderType = (typeof Gender)[number];
+
+/**
  * Board sharing modes.
  * - private: only owner can view
  * - shared: invited members can view/edit/vote (collaborative)
@@ -93,14 +99,7 @@ export type PlaceSourceKindType = (typeof PlaceSourceKind)[number];
  * Broadcast step names for extraction progress (D-02).
  * Clients display progress based on these steps.
  */
-export const ExtractionStep = [
-  'metadata',
-  'transcript',
-  'llm',
-  'places',
-  'done',
-  'error',
-] as const;
+export const ExtractionStep = ['metadata', 'transcript', 'llm', 'places', 'done', 'error'] as const;
 export type ExtractionStepType = (typeof ExtractionStep)[number];
 
 /**

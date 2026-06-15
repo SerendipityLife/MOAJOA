@@ -1,26 +1,49 @@
 import { Ionicons } from '@expo/vector-icons';
+import { type GenderType } from '@moajoa/core';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  BirthdaySheet,
+  GENDER_LABELS,
+  GenderSheet,
+  NicknameSheet,
+} from '@/components/me/profile-sheets';
 import { supabase } from '@/lib/supabase';
+import { toYMD } from '@/lib/trip-format';
 
 /**
- * "내 정보" tab. Composition mirrors the MOAJOA design system (moajoa_total)
- * my screen: profile hero card → grouped menu section cards → logout. Badges
- * and the level chip are intentionally omitted (no gamification data yet).
+ * "내 정보" tab. Profile hero card → editable profile fields (닉네임/성별/생일,
+ * inline bottom-sheet editing, persisted to the profiles table) → grouped
+ * settings/legal menus → logout. Layout follows the MOAJOA design system: tinted
+ * scaffold, white rounded cards, brand-blue accents.
  *
- * Sub-screens (profile edit, settings, help, legal) don't exist yet, so those
- * rows fall through to a "준비 중" placeholder until they're built.
+ * Sub-screens (설정, 도움말, 약관) don't exist yet — those rows fall through to a
+ * "준비 중" placeholder until built.
  */
 
-// Soft ambient card shadow used by the hero card and menu cards.
+// Soft ambient card shadow used by the hero card and section cards.
 const cardShadow = {
   shadowColor: '#000000',
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.04,
   shadowRadius: 8,
 };
+
+type Profile = {
+  display_name: string;
+  email: string | null;
+  avatar_url: string | null;
+  gender: GenderType | null;
+  birthday: string | null; // 'YYYY-MM-DD'
+};
+
+// "1995-03-14" → "1995. 3. 14."
+function formatBirthday(ymd: string): string {
+  const [y, m, d] = ymd.split('-');
+  return `${y}. ${Number(m)}. ${Number(d)}.`;
+}
 
 type MenuItem = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -53,24 +76,66 @@ function MenuSection({ header, items }: { header: string; items: MenuItem[] }) {
   );
 }
 
-export default function MeTab() {
-  const [user, setUser] = useState<{ email: string; name: string; avatarUrl?: string } | null>(
-    null,
+// A single editable "내 정보" row: label left, value (or 추가 placeholder) + chevron right.
+function FieldRow({
+  label,
+  value,
+  onPress,
+}: {
+  label: string;
+  value: string | null;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} className="flex-row items-center px-5 py-4 active:bg-brand-50">
+      <Text className="text-base font-bold text-neutral-900">{label}</Text>
+      <View className="flex-1" />
+      <Text className={`text-base mr-2 ${value ? 'text-neutral-500' : 'text-neutral-300'}`}>
+        {value ?? '추가'}
+      </Text>
+      <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+    </Pressable>
   );
+}
+
+export default function MeTab() {
+  const [uid, setUid] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [editing, setEditing] = useState<'nickname' | 'gender' | 'birthday' | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user;
       if (!u) return;
-      const meta = u.user_metadata ?? {};
-      const email = u.email ?? '';
-      setUser({
-        email,
-        name: meta.full_name || meta.name || (email ? email.split('@')[0] : '여행자'),
-        avatarUrl: meta.avatar_url || meta.picture,
-      });
+      setUid(u.id);
+      const { data: row } = await supabase
+        .from('profiles')
+        .select('display_name, email, avatar_url, gender, birthday')
+        .eq('id', u.id)
+        .single();
+      if (row) {
+        setProfile({
+          display_name: row.display_name,
+          email: row.email,
+          avatar_url: row.avatar_url,
+          gender: (row.gender as GenderType | null) ?? null,
+          birthday: row.birthday,
+        });
+      }
     });
   }, []);
+
+  // Persist a profile patch and reflect it locally. Surfaces failures (RLS, network).
+  async function patch(fields: Partial<Profile>) {
+    if (!uid) return;
+    setEditing(null);
+    const { error } = await supabase.from('profiles').update(fields).eq('id', uid);
+    if (error) {
+      Alert.alert('저장 실패', '잠시 후 다시 시도해 주세요');
+      return;
+    }
+    setProfile((p) => (p ? { ...p, ...fields } : p));
+  }
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -78,6 +143,9 @@ export default function MeTab() {
   }
 
   const soon = () => Alert.alert('준비 중', '곧 지원될 기능이에요');
+
+  const genderLabel = profile?.gender ? GENDER_LABELS[profile.gender] : null;
+  const birthdayLabel = profile?.birthday ? formatBirthday(profile.birthday) : null;
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50">
@@ -90,25 +158,25 @@ export default function MeTab() {
           {/* Profile hero card */}
           <View className="bg-white rounded-3xl p-5 mb-7" style={cardShadow}>
             <View className="flex-row items-center">
-              {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} className="w-20 h-20 rounded-full" />
+              {profile?.avatar_url ? (
+                <Image source={{ uri: profile.avatar_url }} className="w-20 h-20 rounded-full" />
               ) : (
                 <View className="w-20 h-20 rounded-full bg-brand-500 items-center justify-center">
                   <Text className="text-white text-3xl font-bold">
-                    {(user?.name?.[0] ?? '?').toUpperCase()}
+                    {(profile?.display_name?.[0] ?? '?').toUpperCase()}
                   </Text>
                 </View>
               )}
               <View className="flex-1 ml-4">
                 <Text className="text-xl font-extrabold text-neutral-900" numberOfLines={1}>
-                  {user?.name ?? '...'}
+                  {profile?.display_name ?? '...'}
                 </Text>
                 <Text className="text-sm text-neutral-500 mt-0.5" numberOfLines={1}>
-                  {user?.email ?? ''}
+                  {profile?.email ?? ''}
                 </Text>
               </View>
               <Pressable
-                onPress={soon}
+                onPress={() => setEditing('nickname')}
                 hitSlop={8}
                 className="w-8 h-8 rounded-full bg-brand-50 items-center justify-center"
               >
@@ -117,12 +185,30 @@ export default function MeTab() {
             </View>
           </View>
 
-          {/* Menu sections (badges omitted per request) */}
+          {/* Editable profile fields */}
+          <View className="mb-6">
+            <Text className="px-2 mb-2 text-xs font-extrabold tracking-[2px] text-neutral-400">
+              프로필
+            </Text>
+            <View className="bg-white rounded-3xl overflow-hidden" style={cardShadow}>
+              <FieldRow
+                label="닉네임"
+                value={profile?.display_name ?? null}
+                onPress={() => setEditing('nickname')}
+              />
+              <View className="h-px bg-neutral-100 ml-5" />
+              <FieldRow label="성별" value={genderLabel} onPress={() => setEditing('gender')} />
+              <View className="h-px bg-neutral-100 ml-5" />
+              <FieldRow label="생일" value={birthdayLabel} onPress={() => setEditing('birthday')} />
+            </View>
+          </View>
+
+          {/* Settings / support / legal */}
           <MenuSection
-            header="계정"
+            header="설정"
             items={[
-              { icon: 'person-outline', label: '프로필', onPress: soon },
-              { icon: 'settings-outline', label: '설정', onPress: soon },
+              { icon: 'notifications-outline', label: '알림', onPress: soon },
+              { icon: 'settings-outline', label: '환경설정', onPress: soon },
             ]}
           />
           <MenuSection
@@ -152,6 +238,27 @@ export default function MeTab() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* Edit sheets */}
+      <NicknameSheet
+        visible={editing === 'nickname'}
+        initial={profile?.display_name ?? ''}
+        onClose={() => setEditing(null)}
+        onConfirm={(value) => patch({ display_name: value })}
+      />
+      <GenderSheet
+        visible={editing === 'gender'}
+        initial={profile?.gender ?? null}
+        onClose={() => setEditing(null)}
+        onConfirm={(value) => patch({ gender: value })}
+      />
+      <BirthdaySheet
+        visible={editing === 'birthday'}
+        initial={profile?.birthday ?? null}
+        todayYMD={toYMD(new Date())}
+        onClose={() => setEditing(null)}
+        onConfirm={(ymd) => patch({ birthday: ymd })}
+      />
     </SafeAreaView>
   );
 }
