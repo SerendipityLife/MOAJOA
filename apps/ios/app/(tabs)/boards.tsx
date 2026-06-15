@@ -36,14 +36,6 @@ const GREETINGS: Record<'morning' | 'afternoon' | 'evening' | 'night', string[]>
   night: ['편안한 밤 되세요!', '오늘 하루도 고생 많았어요', '포근한 밤이에요'],
 };
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-// "6월 7일 토요일" 형태의 오늘 날짜 라벨(디바이스 로컬 시간 기준).
-function formatToday(): string {
-  const d = new Date();
-  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${WEEKDAYS[d.getDay()]}요일`;
-}
-
 // 디바이스(=사용자) 로컬 시간 기준으로 시간대를 고르고, 그 시간대 변형 중 하나를 무작위로.
 function pickGreeting(): string {
   const h = new Date().getHours();
@@ -67,7 +59,6 @@ export default function BoardsTab() {
   const [name, setName] = useState<string | null>(null);
   // 인사말은 화면 진입 시 한 번만 고정(리렌더로 문구가 깜빡이지 않게).
   const [greeting] = useState(pickGreeting);
-  const dateLabel = formatToday();
 
   // Live background extractions, grouped by board so each row can show its
   // in-progress state. Latest-started entry per board drives the badge label.
@@ -98,15 +89,22 @@ export default function BoardsTab() {
   // refresh the list so counts and ordering stay fresh while we're on this tab.
   useEffect(() => onExtractionComplete(() => load()), [load]);
 
-  // 닉네임은 me.tsx와 동일하게 auth user_metadata에서 파생(폴백 '여행자').
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const u = data.user;
-      if (!u) return;
-      const meta = u.user_metadata ?? {};
-      setName(meta.full_name || meta.name || (u.email ? u.email.split('@')[0] : '여행자'));
-    });
-  }, []);
+  // 닉네임은 me.tsx와 동일한 소스(profiles.display_name)에서 읽는다. 포커스 시
+  // 재조회 — me 탭에서 닉네임을 바꾸고 돌아왔을 때 즉시 반영되도록.
+  useFocusEffect(
+    useCallback(() => {
+      supabase.auth.getUser().then(async ({ data }) => {
+        const u = data.user;
+        if (!u) return;
+        const { data: row } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', u.id)
+          .single();
+        setName(row?.display_name || (u.email ? u.email.split('@')[0] : '여행자'));
+      });
+    }, []),
+  );
 
   // Re-read failed-pending count whenever this screen gains focus — covers
   // the case where a drain finishes while the user is on another tab and
@@ -189,17 +187,14 @@ export default function BoardsTab() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="px-6 pt-10 pb-3">
-        {name ? (
-          <Text className="text-4xl font-bold leading-tight text-neutral-900">
-            <Text className="text-brand-500">{name}</Text>,{'\n'}
-            {greeting}
-          </Text>
-        ) : (
-          <Text className="text-4xl font-bold leading-tight text-neutral-900">{greeting}</Text>
-        )}
-        <View className="self-start mt-3 bg-neutral-100 rounded-full px-3 py-1">
-          <Text className="text-sm text-neutral-500">{dateLabel}</Text>
-        </View>
+        <Text className="text-4xl font-bold leading-tight text-neutral-900">
+          {name && (
+            <>
+              <Text className="text-brand-500">{name}</Text>,{'\n'}
+            </>
+          )}
+          {greeting}
+        </Text>
       </View>
 
       {failedCount > 0 && (
@@ -259,7 +254,7 @@ export default function BoardsTab() {
                 {/* 커버 — 사진이 있으면 히어로, 없으면 카테고리 색 면 + 아이콘 워터마크 */}
                 <View
                   style={{ height: 104, backgroundColor: hasPhoto ? '#000' : vibe.tint }}
-                  className="justify-end px-4 pb-3"
+                  className="justify-start px-4 pt-3"
                 >
                   {hasPhoto ? (
                     <Image
@@ -268,20 +263,32 @@ export default function BoardsTab() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <Ionicons
-                      name={vibe.icon}
-                      size={78}
-                      color={vibe.color}
-                      style={{ position: 'absolute', right: 10, top: 6, opacity: 0.16 }}
-                    />
+                    <View
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons
+                        name={vibe.icon}
+                        size={78}
+                        color={vibe.color}
+                        style={{ opacity: 0.16 }}
+                      />
+                    </View>
                   )}
                   <View
                     className="self-start flex-row items-center rounded-full px-2.5 py-1"
                     style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
                   >
-                    <Ionicons name={vibe.icon} size={12} color={vibe.color} />
-                    <Text className="text-xs font-semibold ml-1" style={{ color: vibe.color }}>
-                      {vibe.labelKo} · {item.place_count}곳
+                    <Text className="text-xs font-semibold" style={{ color: vibe.color }}>
+                      등록 장소 {item.place_count}곳
                     </Text>
                   </View>
                 </View>
@@ -292,12 +299,14 @@ export default function BoardsTab() {
                     {item.title}
                   </Text>
                   {item.place_names.length > 0 && (
-                    <View className="flex-row flex-wrap mt-2.5" style={{ gap: 6 }}>
+                    // 한 줄 고정 — 칩은 shrink로 두어 긴 이름이 박스째 잘리지 않고 "…"로 말줄임.
+                    // +N 배지는 shrink-0으로 항상 온전히 우측에 남는다.
+                    <View className="flex-row items-center mt-2.5" style={{ gap: 6 }}>
                       {item.place_names.map((n, i) => (
                         <View
                           key={i}
-                          className="rounded-full px-2.5 py-1"
-                          style={{ backgroundColor: vibe.tint }}
+                          className="shrink rounded-full px-2.5 py-1"
+                          style={{ backgroundColor: vibe.tint, minWidth: 0 }}
                         >
                           <Text className="text-xs" style={{ color: vibe.textOn }} numberOfLines={1}>
                             {n}
@@ -305,7 +314,7 @@ export default function BoardsTab() {
                         </View>
                       ))}
                       {extra > 0 && (
-                        <View className="rounded-full bg-neutral-100 px-2.5 py-1">
+                        <View className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-1">
                           <Text className="text-xs text-neutral-500">+{extra}</Text>
                         </View>
                       )}
@@ -321,6 +330,26 @@ export default function BoardsTab() {
                   )}
                 </View>
               </Pressable>
+
+              {/* 우측 상단 — 이름 수정·삭제 바로가기(롱프레스 메뉴와 동일 동작). */}
+              <View className="absolute top-2.5 right-2.5 flex-row" style={{ gap: 6 }}>
+                <Pressable
+                  onPress={() => onRename(item)}
+                  hitSlop={6}
+                  className="w-8 h-8 rounded-full items-center justify-center active:opacity-70"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+                >
+                  <Ionicons name="pencil" size={15} color="#475569" />
+                </Pressable>
+                <Pressable
+                  onPress={() => onDelete(item)}
+                  hitSlop={6}
+                  className="w-8 h-8 rounded-full items-center justify-center active:opacity-70"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+                >
+                  <Ionicons name="trash-outline" size={15} color="#EF4444" />
+                </Pressable>
+              </View>
             </View>
           );
         }}

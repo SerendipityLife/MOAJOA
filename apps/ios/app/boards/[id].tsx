@@ -118,6 +118,16 @@ export default function BoardDetailScreen() {
 
   const mapRef = useRef<MapView>(null);
 
+  // 목록의 한 장소를 탭하면 지도를 그 핀으로 확대 이동(+바텀시트 열기). 목록만으로는
+  // 위치 감이 안 오던 문제 해결 — fitToCoordinates(전체 보기)와 별개의 단일 핀 줌인.
+  const onSelectPlace = useCallback((p: Place) => {
+    mapRef.current?.animateToRegion(
+      { latitude: p.lat, longitude: p.lng, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+      350,
+    );
+    setSelectedPlace(p);
+  }, []);
+
   // Fit the camera to ALL pins whenever places load/change. initialRegion only
   // applies on first mount (places still empty → city default), so without this
   // the map stays on the default region even after pins arrive (도쿄 고정 버그).
@@ -227,6 +237,8 @@ export default function BoardDetailScreen() {
               isAi && p.confidence !== null && p.confidence < LOW_CONFIDENCE_THRESHOLD;
             const pinColor = isAi ? '#F97316' : '#0F172A';
             const opacity = isLowConf ? 0.5 : 1.0;
+            // 목록/마커로 고른 핀은 다른 핀과 섞이지 않게 크게·파랗게·맨 위로.
+            const isSelected = selectedPlace?.id === p.id;
             return (
               <Marker
                 key={p.id}
@@ -235,9 +247,28 @@ export default function BoardDetailScreen() {
                 description={p.name_ko ?? p.address ?? undefined}
                 pinColor={pinColor}
                 opacity={opacity}
-                onPress={() => setSelectedPlace(p)}
+                zIndex={isSelected ? 999 : 0}
+                onPress={() => onSelectPlace(p)}
               >
-                {isLowConf ? (
+                {isSelected ? (
+                  <View className="w-12 h-12 items-center justify-center">
+                    <View
+                      className="w-11 h-11 rounded-full items-center justify-center"
+                      style={{
+                        backgroundColor: '#2979FF',
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                        shadowColor: '#000',
+                        shadowOpacity: 0.3,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowRadius: 4,
+                        elevation: 5,
+                      }}
+                    >
+                      <Ionicons name="location" size={22} color="#fff" />
+                    </View>
+                  </View>
+                ) : isLowConf ? (
                   // RESEARCH Pitfall 3: react-native-maps `opacity` prop may be
                   // ignored on Apple Maps. We pair it with a children View that
                   // self-renders the low-confidence ? badge at the same alpha,
@@ -288,7 +319,7 @@ export default function BoardDetailScreen() {
           await load();
           setRefreshing(false);
         }}
-        onPressPlace={setSelectedPlace}
+        onPressPlace={onSelectPlace}
         header={
           <View>
             {boardExtractions.map((e) => (

@@ -28,9 +28,16 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
   const sheetRef = useRef<BottomSheet>(null);
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState('');
+  // The sheet must stay mounted even when no pin is selected. Unmounting (the old
+  // `if (!place) return null`) dropped the ref's measured layout, so the FIRST
+  // snapToIndex after a closed state was a no-op — the sheet only opened on the
+  // second tap. `shown` retains the pin so content keeps rendering through the
+  // close animation while the BottomSheet itself never unmounts.
+  const [shown, setShown] = useState<Place | null>(null);
 
   useEffect(() => {
     if (place) {
+      setShown(place);
       setEditing(false);
       setDraftName(place.name_local);
       sheetRef.current?.snapToIndex(1);
@@ -39,32 +46,30 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
     }
   }, [place]);
 
-  if (!place) return null;
-
   // Phase 3 source_kind detection: link_id != null → AI; link_id == null → manual.
   // (The places.source_kind column from migration 0004 may not be populated
   // consistently for legacy Phase 2 inserts. link_id is the more reliable
   // signal — manual pins go through add_manual_place RPC which leaves link_id null.)
-  const isAI = place.link_id !== null;
+  const isAI = shown?.link_id != null;
   // TRUST-04 D-15: low-confidence only when confidence is a number BELOW the
   // threshold. null / undefined / >= 0.7 all fall through to default variant.
   const isLowConf =
-    isAI && place.confidence !== null && place.confidence < LOW_CONFIDENCE_THRESHOLD;
+    isAI && shown!.confidence !== null && shown!.confidence < LOW_CONFIDENCE_THRESHOLD;
 
   // Resolve the source video for in-app preview. Link.external_id is the youtube
   // video id (set by extract-youtube). null for non-youtube/manual → no embed.
-  const link = place.link_id ? links.find((l) => l.id === place.link_id) : undefined;
+  const link = shown?.link_id ? links.find((l) => l.id === shown.link_id) : undefined;
   const videoId = link?.source_kind === 'youtube' ? link.external_id : null;
-  const startSec = place.source_timestamp_sec ?? 0;
+  const startSec = shown?.source_timestamp_sec ?? 0;
 
   async function onSaveName() {
     const trimmed = draftName.trim();
-    if (trimmed.length === 0 || trimmed === place!.name_local) {
+    if (trimmed.length === 0 || trimmed === shown!.name_local) {
       setEditing(false);
       return;
     }
     try {
-      await renamePlace(supabase, place!.id, trimmed);
+      await renamePlace(supabase, shown!.id, trimmed);
       showToast('이름이 수정되었어요');
       setEditing(false);
       onChanged();
@@ -89,7 +94,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
       return;
     }
     Linking.openURL(
-      `https://www.youtube.com/results?search_query=${encodeURIComponent(place!.name_local)}`,
+      `https://www.youtube.com/results?search_query=${encodeURIComponent(shown!.name_local)}`,
     ).catch(() => {});
   }
 
@@ -99,7 +104,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
   // (soft delete via hidden_at). Both reload via onChanged() then close the sheet.
   async function onConfirm() {
     try {
-      await confirmAiPlace(supabase, place!.id);
+      await confirmAiPlace(supabase, shown!.id);
       onChanged();
       onClose();
     } catch (e) {
@@ -110,7 +115,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
 
   async function onReject() {
     try {
-      await rejectAiPlace(supabase, place!.id);
+      await rejectAiPlace(supabase, shown!.id);
       onChanged();
       onClose();
     } catch (e) {
@@ -127,7 +132,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
         style: 'destructive',
         onPress: async () => {
           try {
-            await deletePlace(supabase, place!.id);
+            await deletePlace(supabase, shown!.id);
             showToast('삭제됨');
             onChanged();
             onClose();
@@ -151,6 +156,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
       backgroundStyle={{ backgroundColor: '#fff' }}
     >
       <BottomSheetView>
+        {shown && (
         <View className="px-6 pt-2 pb-6 bg-white">
           {videoId && (
             <View className="mt-3">
@@ -169,13 +175,13 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
           ) : (
             <Pressable onPress={() => setEditing(true)}>
               <Text className="text-lg font-semibold text-neutral-900 mt-3">
-                {place.name_local}
+                {shown.name_local}
               </Text>
             </Pressable>
           )}
 
-          {place.address && (
-            <Text className="text-sm text-neutral-600 mt-1">{place.address}</Text>
+          {shown.address && (
+            <Text className="text-sm text-neutral-600 mt-1">{shown.address}</Text>
           )}
 
           {/* D-13: source_kind badge row. When low-conf, add a sibling amber
@@ -245,6 +251,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
             <Text className="text-base text-danger text-center">삭제</Text>
           </Pressable>
         </View>
+        )}
       </BottomSheetView>
     </BottomSheet>
   );
