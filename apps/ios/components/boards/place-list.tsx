@@ -45,7 +45,7 @@ export function PlaceList({ places, links, header, refreshing, onRefresh, onPres
     <FlatList
       data={places}
       keyExtractor={(p) => p.id}
-      contentContainerClassName="px-6 pb-12"
+      contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 48 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       ListHeaderComponent={header ?? undefined}
       renderItem={({ item }) => {

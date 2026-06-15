@@ -211,7 +211,8 @@ export default function BoardsTab() {
       <FlatList
         data={boards}
         keyExtractor={(b) => b.id}
-        contentContainerClassName="px-6 pb-12 grow"
+        contentContainerClassName="grow"
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 48 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           loaded ? (

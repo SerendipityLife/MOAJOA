@@ -39,7 +39,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
     if (place) {
       setShown(place);
       setEditing(false);
-      setDraftName(place.name_local);
+      setDraftName(place.name_ko ?? place.name_local);
       sheetRef.current?.snapToIndex(1);
     } else {
       sheetRef.current?.close();
@@ -64,7 +64,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
 
   async function onSaveName() {
     const trimmed = draftName.trim();
-    if (trimmed.length === 0 || trimmed === shown!.name_local) {
+    if (trimmed.length === 0 || trimmed === (shown!.name_ko ?? shown!.name_local)) {
       setEditing(false);
       return;
     }
@@ -175,7 +175,7 @@ export function PinBottomSheet({ place, links, onClose, onChanged }: Props) {
           ) : (
             <Pressable onPress={() => setEditing(true)}>
               <Text className="text-lg font-semibold text-neutral-900 mt-3">
-                {shown.name_local}
+                {shown.name_ko ?? shown.name_local}
               </Text>
             </Pressable>
           )}

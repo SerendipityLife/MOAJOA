@@ -61,9 +61,11 @@ export async function unhidePlace(client: MoajoaSupabaseClient, id: string): Pro
 }
 
 /**
- * Rename a place's display name (name_local). google_place_id remains
- * immutable — users edit the local-language label, not the canonical Google
- * identifier.
+ * Rename a place's display name. The UI shows `name_ko ?? name_local`, so the
+ * edit must target name_ko — otherwise editing a place that has a Korean name
+ * updates the (hidden) local original and the visible title never changes.
+ * name_local stays as the canonical Google original (used for search fallback);
+ * google_place_id remains immutable.
  *
  * RLS: `can_edit_board()` SECURITY DEFINER helper (0001_init.sql / 0002 fix)
  * gates this UPDATE. Non-members get RLS denial.
@@ -76,12 +78,12 @@ export async function renamePlace(
   newName: string,
 ): Promise<Place> {
   const trimmed = newName.trim();
-  if (trimmed.length === 0) throw new Error('name_local cannot be empty');
-  if (trimmed.length > 200) throw new Error('name_local exceeds 200 chars');
+  if (trimmed.length === 0) throw new Error('name_ko cannot be empty');
+  if (trimmed.length > 200) throw new Error('name_ko exceeds 200 chars');
 
   const { data, error } = await client
     .from('places')
-    .update({ name_local: trimmed })
+    .update({ name_ko: trimmed })
     .eq('id', id)
     .select('*')
     .single();
