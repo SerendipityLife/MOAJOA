@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Expo SDK 54 → 56 업그레이드
+milestone: v1.0
+milestone_name: milestone
 status: in_progress
-last_updated: "2026-06-12T00:00:00.000Z"
+last_updated: "2026-06-17T00:28:15.435Z"
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
-  percent: 66
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 96
 ---
 
 # STATE: MOAJOA v1.2
@@ -46,6 +46,7 @@ Phase: 13 — 워크어라운드 유지 + EAS UAT + 문서 (재정의) — **자
 - **12-02 (prebuild + 빌드 + 회귀) ✅ 부분:** SDK 56 prebuild --clean + pod install + deployment target **16.4** + 네이티브 보존(GMSApiKey/App Group/Hermes/maps subspec) + **pnpm sim BUILD SUCCEEDED + 웰컴/보드 화면 렌더(New Arch 등록 OK, JS 에러 0)**. 추적 코드 변경 0(prebuild는 gitignored ios/).
 
 ### ⚠️ 핵심 발견 (마일스톤 전제 수정)
+
 **`expo run:ios`는 SDK 56 + Xcode 26.5 + @expo/cli 56.1.15에서도 여전히 깨짐** — 시뮬레이터(UDID 명시해도)를 물리 기기로 오인해 `No code signing certificates`. 2회 재현(`/tmp/run-ios.log`, `run-ios2.log`). **즉 "SDK 56이 expo run:ios를 고친다"는 전제가 틀렸다.** UPGRADE-04의 "표준 경로 복귀(로컬)"는 **미달성**. → **로컬 시뮬레이터는 pnpm sim(xcodebuild 직접) 우회를 계속 사용해야 함.** 단 SDK 업그레이드 자체의 가치는 유효(SDK 최신화 + Hermes + EAS 클라우드 빌드는 이 로컬 Xcode 버그 무관 → 실기기 share-sheet UAT는 EAS로 진행 가능).
 
 **Phase 13 재정의 필요:** 기존 "pnpm sim 우회 제거"는 **불가**(로컬 expo run:ios 미수정) → 우회 유지 + 왜 필요한지 문서화 + EAS dev build로 실기기 share-sheet UAT + 메모리/CLAUDE.md를 "SDK 56이지만 로컬 우회 여전히 필요"로 갱신. **사용자 확인 대기.**
