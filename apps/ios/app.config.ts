@@ -70,6 +70,7 @@ const config: ExpoConfig = {
         iosAppGroupIdentifier: APP_GROUP_ID,
         // 표시 라벨은 raw 문자열, 내부 Xcode 타깃명은 영숫자만 남겨 정제됨([^a-zA-Z0-9] 제거).
         // 'MOAJOA 저장'은 "MOAJOA"로 정제돼 메인 앱 타깃과 충돌 → 플러그인이 skip하므로 Latin 토큰을 분리.
+        // → '저장 by MOAJOA'는 'byMOAJOA'로 정제됨.
         iosShareExtensionName: '저장 by MOAJOA',
         iosActivationRules: {
           NSExtensionActivationSupportsWebURLWithMaxCount: 1,
@@ -88,21 +89,11 @@ const config: ExpoConfig = {
     webUrl: process.env.EXPO_PUBLIC_WEB_URL ?? 'https://moajoa.app',
     eas: {
       projectId: 'a186ba87-ad59-4f2f-a719-326e51eda3fd',
-      build: {
-        experimental: {
-          ios: {
-            appExtensions: [
-              {
-                targetName: 'ShareExtension',
-                bundleIdentifier: 'com.serendipitylife.moajoa.ShareExtension',
-                entitlements: {
-                  'com.apple.security.application-groups': [APP_GROUP_ID],
-                },
-              },
-            ],
-          },
-        },
-      },
+      // No manual `build.experimental.ios.appExtensions` here. expo-share-intent
+      // auto-injects the share-extension entry (targetName 'byMOAJOA', bundleId
+      // '<appId>.share-extension') WITH the app-group entitlement (see plugin
+      // withIosShareExtensionConfig). A manual entry whose targetName matches the
+      // sanitized name trips the plugin's duplicate-appExtensions error.
     },
   },
 };
