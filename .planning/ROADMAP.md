@@ -17,5 +17,5 @@ Plans:
 
 Plans:
 - [x] 16-01-PLAN.md — Wave 0 순수 기반: `decideShareRoute`(D-01/D-02) + `+native-intent.tsx` 리다이렉트(D-05) + 유닛 테스트 (TDD RED→GREEN, 11 신규 테스트 / iOS 풀스위트 54/54, tsc clean; jest는 이 환경에서 `--watchman=false` 필요)
-- [ ] 16-02-PLAN.md — 마운트 핸들러 `share-handler.tsx`: 페이로드 읽기·Zod http(s) 검증(V5)·라우팅 → enqueue 머묾(D-02) 또는 자동추가+추출+이동(D-03/D-05) + `_layout` ShareIntentProvider 래핑
+- [x] 16-02-PLAN.md — 마운트 핸들러 `share-handler.tsx`: 페이로드 읽기·Zod http(s) 검증(V5)·라우팅 → enqueue 머묾(D-02) 또는 자동추가+추출+이동(D-03/D-05) + `_layout` ShareIntentProvider 래핑 (TDD RED→GREEN, 15 신규 테스트[9 share-payload + 6 share-handler] / iOS 풀스위트 69/69, tsc clean; `extractSharedUrl` V5 가드 + `handleSharedUrl` 테스트 가능 seam; 자동경로는 직접 addLink+startExtraction[D-03 가시], 드레인 triggerExtraction 아님; 프로바이더 reader-only·드레인 미변경)
 - [ ] 16-03-PLAN.md — D-04 인앱 보드 피커 시트(2개+) + share-handler 피커 분기 배선 + 디바이스/심 UAT (제스처·실제 공유시트 수동 검증)

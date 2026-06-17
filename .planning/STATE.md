@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing
-last_updated: "2026-06-17T02:54:29Z"
+last_updated: "2026-06-17T03:30:00Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 67
 ---
 
 # STATE: MOAJOA v1.2
@@ -31,7 +31,7 @@ progress:
 
 ## Current Position
 
-**활성 (2026-06-17):** Phase 16 iOS 공유 수신 — **16-01 ✅ 완료 (Wave 0 순수 기반: `decideShareRoute` + `+native-intent.tsx` 리다이렉트, 11 신규 테스트 GREEN, iOS 풀스위트 54/54).** 다음: 16-02 (마운트 핸들러 `share-handler.tsx` — 페이로드 읽기·Zod 검증·라우팅). 진행 1/3 plans (33%). ⚠️ jest는 `--watchman=false` 필요(아래 Decisions).
+**활성 (2026-06-17):** Phase 16 iOS 공유 수신 — **16-02 ✅ 완료 (마운트 핸들러 `share-handler.tsx`: 페이로드 읽기·`extractSharedUrl` Zod http(s) 검증[V5]·`decideShareRoute` 라우팅 → enqueue 머묾[D-02] 또는 직접 addLink+startExtraction+이동[D-03] + `_layout` ShareIntentProvider[reader-only] 래핑. 15 신규 테스트 GREEN[9 share-payload + 6 share-handler], iOS 풀스위트 69/69, tsc clean. 드레인 미변경 surgical).** 다음: 16-03 (D-04 인앱 보드 피커 시트 + share-handler 피커 분기 배선 + 디바이스 UAT). 진행 2/3 plans (67%). ⚠️ jest는 `--watchman=false` 필요(아래 Decisions).
 
 ---
 
@@ -141,6 +141,7 @@ Plan: 1 of 1
 - Phase 6 Plan 06-04 완료: 2026-05-26 (~2분, 2 tasks; commit b654978; .planning/dogfooding/friend-share-checklist.md Friend A/B 양식 × D-15 5체크 + device meta + locale + Pitfall reminders; screenshots/README.md D-16 layout + NN-step.png naming convention + locale labeling rule + What NOT to include)
 - Phase 6 Plan 06-05 완료: 2026-05-26 (~3분, 2 tasks; commit e11400c; .planning/dogfooding/pass-evaluator.md D-20 11 criteria + D-21 4 fail conditions → next phase mapping + decision tree + Conclusion slot; extraction-baseline-TEMPLATE.md D-09 5-part Meta/Per-video 12-row/Aggregate overall+category+city+source/Top 5 failure modes/v2 EXTRACT-08 시드; PASS-TEMPLATE.md D-22 sign-off 13 필드 + Phase 1.5 unlock checklist + Artifacts Index; .planning/research/PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append D-19 idempotent)
 - Phase 8 Plan 08-03 완료: 2026-06-08 (~3분, 2 tasks TDD RED→GREEN; commits 7889a4a test + db01535 component + 16bd93c page; VIEW-08 — apps/web/app/b/[slug]/_components/place-summary-list.tsx 신규 server component [name_ko ?? name_local + {p.summary_ko && <p>} 조건부, no 'use client', Phase 4 토큰] + page.tsx wire [PlaceSummaryList 지도 아래 + 영상 출처 리스트에 {link.summary_ko && <p line-clamp-3>}]; place-summary-list.test.tsx 4 cases [present/null-legacy/name-preference/HTML-escape] = 4/4 PASS (첫 .test.tsx — 기존 vitest config 그대로, setup 변경 0); tsc --noEmit exit 0 + next build exit 0 /b/[slug] 2.83kB; raw HTML 미사용 grep-asserted → T-08-06 XSS 완화; Rule 3 doc-comment에서 dangerouslySetInnerHTML 토큰 제거 (acceptance grep-FAILS 충족); 표시 전용 새 생성 UI 없음 CLAUDE.md §5; out-of-scope marker-svg.test.ts 5 pre-existing fail [Phase5 #0F172A vs feat(ui) #111827] → deferred-items.md, 08-03 회귀 0; 라이브 브라우저 UAT는 08-04 게이트로 deferred)
+- Phase 16 Plan 16-02 완료: 2026-06-17 (~12분, 2 tasks TDD RED→GREEN; commits 5246913 test + eeb2123 feat[extractSharedUrl] + 39fc6d2 test + 8ef679b feat[share-handler + provider wrap]; share-payload 9/9 + share-handler 6/6 = 15 신규, iOS 풀스위트 69/69 PASS, tsc clean; lib/share-routing.ts에 `extractSharedUrl` Zod http(s) 가드[V5, zod import 추가 — decideShareRoute는 순수 유지] + app/share-handler.tsx 마운트 핸들러[`handleSharedUrl` 테스트 가능 seq seam: V5 가드→await getSession[Pitfall 4]→decideShareRoute→linger enqueuePendingLink AS-IS[D-02] / auto 직접 addLink+startExtraction+navigate[D-03 가시 핀, triggerExtraction 아님] / picker no-op 핸드오프[16-03]; resetShareIntent+handled ref dedup[Pitfall 2]] + _layout.tsx ShareIntentProvider 래핑[reader-only NOT B안, 드레인 미변경 surgical-verified]; 편차 0 — 계획대로; jest `--watchman=false` 호출만)
 - Phase 16 Plan 16-01 완료: 2026-06-17 (~10분 실작업/~43분 wall[jest watchman 행 디버깅 포함], 2 tasks TDD RED→GREEN; commits d2b782e test + 38a2739 feat[share-routing] + 30773de test + 5f62820 feat[+native-intent]; share-routing 7/7 + native-intent 4/4 = 11 신규, iOS 풀스위트 54/54 PASS, tsc clean; lib/share-routing.ts 순수 decideShareRoute[zero imports, D-01/D-02] + app/+native-intent.tsx redirectSystemPath[getShareExtensionKey 파생·앱컨텍스트 호출 0·throw→'/']; Rule 3 인프라: 이 환경에서 jest가 watchman 크롤로 0%CPU 무한 행 → `--watchman=false`로 우회[설정/소스 변경 0, 호출만]; RED 각 커밋 `Could not locate module`로 실패 확인 후 GREEN; T-16-01/02/03 코드로 완화)
 - Phase 15 Plan 15-03 완료: 2026-06-14 (~4분, 2 tasks; commits e688bd9 iOS + 3408431 web; apps/ios/lib/category.ts vibeOf→placeVibe 위임 + VIBE_STYLE 6 canonical(cafe 추가/wellness 제거, color+labelKo는 core VIBE_META, Ionicons icon+tint/textOn은 클라이언트 유지) + apps/web/lib/category-icon.ts categoryVisual→placeVibe 위임 + VIBE_VISUAL 6 vibes lucide(Beer/Building2 orphan import 제거, bar→food/lodging→other collapse); iOS+web `pnpm typecheck` 둘 다 clean (web vitest 프로젝트 전역 깨짐 → typecheck 의존); 호출처 boards.tsx/place-list.tsx/vote-island.tsx diff 외 — source-compatible 유지; 편차 0; depends 15-01 DONE)
 
@@ -206,6 +207,9 @@ Plan: 1 of 1
 - **Trust-action ordering rule** (Phase 5 05-04) — schema-mutating actions (confirm/reject/approve) precede inline-edit actions when both visible in the same sheet. In PinBottomSheet, [확인]/[잘못됨] sit ABOVE 이름 수정 — the schema mutation is the user's primary decision; rename is housekeeping. Margin-branch on 이름 수정 (mt-2 when low-conf, mt-4 otherwise) preserves visual rhythm without restructuring the render block (Karpathy §3.3 surgical).
 - **jest는 이 환경에서 `--watchman=false` 필수** (Phase 16 16-01) — jest-expo 부트스트랩이 watchman의 모노레포(`.pnpm`) 크롤에 걸려 0% CPU로 무한 행(워커/트랜스폼 단계 도달 못 함). watchman 자체는 설치·응답 정상(`/opt/homebrew/bin/watchman`)이나 크롤이 jest Haste-map 단계를 멈춤. `--watchman=false`(node 크롤러)로 <2초 완료. 설정/소스 변경 없이 호출 플래그만. 향후 모든 jest 실행에 적용.
 - **`decideShareRoute`는 1보드+null id를 picker로 폴백** (Phase 16 16-01) — `boardCount === 1 && firstBoardId` 가드. 보드 1개여도 id 미해결이면 `auto`로 undefined 보드를 절대 안 내보내고 picker로 떨어뜨림(방어). 호출처(16-02)의 보드 카운트 출처는 `listMyBoards(supabase).length`.
+- **공유 자동경로는 직접 `addLink`+`startExtraction`(D-03 가시 핀), 드레인 `triggerExtraction` 아님** (Phase 16 16-02, RESEARCH OQ#1 해소) — 보드 1개 자동 케이스는 `share-handler.tsx`에서 직접 `addLink`→`startExtraction({linkId,boardId,boardTitle:null})`→`router.replace('/boards/<id>')`로 처리. 드레인 경로의 `triggerExtraction`은 진행 표시 없는 fire-and-forget(Pitfall 5)이라 "던졌다" 즉각 피드백(D-03)을 못 줌. 머묾 경로(D-02, !authed OR 0보드)만 `enqueuePendingLink(url, null)` AS-IS 재사용 — pending.ts 미변경.
+- **`handleSharedUrl(rawUrl)` 테스트 가능 seam 분리 + V5 가드 선행** (Phase 16 16-02) — React 이펙트 화면을 RNTL 렌더 없이 유닛 테스트하려고 async 결정 본문을 `share-handler.tsx`에서 named export. 이펙트는 thin caller. `extractSharedUrl`(Zod http(s) V5)을 함수 맨 앞에서 호출해 non-http(s) 입력은 `getSession`조차 안 부르고 즉시 return(아무것도 enqueue/add 안 됨). `await getSession()`을 `decideShareRoute` 앞에 둬 auth 레이스(Pitfall 4) 차단. dedup은 이펙트 `finally`의 `resetShareIntent()` + 마운트 내 `handled` useRef(clear-after-read, Pitfall 2).
+- **`ShareIntentProvider`는 페이로드 reader 전용 — B안 아님** (Phase 16 16-02) — `_layout.tsx`가 렌더 트리를 `<ShareIntentProvider>`로 감싸 `share-handler`가 `useShareIntentContext().shareIntent.webUrl`을 읽게 함. 프로바이더의 auto-navigation은 사용 안 함(라우팅 결정은 `decideShareRoute` 우리 것). 드레인 이펙트/`runDrain`/`AppState`/`ready` 게이트는 미변경(surgical, diff로 검증). D-05 "no B안"과 모순 아님 — 프로바이더를 reader로만 씀.
 - **`+native-intent.tsx`는 리다이렉트 전용·앱 컨텍스트 호출 0** (Phase 16 16-01, D-05 A안 piece 1) — `redirectSystemPath`는 앱 밖에서 실행(Supabase/auth/마운트 UI 없음, RESEARCH Pitfall 1). 공유 딥링크만 `getShareExtensionKey()`로 감지해 `/share-handler?dataUrl=<encoded>`로 보냄, 그 외 passthrough, throw→'/'. App Group 키는 절대 리터럴(`moajoaShareKey`) 하드코딩 안 함 — `getShareExtensionKey()` 파생(Phase 3 Pitfall 2 드리프트 클래스 제거). 실제 읽기/enqueue/라우팅은 16-02 마운트 핸들러.
 - **Component contract bumps require fixture updates in the SAME commit** (Phase 5 05-05) — Adding `icon: { scaledSize: g.Size(...), anchor: g.Point(...) }` introduced new `g.Size`/`g.Point` dependencies that broke 3 existing map-options tests. Stubs + fixture extension landed in commit 2464a12 with the component change. Pattern: never let "wave-completion regression" land on a separate commit — they belong together because they encode the same contract change.
 
