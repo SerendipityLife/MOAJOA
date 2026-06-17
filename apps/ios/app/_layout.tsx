@@ -4,6 +4,7 @@ import '@/lib/fonts'; // Pretendard app-wide default — must run before any Tex
 
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { ShareIntentProvider } from 'expo-share-intent';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -55,12 +56,17 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
-        <ToastHost />
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    // ShareIntentProvider is used strictly as the share-payload reader for
+    // /share-handler — NOT B안 auto-navigation (D-05). The routing decision is
+    // ours via decideShareRoute; the provider only exposes shareIntent.webUrl.
+    <ShareIntentProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }} />
+          <ToastHost />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ShareIntentProvider>
   );
 }
