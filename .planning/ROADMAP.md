@@ -10,10 +10,12 @@ Plans:
 ### Phase 16: iOS share ingestion
 
 **Goal:** 공유 시트로 유튜브/블로그/인스타 링크를 MOAJOA로 보내면 앱이 받아 보드에 링크 추가 + 추출 트리거까지 동작한다. 현재(2026-06-17 디버깅 확인): expo-share-intent 표준 네이티브 익스텐션(`ios/byMOAJOA`, App Group `group.com.serendipitylife.moajoa`)은 공유 데이터를 키 `moajoaShareKey`에 쓰고 `moajoa://dataUrl=moajoaShareKey?nonce=…` 딥링크로 앱을 열지만, JS 수신이 전무 — `app/+native-intent.tsx` 부재로 딥링크가 expo-router 직행→"Unmatched Route"이고, 커스텀 드레인 `lib/pending.ts`의 `drainPendingLinks()`는 다른 키 `SharedDefaultsKeys.PendingLinks`를 읽는데 익스텐션은 거기에 안 써서 네이티브 캡처↔JS 드레인이 끊겨 있음.
-**회색지대(discuss 필요):** (A) `+native-intent.tsx`로 딥링크 가로채고 expo-share-intent 페이로드(App Group)→`enqueuePendingLink` 연결 vs (B) `useShareIntent`/`ShareIntentProvider` 통합 대체 / 보드 미지정 케이스(D-03 board picker) 처리 / 충돌위험영역: `packages/core` `SharedDefaultsKeys`, 네이티브 익스텐션 설정(`app.config.ts`).
-**Requirements**: TBD
+**결정 잠금 (discuss 완료):** D-05 A안 채택 — `+native-intent.tsx`(리다이렉트 전용) + 마운트된 `share-handler.tsx`(읽기/검증/라우팅) 두 조각으로 분해(`redirectSystemPath`는 앱 컨텍스트 밖이라 auth/Supabase 불가). 기존 큐·드레인·실패화면 인프라 전부 보존. D-01 스마트 라우팅(1개→자동, 2개+→인앱 피커), D-02 로그아웃/0보드→큐 머묾, D-03 자동시 보드 이동+추출 진행 표시, D-04 인앱 바텀시트 피커, D-06 표준 익스텐션 유지(app.config.ts 변경 없음, prebuild 불필요).
+**Requirements**: D-01..D-06 (ROADMAP에 REQ-ID 미할당 — CONTEXT 결정으로 커버)
 **Depends on:** Phase 15
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 16 to break down)
+- [ ] 16-01-PLAN.md — Wave 0 순수 기반: `decideShareRoute`(D-01/D-02) + `+native-intent.tsx` 리다이렉트(D-05) + 유닛 테스트
+- [ ] 16-02-PLAN.md — 마운트 핸들러 `share-handler.tsx`: 페이로드 읽기·Zod http(s) 검증(V5)·라우팅 → enqueue 머묾(D-02) 또는 자동추가+추출+이동(D-03/D-05) + `_layout` ShareIntentProvider 래핑
+- [ ] 16-03-PLAN.md — D-04 인앱 보드 피커 시트(2개+) + share-handler 피커 분기 배선 + 디바이스/심 UAT (제스처·실제 공유시트 수동 검증)
