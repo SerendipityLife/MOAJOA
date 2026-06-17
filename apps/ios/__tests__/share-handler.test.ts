@@ -3,12 +3,15 @@
 // effect just calls it) — avoids RNTL render flakiness, matches the testable-seam
 // philosophy of pending.test.ts. Mock topology mirrors pending.test.ts.
 
-// 1. @moajoa/api — control listMyBoards + addLink.
+// 1. @moajoa/api — control listMyBoards + addLink (+ listMyBoardsWithPreview
+//    so the BoardPickerSheet import resolves when share-handler is loaded).
 const mockListMyBoards = jest.fn();
 const mockAddLink = jest.fn();
+const mockListMyBoardsWithPreview = jest.fn();
 jest.mock('@moajoa/api', () => ({
   listMyBoards: (...a: unknown[]) => mockListMyBoards(...a),
   addLink: (...a: unknown[]) => mockAddLink(...a),
+  listMyBoardsWithPreview: (...a: unknown[]) => mockListMyBoardsWithPreview(...a),
 }));
 
 // 2. extraction-store — startExtraction is the D-03 visible-progress path.
@@ -37,7 +40,8 @@ jest.mock('@/lib/supabase', () => ({
 }));
 
 import { SharedDefaults } from '../__mocks__/shared-defaults';
-import { handleSharedUrl } from '@/app/share-handler';
+import { handleSharedUrl, addAndNavigate } from '@/app/share-handler';
+import { SharedDefaultsKeys } from '@moajoa/core';
 
 const URL = 'https://www.youtube.com/watch?v=abc';
 
@@ -52,6 +56,7 @@ beforeEach(() => {
   SharedDefaults.__clear();
   mockListMyBoards.mockReset();
   mockAddLink.mockReset();
+  mockListMyBoardsWithPreview.mockReset();
   mockStartExtraction.mockReset();
   mockEnqueuePendingLink.mockReset();
   mockReplace.mockReset();
@@ -115,4 +120,45 @@ test('non-http(s) url → nothing enqueued/added', async () => {
   expect(mockEnqueuePendingLink).not.toHaveBeenCalled();
   expect(mockAddLink).not.toHaveBeenCalled();
   expect(mockGetSession).not.toHaveBeenCalled();
+});
+
+// --- Plan 16-03: picker-select WIRING (the shared addAndNavigate helper) ---
+// The board-picker sheet's onSelect → addAndNavigate(boardId, url). The gesture
+// itself is device UAT (Task 2); here we assert the add+extract+navigate wiring
+// the picker shares verbatim with the auto branch (single source — no drift).
+
+test('addAndNavigate(b2, youtube) → addLink({board_id:b2, url}) once', async () => {
+  mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
+  await addAndNavigate('b2', URL);
+  expect(mockAddLink).toHaveBeenCalledTimes(1);
+  expect(mockAddLink).toHaveBeenCalledWith(expect.anything(), { board_id: 'b2', url: URL });
+});
+
+test('addAndNavigate(b2, ...) → SharedDefaults.set(LastBoardId, b2)', async () => {
+  mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
+  await addAndNavigate('b2', URL);
+  expect(SharedDefaults.get(SharedDefaultsKeys.LastBoardId)).toBe('b2');
+});
+
+test('addAndNavigate(b2, youtube) → startExtraction for the new link on b2', async () => {
+  mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
+  await addAndNavigate('b2', URL);
+  expect(mockStartExtraction).toHaveBeenCalledWith(
+    expect.objectContaining({ linkId: 'link-1', boardId: 'b2' }),
+  );
+});
+
+test('addAndNavigate(b2, ...) → router.replace(/boards/b2)', async () => {
+  mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
+  await addAndNavigate('b2', URL);
+  expect(mockReplace).toHaveBeenCalledWith('/boards/b2');
+});
+
+test('addAndNavigate with manual/null-kind url → adds but no startExtraction', async () => {
+  const manual = 'https://example.com/random';
+  mockAddLink.mockResolvedValue({ id: 'link-2', url: manual });
+  await addAndNavigate('b2', manual);
+  expect(mockAddLink).toHaveBeenCalled();
+  expect(mockStartExtraction).not.toHaveBeenCalled();
+  expect(mockReplace).toHaveBeenCalledWith('/boards/b2');
 });
