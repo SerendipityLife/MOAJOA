@@ -68,7 +68,9 @@ const config: ExpoConfig = {
       'expo-share-intent',
       {
         iosAppGroupIdentifier: APP_GROUP_ID,
-        iosShareExtensionName: 'MOAJOA 저장',
+        // 표시 라벨은 raw 문자열, 내부 Xcode 타깃명은 영숫자만 남겨 정제됨([^a-zA-Z0-9] 제거).
+        // 'MOAJOA 저장'은 "MOAJOA"로 정제돼 메인 앱 타깃과 충돌 → 플러그인이 skip하므로 Latin 토큰을 분리.
+        iosShareExtensionName: '저장 by MOAJOA',
         iosActivationRules: {
           NSExtensionActivationSupportsWebURLWithMaxCount: 1,
           NSExtensionActivationSupportsWebPageWithMaxCount: 1,
