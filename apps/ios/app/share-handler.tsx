@@ -9,7 +9,7 @@
 // The async decision body is exported as `handleSharedUrl` so it unit-tests
 // directly (testable seam) — the effect below is a thin caller.
 import { useShareIntentContext } from 'expo-share-intent';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { listMyBoards, addLink } from '@moajoa/api';
 import { detectSourceKind, SharedDefaultsKeys } from '@moajoa/core';
@@ -19,6 +19,23 @@ import { SharedDefaults } from '@/lib/shared-defaults';
 import { enqueuePendingLink } from '@/lib/pending';
 import { startExtraction } from '@/lib/extraction-store';
 import { decideShareRoute, extractSharedUrl } from '@/lib/share-routing';
+import { BoardPickerSheet } from '@/components/boards/board-picker-sheet';
+
+/**
+ * Add the shared url to the chosen board and navigate so the pin visibly forms
+ * (D-03). The SINGLE source of the add+extract+navigate behavior — both the auto
+ * branch (1 board) and the picker select (2+ boards) call it, so the two paths
+ * cannot drift (Karpathy §3.2). `url` has already been V5-validated upstream.
+ */
+export async function addAndNavigate(boardId: string, url: string): Promise<void> {
+  const link = await addLink(supabase, { board_id: boardId, url });
+  SharedDefaults.set(SharedDefaultsKeys.LastBoardId, boardId);
+  const kind = detectSourceKind(link.url);
+  if (kind !== null && kind !== 'manual') {
+    startExtraction({ linkId: link.id, boardId, boardTitle: null });
+  }
+  router.replace(`/boards/${boardId}`);
+}
 
 /**
  * Decide what to do with a freshly-shared URL and act on it (Phase 16 core).
@@ -27,7 +44,10 @@ import { decideShareRoute, extractSharedUrl } from '@/lib/share-routing';
  * (D-03), or picker (2+ boards — sheet in Plan 16-03). Returns early (no-op) for
  * non-http(s) input so nothing is ever enqueued/added.
  */
-export async function handleSharedUrl(rawUrl: string | null | undefined): Promise<void> {
+export async function handleSharedUrl(
+  rawUrl: string | null | undefined,
+  onPicker?: (url: string) => void,
+): Promise<void> {
   const url = extractSharedUrl(rawUrl); // V5 guard
   if (!url) return;
 
@@ -43,34 +63,48 @@ export async function handleSharedUrl(rawUrl: string | null | undefined): Promis
     await enqueuePendingLink(url, null); // D-02 reuse AS-IS
     router.replace('/');
   } else if (route.kind === 'auto') {
-    const link = await addLink(supabase, { board_id: route.boardId, url }); // D-03
-    SharedDefaults.set(SharedDefaultsKeys.LastBoardId, route.boardId);
-    const kind = detectSourceKind(link.url);
-    if (kind !== null && kind !== 'manual') {
-      startExtraction({ linkId: link.id, boardId: route.boardId, boardTitle: null });
-    }
-    router.replace(`/boards/${route.boardId}`);
+    await addAndNavigate(route.boardId, url); // D-03 (shared path)
+  } else {
+    // route.kind === 'picker' (D-04): 2+ boards. Hold the validated url in
+    // screen state and open the in-app BoardPickerSheet. Do NOT add or linger
+    // here — addAndNavigate runs on select (same path as auto). The payload is
+    // already held in component state, so resetShareIntent-after-open is safe.
+    onPicker?.(url);
   }
-  // else route.kind === 'picker' — Plan 16-03 opens board-picker-sheet with
-  // `url` in state. For 16-02 do NOT auto-add or linger (handoff only).
 }
 
 export default function ShareHandler() {
   const { shareIntent, resetShareIntent } = useShareIntentContext();
   const handled = useRef(false); // dedup within this mount (Pitfall 2 / clear-after-read)
+  // D-04: when the route is 'picker', the validated url is held here and drives
+  // the BoardPickerSheet open. Null = sheet closed (but it stays MOUNTED — Pitfall 6).
+  const [pickerUrl, setPickerUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!shareIntent?.webUrl || handled.current) return;
     handled.current = true;
-    handleSharedUrl(shareIntent.webUrl).finally(() => {
+    handleSharedUrl(shareIntent.webUrl, setPickerUrl).finally(() => {
       resetShareIntent(); // dedup: clear the App Group key so the share never re-fires
     });
   }, [shareIntent?.webUrl, resetShareIntent]);
 
+  function onPickBoard(boardId: string) {
+    if (!pickerUrl) return;
+    void addAndNavigate(boardId, pickerUrl); // same path as auto branch
+    setPickerUrl(null);
+  }
+
   // Brief loading state while we decide (launch-from-share has no other UI yet).
+  // BoardPickerSheet stays mounted (driven by `pickerUrl`) so the FIRST open is
+  // not a no-op — Pitfall 6, mirroring pin-sheet.tsx.
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <ActivityIndicator />
+      <BoardPickerSheet
+        url={pickerUrl}
+        onSelect={onPickBoard}
+        onClose={() => setPickerUrl(null)}
+      />
     </View>
   );
 }

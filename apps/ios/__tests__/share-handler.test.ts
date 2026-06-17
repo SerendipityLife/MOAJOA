@@ -39,6 +39,12 @@ jest.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: (...a: unknown[]) => mockGetSession(...a) } },
 }));
 
+// 7. BoardPickerSheet — stub the component module so the heavy native import
+//    chain (@gorhom/bottom-sheet → react-native-reanimated) never loads under
+//    jest. The sheet's GESTURE is device UAT (Task 2); this suite tests only the
+//    add+extract+navigate WIRING (addAndNavigate) + the handler's branch logic.
+jest.mock('@/components/boards/board-picker-sheet', () => ({ BoardPickerSheet: () => null }));
+
 import { SharedDefaults } from '../__mocks__/shared-defaults';
 import { handleSharedUrl, addAndNavigate } from '@/app/share-handler';
 import { SharedDefaultsKeys } from '@moajoa/core';
