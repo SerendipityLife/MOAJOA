@@ -87,6 +87,7 @@ const config: ExpoConfig = {
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     webUrl: process.env.EXPO_PUBLIC_WEB_URL ?? 'https://moajoa.app',
     eas: {
+      projectId: 'a186ba87-ad59-4f2f-a719-326e51eda3fd',
       build: {
         experimental: {
           ios: {
