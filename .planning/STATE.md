@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-last_updated: "2026-06-17T01:40:45.649Z"
+status: Executing
+last_updated: "2026-06-17T02:54:29Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 33
 ---
 
 # STATE: MOAJOA v1.2
@@ -30,6 +30,10 @@ progress:
 ---
 
 ## Current Position
+
+**활성 (2026-06-17):** Phase 16 iOS 공유 수신 — **16-01 ✅ 완료 (Wave 0 순수 기반: `decideShareRoute` + `+native-intent.tsx` 리다이렉트, 11 신규 테스트 GREEN, iOS 풀스위트 54/54).** 다음: 16-02 (마운트 핸들러 `share-handler.tsx` — 페이로드 읽기·Zod 검증·라우팅). 진행 1/3 plans (33%). ⚠️ jest는 `--watchman=false` 필요(아래 Decisions).
+
+---
 
 **Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드) — **진행 중 (2026-06-13)**
 Branch: `gsd/v1.2-sdk-upgrade`
@@ -137,6 +141,7 @@ Plan: 1 of 1
 - Phase 6 Plan 06-04 완료: 2026-05-26 (~2분, 2 tasks; commit b654978; .planning/dogfooding/friend-share-checklist.md Friend A/B 양식 × D-15 5체크 + device meta + locale + Pitfall reminders; screenshots/README.md D-16 layout + NN-step.png naming convention + locale labeling rule + What NOT to include)
 - Phase 6 Plan 06-05 완료: 2026-05-26 (~3분, 2 tasks; commit e11400c; .planning/dogfooding/pass-evaluator.md D-20 11 criteria + D-21 4 fail conditions → next phase mapping + decision tree + Conclusion slot; extraction-baseline-TEMPLATE.md D-09 5-part Meta/Per-video 12-row/Aggregate overall+category+city+source/Top 5 failure modes/v2 EXTRACT-08 시드; PASS-TEMPLATE.md D-22 sign-off 13 필드 + Phase 1.5 unlock checklist + Artifacts Index; .planning/research/PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append D-19 idempotent)
 - Phase 8 Plan 08-03 완료: 2026-06-08 (~3분, 2 tasks TDD RED→GREEN; commits 7889a4a test + db01535 component + 16bd93c page; VIEW-08 — apps/web/app/b/[slug]/_components/place-summary-list.tsx 신규 server component [name_ko ?? name_local + {p.summary_ko && <p>} 조건부, no 'use client', Phase 4 토큰] + page.tsx wire [PlaceSummaryList 지도 아래 + 영상 출처 리스트에 {link.summary_ko && <p line-clamp-3>}]; place-summary-list.test.tsx 4 cases [present/null-legacy/name-preference/HTML-escape] = 4/4 PASS (첫 .test.tsx — 기존 vitest config 그대로, setup 변경 0); tsc --noEmit exit 0 + next build exit 0 /b/[slug] 2.83kB; raw HTML 미사용 grep-asserted → T-08-06 XSS 완화; Rule 3 doc-comment에서 dangerouslySetInnerHTML 토큰 제거 (acceptance grep-FAILS 충족); 표시 전용 새 생성 UI 없음 CLAUDE.md §5; out-of-scope marker-svg.test.ts 5 pre-existing fail [Phase5 #0F172A vs feat(ui) #111827] → deferred-items.md, 08-03 회귀 0; 라이브 브라우저 UAT는 08-04 게이트로 deferred)
+- Phase 16 Plan 16-01 완료: 2026-06-17 (~10분 실작업/~43분 wall[jest watchman 행 디버깅 포함], 2 tasks TDD RED→GREEN; commits d2b782e test + 38a2739 feat[share-routing] + 30773de test + 5f62820 feat[+native-intent]; share-routing 7/7 + native-intent 4/4 = 11 신규, iOS 풀스위트 54/54 PASS, tsc clean; lib/share-routing.ts 순수 decideShareRoute[zero imports, D-01/D-02] + app/+native-intent.tsx redirectSystemPath[getShareExtensionKey 파생·앱컨텍스트 호출 0·throw→'/']; Rule 3 인프라: 이 환경에서 jest가 watchman 크롤로 0%CPU 무한 행 → `--watchman=false`로 우회[설정/소스 변경 0, 호출만]; RED 각 커밋 `Could not locate module`로 실패 확인 후 GREEN; T-16-01/02/03 코드로 완화)
 - Phase 15 Plan 15-03 완료: 2026-06-14 (~4분, 2 tasks; commits e688bd9 iOS + 3408431 web; apps/ios/lib/category.ts vibeOf→placeVibe 위임 + VIBE_STYLE 6 canonical(cafe 추가/wellness 제거, color+labelKo는 core VIBE_META, Ionicons icon+tint/textOn은 클라이언트 유지) + apps/web/lib/category-icon.ts categoryVisual→placeVibe 위임 + VIBE_VISUAL 6 vibes lucide(Beer/Building2 orphan import 제거, bar→food/lodging→other collapse); iOS+web `pnpm typecheck` 둘 다 clean (web vitest 프로젝트 전역 깨짐 → typecheck 의존); 호출처 boards.tsx/place-list.tsx/vote-island.tsx diff 외 — source-compatible 유지; 편차 0; depends 15-01 DONE)
 
 ---
@@ -199,6 +204,9 @@ Plan: 1 of 1
 - **SVG marker uses static literals only — no user-supplied strings** (Phase 5 05-05) — `name_local` flows only to Google Maps SDK `title` attribute (SDK-escaped). T-05-05-01 XSS mitigation by construction, not by sanitization. Any future per-pin label rendered IN SVG must be HTML-entity escaped before interpolation.
 - **Provider-defensive marker children fallback** (Phase 5 05-04) — when a native prop (opacity, pinColor) has documented provider drift, encode the same visual intent in a children View as fallback. low-conf marker: opacity prop AND children View with rgba(249,115,22,0.5) circle + ? badge. On Apple Maps that ignores opacity, children carries the signal alone; on providers that honor opacity, both layers stack to obviously-degraded visual. Pattern applies to any future per-pin state (vote count, ownership badge).
 - **Trust-action ordering rule** (Phase 5 05-04) — schema-mutating actions (confirm/reject/approve) precede inline-edit actions when both visible in the same sheet. In PinBottomSheet, [확인]/[잘못됨] sit ABOVE 이름 수정 — the schema mutation is the user's primary decision; rename is housekeeping. Margin-branch on 이름 수정 (mt-2 when low-conf, mt-4 otherwise) preserves visual rhythm without restructuring the render block (Karpathy §3.3 surgical).
+- **jest는 이 환경에서 `--watchman=false` 필수** (Phase 16 16-01) — jest-expo 부트스트랩이 watchman의 모노레포(`.pnpm`) 크롤에 걸려 0% CPU로 무한 행(워커/트랜스폼 단계 도달 못 함). watchman 자체는 설치·응답 정상(`/opt/homebrew/bin/watchman`)이나 크롤이 jest Haste-map 단계를 멈춤. `--watchman=false`(node 크롤러)로 <2초 완료. 설정/소스 변경 없이 호출 플래그만. 향후 모든 jest 실행에 적용.
+- **`decideShareRoute`는 1보드+null id를 picker로 폴백** (Phase 16 16-01) — `boardCount === 1 && firstBoardId` 가드. 보드 1개여도 id 미해결이면 `auto`로 undefined 보드를 절대 안 내보내고 picker로 떨어뜨림(방어). 호출처(16-02)의 보드 카운트 출처는 `listMyBoards(supabase).length`.
+- **`+native-intent.tsx`는 리다이렉트 전용·앱 컨텍스트 호출 0** (Phase 16 16-01, D-05 A안 piece 1) — `redirectSystemPath`는 앱 밖에서 실행(Supabase/auth/마운트 UI 없음, RESEARCH Pitfall 1). 공유 딥링크만 `getShareExtensionKey()`로 감지해 `/share-handler?dataUrl=<encoded>`로 보냄, 그 외 passthrough, throw→'/'. App Group 키는 절대 리터럴(`moajoaShareKey`) 하드코딩 안 함 — `getShareExtensionKey()` 파생(Phase 3 Pitfall 2 드리프트 클래스 제거). 실제 읽기/enqueue/라우팅은 16-02 마운트 핸들러.
 - **Component contract bumps require fixture updates in the SAME commit** (Phase 5 05-05) — Adding `icon: { scaledSize: g.Size(...), anchor: g.Point(...) }` introduced new `g.Size`/`g.Point` dependencies that broke 3 existing map-options tests. Stubs + fixture extension landed in commit 2464a12 with the component change. Pattern: never let "wave-completion regression" land on a separate commit — they belong together because they encode the same contract change.
 
 ### Todos (next session 시작점)
