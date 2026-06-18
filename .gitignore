@@ -75,3 +75,12 @@ playwright-report/
 test-results/
 .claude/settings.local.json
 .vercel
+
+# design-sync (claude.ai/design) build artifacts
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+apps/web/.ds-sync.generated.css
+apps/web/.ds-fonts/
