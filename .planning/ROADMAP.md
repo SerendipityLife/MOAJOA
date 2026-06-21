@@ -34,7 +34,7 @@ Plans:
 
 ### Phases
 
-- [x] **Phase 17: Trip Foundation & IA 재편** — 0016 마이그레이션 + core 식별자 계약 + Expo Router 여행 4탭 + 진입분기 + 일정 정해짐 경로 (비협상 기반) — 5/5 plans 완료 (2026-06-21), phase verify 대기
+- [x] **Phase 17: Trip Foundation & IA 재편** — 0016 마이그레이션 + core 식별자 계약 + Expo Router 여행 4탭 + 진입분기 + 일정 정해짐 경로 (비협상 기반) — 5/5 plans 완료 + verify 통과 (6/6 criteria, 7/7 reqs, 2026-06-21)
 - [ ] **Phase 18: Auto Plan (추출 즉시 AI 플랜)** — 추출 완료가 플랜 생성 트리거. 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시
 - [ ] **Phase 19: Date Voting (일정 미정 분기)** — 날짜 투표 + 비로그인 초대 링크 + 집계→여행 일정 전환
 - [ ] **Phase 20: Affiliate Booking (딥링크 제휴 예약)** — 인라인 예약 카드 + 통합 체크리스트 + SubID 어트리뷰션 + 시스템 브라우저
