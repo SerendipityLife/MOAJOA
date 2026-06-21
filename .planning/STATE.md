@@ -1,21 +1,21 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Executing
-last_updated: "2026-06-17T03:30:00Z"
+milestone: v2.0
+milestone_name: 전면 개편 (발견→예약→정산)
+status: Defining requirements
+last_updated: "2026-06-21T00:00:00Z"
 progress:
-  total_phases: 1
+  total_phases: 0
   completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
-  percent: 67
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
-# STATE: MOAJOA v1.2
+# STATE: MOAJOA v2.0
 
-**Last updated:** 2026-06-12
-**Milestone:** v1.2 (Expo SDK 54 → 56 업그레이드)
+**Last updated:** 2026-06-21
+**Milestone:** v2.0 (전면 개편 — 발견→예약→정산 풀 루프)
 
 ---
 
@@ -30,6 +30,17 @@ progress:
 ---
 
 ## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: v2.0 전면 개편 — 요구사항 정의 중 (리서치 진행)
+Last activity: 2026-06-21 — Milestone v2.0 시작
+
+> v1.x 진행 이력은 아래 섹션에 그대로 보존.
+
+---
+
+## v1.x Position (archived)
 
 **활성 (2026-06-17):** Phase 16 iOS 공유 수신 — **16-03 구현 ✅ 완료 / 디바이스 UAT ⏳ 대기.** Task 1 (코드+유닛테스트) 완료: `board-picker-sheet.tsx`(D-04 인앱 보드 피커 — keep-mounted `shown` + 인라인 backgroundStyle + 내부 View className, pin-sheet 미러; Pitfall 6 첫 오픈 no-op 회피) + `share-handler.tsx` 피커 분기 배선(`addAndNavigate(boardId,url)` 공유 헬퍼로 auto[1보드]·picker[2+] 단일 경로 — drift 0; `pickerUrl` state에 검증된 url 보유 후 시트 마운트). 5 신규 피커-셀렉트 와이어링 테스트 GREEN(share-handler 6→11), iOS 풀스위트 **74/74** PASS, tsc clean. RED→GREEN 커밋 044cb1b/a82dffa. **Task 2 (`checkpoint:human-verify` gate=blocking) = 디바이스/심 UAT 미수행 — 4 시나리오 사용자 측 실행 필요**(피커 첫오픈·1보드 자동이동·로그아웃 머묾·중복방지; 상세 16-03-SUMMARY.md "Pending: Device UAT"). 16-03은 UAT 통과 전까지 fully-done 아님 → completed_plans는 2 유지. 진행 2/3 plans + 16-03 구현분 (67%, UAT 후 100%). ⚠️ jest는 `--watchman=false` 필요(아래 Decisions). ⚠️ Rule 3: share-handler.test.ts가 BoardPickerSheet 모듈을 stub(@gorhom→reanimated jest 미로드 회피) — 테스트 토폴로지만, 설정/소스 변경 0.
 

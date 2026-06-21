@@ -8,20 +8,24 @@
 
 **"링크 → 30초 안에 지도 위의 핀."** 사용자가 영상 URL을 던지면 손대지 않아도 그 안의 장소가 정확히 지도 위에 떠야 한다. 이게 안 되면 나머지(공유·투표·UI)는 의미 없음.
 
-## Current Milestone: v1.1 — 추출 고도화 + 협업
+## Current Milestone: v2.0 — 전면 개편 (발견→예약→정산 풀 루프)
 
-**Goal:** 영상에서 "장소 + 사람이 읽는 해설"까지 뽑아내고(추출 깊이), 소스를 넓히고(블로그·인스타), 친구가 무설치로 웹에서 투표하게 한다. "모으기" 입구 강화 + 협업 루프 시작.
+**Goal:** 추출+투표에 머물던 제품을 발견 → 결정 → 플랜 → 예약 → 정산의 풀 루프로 확장하고, 네비게이션을 여행 4단계(지도·플랜·예약·가계부)로 재편한다. 수익(제휴 수수료)을 MVP에 내장.
 
-**Target features (순서 ② → ① → 투표):**
-- **② 추출 깊이** — `places.summary_ko`(장소당 1~2문장 한국어 해설) + `links.summary_ko`(영상 TL;DR). 단일 Claude 호출 확장, nullable 추가형, 반환각 규칙 유지, 해설이 추출을 실패시키지 않음. *(설계 잠금: `docs/SESSION-NOTES-2026-06-07.md` §2)*
-- **① 소스 넓이** — 블로그·인스타 자동 추출. ②의 출력 계약 재사용.
-- **웹 투표 (협업)** — 웹 = 조회+공유+투표. 초대받은 친구가 무설치로 "여기 가자" 참여.
+**Target features:**
+- **시작 일정 분기** — 정해짐→날짜·도시 입력 / 미정→일행과 날짜 투표(초대 링크)
+- **추출 직후 자동 AI 플랜** — 추출 완료가 곧 플랜 생성 트리거. 투표는 같은 플랜 위에 얹는 옵션
+- **가격비교 + 딥링크 제휴 예약** — Travelpayouts·Stay22(숙소·액티비티·교통·유심). 수수료 Day1
+- **여행 가계부** — 개인 전용 주소로 예약 메일 전달 → AI 파싱(카드·통화·환율·결제시점)
+- **네비게이션/IA 재편** — `trip/[id]/(tabs)`: 지도·플랜·예약·가계부. 1개면 바로 진입, 새 여행=컨텍스트
+- **Android 앱(대표/결제자)** — 또는 임시 반응형 웹 예약
 
 **범위 외 (이번 마일스톤):**
-- **③ 캡처 마찰**(Share Extension 개선) — v1 Phase 3에서 config 완료, 남은 실기기 스모크는 도그푸딩 UAT와 동반.
-- **v1 도그푸딩 게이트** — 의도적 병행/나중 (SESSION-NOTES §4).
+- **여행 당일 실시간**(항공 게이트·공항 주차) — phase 2 프리미엄
+- **데이터 라이선싱 · 인앱 MOR 결제** — 장기
+- **방문 인증(GPS·영수증)** — 제거 (신뢰 근거는 실제 예약·결제 데이터로)
 
-*세부 결정·근거: `docs/SESSION-NOTES-2026-06-07.md`, `.planning/AUTONOMOUS-LOG-2026-06-08.md`*
+*제품 단일 출처: [docs/PRODUCT.md](../docs/PRODUCT.md) · 재심사 지원서: [docs/MOAEUM-APPLICATION.md](../docs/MOAEUM-APPLICATION.md)*
 
 ## Requirements
 
@@ -111,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-07 — milestone v1.1 시작 (추출 고도화 + 협업). 이전: 2026-05-25 brownfield init*
+*Last updated: 2026-06-21 — milestone v2.0 시작 (전면 개편: 발견→예약→정산). 이전: 2026-06-07 v1.1, 2026-05-25 brownfield init*
