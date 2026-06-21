@@ -221,7 +221,7 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 ### Trip Setup & Date Voting (SETUP)
 
 - [x] **SETUP-01**: 새 여행 시작 시 "일정 정해졌나요?" 분기에서, 정해졌으면 날짜·도시를 바로 입력해 여행을 만든다
-- [x] **SETUP-02**: 여행에 대표(결제자)가 지정된다
+- [x] **SETUP-02**: 여행에 대표(결제자)가 지정된다 — 17-03: `representative_id` 컬럼 + `trips_default_representative` 트리거(coalesce auth.uid())가 0016에 반영, 로컬 db reset으로 검증
 - [ ] **POLL-01**: 일정 미정이면 날짜 투표를 만들어 초대 링크/코드로 일행을 부른다
 - [ ] **POLL-02**: 초대받은 일행이 무설치(웹)로 가능한 날짜에 투표한다
 - [ ] **POLL-03**: 투표가 집계되어 확정된 날짜가 여행 일정으로 전환된다
@@ -276,7 +276,7 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | NAV-01 | Phase 17 | Complete |
 | NAV-02 | Phase 17 | Pending |
 | NAV-03 | Phase 17 | Pending |
-| NAV-04 | Phase 17 | Pending |
+| NAV-04 | Phase 17 | In Progress (17-03: data layer trips-native + EF repointed; web `/b/[slug]`→`/t/[slug]` route move is Plan 05) |
 | ATTR-01 | Phase 17 | Done (17-02 contract lock) |
 | SETUP-01 | Phase 17 | Complete |
 | SETUP-02 | Phase 17 | Complete |

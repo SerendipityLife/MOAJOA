@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-last_updated: "2026-06-21T11:58:32.000Z"
-last_activity: 2026-06-21 -- 17-02 complete (affiliate contract — buildAffiliateUrl + ClickToken + BookingClickContext, ATTR-01)
+last_updated: "2026-06-21T12:41:00.000Z"
+last_activity: 2026-06-21 -- 17-03 complete (0016 trips-native squash applied locally + api trip-vocab + EF repointed; SETUP-02/NAV-04 data layer; remote reset deferred)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
-  percent: 63
+  completed_plans: 6
+  percent: 75
 ---
 
 # STATE: MOAJOA v2.0
@@ -32,11 +32,13 @@ progress:
 
 ## Current Position
 
-Phase: 17 — Trip Foundation & IA 재편 (executing — 2/5 plans · 17-03 Task 1/3 done, BLOCKED at Task 2 checkpoint)
-Plan: 17-03 ⏳ 진행 중 (Wave 3) — Task 1 (0016 squash baseline) ✅ commit a6f911b / Task 2 (BLOCKING checkpoint:human-action — Docker 필요) ⛔ / Task 3 (api 쿼리 리네임, Task 2 의존) ⏳
-Status: 17-03 PAUSED — Task 2 `supabase db reset` + `pnpm supabase:types`가 로컬 Supabase(Docker) 기동을 요구하는데 Docker DOWN. 사용자가 Docker Desktop 시작 후 재개.
-Last activity: 2026-06-21 -- 17-03 Task 1 complete (0016 trips-native squash baseline authored, all structural grep gates PASS)
-Next: Docker Desktop 시작 → `pnpm supabase:start` → `pnpm supabase:reset` (0016 단독 적용 = 42P17 + dropped-object 게이트) → `pnpm supabase:types` → 0001-0014 아카이브 → Task 3 (api 쿼리 trip 어휘 리네임 + EF repoint)
+Phase: 17 — Trip Foundation & IA 재편 (executing — 3/5 plans · 17-03 ✅ 완료, 17-04/05 대기)
+Plan: 17-03 ✅ 완료 (Wave 3) — Task 1 (0016 squash) ✅ a6f911b / Task 2 (local reset + archive + types) ✅ 789caf1 / Task 3 (api trip-vocab + EF repoint) ✅ 30f1f33
+Status: 17-03 COMPLETE — `supabase db reset`가 0016 단독으로 클린 적용(42P17 0건, dropped-object 0건), types trips-native 재생성(boards 0건), api typecheck PASS. ⚠️ 원격 DB reset은 의도적 DEFERRED (이번 세션 LOCAL ONLY) — 인간 승인 후 별도 실행.
+Last activity: 2026-06-21 -- 17-03 완료 (0016 로컬 적용 + 0001-0014 아카이브 + api/EF trip 어휘 마이그레이션)
+Next: 17-04 (Expo Router 4탭 재편 + 0/1/N 진입분기 + trip 헤더 + share repoint + 구 라우트 삭제, NAV-01/02/03/04) — apps/ios·apps/web가 삭제된 boards.ts export·board_id를 아직 참조하므로 17-04/05가 앱 trip 어휘 마이그레이션 소유
+
+**17-03 Task 2/3 완료 (2026-06-21, commits 789caf1 + 30f1f33):** **Task 2 (로컬 적용):** colima Docker로 `pnpm supabase:start` 후 `pnpm supabase:reset`가 **0016 단독으로 클린 적용** — `42P17 infinite recursion` 0건(DEFINER-헬퍼-only RLS 포트 검증), dropped-object 0건(폴드 컬럼/함수 전부 생존, Pitfall 4 clear), benign NOTICE만(pgcrypto exists, drop-trigger no-op). 0001–0014를 `supabase/migrations/_archive/`로 `git mv`(히스토리 보존, apply set엔 0016만 — CLI가 top-level `*.sql`만 글롭). `pnpm supabase:types` → `database.ts` 1628줄 trips-native(**boards 0건**, confidence 7/source_kind 7/representative_id 5/booking_clicks 4/public_trip_view 1). **DEVIATION (R3 blocking infra):** vector 로그 컨테이너가 호스트 docker.sock(`~/.colima/default/docker.sock`)을 bind-mount 못 해 stack start 크래시 → `config.toml`에 `[analytics] enabled=false`(로컬 dev/reset/typegen에 불필요). **Task 3 (api trip 어휘 + EF):** `queries/trips.ts` 신설(listMyTrips/listMyTripsWithPreview/getTrip/createTrip/updateTrip/deleteTrip/shareTrip/getPublicTripBySlug, `.from('trips')` + `rpc('public_trip_view')`), `boards.ts` 삭제(D-13). barrel `./trips`. links/places/memberships DB 컬럼·RPC 어휘 trip화(`.eq('trip_id')`, `p_trip_id`, `join_shared_trip`; listLinksByTrip/listPlacesByTrip/getMyTripRole). extract-youtube EF `.from('boards')→trips` + `board_id→trip_id`(insert rows + onConflict) — **EF board_id 0건**. `createTrip`는 Plan 01 `TripCreate`(title+city_code+필수 날짜)에 맞춤; representative_id는 0016 트리거가 set(SETUP-02). `pnpm --filter @moajoa/api typecheck` PASS. **DEVIATION (scope boundary):** core `LinkAdd/PlaceAddManual.board_id` 입력 필드는 유지(리네임 시 apps/ios+apps/web 4+ 호출지로 캐스케이드 — 본 plan files_modified 밖, Plan 01 핸드오프상 앱 마이그레이션은 IA/nav plan 소유) → api 경계에서 `input.board_id`→`trip_id` 매핑. api 쿼리 잔여 board_id 코드라인 2건(매핑부)뿐. **boards.ts 삭제로 apps/web·apps/ios importer가 깨짐 — 17-04/05가 앱 trip 어휘 마이그레이션 소유(예정대로).** **원격 DB reset DEFERRED** (LOCAL ONLY).
 
 **17-03 Task 1 완료 (2026-06-21, commit a6f911b):** `supabase/migrations/0016_trips_baseline.sql` 810줄 단일 trips-native 베이스라인 (D-03 일회성 append-only 오버라이드). 0001–0014 폴드: boards→trips 리네임 + `representative_id`(SETUP-02, NULLABLE-safe `trips_default_representative` 트리거 coalesce). 모든 SECURITY DEFINER 헬퍼/트리거/RPC/뷰 이전 — `am_trip_owner`/`am_trip_member`/`can_read|edit|vote_trip` (0002 idiom, `set search_path = public`), `join_shared_trip`(0009+0012 owner self-join guard), `accepted_member_count`(0011 +1 includes-owner), `vote_counts_for_places`, `public_trip_view`(0013 최신 body — google_place_id+address), `add_manual_place`, `ensure_share_slug`×2, `set_updated_at`, `handle_new_auth_user`, links/places/votes default-fk 트리거. 폴드 컬럼: places.source_kind+inferred_city(0004), confidence(0006), summary_ko(0008), PostGIS geog generated + GIST. 빈 booking_clicks(D-07, owner-read RLS, INSERT 경로는 Phase 20). **모든 정책은 헬퍼 경유 — 직접 cross-table EXISTS 0건 (42P17 가드).** **BLOCKER 1 해소:** profiles auto-first-board 트리거 의도적 미이전 → 0-trip 온보딩 분기 도달가능 유지 (onboarding Plan 05이 first-trip 생성 소유, NAV-01/D-11). **DEVIATION (R1·on-disk ground truth):** plan/PATTERNS가 참조하는 `0015 place signature_menu`는 디스크에 없음 (WIP 0015 이번 세션 폐기, 0014에서 끝) → signature_menu 컬럼 미생성. plan acceptance G8b(`signature_menu>=1`)는 코멘트 2건으로만 매치 — 실 컬럼 아님. **STRUCTURAL grep 게이트 전부 PASS** (board_id 0건, public_board_view 0건, helpers 5+, security definer 10/set search_path 12, profiles_create_first_board 0건). **REAL-DB 검증(42P17/dropped-object/타입재생성)은 Task 2 게이트 — Docker DOWN으로 미수행.**
 
