@@ -480,24 +480,24 @@ grant execute on function am_trip_owner(uuid) to authenticated;
 
 ## Open Questions
 
-1. **0001~0015 파일 처리: 아카이브 vs 삭제 vs 보존**
+> **STATUS (plan-phase, 2026-06-21): ALL RESOLVED.** Q1-Q3 resolved by Plan 03 (0016 squash);
+> Q4 resolved by Plan 04 (me relocated, friends/discover deleted with the (tabs) tree).
+
+1. **0001~0015 파일 처리: 아카이브 vs 삭제 vs 보존** — **RESOLVED (Plan 03 Task 2).**
    - What we know: squash는 0016 단일 baseline 생성 (D-03). 로컬/원격 reset.
-   - What's unclear: 옛 15개 파일을 git에서 지울지(`supabase migration list` 정합) vs `_archive/`로 옮길지 vs 그대로 두고 0016만 새 시작점으로 선언할지.
-   - Recommendation: plan-phase에서 `supabase migration repair` 동작 확인 후 결정. 외부 사용자 0이라 어느 쪽도 안전. 가장 깨끗한 건 **옛 파일 제거 + 0016만 남김** (히스토리 청결, D-03 정신).
+   - Resolution: Plan 03 Task 2가 `supabase db reset` 동작 확인 후 옛 파일을 `supabase/migrations/_archive/`로 이동(히스토리 보존, 활성 셋에서 제외) — reset이 contiguous history를 요구해 깨지면 그대로 두고 0016을 새 baseline으로 선언하는 fallback을 SUMMARY에 기록. 외부 사용자 0이라 어느 쪽도 안전.
 
-2. **`booking_clicks` 빈 테이블을 0016에 포함할지 (D-07)**
+2. **`booking_clicks` 빈 테이블을 0016에 포함할지 (D-07)** — **RESOLVED (Plan 03 Task 1).**
    - What we know: 민팅은 Phase 20. squash라 지금 넣으면 깔끔.
-   - What's unclear: 스키마만 넣고 RLS는 Phase 20에서 추가 vs 지금 RLS까지.
-   - Recommendation: **빈 테이블 + 최소 RLS(deny-by-default)를 0016에 포함** (D-07 권장). FK는 `trip_id`/`place_id?`/`user_id`. Phase 20이 INSERT 경로/EF 추가.
+   - Resolution: Plan 03 Task 1 step 2가 **빈 테이블 + deny-by-default RLS(owner-read만)를 0016에 포함**. FK는 `trip_id`/`place_id?`/`user_id`(votes 모양). Phase 20이 INSERT 경로/redirect EF 추가.
 
-3. **`representative_id` 자동 set: 트리거 vs 클라이언트**
+3. **`representative_id` 자동 set: 트리거 vs 클라이언트** — **RESOLVED (Plan 03 Task 1 step 4 + Plan 01).**
    - What we know: 생성자 자동 대표 (D-10).
-   - Recommendation: 트리거(`trips_default_representative`, `coalesce(new.representative_id, auth.uid())`)가 `*_default_added_by` 패턴과 일관 + 클라 누락 방지. [VERIFIED: links_default_added_by 패턴]
+   - Resolution: 트리거(`trips_default_representative`, `coalesce(new.representative_id, auth.uid())`)로 결정 — `*_default_added_by` 패턴과 일관 + 클라 누락 방지. 클라는 representative 필드를 보내지 않음(Plan 05 Task 2). [VERIFIED: links_default_added_by 패턴]
 
-4. **`me`/`friends`/`discover` 전역 탭의 운명**
+4. **`me`/`friends`/`discover` 전역 탭의 운명** — **RESOLVED (Plan 04 Task 2 + Task 3).**
    - What we know: 4탭은 trip 스코프. me는 헤더 프로필로 접근.
-   - What's unclear: friends/discover를 어디로? (Phase 17 스코프 밖일 수 있음 — 멤버초대=Phase 19, discover=v2 defer).
-   - Recommendation: plan-phase에서 PRODUCT §6 재확인. friends/discover는 Phase 17 단계에선 제거 또는 me 하위로 (deferred 기능이므로 라우트만 정리).
+   - Resolution: **`me` → `apps/ios/app/me.tsx` 글로벌 trip-out 스크린으로 relocate** (Plan 04 Task 2; 헤더 프로필 글리프가 `/me`로 라우팅). **`friends`/`discover`는 `(tabs)` 트리와 함께 삭제** (Plan 04 Task 3) — 둘 다 CONTEXT상 **Deferred 기능**(discover=v2/다시장, friends/멤버초대=Phase 19)이라 Phase 17에 들어갈 화면이 없음. me 하위로 옮기지 않고 각자 소유 phase에서 재도입. 클린 브레이크(D-13)와 일관.
 
 ## Environment Availability
 
