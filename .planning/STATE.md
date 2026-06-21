@@ -1,15 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: 전면 개편 (발견→예약→정산)
-status: Roadmap ready
-last_updated: "2026-06-21T00:00:00Z"
+milestone_name: — 전면 개편
+status: v2.0 로드맵 확정 (6 phases 17–22). Phase 17 plan 대기.
+last_updated: "2026-06-21T09:03:12.485Z"
+last_activity: 2026-06-21 — v2.0 roadmap created
 progress:
-  total_phases: 6
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_phases: 7
+  completed_phases: 1
+  total_plans: 3
+  completed_plans: 3
+  percent: 100
 ---
 
 # STATE: MOAJOA v2.0
