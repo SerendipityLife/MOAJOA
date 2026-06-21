@@ -7,60 +7,51 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
-      boards: {
+      booking_clicks: {
         Row: {
-          city_code: string | null
-          cover_image_url: string | null
           created_at: string
-          description: string | null
-          end_date: string | null
           id: string
-          owner_id: string
-          share_slug: string | null
-          start_date: string | null
-          title: string
-          updated_at: string
-          visibility: string
+          place_id: string | null
+          provider: string
+          trip_id: string
+          user_id: string
         }
         Insert: {
-          city_code?: string | null
-          cover_image_url?: string | null
           created_at?: string
-          description?: string | null
-          end_date?: string | null
           id?: string
-          owner_id?: string
-          share_slug?: string | null
-          start_date?: string | null
-          title: string
-          updated_at?: string
-          visibility?: string
+          place_id?: string | null
+          provider: string
+          trip_id: string
+          user_id: string
         }
         Update: {
-          city_code?: string | null
-          cover_image_url?: string | null
           created_at?: string
-          description?: string | null
-          end_date?: string | null
           id?: string
-          owner_id?: string
-          share_slug?: string | null
-          start_date?: string | null
-          title?: string
-          updated_at?: string
-          visibility?: string
+          place_id?: string | null
+          provider?: string
+          trip_id?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "boards_owner_id_fkey"
-            columns: ["owner_id"]
+            foreignKeyName: "booking_clicks_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_clicks_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_clicks_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -115,7 +106,6 @@ export type Database = {
         Row: {
           added_by: string
           author_name: string | null
-          board_id: string
           created_at: string
           external_id: string | null
           extracted_at: string | null
@@ -129,12 +119,12 @@ export type Database = {
           summary_ko: string | null
           thumbnail_url: string | null
           title: string | null
+          trip_id: string
           url: string
         }
         Insert: {
           added_by: string
           author_name?: string | null
-          board_id: string
           created_at?: string
           external_id?: string | null
           extracted_at?: string | null
@@ -148,12 +138,12 @@ export type Database = {
           summary_ko?: string | null
           thumbnail_url?: string | null
           title?: string | null
+          trip_id: string
           url: string
         }
         Update: {
           added_by?: string
           author_name?: string | null
-          board_id?: string
           created_at?: string
           external_id?: string | null
           extracted_at?: string | null
@@ -167,6 +157,7 @@ export type Database = {
           summary_ko?: string | null
           thumbnail_url?: string | null
           title?: string | null
+          trip_id?: string
           url?: string
         }
         Relationships: [
@@ -178,10 +169,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "links_board_id_fkey"
-            columns: ["board_id"]
+            foreignKeyName: "links_trip_id_fkey"
+            columns: ["trip_id"]
             isOneToOne: false
-            referencedRelation: "boards"
+            referencedRelation: "trips"
             referencedColumns: ["id"]
           },
         ]
@@ -189,44 +180,44 @@ export type Database = {
       memberships: {
         Row: {
           accepted_at: string | null
-          board_id: string
           created_at: string
           id: string
           invited_by: string | null
           role: string
+          trip_id: string
           user_id: string
         }
         Insert: {
           accepted_at?: string | null
-          board_id: string
           created_at?: string
           id?: string
           invited_by?: string | null
           role?: string
+          trip_id: string
           user_id: string
         }
         Update: {
           accepted_at?: string | null
-          board_id?: string
           created_at?: string
           id?: string
           invited_by?: string | null
           role?: string
+          trip_id?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "memberships_board_id_fkey"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "memberships_invited_by_fkey"
             columns: ["invited_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
             referencedColumns: ["id"]
           },
           {
@@ -242,7 +233,6 @@ export type Database = {
         Row: {
           added_by: string
           address: string | null
-          board_id: string
           category: string | null
           confidence: number | null
           created_at: string
@@ -262,11 +252,11 @@ export type Database = {
           source_quote: string | null
           source_timestamp_sec: number | null
           summary_ko: string | null
+          trip_id: string
         }
         Insert: {
           added_by: string
           address?: string | null
-          board_id: string
           category?: string | null
           confidence?: number | null
           created_at?: string
@@ -286,11 +276,11 @@ export type Database = {
           source_quote?: string | null
           source_timestamp_sec?: number | null
           summary_ko?: string | null
+          trip_id: string
         }
         Update: {
           added_by?: string
           address?: string | null
-          board_id?: string
           category?: string | null
           confidence?: number | null
           created_at?: string
@@ -310,6 +300,7 @@ export type Database = {
           source_quote?: string | null
           source_timestamp_sec?: number | null
           summary_ko?: string | null
+          trip_id?: string
         }
         Relationships: [
           {
@@ -320,17 +311,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "places_board_id_fkey"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "places_link_id_fkey"
             columns: ["link_id"]
             isOneToOne: false
             referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "places_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
             referencedColumns: ["id"]
           },
         ]
@@ -391,6 +382,69 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      trips: {
+        Row: {
+          city_code: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          owner_id: string
+          representative_id: string | null
+          share_slug: string | null
+          start_date: string | null
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          city_code?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          owner_id?: string
+          representative_id?: string | null
+          share_slug?: string | null
+          start_date?: string | null
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          city_code?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          owner_id?: string
+          representative_id?: string | null
+          share_slug?: string | null
+          start_date?: string | null
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_representative_id_fkey"
+            columns: ["representative_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       votes: {
         Row: {
@@ -569,11 +623,10 @@ export type Database = {
         Returns: unknown
       }
       _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
-      accepted_member_count: { Args: { p_board_id: string }; Returns: number }
+      accepted_member_count: { Args: { p_trip_id: string }; Returns: number }
       add_manual_place: {
         Args: {
           p_address?: string
-          p_board_id: string
           p_category?: string
           p_google_place_id: string
           p_lat?: number
@@ -582,11 +635,11 @@ export type Database = {
           p_name_ko?: string
           p_name_local?: string
           p_note?: string
+          p_trip_id: string
         }
         Returns: {
           added_by: string
           address: string | null
-          board_id: string
           category: string | null
           confidence: number | null
           created_at: string
@@ -606,6 +659,7 @@ export type Database = {
           source_quote: string | null
           source_timestamp_sec: number | null
           summary_ko: string | null
+          trip_id: string
         }
         SetofOptions: {
           from: "*"
@@ -652,11 +706,11 @@ export type Database = {
             }
             Returns: string
           }
-      am_board_member: { Args: { p_board_id: string }; Returns: boolean }
-      am_board_owner: { Args: { p_board_id: string }; Returns: boolean }
-      can_edit_board: { Args: { p_board_id: string }; Returns: boolean }
-      can_read_board: { Args: { p_board_id: string }; Returns: boolean }
-      can_vote_board: { Args: { p_board_id: string }; Returns: boolean }
+      am_trip_member: { Args: { p_trip_id: string }; Returns: boolean }
+      am_trip_owner: { Args: { p_trip_id: string }; Returns: boolean }
+      can_edit_trip: { Args: { p_trip_id: string }; Returns: boolean }
+      can_read_trip: { Args: { p_trip_id: string }; Returns: boolean }
+      can_vote_trip: { Args: { p_trip_id: string }; Returns: boolean }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -789,7 +843,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
-      join_shared_board: { Args: { p_share_slug: string }; Returns: string }
+      join_shared_trip: { Args: { p_share_slug: string }; Returns: string }
       longtransactionsenabled: { Args: never; Returns: boolean }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -831,7 +885,7 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
-      public_board_view: { Args: { p_slug: string }; Returns: Json }
+      public_trip_view: { Args: { p_slug: string }; Returns: Json }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -1571,3 +1625,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
