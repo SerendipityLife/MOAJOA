@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-status: v2.0 로드맵 확정 (6 phases 17–22). Phase 17 plan 대기.
-last_updated: "2026-06-21T09:03:12.485Z"
-last_activity: 2026-06-21 — v2.0 roadmap created
+status: executing
+last_updated: "2026-06-21T10:17:56.886Z"
+last_activity: 2026-06-21 -- Phase 17 planning complete
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 3
+  total_plans: 8
   completed_plans: 3
-  percent: 100
+  percent: 38
 ---
 
 # STATE: MOAJOA v2.0
@@ -34,8 +34,8 @@ progress:
 
 Phase: 17 — Trip Foundation & IA 재편 (not started)
 Plan: —
-Status: v2.0 로드맵 확정 (6 phases 17–22). Phase 17 plan 대기.
-Last activity: 2026-06-21 — v2.0 roadmap created
+Status: Ready to execute
+Last activity: 2026-06-21 -- Phase 17 planning complete
 Next: `/gsd-discuss-phase 17` (또는 `/gsd-plan-phase 17`)
 
 **v2.0 phases:** 17 기반·IA → 18 플랜 ∥ 19 날짜투표 → 20 예약(18의존) ∥ 21 가계부 → 22 Android. 충돌영역(packages/core·migrations)은 17에서 페어로 확정.
