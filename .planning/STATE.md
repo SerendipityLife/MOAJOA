@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 전면 개편 (발견→예약→정산)
-status: Defining requirements
+status: Roadmap ready
 last_updated: "2026-06-21T00:00:00Z"
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -31,10 +31,13 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 17 — Trip Foundation & IA 재편 (not started)
 Plan: —
-Status: v2.0 전면 개편 — 요구사항 정의 중 (리서치 진행)
-Last activity: 2026-06-21 — Milestone v2.0 시작
+Status: v2.0 로드맵 확정 (6 phases 17–22). Phase 17 plan 대기.
+Last activity: 2026-06-21 — v2.0 roadmap created
+Next: `/gsd-discuss-phase 17` (또는 `/gsd-plan-phase 17`)
+
+**v2.0 phases:** 17 기반·IA → 18 플랜 ∥ 19 날짜투표 → 20 예약(18의존) ∥ 21 가계부 → 22 Android. 충돌영역(packages/core·migrations)은 17에서 페어로 확정.
 
 > v1.x 진행 이력은 아래 섹션에 그대로 보존.
 

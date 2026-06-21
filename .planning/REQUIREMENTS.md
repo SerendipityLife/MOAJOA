@@ -269,8 +269,51 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 ## v2.0 Traceability
 
-(v2.0 roadmap 생성 후 채움)
+Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADMAP.md` "## Milestone v2.0". Phase 번호는 기존 마지막(Phase 16)에서 이어감.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| NAV-01 | Phase 17 | Pending |
+| NAV-02 | Phase 17 | Pending |
+| NAV-03 | Phase 17 | Pending |
+| NAV-04 | Phase 17 | Pending |
+| ATTR-01 | Phase 17 | Pending |
+| SETUP-01 | Phase 17 | Pending |
+| SETUP-02 | Phase 17 | Pending |
+| PLAN-01 | Phase 18 | Pending |
+| PLAN-02 | Phase 18 | Pending |
+| PLAN-03 | Phase 18 | Pending |
+| PLAN-04 | Phase 18 | Pending |
+| PLAN-05 | Phase 18 | Pending |
+| POLL-01 | Phase 19 | Pending |
+| POLL-02 | Phase 19 | Pending |
+| POLL-03 | Phase 19 | Pending |
+| BOOK-01 | Phase 20 | Pending |
+| BOOK-02 | Phase 20 | Pending |
+| BOOK-03 | Phase 20 | Pending |
+| ATTR-02 | Phase 20 | Pending |
+| LEDGER-01 | Phase 21 | Pending |
+| LEDGER-02 | Phase 21 | Pending |
+| LEDGER-03 | Phase 21 | Pending |
+| LEDGER-04 | Phase 21 | Pending |
+| LEDGER-05 | Phase 21 | Pending |
+| LEDGER-06 | Phase 21 | Pending |
+| AND-01 | Phase 22 | Pending |
+| AND-02 | Phase 22 | Pending |
+
+**Coverage:**
+- v2.0 requirements: 27 total → mapped to phases 17~22: 27 ✓
+- Unmapped: 0
+- Duplicate mappings: 0
+
+**Phase별 매핑 요약:**
+- Phase 17 (Trip Foundation & IA): NAV-01..04, ATTR-01, SETUP-01/02 — 7
+- Phase 18 (Auto Plan): PLAN-01..05 — 5
+- Phase 19 (Date Voting): POLL-01..03 — 3
+- Phase 20 (Affiliate Booking): BOOK-01..03, ATTR-02 — 4
+- Phase 21 (Travel Ledger): LEDGER-01..06 — 6
+- Phase 22 (Android Parity): AND-01/02 — 2
 
 ---
 *Requirements defined: 2026-05-25*
-*Last updated: 2026-06-21 — v2.0 requirements 추가 (NAV/ATTR/SETUP/POLL/PLAN/BOOK/LEDGER/AND). Traceability는 v2.0 roadmap 생성 후 채움. 이전: 2026-06-07 v1.1*
+*Last updated: 2026-06-21 — v2.0 roadmap 생성 (Phase 17~22) + v2.0 Traceability 채움 (27 reqs, 100% coverage, 중복 0). 이전: 2026-06-07 v1.1*
