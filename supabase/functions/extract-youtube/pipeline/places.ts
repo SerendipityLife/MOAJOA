@@ -22,6 +22,13 @@ export interface ResolveInputs {
   query: string;
   /** BCP-47 language code, e.g. "ja", "ko", "en". Affects displayName language. */
   languageCode: string;
+  /**
+   * Optional region center for locationBias (50km circle). Disambiguates chain
+   * stores by pulling the in-region branch instead of Google's globally most
+   * relevant one. Omit → no bias (previous behavior).
+   */
+  lat?: number;
+  lng?: number;
 }
 
 const PLACES_TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
@@ -36,6 +43,19 @@ const FIELD_MASK = [
 
 export async function resolveGooglePlace(inputs: ResolveInputs): Promise<ResolveResult | null> {
   const t0 = performance.now();
+  const body: Record<string, unknown> = {
+    textQuery: inputs.query,
+    languageCode: inputs.languageCode,
+    maxResultCount: 1,
+  };
+  if (inputs.lat !== undefined && inputs.lng !== undefined) {
+    body.locationBias = {
+      circle: {
+        center: { latitude: inputs.lat, longitude: inputs.lng },
+        radius: 50000,
+      },
+    };
+  }
   const res = await fetch(PLACES_TEXT_SEARCH_URL, {
     method: 'POST',
     headers: {
@@ -43,11 +63,7 @@ export async function resolveGooglePlace(inputs: ResolveInputs): Promise<Resolve
       'X-Goog-Api-Key': inputs.apiKey,
       'X-Goog-FieldMask': FIELD_MASK,
     },
-    body: JSON.stringify({
-      textQuery: inputs.query,
-      languageCode: inputs.languageCode,
-      maxResultCount: 1,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

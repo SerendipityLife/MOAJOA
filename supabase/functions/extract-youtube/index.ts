@@ -26,6 +26,7 @@ import { fetchBlogContent } from './pipeline/blog.ts';
 import { fetchInstagramContent } from './pipeline/instagram.ts';
 import type { SourceContent } from './pipeline/source.ts';
 import { resolveGooglePlace } from './pipeline/places.ts';
+import { cityCenter } from './pipeline/cities.ts';
 import { normalizeName, resolveDescriptionMapLinks } from './pipeline/maplinks.ts';
 
 // ---- Request contract -------------------------------------------------------
@@ -338,12 +339,17 @@ Deno.serve(async (req) => {
 
     for (const cand of needSearch) {
       try {
+        // Bias the search to the place's region so chain stores resolve to the
+        // in-region branch (e.g. "一蘭" → 도쿄점, not 후쿠오카 신구점). Per-place
+        // inferred_city wins; board city_code is the fallback. Text query still
+        // carries inferred_city as a soft disambiguator (regression 0 when no center).
+        const center = cityCenter(cand.inferred_city) ?? cityCenter(cityHint);
         const place = await resolveGooglePlace({
           apiKey: placesKey!,
-          // Appending the LLM's inferred city disambiguates chain stores and
-          // same-name places across cities (e.g. "一蘭" → 후쿠오카 본점 vs 도쿄점).
           query: cand.inferred_city ? `${cand.name_local} ${cand.inferred_city}` : cand.name_local,
           languageCode,
+          lat: center?.lat,
+          lng: center?.lng,
         });
         if (place) {
           resolved.push({ cand, place });
