@@ -19,7 +19,7 @@ test('share deep link redirects to /share-handler with encoded payload', () => {
 });
 
 test('non-share app path passes through unchanged', () => {
-  expect(redirectSystemPath({ path: '/boards/123', initial: false })).toBe('/boards/123');
+  expect(redirectSystemPath({ path: '/trip/123/plan', initial: false })).toBe('/trip/123/plan');
 });
 
 test('deep link without share key passes through unchanged', () => {

@@ -1,17 +1,17 @@
-// Phase 16, Plan 16-02: branch behavior of the mounted share-handler.
+// Phase 16, Plan 16-02: branch behavior of the mounted share-handler (trip vocab 17-04).
 // Tests the exported async decision body `handleSharedUrl` directly (the screen's
 // effect just calls it) — avoids RNTL render flakiness, matches the testable-seam
 // philosophy of pending.test.ts. Mock topology mirrors pending.test.ts.
 
-// 1. @moajoa/api — control listMyBoards + addLink (+ listMyBoardsWithPreview
-//    so the BoardPickerSheet import resolves when share-handler is loaded).
-const mockListMyBoards = jest.fn();
+// 1. @moajoa/api — control listMyTrips + addLink (+ listMyTripsWithPreview so the
+//    TripPickerSheet import resolves when share-handler is loaded).
+const mockListMyTrips = jest.fn();
 const mockAddLink = jest.fn();
-const mockListMyBoardsWithPreview = jest.fn();
+const mockListMyTripsWithPreview = jest.fn();
 jest.mock('@moajoa/api', () => ({
-  listMyBoards: (...a: unknown[]) => mockListMyBoards(...a),
+  listMyTrips: (...a: unknown[]) => mockListMyTrips(...a),
   addLink: (...a: unknown[]) => mockAddLink(...a),
-  listMyBoardsWithPreview: (...a: unknown[]) => mockListMyBoardsWithPreview(...a),
+  listMyTripsWithPreview: (...a: unknown[]) => mockListMyTripsWithPreview(...a),
 }));
 
 // 2. extraction-store — startExtraction is the D-03 visible-progress path.
@@ -30,8 +30,12 @@ jest.mock('@/lib/pending', () => ({
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({ router: { replace: (...a: unknown[]) => mockReplace(...a) } }));
 
-// 5. shared-defaults — in-memory App Group bridge.
-jest.mock('@/lib/shared-defaults', () => require('../__mocks__/shared-defaults'));
+// 5. AsyncStorage — in-memory last-trip persistence (LastTripId).
+const mockSetItem = jest.fn();
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: { setItem: (...a: unknown[]) => mockSetItem(...a) },
+}));
 
 // 6. supabase — control auth.getSession() per branch.
 const mockGetSession = jest.fn();
@@ -39,15 +43,14 @@ jest.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: (...a: unknown[]) => mockGetSession(...a) } },
 }));
 
-// 7. BoardPickerSheet — stub the component module so the heavy native import
-//    chain (@gorhom/bottom-sheet → react-native-reanimated) never loads under
-//    jest. The sheet's GESTURE is device UAT (Task 2); this suite tests only the
+// 7. TripPickerSheet — stub the component module so the heavy native import chain
+//    (@gorhom/bottom-sheet → react-native-reanimated) never loads under jest. The
+//    sheet's GESTURE is device UAT (Task 4); this suite tests only the
 //    add+extract+navigate WIRING (addAndNavigate) + the handler's branch logic.
-jest.mock('@/components/boards/board-picker-sheet', () => ({ BoardPickerSheet: () => null }));
+jest.mock('@/components/boards/trip-picker-sheet', () => ({ TripPickerSheet: () => null }));
 
-import { SharedDefaults } from '../__mocks__/shared-defaults';
 import { handleSharedUrl, addAndNavigate } from '@/app/share-handler';
-import { SharedDefaultsKeys } from '@moajoa/core';
+import { TripKeys } from '@moajoa/core';
 
 const URL = 'https://www.youtube.com/watch?v=abc';
 
@@ -59,14 +62,14 @@ function notAuthed() {
 }
 
 beforeEach(() => {
-  SharedDefaults.__clear();
-  mockListMyBoards.mockReset();
+  mockListMyTrips.mockReset();
   mockAddLink.mockReset();
-  mockListMyBoardsWithPreview.mockReset();
+  mockListMyTripsWithPreview.mockReset();
   mockStartExtraction.mockReset();
   mockEnqueuePendingLink.mockReset();
   mockReplace.mockReset();
   mockGetSession.mockReset();
+  mockSetItem.mockReset();
 });
 
 test('not authed → enqueuePendingLink(url, null), no add/extract, navigate home', async () => {
@@ -79,40 +82,40 @@ test('not authed → enqueuePendingLink(url, null), no add/extract, navigate hom
   expect(mockReplace).toHaveBeenCalledWith('/');
 });
 
-test('authed + 0 boards → enqueuePendingLink(url, null), no add', async () => {
+test('authed + 0 trips → enqueuePendingLink(url, null), no add', async () => {
   authed();
-  mockListMyBoards.mockResolvedValue([]);
+  mockListMyTrips.mockResolvedValue([]);
   await handleSharedUrl(URL);
   expect(mockEnqueuePendingLink).toHaveBeenCalledWith(URL, null);
   expect(mockAddLink).not.toHaveBeenCalled();
 });
 
-test('authed + 1 board → addLink + startExtraction + navigate to board', async () => {
+test('authed + 1 trip → addLink + startExtraction + navigate to trip plan', async () => {
   authed();
-  mockListMyBoards.mockResolvedValue([{ id: 'b1' }]);
+  mockListMyTrips.mockResolvedValue([{ id: 't1' }]);
   mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
   await handleSharedUrl(URL);
-  expect(mockAddLink).toHaveBeenCalledWith(expect.anything(), { board_id: 'b1', url: URL });
+  expect(mockAddLink).toHaveBeenCalledWith(expect.anything(), { board_id: 't1', url: URL });
   expect(mockStartExtraction).toHaveBeenCalledWith(
-    expect.objectContaining({ linkId: 'link-1', boardId: 'b1' }),
+    expect.objectContaining({ linkId: 'link-1', boardId: 't1' }),
   );
-  expect(mockReplace).toHaveBeenCalledWith('/boards/b1');
+  expect(mockReplace).toHaveBeenCalledWith('/trip/t1/plan');
   expect(mockEnqueuePendingLink).not.toHaveBeenCalled();
 });
 
-test('authed + 1 board, manual link → no startExtraction but still adds + navigates', async () => {
+test('authed + 1 trip, manual link → no startExtraction but still adds + navigates', async () => {
   authed();
-  mockListMyBoards.mockResolvedValue([{ id: 'b1' }]);
+  mockListMyTrips.mockResolvedValue([{ id: 't1' }]);
   mockAddLink.mockResolvedValue({ id: 'link-2', url: 'https://example.com/random' });
   await handleSharedUrl('https://example.com/random');
   expect(mockAddLink).toHaveBeenCalled();
   expect(mockStartExtraction).not.toHaveBeenCalled();
-  expect(mockReplace).toHaveBeenCalledWith('/boards/b1');
+  expect(mockReplace).toHaveBeenCalledWith('/trip/t1/plan');
 });
 
-test('authed + 2 boards → picker branch: neither add nor enqueue', async () => {
+test('authed + 2 trips → picker branch: neither add nor enqueue', async () => {
   authed();
-  mockListMyBoards.mockResolvedValue([{ id: 'b1' }, { id: 'b2' }]);
+  mockListMyTrips.mockResolvedValue([{ id: 't1' }, { id: 't2' }]);
   await handleSharedUrl(URL);
   expect(mockAddLink).not.toHaveBeenCalled();
   expect(mockEnqueuePendingLink).not.toHaveBeenCalled();
@@ -121,7 +124,7 @@ test('authed + 2 boards → picker branch: neither add nor enqueue', async () =>
 
 test('non-http(s) url → nothing enqueued/added', async () => {
   authed();
-  mockListMyBoards.mockResolvedValue([{ id: 'b1' }]);
+  mockListMyTrips.mockResolvedValue([{ id: 't1' }]);
   await handleSharedUrl('javascript:alert(1)');
   expect(mockEnqueuePendingLink).not.toHaveBeenCalled();
   expect(mockAddLink).not.toHaveBeenCalled();
@@ -129,42 +132,42 @@ test('non-http(s) url → nothing enqueued/added', async () => {
 });
 
 // --- Plan 16-03: picker-select WIRING (the shared addAndNavigate helper) ---
-// The board-picker sheet's onSelect → addAndNavigate(boardId, url). The gesture
-// itself is device UAT (Task 2); here we assert the add+extract+navigate wiring
+// The trip-picker sheet's onSelect → addAndNavigate(tripId, url). The gesture
+// itself is device UAT (Task 4); here we assert the add+extract+navigate wiring
 // the picker shares verbatim with the auto branch (single source — no drift).
 
-test('addAndNavigate(b2, youtube) → addLink({board_id:b2, url}) once', async () => {
+test('addAndNavigate(t2, youtube) → addLink({board_id:t2, url}) once', async () => {
   mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
-  await addAndNavigate('b2', URL);
+  await addAndNavigate('t2', URL);
   expect(mockAddLink).toHaveBeenCalledTimes(1);
-  expect(mockAddLink).toHaveBeenCalledWith(expect.anything(), { board_id: 'b2', url: URL });
+  expect(mockAddLink).toHaveBeenCalledWith(expect.anything(), { board_id: 't2', url: URL });
 });
 
-test('addAndNavigate(b2, ...) → SharedDefaults.set(LastBoardId, b2)', async () => {
+test('addAndNavigate(t2, ...) → AsyncStorage.setItem(LastTripId, t2)', async () => {
   mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
-  await addAndNavigate('b2', URL);
-  expect(SharedDefaults.get(SharedDefaultsKeys.LastBoardId)).toBe('b2');
+  await addAndNavigate('t2', URL);
+  expect(mockSetItem).toHaveBeenCalledWith(TripKeys.LastTripId, 't2');
 });
 
-test('addAndNavigate(b2, youtube) → startExtraction for the new link on b2', async () => {
+test('addAndNavigate(t2, youtube) → startExtraction for the new link on t2', async () => {
   mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
-  await addAndNavigate('b2', URL);
+  await addAndNavigate('t2', URL);
   expect(mockStartExtraction).toHaveBeenCalledWith(
-    expect.objectContaining({ linkId: 'link-1', boardId: 'b2' }),
+    expect.objectContaining({ linkId: 'link-1', boardId: 't2' }),
   );
 });
 
-test('addAndNavigate(b2, ...) → router.replace(/boards/b2)', async () => {
+test('addAndNavigate(t2, ...) → router.replace(/trip/t2/plan)', async () => {
   mockAddLink.mockResolvedValue({ id: 'link-1', url: URL });
-  await addAndNavigate('b2', URL);
-  expect(mockReplace).toHaveBeenCalledWith('/boards/b2');
+  await addAndNavigate('t2', URL);
+  expect(mockReplace).toHaveBeenCalledWith('/trip/t2/plan');
 });
 
 test('addAndNavigate with manual/null-kind url → adds but no startExtraction', async () => {
   const manual = 'https://example.com/random';
   mockAddLink.mockResolvedValue({ id: 'link-2', url: manual });
-  await addAndNavigate('b2', manual);
+  await addAndNavigate('t2', manual);
   expect(mockAddLink).toHaveBeenCalled();
   expect(mockStartExtraction).not.toHaveBeenCalled();
-  expect(mockReplace).toHaveBeenCalledWith('/boards/b2');
+  expect(mockReplace).toHaveBeenCalledWith('/trip/t2/plan');
 });
