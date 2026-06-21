@@ -60,7 +60,7 @@ Plans:
 - [x] 17-02-PLAN.md — affiliate contract: buildAffiliateUrl + BookingClickContext + opaque ClickToken (ATTR-01, TDD)
 - [x] 17-03-PLAN.md — 0016 squash baseline + RLS/trigger/view/join port + api trip-vocab rename + local db reset + types regen (SETUP-02/NAV-04) — remote reset deferred
 - [ ] 17-04-PLAN.md — Expo Router 4-tab restructure + 0/1/N entry + trip header (no FAB) + share repoint + old-route delete (NAV-01/02/03/04)
-- [ ] 17-05-PLAN.md — onboarding 정해짐/미정 branch + trip create UI (preset city/date range/auto-rep) + web /b/[slug]→/t/[slug] move (SETUP-01/02/NAV-04)
+- [x] 17-05-PLAN.md — onboarding 정해짐/미정 branch + trip create UI (preset city/date range/auto-rep) + web /b/[slug]→/t/[slug] move (SETUP-01/02/NAV-04)
 **UI hint**: yes
 
 ### Phase 18: Auto Plan (추출 즉시 AI 플랜)
@@ -125,7 +125,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Trip Foundation & IA 재편 | 3/5 | In Progress|  |
+| 17. Trip Foundation & IA 재편 | 4/5 | In Progress|  |
 | 18. Auto Plan | 0/~4 | Not started | - |
 | 19. Date Voting | 0/~3 | Not started | - |
 | 20. Affiliate Booking | 0/~3 | Not started | - |
