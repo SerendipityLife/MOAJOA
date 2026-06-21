@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-last_updated: "2026-06-21T10:17:56.886Z"
-last_activity: 2026-06-21 -- Phase 17 planning complete
+last_updated: "2026-06-21T11:53:26.905Z"
+last_activity: 2026-06-21 -- 17-01 complete (Trip contract + vitest + decideEntryRoute)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 8
-  completed_plans: 3
-  percent: 38
+  completed_plans: 4
+  percent: 50
 ---
 
 # STATE: MOAJOA v2.0
@@ -32,11 +32,13 @@ progress:
 
 ## Current Position
 
-Phase: 17 — Trip Foundation & IA 재편 (not started)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-06-21 -- Phase 17 planning complete
-Next: `/gsd-discuss-phase 17` (또는 `/gsd-plan-phase 17`)
+Phase: 17 — Trip Foundation & IA 재편 (executing — 1/5 plans)
+Plan: 17-01 ✅ 완료 (Wave 1) → 다음 Wave 2
+Status: Ready to execute 17-02
+Last activity: 2026-06-21 -- 17-01 complete (Trip contract + vitest + decideEntryRoute)
+Next: `/gsd-execute-phase 17` (다음 plan) + `/gsd-verify-work`
+
+**17-01 완료 (2026-06-21, ~7분, commits 84a353e + 5501f2a + a498858 + a3ee35d + 66faefc):** `@moajoa/core`에 canonical Trip 계약 락 — board.ts→trip.ts 리네임(Board 별칭 없음, D-02/D-13 clean break) + `representative_id`(SETUP-02) + `TripCreateSchema`(start/end 필수 + end>=start refine, 당일치기 허용, SETUP-01/D-09) + `decideEntryRoute` 순수함수(0→온보딩/1→그 trip/N→last-viewed, 삭제-fallback trips[0], NAV-01) + `TripKeys.LastTripId`(`@moajoa/trip:last_id`). **vitest 바인딩**(packages/core test 스크립트 echo 스텁→`vitest run`, ^1.6.0 apps/web 정렬) — category(22)+trip(8)+entry-route(5)=**35/35 green**, core typecheck clean. Limits `Boards*`→`Trips*` + `BoardVisibility`→`TripVisibility` 리네임. **2 deviation auto-fix:** (R3) board.ts 삭제로 깨진 types/index.ts import을 Trip으로 재지정; (R1) RESEARCH 스니펫의 `trips[0]` unchecked-index를 `noUncheckedIndexedAccess` 게이트에 맞게 가드. **Plan 03 핸드오프:** packages/api·apps/ios 3개 사이트가 아직 구 core 심볼(Limits.BoardTitleMax 등) 참조 — 의도된 것(plan verification에 명시), Plan 03이 boards→trips 물리 리네임 소유.
 
 **v2.0 phases:** 17 기반·IA → 18 플랜 ∥ 19 날짜투표 → 20 예약(18의존) ∥ 21 가계부 → 22 Android. 충돌영역(packages/core·migrations)은 17에서 페어로 확정.
 
@@ -124,7 +126,7 @@ Plan: 1 of 1
 - **Next action:** Phase 5 Wave 5 — 05-06 (lib/onboarding.ts AsyncStorage wrapper + OnboardCard component + [id].tsx visibility wire — ONBOARD-02). After that, end-of-phase UAT batch covers all Phase 5 live verification.
 - **Phase 6: Dogfooding Gate** — ✓ TEMPLATES COMPLETE 2026-05-26 (5/5 plans, ~14분 total, 10 commits 1137306+8591d0f+ed9f644+6df9283+c08802a+145d099+b654978+5b3a609+e11400c+97e225a). 06-01 pre-dogfooding-checklist (D-01 6 그룹 A~F + D-02 sign-off, 105 lines) + manual-uat-phase3.md N2 SQL substitute (set_config + 42501 expected) + 7 Evidence: 라인. 06-02 sample-videos.md 12-row matrix (D-04) + samples.json (D-05 schema, JSON.parse 12 entries) + ground-truth/_template.json (confidence_label high/medium/low) + ground-truth/README.md (per-video procedure, D-06 매칭, quality bar). 06-03 daily-log-template.md (7 Day blocks + End-of-Week SQL Snapshot + 7일 Pass/Fail Summary, D-10/D-11/D-12/D-13) + incidents.md (4-label policy P0/P1/expected-v1-limit/noise) + scripts/dogfooding/{p90-duration,daily-aggregate,measure-accuracy}.sql 3종 (percentile_cont + hidden_at IS NULL + jsonb_agg FILTER) + scripts/dogfooding/README.md (setup/args/output destinations). 06-04 friend-share-checklist.md (Friend A/B 양식 × D-15 5체크 + device meta + locale + 피드백, 97 lines) + screenshots/README.md (D-16 layout + NN-step.png 명명 + locale labeling). 06-05 pass-evaluator.md (D-20 11 criteria + D-21 4 fail → next phase mapping + decision tree) + extraction-baseline-TEMPLATE.md (D-09 5-part: Meta/Per-video/Aggregate/Top5/v2 시드) + PASS-TEMPLATE.md (D-22 sign-off 13 필드 + Phase 1.5 unlock) + PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append (D-19, idempotent). 모든 5 plans `autonomous: true` — production code 수정 0건, documentation/SQL templates only. Phase 6 dogfooding 실행 (7일 본인 여행 + 12 영상 ground truth + 친구 2명 share + baseline measurement)은 user-side work — 본 5 plans는 그 양식과 SQL을 미리 준비하는 것이 scope.
 - **Next action:** Phase 6 dogfooding execution (user-side) — pre-dogfooding-checklist.md sign-off → 7일 daily-log + incidents append → Day 5~6 친구 share → Day 7+1 baseline 측정 + pass-evaluator 평가 → PASS.md (또는 FAIL-YYYY-MM-DD.md) 작성 → Phase 1.5 unlock (협업·투표).
-- **Progress:** [██████████] 96%
+- **Progress:** [█████░░░░░] 50%
 
 ---
 
@@ -245,6 +247,7 @@ Plan: 1 of 1
 | 260612-0cx | 유튜브 추출 파이프라인 리뷰 픽스 #1~#6 (max_tokens 잘림·anon 어뷰즈·클레임 레이스/고착·cityHint·키 경고) | 2026-06-12 | f8919bd | [260612-0cx-youtube-pipeline-fixes](./quick/260612-0cx-youtube-pipeline-fixes/) |
 | 260612-p0p1 | 도그푸딩 P0/P1: OG 이미지 500(Satori woff2+flex) + 로그인→/boards 루프(?next=+안내 페이지) — 라이브 검증 | 2026-06-12 | 08cb410 | v2-backlog #4·#6 해소 |
 | 260612-place | 장소 상세 UX: 통합 리스트(해설+펼침+Google지도/영상점프+inline ❤️) + 0013 view 필드 — 라이브 검증 | 2026-06-12 | 1131357 | 사용자 결정: 투표는 인라인 |
+| Phase 17-trip-foundation-ia P01 | ~7 min | 3 tasks | 11 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 

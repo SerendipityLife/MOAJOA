@@ -208,7 +208,7 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 ### Navigation & IA (NAV)
 
-- [ ] **NAV-01**: 앱 진입 시 여행이 1개면 목록 없이 그 여행으로 바로 들어간다 (0개→온보딩, 2개+→마지막 본 여행)
+- [x] **NAV-01**: 앱 진입 시 여행이 1개면 목록 없이 그 여행으로 바로 들어간다 (0개→온보딩, 2개+→마지막 본 여행)
 - [ ] **NAV-02**: 여행 안에서 하단 탭(지도·플랜·예약·가계부)으로 단계를 전환하며, 탭바가 항상 보인다
 - [ ] **NAV-03**: 새 여행·여행 전환·내 정보를 헤더에서 접근한다 (새 여행은 별도 탭이 아니라 온보딩/여행 종료 후/헤더 +)
 - [ ] **NAV-04**: 재편 이후에도 기존 공유 링크(웹 `/b/[slug]`, 보드 딥링크)가 깨지지 않고 열린다
@@ -220,8 +220,8 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 ### Trip Setup & Date Voting (SETUP)
 
-- [ ] **SETUP-01**: 새 여행 시작 시 "일정 정해졌나요?" 분기에서, 정해졌으면 날짜·도시를 바로 입력해 여행을 만든다
-- [ ] **SETUP-02**: 여행에 대표(결제자)가 지정된다
+- [x] **SETUP-01**: 새 여행 시작 시 "일정 정해졌나요?" 분기에서, 정해졌으면 날짜·도시를 바로 입력해 여행을 만든다
+- [x] **SETUP-02**: 여행에 대표(결제자)가 지정된다
 - [ ] **POLL-01**: 일정 미정이면 날짜 투표를 만들어 초대 링크/코드로 일행을 부른다
 - [ ] **POLL-02**: 초대받은 일행이 무설치(웹)로 가능한 날짜에 투표한다
 - [ ] **POLL-03**: 투표가 집계되어 확정된 날짜가 여행 일정으로 전환된다
@@ -273,13 +273,13 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | Phase 17 | Pending |
+| NAV-01 | Phase 17 | Complete |
 | NAV-02 | Phase 17 | Pending |
 | NAV-03 | Phase 17 | Pending |
 | NAV-04 | Phase 17 | Pending |
 | ATTR-01 | Phase 17 | Pending |
-| SETUP-01 | Phase 17 | Pending |
-| SETUP-02 | Phase 17 | Pending |
+| SETUP-01 | Phase 17 | Complete |
+| SETUP-02 | Phase 17 | Complete |
 | PLAN-01 | Phase 18 | Pending |
 | PLAN-02 | Phase 18 | Pending |
 | PLAN-03 | Phase 18 | Pending |

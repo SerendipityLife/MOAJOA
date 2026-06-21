@@ -56,7 +56,7 @@ Plans:
   6. 예약 딥링크가 trip(가능하면 place) 컨텍스트를 담은 SubID 포맷으로 생성된다 (`packages/core` 단일 헬퍼, Day1 포맷 확정)
 **Plans**: 5 plans
 Plans:
-- [ ] 17-01-PLAN.md — core foundation: vitest wiring + Trip/TripId/TripCreate Zod (board.ts→trip.ts) + TripKeys + decideEntryRoute (NAV-01/SETUP-01/02)
+- [x] 17-01-PLAN.md — core foundation: vitest wiring + Trip/TripId/TripCreate Zod (board.ts→trip.ts) + TripKeys + decideEntryRoute (NAV-01/SETUP-01/02)
 - [ ] 17-02-PLAN.md — affiliate contract: buildAffiliateUrl + BookingClickContext + opaque ClickToken (ATTR-01, TDD)
 - [ ] 17-03-PLAN.md — 0016 squash baseline + RLS/trigger/view/join port + api trip-vocab rename + [BLOCKING] db push + types regen (SETUP-02/NAV-04)
 - [ ] 17-04-PLAN.md — Expo Router 4-tab restructure + 0/1/N entry + trip header (no FAB) + share repoint + old-route delete (NAV-01/02/03/04)
@@ -125,7 +125,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Trip Foundation & IA 재편 | 0/5 | Planned | - |
+| 17. Trip Foundation & IA 재편 | 1/5 | In Progress|  |
 | 18. Auto Plan | 0/~4 | Not started | - |
 | 19. Date Voting | 0/~3 | Not started | - |
 | 20. Affiliate Booking | 0/~3 | Not started | - |
