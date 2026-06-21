@@ -3,3 +3,4 @@ export * from './types/index';
 export * from './constants';
 export * from './category';
 export * from './entry-route';
+export * from './booking';

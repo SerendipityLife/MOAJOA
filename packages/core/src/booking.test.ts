@@ -88,8 +88,9 @@ describe('buildAffiliateUrl — single helper, token always injected (ATTR-01)',
     expect(buildAffiliateUrl('stay22', { hotelname: 'x' }, token)).toContain(token);
   });
 
-  it('rejects a non-ClickToken subId (parsed through ClickTokenSchema)', () => {
-    // @ts-expect-error — invalid token shape rejected at runtime AND type level
+  it('rejects a non-ClickToken subId at runtime (parsed through ClickTokenSchema)', () => {
+    // ClickToken is a plain `string` at the type level (no brand), so the guard is runtime:
+    // buildAffiliateUrl re-parses subId through ClickTokenSchema and throws on an invalid shape.
     expect(() => buildAffiliateUrl('travelpayouts', { p: '1' }, 'bad.token')).toThrow();
   });
 });
