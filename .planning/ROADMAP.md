@@ -57,7 +57,7 @@ Plans:
 **Plans**: 5 plans
 Plans:
 - [x] 17-01-PLAN.md — core foundation: vitest wiring + Trip/TripId/TripCreate Zod (board.ts→trip.ts) + TripKeys + decideEntryRoute (NAV-01/SETUP-01/02)
-- [ ] 17-02-PLAN.md — affiliate contract: buildAffiliateUrl + BookingClickContext + opaque ClickToken (ATTR-01, TDD)
+- [x] 17-02-PLAN.md — affiliate contract: buildAffiliateUrl + BookingClickContext + opaque ClickToken (ATTR-01, TDD)
 - [ ] 17-03-PLAN.md — 0016 squash baseline + RLS/trigger/view/join port + api trip-vocab rename + [BLOCKING] db push + types regen (SETUP-02/NAV-04)
 - [ ] 17-04-PLAN.md — Expo Router 4-tab restructure + 0/1/N entry + trip header (no FAB) + share repoint + old-route delete (NAV-01/02/03/04)
 - [ ] 17-05-PLAN.md — onboarding 정해짐/미정 branch + trip create UI (preset city/date range/auto-rep) + web /b/[slug]→/t/[slug] move (SETUP-01/02/NAV-04)

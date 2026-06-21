@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-last_updated: "2026-06-21T11:53:26.905Z"
-last_activity: 2026-06-21 -- 17-01 complete (Trip contract + vitest + decideEntryRoute)
+last_updated: "2026-06-21T11:58:32.000Z"
+last_activity: 2026-06-21 -- 17-02 complete (affiliate contract — buildAffiliateUrl + ClickToken + BookingClickContext, ATTR-01)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 8
-  completed_plans: 4
-  percent: 50
+  completed_plans: 5
+  percent: 63
 ---
 
 # STATE: MOAJOA v2.0
@@ -32,11 +32,13 @@ progress:
 
 ## Current Position
 
-Phase: 17 — Trip Foundation & IA 재편 (executing — 1/5 plans)
-Plan: 17-01 ✅ 완료 (Wave 1) → 다음 Wave 2
-Status: Ready to execute 17-02
-Last activity: 2026-06-21 -- 17-01 complete (Trip contract + vitest + decideEntryRoute)
+Phase: 17 — Trip Foundation & IA 재편 (executing — 2/5 plans)
+Plan: 17-02 ✅ 완료 (Wave 2) → 다음 Wave 3 (17-03 squash migration + db push)
+Status: Ready to execute 17-03
+Last activity: 2026-06-21 -- 17-02 complete (affiliate contract — ATTR-01)
 Next: `/gsd-execute-phase 17` (다음 plan) + `/gsd-verify-work`
+
+**17-02 완료 (2026-06-21, ~4분, TDD RED→GREEN commits d014c2d + 35520a8):** `@moajoa/core`에 affiliate 귀속 계약 락 (ATTR-01, D-06). `buildAffiliateUrl(provider, productParams, subId)` — 제휴 딥링크를 만드는 **유일한** 헬퍼. 호출 시 `subId`를 `ClickTokenSchema.parse`로 재검증해 토큰이 없거나 잘못되면 throw → 손조립으로 SubID 누락(Pitfall 1)이 구조적으로 불가능. `ClickTokenSchema = /^c_[0-9A-Za-z]{8,30}$/` (base62 = Travelpayouts ∩ Stay22 교집합 charset, `. - _` 거부, 8-30 << 128 Pitfall 5). `BookingClickContextSchema` = tripId/userId UUID 필수 + placeId optional UUID (D-04). 주입 사이트: travelpayouts→`sub_id`, stay22→`campaign` (provider-correct). `AffiliateProvider`/`AffiliateProviderType` enum. barrel `export * from './booking'` (trip/entry-route export 유지). booking 15 + 기존 35 = **50/50 vitest green**, core typecheck clean, Pitfall 1 grep guard(booking.ts 외부 affiliate 리터럴 0) PASS. **1 deviation (R1):** 테스트의 invalid-token 케이스에 달린 `@ts-expect-error`가 unused(`ClickToken`은 unbranded `string`이라 `'bad.token'`이 타입상 valid) → tsc TS2578 → directive 제거하고 가드가 런타임(parse throw)임을 주석/이름에 명시; `.toThrow()` 런타임 단언은 그대로(must_haves 충족). **Phase 17 scope-only(D-06/D-07):** base URL/marker ID/Stay22 aid는 PLACEHOLDER, booking_clicks INSERT·리다이렉트 EF·env 배선은 Phase 20. 빈 booking_clicks 테이블은 17-03 squash migration 소유.
 
 **17-01 완료 (2026-06-21, ~7분, commits 84a353e + 5501f2a + a498858 + a3ee35d + 66faefc):** `@moajoa/core`에 canonical Trip 계약 락 — board.ts→trip.ts 리네임(Board 별칭 없음, D-02/D-13 clean break) + `representative_id`(SETUP-02) + `TripCreateSchema`(start/end 필수 + end>=start refine, 당일치기 허용, SETUP-01/D-09) + `decideEntryRoute` 순수함수(0→온보딩/1→그 trip/N→last-viewed, 삭제-fallback trips[0], NAV-01) + `TripKeys.LastTripId`(`@moajoa/trip:last_id`). **vitest 바인딩**(packages/core test 스크립트 echo 스텁→`vitest run`, ^1.6.0 apps/web 정렬) — category(22)+trip(8)+entry-route(5)=**35/35 green**, core typecheck clean. Limits `Boards*`→`Trips*` + `BoardVisibility`→`TripVisibility` 리네임. **2 deviation auto-fix:** (R3) board.ts 삭제로 깨진 types/index.ts import을 Trip으로 재지정; (R1) RESEARCH 스니펫의 `trips[0]` unchecked-index를 `noUncheckedIndexedAccess` 게이트에 맞게 가드. **Plan 03 핸드오프:** packages/api·apps/ios 3개 사이트가 아직 구 core 심볼(Limits.BoardTitleMax 등) 참조 — 의도된 것(plan verification에 명시), Plan 03이 boards→trips 물리 리네임 소유.
 
@@ -159,6 +161,7 @@ Plan: 1 of 1
 - Phase 6 Plan 06-05 완료: 2026-05-26 (~3분, 2 tasks; commit e11400c; .planning/dogfooding/pass-evaluator.md D-20 11 criteria + D-21 4 fail conditions → next phase mapping + decision tree + Conclusion slot; extraction-baseline-TEMPLATE.md D-09 5-part Meta/Per-video 12-row/Aggregate overall+category+city+source/Top 5 failure modes/v2 EXTRACT-08 시드; PASS-TEMPLATE.md D-22 sign-off 13 필드 + Phase 1.5 unlock checklist + Artifacts Index; .planning/research/PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append D-19 idempotent)
 - Phase 8 Plan 08-03 완료: 2026-06-08 (~3분, 2 tasks TDD RED→GREEN; commits 7889a4a test + db01535 component + 16bd93c page; VIEW-08 — apps/web/app/b/[slug]/_components/place-summary-list.tsx 신규 server component [name_ko ?? name_local + {p.summary_ko && <p>} 조건부, no 'use client', Phase 4 토큰] + page.tsx wire [PlaceSummaryList 지도 아래 + 영상 출처 리스트에 {link.summary_ko && <p line-clamp-3>}]; place-summary-list.test.tsx 4 cases [present/null-legacy/name-preference/HTML-escape] = 4/4 PASS (첫 .test.tsx — 기존 vitest config 그대로, setup 변경 0); tsc --noEmit exit 0 + next build exit 0 /b/[slug] 2.83kB; raw HTML 미사용 grep-asserted → T-08-06 XSS 완화; Rule 3 doc-comment에서 dangerouslySetInnerHTML 토큰 제거 (acceptance grep-FAILS 충족); 표시 전용 새 생성 UI 없음 CLAUDE.md §5; out-of-scope marker-svg.test.ts 5 pre-existing fail [Phase5 #0F172A vs feat(ui) #111827] → deferred-items.md, 08-03 회귀 0; 라이브 브라우저 UAT는 08-04 게이트로 deferred)
 - Phase 16 Plan 16-03 구현 완료 / 디바이스 UAT 대기: 2026-06-17 (~3분, Task 1 코드+유닛 완료 · Task 2 `checkpoint:human-verify` gate=blocking 디바이스 UAT 미수행[사용자 측]; TDD RED→GREEN commits 044cb1b test[addAndNavigate 와이어링 5행] + a82dffa feat[board-picker-sheet + 피커 분기]; 5 신규 피커-셀렉트 와이어링 = share-handler 6→11, iOS 풀스위트 74/74 PASS, tsc clean; `components/boards/board-picker-sheet.tsx`[D-04 keep-mounted `shown` + 인라인 backgroundStyle + 내부 View className, pin-sheet 미러, Pitfall 6; listMyBoardsWithPreview 로드 → title+place_count 행, onSelect→onSelect(board.id)] + `app/share-handler.tsx`[`export addAndNavigate(boardId,url)` 단일 add+extract+navigate 헬퍼 추출 → auto 분기 리팩터 호출 + picker 분기는 `onPicker?(url)`로 검증 url을 `pickerUrl` state에 보유 후 BoardPickerSheet 마운트, onPickBoard→addAndNavigate; 두 경로 drift 0 Karpathy §3.2]; Rule 3: share-handler.test.ts에 `jest.mock('@/components/boards/board-picker-sheet')` stub 추가 — @gorhom/bottom-sheet→reanimated가 jest서 미초기화라 와이어링 스위트를 네이티브-free로 유지[테스트 토폴로지만, 설정/소스 변경 0]; T-16-08/09/10 plan threat_model대로; **Task 2 디바이스 UAT 4 시나리오[피커 첫오픈 D-04·1보드 자동이동 D-01/D-03·로그아웃 머묾 D-02·중복방지] 사용자 실행 대기 → 16-03 fully-done 아님**)
+- Phase 17 Plan 17-02 완료: 2026-06-21 (~4분, 1 TDD feature RED→GREEN, no REFACTOR; commits d014c2d test + 35520a8 feat; booking 15 신규 = 50/50 core vitest PASS, core typecheck exit 0, Pitfall 1 grep guard PASS; `packages/core/src/booking.ts` 신규[buildAffiliateUrl 단일 헬퍼 + ClickTokenSchema /^c_[0-9A-Za-z]{8,30}$/ + BookingClickContextSchema UUID+optional placeId + AffiliateProvider enum] + booking.test.ts 신규[8 토큰 + 3 컨텍스트 + 4 URL] + index.ts barrel `export * from './booking'`; subId를 ClickTokenSchema.parse로 재검증해 손조립 SubID 누락 구조적 불가[Pitfall 1, D-06], 토큰 charset = Travelpayouts ∩ Stay22 base62 교집합[Pitfall 5], 주입 사이트 travelpayouts→sub_id/stay22→campaign; Phase 17 contract-only — base URL/marker/aid PLACEHOLDER, booking_clicks INSERT·리다이렉트 EF는 Phase 20; 1 deviation R1: 테스트의 unused @ts-expect-error 제거[ClickToken은 unbranded string이라 가드는 런타임 parse throw — TS2578 픽스, .toThrow() 단언 유지]; ATTR-01 계약 락 완료)
 - Phase 16 Plan 16-02 완료: 2026-06-17 (~12분, 2 tasks TDD RED→GREEN; commits 5246913 test + eeb2123 feat[extractSharedUrl] + 39fc6d2 test + 8ef679b feat[share-handler + provider wrap]; share-payload 9/9 + share-handler 6/6 = 15 신규, iOS 풀스위트 69/69 PASS, tsc clean; lib/share-routing.ts에 `extractSharedUrl` Zod http(s) 가드[V5, zod import 추가 — decideShareRoute는 순수 유지] + app/share-handler.tsx 마운트 핸들러[`handleSharedUrl` 테스트 가능 seq seam: V5 가드→await getSession[Pitfall 4]→decideShareRoute→linger enqueuePendingLink AS-IS[D-02] / auto 직접 addLink+startExtraction+navigate[D-03 가시 핀, triggerExtraction 아님] / picker no-op 핸드오프[16-03]; resetShareIntent+handled ref dedup[Pitfall 2]] + _layout.tsx ShareIntentProvider 래핑[reader-only NOT B안, 드레인 미변경 surgical-verified]; 편차 0 — 계획대로; jest `--watchman=false` 호출만)
 - Phase 16 Plan 16-01 완료: 2026-06-17 (~10분 실작업/~43분 wall[jest watchman 행 디버깅 포함], 2 tasks TDD RED→GREEN; commits d2b782e test + 38a2739 feat[share-routing] + 30773de test + 5f62820 feat[+native-intent]; share-routing 7/7 + native-intent 4/4 = 11 신규, iOS 풀스위트 54/54 PASS, tsc clean; lib/share-routing.ts 순수 decideShareRoute[zero imports, D-01/D-02] + app/+native-intent.tsx redirectSystemPath[getShareExtensionKey 파생·앱컨텍스트 호출 0·throw→'/']; Rule 3 인프라: 이 환경에서 jest가 watchman 크롤로 0%CPU 무한 행 → `--watchman=false`로 우회[설정/소스 변경 0, 호출만]; RED 각 커밋 `Could not locate module`로 실패 확인 후 GREEN; T-16-01/02/03 코드로 완화)
 - Phase 15 Plan 15-03 완료: 2026-06-14 (~4분, 2 tasks; commits e688bd9 iOS + 3408431 web; apps/ios/lib/category.ts vibeOf→placeVibe 위임 + VIBE_STYLE 6 canonical(cafe 추가/wellness 제거, color+labelKo는 core VIBE_META, Ionicons icon+tint/textOn은 클라이언트 유지) + apps/web/lib/category-icon.ts categoryVisual→placeVibe 위임 + VIBE_VISUAL 6 vibes lucide(Beer/Building2 orphan import 제거, bar→food/lodging→other collapse); iOS+web `pnpm typecheck` 둘 다 clean (web vitest 프로젝트 전역 깨짐 → typecheck 의존); 호출처 boards.tsx/place-list.tsx/vote-island.tsx diff 외 — source-compatible 유지; 편차 0; depends 15-01 DONE)
