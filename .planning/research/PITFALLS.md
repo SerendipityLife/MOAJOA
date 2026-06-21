@@ -1,506 +1,378 @@
-# MOAJOA Pitfalls Research
+# Pitfalls Research — MOAJOA v2.0 (발견→예약→정산 풀 루프)
 
-**Domain:** 영상 링크 → 지도 보드 자동 추출 + 협업 공유 (Next.js 15 + Expo SDK 54 + Supabase + Anthropic + Google Places)
-**Researched:** 2026-05-25
-**Confidence:** HIGH (대부분의 항목은 ASIS 1년+ 경험 + 최근 베이스라인 시행착오 + 2026년 공식 문서로 검증됨)
+**Domain:** AI 여행 플랫폼 — 제휴 수익화 · 인바운드 이메일 파싱 · LLM 자동 플랜 · 다통화 가계부 · Android 포팅 · 네비게이션 재편
+**Researched:** 2026-06-21
+**Confidence:** MEDIUM-HIGH (제휴/이메일/Play Store는 official+다중 출처 HIGH, LLM 플랜·FX는 도메인 패턴 MEDIUM, Android Expo 패리티는 plugin docs MEDIUM)
 
-> 이 문서의 목적은 일반론이 아니라, **MOAJOA 2인팀이 ASIS 1년의 학습을 통해 알게 된 것 + Day 1~2 베이스라인에서 이미 데인 것 + 앞으로 데기 쉬운 것**을 phase별로 묶어두는 것이다. 추상적인 best practice는 의도적으로 뺐다.
-
----
-
-## Critical Pitfalls (반드시 막아야 할 것)
-
-### Pitfall 1: LLM이 영상에 안 나온 장소를 만들어낸다 (Hallucinated Places)
-
-**무엇이 잘못되는가:**
-Claude가 transcript에서 장소를 추출할 때, 자막에 없는 유명 관광지를 "맥락상 있을 법한" 것으로 추가한다. 특히 도쿄·오사카 영상에서 "긴자", "신주쿠" 같은 일반 지명이 자막에 단 한 번 언급되면 그걸 가게 이름으로 오해해 "긴자 본점" 같은 가짜 장소를 만든다. Places API는 이 가짜 이름으로도 *유사한* 가게를 찾아주기 때문에 표면적으로는 결과가 나오지만, **사용자가 영상에서 찾으려던 가게가 아니다**. 이게 "링크 → 30초 안에 지도 위의 핀"의 신뢰도를 깨는 가장 큰 위협이다.
-
-**왜 일어나는가:**
-- LLM은 transcript의 **누락된 부분을 자기가 채우려는** 경향이 있다 (자막 자동생성은 가게 이름을 자주 놓침)
-- "구조화된 JSON을 내라"라는 프롬프트는 *모르면 빈 배열*보다 *그럴듯한 것*을 더 선호하게 만든다
-- 한국어 음차된 일본 가게 이름 ("이찌란", "잇푸도")은 transcript 정확도가 낮아서 LLM이 "가장 비슷한 유명 체인"으로 정정해버린다
-- 검증 단계가 없다 — 추출 → Places API → 저장이 한 흐름이고, "이게 정말 영상에 나왔는가?"를 확인하는 게이트가 없다
-
-**어떻게 막나:**
-1. **Citation 강제** — Claude 응답 스키마에 `transcript_quote: string` (해당 장소가 언급된 자막 원문 5~30자) 필드를 필수로 추가. quote가 없으면 그 후보는 버린다.
-2. **2단계 확인** — 1차 추출 후 별도 prompt로 "이 장소들이 정말 transcript에 나오는지 yes/no" 검증 패스. 비용은 두 배지만 영상당 여전히 < $0.005.
-3. **Confidence threshold** — `confidence < 0.7`인 후보는 "사용자에게 검토 요청" 상태로 저장 (`place.review_status = 'low_confidence'`), 지도엔 음영 핀으로 표시.
-4. **Eval baseline** — sample 10~20개 영상의 "expected places" 골드 셋을 만들고, 매 프롬프트 변경마다 precision/recall 측정. 이건 ASIS 시절에도 안 했던 거니까 이번엔 *반드시* 한다.
-
-**조기 경보 신호:**
-- 베이스라인 dogfooding 중 "내가 영상에서 본 가게가 아닌 핀"이 1주에 2개 이상 발견됨
-- Places API resolution이 100% 성공하는데 사용자가 "이 가게 본 적 없는데?" 라고 함 (LLM이 그럴듯한 거 만들고 Places가 그럴듯하게 매칭한 경우)
-- transcript에 한국어 자막 자동생성 비율이 높을수록 hallucination이 증가
-
-**Phase에서 다루기:**
-- **Phase 1 (MVP):** 항목 1 (citation 필드) + 항목 3 (confidence threshold) — 비용 없음, 스키마 변경만
-- **Phase 2 (추출 정교화 마일스톤):** 항목 2 (2단계 확인) + 항목 4 (eval baseline) — eval-driven 개선 본격 시작
+> 이 문서는 v2.0 전면 개편 기준 신규 작성이다. v1 마일스톤의 share-extension·deep-link·App Group 함정은 이미 코드에 인라인 인용돼 해소됨(`+native-intent.tsx`, `app.config.ts`). 여기서는 **이번 마일스톤에 새로 들어오는 6개 기능 영역에 특화된 함정 + 영역 간 통합 함정**만 다룬다. 일반 웹 보안·일반 LLM 팁은 제외.
 
 ---
 
-### Pitfall 2: 잘못된 도시·국가에 핀이 찍힌다 (Wrong City Assignment)
+## Critical Pitfalls
 
-**무엇이 잘못되는가:**
-영상은 도쿄 영상인데, 가게 이름이 흔해서 (예: "스타벅스 본점") Places API가 한국·미국 매장을 반환한다. 또는 한 영상에 도쿄와 후쿠오카가 같이 등장하는데 LLM이 도시 컨텍스트를 후반에서 잃어버린다. 사용자는 "도쿄 여행 보드"를 만들었는데 핀이 서울에 찍혀 있다.
+### Pitfall 1: 제휴 어트리뷰션 마커(SubID) 누락 — 수수료가 "Unknown"으로 빠짐
 
-**왜 일어나는가:**
-- Places Text Search에 `locationBias` 또는 `locationRestriction`을 안 넣으면 글로벌 검색이 됨
-- 보드 단위 `city_code` 또는 `country_hint`가 LLM 프롬프트에는 전달돼도 Places 호출엔 전달 안 됨 (두 단계가 분리됨)
-- 한 영상에 도시가 여러 개일 때 LLM이 마지막에 언급된 도시를 모든 장소에 일괄 적용
+**What goes wrong:**
+딥링크 예약 버튼은 잘 뜨고 클릭도 잘 되는데, 정작 정산 대시보드에서 우리가 발생시킨 예약이 우리 것으로 안 잡힌다. Travelpayouts는 `marker=ID.subID`가, Stay22(Allez)는 campaign ID + claimed domain이 붙어야 어트리뷰션이 된다. 이게 빠지면 클릭은 카운트돼도 커미션이 "Unknown" 버킷으로 가거나 0원이 된다.
 
-**어떻게 막나:**
-1. **Place 후보에 `inferred_city` 필드 필수** — LLM이 후보별로 도시를 명시하게 강제. 영상 전체의 한 도시로 일괄 적용 X
-2. **Places API에 `locationBias` 항상 전달** — 보드 또는 후보별 도시 코드 → Places `locationBias.rectangle` 또는 `circle`로 변환
-3. **국가/도시 sanity check** — 추출 결과의 위경도가 보드 도시 bounding box 밖이면 `low_confidence`로 떨어뜨림
-4. **`boards.city_code`가 NULL이면 추출 차단** — UX적으로 보드 생성 시 도시 선택 강제 (또는 첫 추출에서 도시 자동 추론 후 사용자 확인)
+**Why it happens:**
+- 개발 중에는 베어 어필리에이트 링크(마커만, SubID 없음)로 테스트 → "링크 열림 = 끝"으로 착각.
+- SubID는 per-trip/per-user 분해(어느 여행·어느 사용자가 전환시켰나)에 쓰는데, MVP에선 "나중에 붙이면 되지"로 미룸 → 초기 데이터가 영구히 익명화됨.
+- Stay22는 settings에서 도메인을 claim 안 하면 모든 전환이 `Unknown` 태그. 앱 딥링크(WebView/in-app browser)는 referer 도메인이 없어 특히 위험.
 
-**조기 경보 신호:**
-- 도쿄 보드인데 핀이 한국 좌표에 찍힘
-- Places API 응답에서 `formattedAddress`의 국가가 보드 의도 국가와 다름
+**How to avoid:**
+- 딥링크를 만드는 단 하나의 헬퍼를 `packages/core`에 둔다(예: `buildAffiliateUrl(provider, productParams, { tripId, userId })`). 손으로 링크를 조립하는 코드를 절대 허용하지 않음 → 마커/SubID 누락이 구조적으로 불가능해짐.
+- SubID 포맷을 Day1에 확정: `tripId` 또는 `tripId.userId`. 익명 이후 채우기는 불가능하니 첫 줄부터 넣는다.
+- Stay22 도메인 claim + 가능하면 deep-link에 자체 식별자 동봉. 인앱 브라우저(WKWebView / Android Custom Tabs)가 third-party cookie를 어떻게 다루는지 실측(아래 Pitfall 2).
+- "전환 1건이 우리 SubID로 대시보드에 찍힌다"를 phase exit criterion으로 삼는다 — 클릭 카운트가 아니라 **attributed booking**으로.
 
-**Phase에서 다루기:**
-- **Phase 1 (MVP):** 항목 2, 3 — Edge Function 한 곳만 수정하면 됨
-- **Phase 1.5:** 항목 4 (UX) — 온보딩 흐름 잡을 때 함께
+**Warning signs:**
+- 대시보드 `Unknown`/`no subid` 비율 > 0.
+- 딥링크 URL에 `marker=`/`sub_id=`/campaign param이 없음.
+- 클릭 수 >> 전환 수인데 전환의 SubID가 비어 있음.
 
----
-
-### Pitfall 3: Transcript 타임스탬프와 실제 화면이 어긋난다 (Timing Drift)
-
-**무엇이 잘못되는가:**
-"핀 클릭 → 영상 타임스탬프 jump"가 핵심 UX인데, 자동생성 자막의 시작 시각이 화면에 가게가 등장하는 시각보다 5~15초 지연돼있다. 사용자는 핀을 누르고 점프했는데 다른 가게가 나오고 있어서 "이 앱 못 믿겠다"라고 느낀다.
-
-**왜 일어나는가:**
-- YouTube `timedtext` 자동 자막은 음성 발화 시점 기준 → 실제 화면 등장과 어긋남 (특히 vlog 형식)
-- LLM이 추출한 장소의 timestamp는 "transcript의 어느 줄에서 언급됐는가" 기준이지 "영상의 어느 시점에 보이는가" 기준이 아님
-- transcript 한 줄에 여러 장소가 묶이면 모든 장소가 같은 timestamp가 됨
-
-**어떻게 막나:**
-1. **timestamp range 저장** — `place.video_start_sec`, `place.video_end_sec` (단일 시점이 아니라 범위로 — "3:20~3:50 사이에 언급됨")
-2. **Jump는 시작 시각보다 -3초 offset** — 사용자가 가게 등장 직전부터 보게 해서 "어, 이 가게구나" 인지 시간 확보
-3. **여러 timestamp가 있으면 multiple anchor** — 핀 클릭 시 "3:20 / 8:45 / 12:10" 중 선택 가능한 chip UI
-4. **수동 보정 UI** — Phase 1.5에 "이 핀의 시각을 영상 현재 위치로 변경" 버튼 (사용자가 옳다고 생각하는 시각으로 덮어쓰기)
-
-**조기 경보 신호:**
-- 자체 dogfooding 중 "점프한 화면이 그 가게가 아님" 빈도 측정
-- transcript에 동일 줄에 묶인 장소가 3개 이상인 추출 결과 비율
-
-**Phase에서 다루기:**
-- **Phase 1 (MVP):** 항목 1, 2 — 스키마 + Edge Function 변경
-- **Phase 1.5:** 항목 3, 4 — UX 정교화
+**Phase to address:** 가격비교/제휴 예약 phase (수익화). exit gate = 실제 전환 1건이 SubID로 어트리뷰션됨.
 
 ---
 
-### Pitfall 4: Supabase RLS 무한 재귀 — 다음 라운드 (Next RLS Recursion)
+### Pitfall 2: 인앱 브라우저 쿠키 격리 + 짧은 쿠키 기간 → 어트리뷰션 윈도우 증발
 
-**무엇이 잘못되는가:**
-이미 boards ↔ memberships 사이클은 0002, 0005에서 SECURITY DEFINER 헬퍼(`am_board_owner`, `am_board_member`)로 끊었다. 하지만 협업 보드 투표·초대·매뉴얼 큐 등이 들어오면 **새로운 사이클이 생긴다**. 예: `invitations` 테이블 정책이 `memberships`를 EXISTS로 참조, `memberships`는 `boards`를 참조, `boards`는 다시 `invitations`를 참조 → 42P17.
+**What goes wrong:**
+어필리에이트는 클릭 시 디바이스에 쿠키를 심고, 그 기간 안에 예약하면 커미션이 잡힌다. 그런데 (a) 쿠키 기간이 생각보다 짧고 — **Stay22↔Booking은 24시간**, Travelpayouts는 보통 **30일이지만 프로그램마다 다름** — (b) iOS `WKWebView`/Android Custom Tabs의 ephemeral/격리 쿠키 저장소에서 열면 third-party 쿠키가 시스템 사파리·크롬과 공유 안 돼, 사용자가 나중에 "진짜 브라우저"로 돌아와 예약하면 쿠키가 없어 전환이 날아간다.
 
-**왜 일어나는가:**
-- RLS 정책 안에서 다른 RLS 테이블을 `EXISTS (SELECT FROM other_table)`로 참조하면 그 정책도 평가됨
-- 새 테이블 추가 시 "기존 패턴(SECURITY DEFINER 헬퍼)"을 잊고 EXISTS 작성
-- Append-only migration 규칙 때문에 잘못 만든 정책을 *다시 DROP하고 새로 만드는* 추가 마이그레이션이 필요 — 점점 누더기가 됨
+**Why it happens:**
+- "쿠키 30일이니 넉넉하다"고 가정하지만 핵심 숙소 제휴(Stay22→Booking)가 24시간이라는 걸 모름. 여행 예약은 며칠~몇 주 숙고하는 게 정상이라, 24시간 윈도우는 실제 전환의 대부분을 놓친다.
+- 인앱 WebView vs 시스템 브라우저(ASWebAuthenticationSession / Custom Tabs)의 쿠키 공유 차이를 검증 안 함. 보안상 격리된 WebView에서 열면 어트리뷰션이 거기서 끝남.
 
-**어떻게 막나:**
-1. **새 테이블 RLS는 무조건 헬퍼 함수만** — 직접 `EXISTS (SELECT FROM table)` 금지. `am_board_member(board_id)`, `can_read_board(board_id)`, `can_edit_board(board_id)` 같은 4~5개 헬퍼로 모든 정책 표현
-2. **RLS 테스트 픽스처** — 마이그레이션 추가 시 `supabase/tests/rls/<feature>.sql`에 시나리오(소유자/멤버/외부인/익명) 테스트. CI 없어도 로컬에서 `supabase db reset && psql -f tests/rls/*.sql` 실행 의무화
-3. **헬퍼 함수는 STABLE + SECURITY DEFINER + search_path 고정** — `SET search_path = public, pg_catalog` 명시 (없으면 search_path 공격 가능)
-4. **재귀 깊이 모니터링** — Supabase 로그에서 `42P17` (infinite recursion) 발생 시 즉시 알림. 한 번 발생하면 prod 사용자에 500 에러
+**How to avoid:**
+- 외부 예약은 **시스템 브라우저**(`expo-web-browser`의 적절한 모드 / Custom Tabs / Safari)로 연다. 격리 WebView 금지 — 쿠키가 사용자의 실제 브라우저에 남아야 나중 전환도 잡힌다.
+- 각 제휴 프로그램의 쿠키 기간을 표로 관리하고(24h vs 30d) 24h짜리 숙소는 UX로 "지금 바로 예약" 넛지를 더 강하게. 30d 프로그램(항공·eSIM 등)을 우선 노출 검토.
+- 제휴 프로그램 선택 자체를 쿠키 기간·커미션율 기준으로 한다. 24h 윈도우 프로바이더에 트래픽을 몰지 않는다.
 
-**조기 경보 신호:**
-- 새 마이그레이션 PR에서 정책에 `EXISTS (SELECT 1 FROM` 패턴 등장 (헬퍼 함수 우회)
-- 로컬 RLS 테스트 추가 안 한 채 prod push
-- `am_board_*` 헬퍼 함수가 새 테이블 케이스 (예: invitee 본인) 커버 안 되어 정책이 직접 JOIN 시작
+**Warning signs:**
+- "딥링크 클릭은 많은데 전환율이 비정상적으로 낮음"(쿠키 증발).
+- 외부 링크가 인앱 모달 WebView로 열림(시스템 브라우저 아님).
+- 쿠키 기간을 모르는 채 제휴 프로그램을 붙임.
 
-**Phase에서 다루기:**
-- **Phase 1 (MVP):** 항목 1, 3 — 컨벤션 문서화 (CLAUDE.md에 이미 있지만 강화)
-- **Phase 1.5 (협업·투표):** 항목 2 — invitations·notifications 추가 시 테스트 픽스처 필수
-- **Phase 2:** 항목 4 — Sentry/PostHog 도입 시 42P17 알림
+**Phase to address:** 가격비교/제휴 예약 phase. 브라우저 오픈 모드 결정은 `/gsd-discuss-phase`에서 잠근다.
 
 ---
 
-### Pitfall 5: Google Places API 비용 폭주 (Cost Runaway)
+### Pitfall 3: 전달 이메일 사용자 식별 — 누가 보냈는지 vs 누구의 여행인지
 
-**무엇이 잘못되는가:**
-영상 한 개에 10개 장소가 추출되고, 각각 Text Search → Place Details까지 호출하면 한 영상당 비용이 예산($0.005)의 10배가 된다. 더 나쁜 경우: 추출 실패 시 재시도가 무한 루프 → 한 영상이 100번 호출됨 → 한 달에 한 영상이 $1+ 발생. $200 무료 크레딧이 일주일에 소진된다.
+**What goes wrong:**
+가계부의 핵심 입력 경로는 "개인 전용 주소로 예약 메일 전달". 그런데 사용자가 메일을 전달하면 인바운드 SMTP가 보는 **발신자(From)는 사용자가 아니라 사용자의 메일 클라이언트/원래 예약처**가 될 수 있고, 전달 헤더 포맷은 Gmail/Outlook/Apple Mail마다 다 다르다. "From으로 사용자 식별"을 하면 잘못된 사용자의 가계부에 항목이 붙거나(데이터 유출!) 매칭 실패로 드롭된다. TripIt조차 "다른 사람이 전달한 확인 메일은 트래블러를 구분 못 한다"고 명시한다.
 
-**왜 일어나는가:**
-- Places API "(New)" SKU는 tiered pricing — FieldMask에 `places.id, places.displayName` (Essentials)만 요청하면 저렴하지만, `places.*` (와일드카드)나 `places.photos`까지 요청하면 Pro/Enterprise SKU로 자동 승급되어 단가가 5~10배
-- 추출 retry 로직이 exponential backoff 없이 즉시 재시도
-- 동일 영상을 사용자가 두 번 share → 같은 추출이 중복 실행
-- 같은 가게가 여러 영상에 나와도 매번 새로 Places API 호출 (캐싱 X)
+**Why it happens:**
+- 단일 인박스(`ledger@moajoa.app`)로 받고 From 헤더로 사용자를 찾으려 함 → 전달 시 From이 변형/스푸핑 가능, 신뢰 불가.
+- 전달된 메일의 "원본 발신자"를 본문에서 정규식으로 긁으려다 클라이언트별 포맷 폭발에 빠짐.
 
-**어떻게 막나:**
-1. **FieldMask는 명시적 최소 셋만** — `X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.location` 만. 와일드카드 절대 금지. 프로덕션에서 와일드카드 쓰면 비용이 예측 불가능
-2. **링크 중복 가드** — `(board_id, url)` UNIQUE constraint로 같은 보드에 같은 URL 두 번 insert 차단 (이미 ASIS에서 했던 패턴이면 유지)
-3. **Place ID 캐시 테이블** — `place_text_cache(query_text, locale, city_code, google_place_id, cached_at)` — 같은 "긴자 본점, 도쿄, ja" 쿼리는 30일 캐시 활용. Edge Function이 호출 전 캐시 확인
-4. **영상당 API call 예산 enforcement** — Edge Function 내부 카운터: "이 영상 처리에서 Places API 12회 초과 시 즉시 abort, 나머지 장소는 `unresolved` 상태로 저장". 사용자에겐 "10개 중 7개만 위치 확인됨" 표시
-5. **Retry 정책 명시** — 같은 link_id에 대해 최대 2회 재시도, exponential backoff (10s, 60s). `extraction_status='failed'` 후엔 사용자 수동 트리거만
-6. **Daily/Monthly budget alert** — Google Cloud Console에서 알림 설정 ($50, $100, $150 임계). 시도해본 적 없어도 셋업 자체는 5분
+**How to avoid:**
+- **주소 자체에 사용자 토큰을 박는다(plus-addressing 또는 서브도메인):** `ledger+<opaqueUserToken>@moajoa.app` 또는 `<token>@inbound.moajoa.app`. 받는 주소(envelope recipient / `To`)로 사용자를 식별 — From은 식별에 절대 쓰지 않는다. TripIt 패턴: "최종 배달 목적지를 읽지, 원래 발신자를 읽지 않는다."
+- 토큰은 추측 불가능한 랜덤(유저 UUID 직접 노출 X). 토큰 유출 시 회전 가능하게.
+- 인바운드 서비스(Postmark/SendGrid Inbound Parse 등)는 envelope `To`/`recipient` 필드를 제공하니 그걸로 라우팅. 본문 파싱은 사용자 식별이 끝난 뒤에만.
 
-**조기 경보 신호:**
-- Edge Function 로그에서 같은 link_id가 1시간에 5번 이상 처리됨
-- Google Cloud billing dashboard에서 일일 비용 > $5
-- Places API 응답 시간 < 100ms (캐시될 만한 반복 쿼리 흔적)
+**Warning signs:**
+- 사용자 식별 로직이 `From:` 헤더를 읽음.
+- 모든 사용자가 같은 주소(`ledger@`)로 보냄.
+- 다른 사람이 전달한 테스트 메일이 엉뚱한 계정에 붙음.
 
-**Phase에서 다루기:**
-- **Phase 1 (MVP):** 항목 1, 2, 5, 6 — 비용 폭주 방어선 (1주일 안에 셋업)
-- **Phase 1.5:** 항목 3 (캐시 테이블) — 추출 빈도 늘기 전에
-- **Phase 2:** 항목 4 (영상당 예산) — 추출 정교화 마일스톤에서 같이
+**Phase to address:** 여행 가계부(인바운드 메일 파싱) phase. 주소 스킴 결정을 가장 먼저 잠근다.
 
 ---
 
-### Pitfall 6: Expo SDK 54 + pnpm 모노레포 빌드 실패 — 시간 블랙홀 (Build Time Sink)
+### Pitfall 4: 인바운드 메일 스푸핑 + 본문 무차별 저장(개인정보)
 
-**무엇이 잘못되는가:**
-*이미 현재 블로커.* `pod install` 단계에서 `react-native-reanimated` podspec이 pnpm isolated store 경로를 못 풀어 빌드 실패. 우회법이 여러 개 있지만 (shamefully-hoist, EAS Build, yarn 분리) 각각의 장단점이 있어 잘못 고르면 *해결 후 다른 패키지가 깨진다*. 2인팀이 여기 1주일 박혀있으면 전체 일정이 무너진다.
+**What goes wrong:**
+인바운드 주소는 공개되면 누구나 메일을 쏠 수 있다. 인증(SPF/DKIM/DMARC) 검증 없이 받으면 (a) 공격자가 위조 예약을 사용자 가계부에 주입하거나, (b) 스팸이 LLM 파싱 비용을 태운다. 동시에 예약 메일은 카드 끝자리·여권·예약 PNR 등 민감정보 덩어리 — 원문을 그대로 DB에 영구 저장하면 개인정보 사고의 폭탄을 안는 셈.
 
-**왜 일어나는가:**
-- pnpm은 기본 isolated install (각 패키지가 자기 node_modules에 symlink만 가짐) — RN 0.81/Reanimated 4.x peer dependency 검사가 이 구조를 못 풀음
-- Expo SDK 54는 isolated install을 "지원"하지만, 모든 RN 네이티브 라이브러리가 호환되는 건 아님
-- Reanimated 4.1+는 `react-native-worklets`를 명시적 peer dependency로 요구 (이전엔 내부 번들이었음) — 자동 설치 안 됨
-- 모노레포 root에 hoist하면 web의 React 19 / iOS의 React 18 충돌 (이미 한 번 데임 — bug #2)
+**Why it happens:**
+- 인바운드 파싱을 "그냥 받아서 LLM에 던지면 됨"으로 단순화.
+- 디버깅 편의로 raw 메일 전체(원문 HTML+첨부)를 테이블에 박아둠 → 잊혀진 채 누적.
 
-**어떻게 막나:**
-1. **결정 트리 미리 잠그기** — 다음 중 하나로 *이번 주에* 결정:
-   - **A안 (권장)**: `apps/ios/.npmrc`에 `node-linker=hoisted` (apps/ios 디렉토리 한정). web의 isolation 깨지지 않음
-   - **B안**: EAS Build (클라우드) — Apple Developer $99/year 필요. 로컬 toolchain 우회. 빌드 시간 + 비용
-   - **C안 (비권장)**: yarn workspaces로 iOS만 분리 — 두 패키지 매니저 공존은 누적 부채
-2. **명시적 peer dependency 설치** — `pnpm -F @moajoa/ios add react-native-worklets@latest` 즉시 실행 (Reanimated 4.x peer requirement)
-3. **빌드 성공 시 lockfile 잠금** — 동작하는 lockfile을 git에 커밋하고, 향후 `pnpm install`은 `--frozen-lockfile`로 (CI 도입 전이라도 로컬 컨벤션)
-4. **빌드 실패 시간 박스** — 한 빌드 이슈에 4시간 이상 박지 말 것. 4시간 초과 시 EAS Build로 즉시 전환
+**How to avoid:**
+- 인바운드 프로바이더가 검증한 SPF/DKIM 결과를 신뢰 신호로 사용. DMARC 정렬 실패/미인증 메일은 격리하거나 LLM에 안 태움. envelope recipient 토큰이 유효 사용자와 매칭될 때만 처리.
+- **본문 저장 최소화:** LLM 파싱 결과(구조화 필드: 금액·통화·날짜·프로바이더·항목)만 저장하고 원문은 짧은 TTL(예: 파싱 성공 후 N일) 후 폐기하거나 아예 안 저장. 저장해야 하면 카드번호·PNR 등은 마스킹/레닥션 후 저장.
+- 첨부(PDF e-ticket 등)는 신뢰 발신자에서만 처리, 크기·타입 화이트리스트.
+- 데이터 최소화는 Play/App Store Data Safety 신고(아래 Pitfall 10)와도 직결 — "수집 안 하면 신고할 것도 없다."
 
-**조기 경보 신호:**
-- `pod install` 에러에 `Unable to find a specification` 또는 `podspec not found`
-- Metro bundler가 `react-native-reanimated` 경로 못 찾음
-- iOS 빌드 후 `worklets` 관련 런타임 에러 (peer 누락 신호)
+**Warning signs:**
+- 인바운드 핸들러에 SPF/DKIM 분기 없음.
+- `inbound_emails.raw_html` 같은 컬럼에 원문이 무기한 쌓임.
+- 미인증 발신자의 메일이 가계부에 항목을 만듦.
 
-**Phase에서 다루기:**
-- **Phase 1 (MVP) - 최우선 블로커:** 항목 1, 2 — 이번 주 결정. 결정 늦으면 share extension·dogfooding 전체 지연
-- **Phase 1.5:** 항목 3 — 빌드 안정화 후
+**Phase to address:** 여행 가계부 phase. RLS·저장 스키마 설계 시 마이그레이션과 짝지어 결정.
 
 ---
 
-### Pitfall 7: 2인팀의 Scope Creep — ASIS 재현 (Scope Creep Redux)
+### Pitfall 5: LLM 자동 플랜 환각 — 닫힌 가게·불가능한 동선·비용 폭증
 
-**무엇이 잘못되는가:**
-ASIS Flutter 버전이 1년+ 걸린 이유는 기술 선택보다 *기능 확장*이었을 가능성이 높다. v1 MVP("링크 → 핀 → 공유 열람")가 검증되기 전에:
-- 협업 투표 UI를 미리 만들기 시작
-- 둘러보기 피드를 "있으면 좋겠다"고 짓기 시작
-- 어드민 큐 시스템을 "곧 필요할 거니까" 미리 셋업
-- "다국어 / 다크모드 / OAuth / 알림" 같은 비핵심 기능에 매주 조금씩 시간 씀
+**What goes wrong:**
+"추출 직후 = 즉시 AI 플랜"이 v2의 아하 순간인데, LLM 단독 일정은 (a) 이미 문 닫은 시간에 박물관 배치, (b) 차로 2시간 거리를 30분 슬롯에 우겨넣기, (c) 존재하지 않거나 폐업한 장소를 그럴듯하게 생성, (d) 추출된 장소 수가 많을수록 토큰·호출이 늘어 추출당 < $0.005 예산을 넘김. 연구 일관된 결론: **그라운딩 없는 LLM은 정량 제약(영업시간·이동시간)에서 신뢰 불가, Maps 데이터로 그라운딩하면 환각·비현실 타이밍이 사실상 사라진다.**
 
-결과: dogfooding 못 하는 채로 6개월 → 동기 잃음 → 다시 피봇 사이클.
+**Why it happens:**
+- "Claude한테 장소 리스트 주고 일정 짜줘" 한 방으로 끝내려 함. LLM은 정성(취향·테마)은 잘하지만 정량(거리·시간)은 못한다.
+- 영업시간/좌표를 이미 Places API로 갖고 있는데 프롬프트에 안 넣음 → LLM이 추측(환각).
+- 출력 검증 루프가 없어 "그럴듯한 잘못된 일정"이 그대로 사용자에게 노출.
 
-**왜 일어나는가:**
-- 2인팀은 review 압력이 적어서 개인 호기심으로 코드가 추가됨
-- "이거 곧 필요해" = 거의 항상 *지금은 안 필요*
-- Karpathy 4 원칙 중 3.2 (Simplicity First)와 3.3 (Surgical Changes)이 LLM 코딩 에이전트뿐 아니라 *사람에게도* 적용돼야 함
-- GSD plan에 없는 작업을 "잠깐만"이라며 끼워넣음
-- 코드 리뷰 시 "옆에 있는 거 정리하고 싶다"가 PR 키움
+**How to avoid:**
+- **하이브리드:** LLM은 클러스터링/순서/테마만 정하고, 영업시간·이동시간은 우리가 가진 Places 데이터 + 거리 행렬로 후처리 검증·조정. 우리는 이미 추출 단계에서 좌표·영업시간을 확보하니 그걸 플랜 단계로 흘린다.
+- 좌표 없는/검증 안 된 장소는 일정에 자동 배치하지 않음(LLM이 새 장소를 "발명"하지 못하게 입력 후보를 우리 DB place로 제약).
+- 비용 가드레일: 입력 장소 수 상한, 출력 토큰 상한, 일정 길이 상한. 추출 코스트 테이블(이미 0004/0005 존재) 패턴 재사용해 플랜 코스트도 로깅. 캐싱(같은 보드 재플랜 시 재사용).
+- 검증 가능한 성공 기준: "생성된 일정의 모든 슬롯이 (영업시간 내) AND (직전 장소에서 이동시간 ≤ 슬롯 갭)" 자동 체크 → 위반 시 재배치. `/gsd-plan-phase`의 verify 루프로.
 
-**어떻게 막나:**
-1. **PROJECT.md의 Out of Scope를 매주 1회 읽기** — `/gsd-progress` 결과에 강제 출력. "이거 정말 v1에 필요?"
-2. **모든 PR은 GSD plan의 task ID 참조 필수** — plan에 없는 작업은 PR 거절 (또는 별도 `/gsd-quick` PR로 분리)
-3. **"옆 코드 정리하고 싶음"은 따로 issue로** — 본 PR에 끼우지 않음 (CLAUDE.md § 3.3 이미 정의됨, 사람도 동일)
-4. **Dogfooding 게이트** — Phase 1 완료 = "내가 일본 여행 계획에 실제로 7일간 사용했음" 증명 (스크린샷·실제 핀 목록·실제 결정 결과). 이 게이트 전엔 Phase 1.5 코드 한 줄도 안 씀
-5. **Sprint = 1주, 끝에 demo** — 2인이지만 매주 금요일 "이번 주에 뭐가 동작하나" 30분 시연. 시연할 게 없으면 깊이 반성
+**Warning signs:**
+- 플랜에 좌표 없는 장소가 등장.
+- 이동시간 검증 코드 없음(슬롯 시간 = LLM이 부른 대로).
+- 플랜 1건 코스트가 추출 코스트보다 큰데 측정 안 함.
+- 사용자 테스트에서 "여기 지금 닫았는데?" 피드백.
 
-**조기 경보 신호:**
-- 한 주 동안 dogfooding 가능한 새 기능이 0개
-- PR diff에 plan에 없는 파일이 포함됨
-- "이거 곧 필요할 거니까" / "기왕 하는 김에" / "리팩토링 한번..." 단어 등장
-- Out of Scope 리스트에서 항목이 슬며시 Active로 이동
-
-**Phase에서 다루기:**
-- **Phase 1 (MVP):** 항목 1, 2, 4, 5 — 워크플로우 컨벤션. 코드 변경 없음
-- **모든 Phase 전반:** 항목 3 — 코드 리뷰 룰
+**Phase to address:** 자동 AI 플랜 phase. exit gate = 영업시간·이동시간 검증 통과율 측정.
 
 ---
 
-## Moderate Pitfalls (조심해야 할 것)
+### Pitfall 6: 환율 — 예약시점 vs 결제일 vs 카드명세 환율의 3중 불일치
 
-### Pitfall 8: Next.js 15 App Router + Supabase SSR 쿠키 동기화
+**What goes wrong:**
+가계부가 "카드·통화·환율·결제시점"을 정리한다고 약속했는데, 외화 결제는 환율이 **세 시점에서 다르다**: 예약 확정 시점(메일에 찍힌 환율), 카드사 결제(매입) 시점(보통 T+1~T+2 뒤 settlement rate), 그리고 최종 명세 표시. 메일의 ₩ 환산액을 "진짜 낸 돈"으로 저장하면 카드 명세와 안 맞아 사용자가 신뢰를 잃는다. 또 ₩/$/¥가 섞인 여행에서 통화를 안 들고 다니면 합계가 의미 없어진다.
 
-**무엇이 잘못되는가:**
-RSC(React Server Component)에선 쿠키 *읽기만* 가능, 쓰기 불가. Supabase 세션 refresh가 RSC 안에서 실행되면 쿠키 set이 silently fail → 클라이언트는 로그인된 줄 알고 hydration mismatch + 다음 요청에서 anon으로 fallback. Next.js 15.3+ Turbopack에선 `cookies()` 비동기화로 "cookies() should be awaited" 런타임 에러도 발생.
+**Why it happens:**
+- 메일에 적힌 한 줄 ₩ 금액을 그대로 "지출"로 저장 → 그건 예약시점 추정 환율일 뿐 실제 매입가가 아님.
+- 내부적으로 모든 걸 ₩ 단일 통화로 캐스팅해 원통화·원환율 정보를 버림 → 사후 정정 불가.
 
-**왜 일어나는가:**
-- `createServerClient`의 setAll 콜백이 try/catch로 묶여있어야 하는데 새 패키지 설치 시 그게 빠질 수 있음
-- middleware.ts에서 세션 refresh 안 하면 RSC에서 만료된 토큰 그대로 사용
-- 클라이언트 컴포넌트와 서버 컴포넌트가 같은 페이지에 있을 때 user state 불일치
+**How to avoid:**
+- **항상 (원통화 금액 + 원통화 코드 + 환율 출처/시점)을 원자적으로 저장.** ₩ 환산은 표시용 파생값이지 진실의 원천이 아니다. 결제일 매입 환율이 확정되면 그때 갱신(또는 "예약시점 추정 / 결제확정" 상태 플래그).
+- 통화는 ISO 4217 코드로, 합계는 통화별로 분리하거나 표시 시점 환율로 환산(환산이라고 라벨링). "혼재 통화 합계"를 단일 숫자로 뭉개지 않는다.
+- 환율 소스를 명시(메일 내 값 / 외부 환율 API / "추정"). 정확도를 못 보장하는 값은 "약" 표기.
+- 스키마에 `amount`, `currency`, `fx_rate`, `fx_source`, `fx_as_of`, `amount_krw_est` 분리 — 마이그레이션과 짝지어.
 
-**어떻게 막나:**
-1. middleware.ts에 `updateSession` 항상 셋업 (Supabase 공식 가이드 그대로) — 세션 refresh는 middleware 책임
-2. server client는 항상 `async createClient()` (Next.js 15+ `cookies()` 비동기)
-3. setAll 콜백 try/catch로 RSC write 에러 무시
-4. 2026년 말까지 anon key는 동작하지만, `sb_publishable_xxx`로 전환 계획 — 새 키는 회전 가능
+**Warning signs:**
+- 지출 레코드에 통화 컬럼이 없거나 항상 'KRW'.
+- 메일의 ₩ 값을 실제 결제액으로 신뢰.
+- 다통화 합계가 단일 숫자로 표시되고 환산 시점 라벨 없음.
 
-**Phase:** Phase 1 (MVP) — 처음 셋업할 때 정확히 하고 잊기
-
----
-
-### Pitfall 9: 마이그레이션 Append-Only 규칙 위반 유혹
-
-**무엇이 잘못되는가:**
-"방금 만든 0007_xxx.sql에 작은 오타가 있다 — 그냥 고치자" — 로컬에서 동작하지만 prod엔 이미 적용됐다면 다음 사람이 `supabase db reset`할 때 다른 결과가 나옴. RLS 정책의 미묘한 차이는 prod에서만 발견되어 추적 지옥.
-
-**왜 일어나는가:**
-- "아직 push 안 했으니까" 자체가 위험 — push 전 commit이 머지되면 다른 환경에 적용됨
-- prod에 적용된 마이그레이션을 *덮어쓰는* 새 마이그레이션은 git diff로 안 보임 (논리적 변화만 있음)
-
-**어떻게 막나:**
-1. 마이그레이션 파일은 한 번 commit 후 절대 수정 X. 수정이 필요하면 `0008_fix_0007.sql` 새 파일
-2. `supabase migration list` 정기 점검 — 로컬과 prod 동기화 상태 확인
-3. PR에 마이그레이션 포함 시 description에 `BREAKING DB CHANGE` 명시 (이미 CLAUDE.md § 4.6에 있음)
-
-**Phase:** 모든 Phase — 컨벤션
+**Phase to address:** 여행 가계부 phase(스키마). FX 표시 정확도는 LLM 파싱 phase와도 연결.
 
 ---
 
-### Pitfall 10: 한국어 IME + Share Extension 한국어 앱 이름
+### Pitfall 7: 네비게이션 재편 — 탭바 유실 · 딥링크/공유 라우트 깨짐 · 1개 여행 바로진입 엣지
 
-**무엇이 잘못되는가:**
-iOS Share Extension의 "Activity" 이름(공유 시트에 뜨는 앱 이름)이 한글로 표시 안 되거나, 카톡에서 공유 시 한글 URL 인코딩이 깨짐. 한국어 IME 사용 중 textarea에서 한 글자가 두 번 입력되는 React Native 이슈.
+**What goes wrong:**
+`(tabs)/{boards,discover,me,friends,new}` 전역 탭에서 `trip/[id]/(tabs)/{map,plan,book,ledger}` **여행 스코프 탭**으로 IA를 통째로 뒤집는다. 흔한 사고:
+- 중첩 `(tabs)` 그룹에서 `_layout`을 잘못 짜 상세 화면 진입 시 탭바가 사라짐(혹은 탭바 안에 탭바가 중첩).
+- 기존 딥링크/공유 링크(`/boards/[id]`, `/share-handler`, web `/b/[slug]`)가 새 `trip/[id]/...` 구조로 못 가 404 → 카톡으로 뿌린 옛 링크가 다 깨짐.
+- "여행 1개면 목록 없이 바로 진입 / 여러 개면 마지막 / 0개면 welcome" 진입 로직의 엣지(여행 삭제 직후 0개, 동시 생성 경합, 마지막 여행이 삭제된 경우)에서 빈 화면/크래시.
+- `+native-intent.tsx`가 share 딥링크를 `/share-handler`로 보내는데, share-handler가 새 trip 라우트로 라우팅하도록 같이 안 고치면 저장 플로우가 끊김.
 
-**왜 일어나는가:**
-- `expo-share-intent` 또는 `expo-share-extension` config 플러그인의 `displayName`을 한글로 지정 시 `Info.plist`의 `CFBundleDisplayName` 인코딩 이슈 가능
-- React Native TextInput에서 한국어 조합형 입력 시 `onChangeText` 이벤트가 음절 분해/결합마다 발생 — 검색 자동완성 등에서 중복 호출
+**Why it happens:**
+- expo-router 그룹/중첩 레이아웃은 라우트 머신이라 한 번에 뒤집으면 회귀가 조용히 숨음(타입드 라우트가 있어도 런타임 진입 순서까지는 못 잡음).
+- 기존 보드(=여행)와 새 trip 컨셉의 매핑/마이그레이션을 안 정해 "기존 보드는 어느 trip 탭으로?"가 공백.
+- 진입 로직을 한 곳(`index.tsx`)에만 두고 0/1/N 분기를 테스트 안 함.
 
-**어떻게 막나:**
-1. Share extension `displayName`은 영문 + 한글 병기 또는 한글만 (둘 다 빌드 테스트)
-2. 한국어 입력 검색은 `onChangeText` 대신 debounce (150~300ms) 적용
-3. URL 인코딩은 항상 `encodeURIComponent` 거친 후 Supabase에 저장
+**How to avoid:**
+- 보드↔trip 매핑을 먼저 결정: 기존 `boards`가 곧 trip인가, 아니면 trip이 boards를 감싸나? 데이터 마이그레이션(또는 뷰)로 기존 보드가 새 라우트에서 그대로 열리게. append-only 마이그레이션 규칙 준수.
+- **하위호환 라우트 유지:** 옛 `/boards/[id]` → 새 `trip/[id]/...`로 리다이렉트(앱 내 + web). 이미 배포된 공유 링크는 영구히 살아 있어야 함. web `/b/[slug]`는 SSR 열람 경로라 절대 깨면 안 됨.
+- 진입 분기(0/1/N 여행)를 명시적 함수로 빼고 각 케이스 테스트: 0→welcome, 1→`trip/<id>/plan`, N→마지막. "마지막 여행이 방금 삭제됨" 엣지 포함.
+- 탭바 유지를 검증 기준으로: 모든 4탭 + 상세 push에서 탭바가 보인다(중첩 레이아웃 회귀 체크).
+- `+native-intent.tsx`/`share-handler.tsx`/`index.tsx`를 IA 변경과 **한 phase에서 같이** 고친다(흩어지면 한쪽만 새 라우트를 알게 됨).
 
-**Phase:** Phase 1.5 (Share Extension) — 실기기 검증 시
+**Warning signs:**
+- 상세 화면에서 탭바가 사라짐.
+- 옛 공유 링크가 404 / 새 구조로 리다이렉트 안 됨.
+- 여행 0개 또는 삭제 직후 빈 화면/크래시.
+- share-handler가 여전히 `/boards/...`로만 보냄.
 
----
-
-### Pitfall 11: Pretendard 폰트 로딩 — Hermes + iOS 빌드
-
-**무엇이 잘못되는가:**
-Pretendard는 9개 weight(100~900)가 있는데 다 번들하면 앱 크기 ~30MB 증가. 또 `useFonts` 훅으로 런타임 로딩 시 첫 렌더 깜빡임(FOUT). Hermes 엔진은 정적 분석이 강해서 dynamic require로 폰트 import하면 빌드 실패.
-
-**왜 일어나는가:**
-- Pretendard variable font는 OTF/TTF로 변환된 weight별 파일 → 모두 번들 시 용량 증가
-- `expo-font` config plugin은 빌드 타임 embed (빠름), `useFonts`는 런타임 (느림). 둘 섞이면 우선순위 모호
-- Hermes는 `require(variableExpression)` 패턴 못 풂
-
-**어떻게 막나:**
-1. 사용 weight만 번들 (Regular 400, Medium 500, SemiBold 600, Bold 700 — 4개면 충분)
-2. `expo-font` config plugin으로 빌드 타임 embed (config plugin > useFonts)
-3. 폰트 import는 정적 require만 — `require('./assets/fonts/Pretendard-Regular.otf')` 직접
-
-**Phase:** Phase 1 (디자인 시스템 트랙) — 디자인 토큰 정의할 때 함께
+**Phase to address:** 네비게이션/IA 재편 phase. 회색지대(보드↔trip 매핑, 리다이렉트 정책, 진입 분기)는 반드시 `/gsd-discuss-phase`에서 잠근다.
 
 ---
 
-## Minor Pitfalls
+### Pitfall 8: Android 포팅 — share intent 패리티 · 권한/네이티브 모듈 차이 · Play 심사
 
-### Pitfall 12: Realtime 구독 누수
-보드 화면 unmount 시 Supabase Realtime 채널 unsubscribe 안 함 → 연결 수 누적 → 무료 tier 동시 연결 한도 초과.
-**예방:** `useEffect` cleanup에서 `channel.unsubscribe()` 컨벤션화. ESLint 룰로 검증 가능.
-**Phase:** Phase 1.5 (Realtime 도입 시)
+**What goes wrong:**
+"Expo라 재작성 아님"은 맞지만 **자동 패리티는 아니다.** 함정:
+- iOS share extension은 별도 프로세스 + App Group으로 통신하지만, Android는 `ACTION_SEND` intent + AndroidManifest 인텐트 필터로 동작 — 모델이 다르다. iOS의 App Group(`group.com.serendipitylife.moajoa`) 의존 코드는 Android에서 무의미. `expo-share-intent`가 양쪽을 추상화하지만 활성화 규칙·받는 MIME/payload 형태가 달라 한쪽만 테스트하면 다른쪽이 빈 payload로 깨진다.
+- 권한 모델 차이: iOS `infoPlist` 문자열 vs Android 런타임 권한 + `AndroidManifest` 선언. 위치·알림·딥링크(App Links vs Universal Links) 설정이 별도.
+- react-native-maps: iOS는 Google Maps API 키를 플러그인이 주입(현 config), Android는 별도 키 + SHA-1 서명 등록 + Maps SDK 활성화 필요. 키 누락 시 회색 지도.
+- Hermes/엔진은 공유지만 네이티브 빌드는 별개 — iOS에서 동작한 게 Android 빌드에서 깨질 수 있음.
+- Play 심사: Data Safety 폼(아래 Pitfall 10), 타깃 API 레벨, 딥링크 검증.
 
-### Pitfall 13: OG 이미지 자동 생성 — 한자 렌더링 실패
-`@vercel/og`에서 한국어/일본어 폰트 미포함 시 한자가 □로 표시. 카톡 공유 카드 망함.
-**예방:** OG generator에 Pretendard + Noto Sans JP 폰트 명시적 fetch (또는 edge function에 번들).
-**Phase:** Phase 1.5 (web 폴리시)
+**Why it happens:**
+- "iOS에서 됐으니 Android도 되겠지"라는 가정. 공유 코드(RN/Expo)와 네이티브 설정(권한·키·intent)을 구분 안 함.
+- iOS 전용 가정(App Group, Universal Links, infoPlist)이 코드에 박혀 있고 Android 분기 없음.
 
-### Pitfall 14: Magic Link 만료 + 무료 SMTP rate limit
-Supabase 무료 SMTP는 시간당 4개, 매직링크 만료 5분 — dogfooding 중 친구 5명에게 동시 invite 시 깨짐.
-**예방:** Phase 1.5 외부 사용자 받기 전 Resend 또는 Postmark로 SMTP 교체.
-**Phase:** Phase 1.5 또는 Phase 2
+**How to avoid:**
+- share 입력 경로를 플랫폼 추상화 뒤로: payload 읽기를 `expo-share-intent`의 크로스플랫폼 API로만(App Group 직접 접근 코드를 share 로직에 두지 않음). Android `ACTION_SEND`로 URL/텍스트 받는 걸 실기기에서 별도 검증.
+- 권한·키를 플랫폼별 체크리스트로: Android Maps 키 + SHA-1, 위치 런타임 권한, 알림, App Links(`assetlinks.json`) — iOS 설정과 1:1 대조.
+- "iOS에서 됨 = 완료"를 금지. share 저장·지도·딥링크·예약 외부브라우저(Custom Tabs 쿠키, Pitfall 2)를 Android 실기기에서 재검증.
+- 임시 fallback(반응형 웹 예약)을 둬서 Android 네이티브가 늦어도 결제자(대표)가 막히지 않게 — PRODUCT 12절 명시 경로.
 
-### Pitfall 15: Anthropic claude-sonnet-4-6 응답 JSON 깨짐
-LLM이 가끔 JSON 앞뒤에 마크다운 코드블록 ```json ... ``` 두름 → JSON.parse 실패.
-**예방:** Edge Function에서 응답 파싱 전 ```...``` 제거 + Zod로 validate. 실패 시 1회 재시도.
-**Phase:** Phase 1 — 이미 베이스라인에서 발생 가능
+**Warning signs:**
+- share 로직이 App Group/UserDefaults를 직접 읽음(iOS 전용).
+- Android에서 지도가 회색(키/SHA-1 누락).
+- Android share가 빈 payload.
+- Android 실기기 테스트 없이 "패리티 완료" 선언.
+
+**Phase to address:** Android 포팅 phase. share·maps·권한 패리티 각각을 exit criterion으로.
+
+---
+
+## Integration Pitfalls (영역 간 — 가장 놓치기 쉬움)
+
+### Pitfall 9: 추출→플랜→예약→가계부 식별자 단절(루프가 안 닫힘)
+
+**What goes wrong:**
+플라이휠의 핵심은 한 trip 안에서 place → plan slot → 예약 클릭(딥링크 SubID) → 결제 메일(가계부 항목)이 **같은 trip/place로 연결**되는 것. 그런데 각 기능을 따로 만들면: 딥링크 SubID는 `tripId`만 담고 어느 place에서 눌렀는지 안 담음 → 가계부의 ₩50,000 호텔비가 어느 일정·어느 추천에서 나왔는지 매칭 불가 → "예약·결제 데이터가 다음 발견을 똑똑하게"라는 BM 근거(방문 인증 제거의 대체물)가 성립 안 함.
+
+**Why it happens:**
+기능별 phase가 독립적으로 진행되며 공통 식별자 계약을 안 정함. SubID 포맷, 가계부 항목의 `trip_id`/`place_id` FK, 플랜 슬롯↔place 링크가 제각각.
+
+**How to avoid:**
+- `packages/core`에 **트립 스코프 식별자 계약**을 한 번 정의: SubID 인코딩(`tripId[.placeId][.userId]`), 가계부 항목·플랜 슬롯·예약 클릭이 모두 `trip_id`(+가능하면 `place_id`) 보유. 예약 메일 파싱 시 프로바이더·날짜·금액으로 휴리스틱 매칭하되, SubID가 살아 돌아오면(일부 네트워크는 SubID를 리포트에 반환) 그걸로 정확 매칭.
+- 루프 닫힘을 통합 테스트: "딥링크 클릭 → (모의) 예약 메일 → 가계부 항목이 같은 place에 붙음"을 한 번이라도 e2e로 통과.
+
+**Warning signs:**
+- SubID에 trip/place 컨텍스트 없음.
+- 가계부 항목에 `trip_id` FK 없음.
+- "이 지출이 어느 추천에서 왔나"를 답할 수 없음.
+
+**Phase to address:** 가장 먼저 진행되는 수익화 또는 가계부 phase에서 식별자 계약을 잠그고, 나머지 phase가 그 계약을 import.
+
+---
+
+### Pitfall 10: Play/App Store Data Safety 폼 ↔ 실제 데이터 흐름 불일치(심사 거절 #1) + 제휴 공시
+
+**What goes wrong:**
+2026 Play 심사에서 가장 빈번한 거절은 데이터 수집 자체가 아니라 **Data Safety 폼 신고와 앱 실제 행동의 불일치**. v2는 새 데이터를 대거 수집: 이메일 본문(예약/결제 정보), 카드 끝자리·통화, 위치, 그리고 제휴 클릭 트래킹. SDK/API(어트리뷰션, 분석)가 뒤에서 수집하는 것까지 신고 안 하면 "deceptive disclosure"로 즉시 거절. 또 제휴 수익(커미션)을 사용자에게 공시 안 하면 deceptive behavior 정책에 걸릴 수 있음.
+
+**Why it happens:**
+- 직접 수집하는 것만 신고하고 어트리뷰션/분석 SDK가 긁는 식별자·위치를 빠뜨림.
+- 가계부가 결제·금융 정보를 다루는데 폼의 financial info 항목을 누락.
+- 제휴 링크가 수익을 낸다는 공시를 UX에 안 넣음.
+
+**How to avoid:**
+- v2에서 추가되는 모든 데이터(이메일 본문→파싱 필드, 카드 끝자리, 통화, 위치, 어트리뷰션 ID)를 Data Safety/App Privacy 폼에 정확히 매핑. Pitfall 4의 데이터 최소화는 신고 부담도 줄임 — "안 저장하면 신고 안 해도 됨."
+- 제휴 링크에 "예약 시 수수료를 받을 수 있어요" 류 공시(앱 정책·약관 + 가능하면 인라인).
+- iOS App Privacy(Nutrition Label)도 동일하게 일치시킴 — 양쪽 스토어 동시 대응.
+
+**Warning signs:**
+- Data Safety 폼이 직접수집만 나열, SDK 수집 누락.
+- 금융/이메일 데이터 항목 미신고.
+- 제휴 수익 공시 없음.
+
+**Phase to address:** Android 포팅 phase + 가계부 phase. 출시 전 폼 검수를 ship 게이트로.
 
 ---
 
 ## Technical Debt Patterns
 
-| Shortcut | 즉각 이득 | 장기 비용 | 언제 OK? |
-|---|---|---|---|
-| `add_manual_place` RPC가 클라이언트 좌표 신뢰 (현 상태) | 빠른 베이스라인 | 악성 클라이언트가 가짜 좌표 주입 가능 | dogfooding 단계만. Phase 1.5에 `resolve-place` Edge Function 필수 |
-| Web의 dev tool UI (보드 생성/링크 추가) 노출 | 개발 검증 빠름 | 외부 사용자 혼란 ("web에서도 되는 줄") | `NEXT_PUBLIC_ENABLE_DEV_TOOLS=1` 게이트로 즉시 격리 |
-| 무료 Supabase SMTP | $0 | 시간당 4개, 스팸함 분류 | 2인 dogfooding만. 친구 invite 시작 전 Resend |
-| 추출 정확도 측정 없음 | 코드 작성 빠름 | 회귀 detect 불가, 프롬프트 변경마다 도박 | Phase 1 baseline 측정 후엔 *절대 안 됨* |
-| `apps/ios/.npmrc shamefully-hoist=true` | iOS 빌드 통과 | 모노레포 isolation 깨지면 web/iOS dep 충돌 재발 | iOS 디렉토리 한정으로만 (root 전체 X) |
-| placeholder Database 타입 (`SupabaseClient<any,any,any>`) | 타입 충돌 회피 | 타입 안전성 손실 | `pnpm supabase:types` 자동 생성 후 즉시 교체 (이미 Day 2에 해결) |
-| Eval sample 없이 프롬프트 변경 | 빠른 iteration | 무엇이 개선/회귀인지 모름 | 절대 안 됨 — Phase 2 본격 정교화 전에 sample 10~20개 만들기 |
-
----
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| 베어 어필리에이트 링크(SubID 없이) | 빠른 예약 버튼 데모 | 초기 전환이 영구 익명화, BM 데이터 소실 | **never** — Day1부터 SubID |
+| 메일 본문 raw 전체 저장 | 파싱 디버깅 쉬움 | 개인정보 폭탄 + Data Safety 신고 부담 | 짧은 TTL/마스킹 전제로만 단기 |
+| LLM 단독 일정(그라운딩 X) | 플랜 화면 빨리 띄움 | 닫힌 가게·불가능 동선으로 신뢰 붕괴 | MVP 데모용 한정, 출시 전 그라운딩 필수 |
+| ₩ 단일 통화로 캐스팅 | 가계부 합계 코드 단순 | 원통화/환율 소실, 명세 불일치, 사후정정 불가 | **never** — 원통화+환율 원자 저장 |
+| IA 한 번에 빅뱅 전환(리다이렉트 X) | 새 구조 빨리 봄 | 배포된 공유 링크 전부 깨짐 | **never** — 하위호환 리다이렉트 유지 |
+| iOS만 테스트하고 Android 패리티 가정 | iOS 먼저 출시 | Android에서 share/지도/예약 조용히 깨짐 | Android를 명시적 phase로 분리하면 OK |
 
 ## Integration Gotchas
 
-| 통합 | 흔한 실수 | 올바른 접근 |
-|---|---|---|
-| **Google Places API (New)** | FieldMask 와일드카드 `places.*` 사용 → Enterprise SKU로 자동 승급, 10배 비용 | 명시적 필드만 (`places.id,places.displayName,places.formattedAddress,places.location`). 와일드카드는 dev에서만 |
-| **Anthropic Claude** | system prompt에서만 "JSON으로 답해"라고 함 | Response prefill (`{"places": [`)로 시작 강제 + Zod로 validate + 실패 시 1회 retry |
-| **Supabase RLS** | 정책에 `EXISTS (SELECT FROM other_table)` 직접 작성 | 모든 cross-table 검증은 SECURITY DEFINER 헬퍼 함수 (`am_board_owner`, `am_board_member`) |
-| **Supabase Realtime** | channel을 컴포넌트 안에서 매 렌더마다 생성 | `useEffect`로 mount/unmount 정확히 (cleanup 필수). Channel 이름은 보드별 unique |
-| **YouTube timedtext** | 자막 없는 영상에 대한 fallback 없음 → Edge Function 500 | 자막 없으면 `extraction_status='no_transcript'` + 메타데이터(title, description)만으로 best-effort |
-| **expo-share-intent** | iOS Share Extension target에 Supabase URL/key 환경변수 자동 주입 안 됨 (별도 target임) | config plugin의 `iosShareExtensionInfoPlist`에 `MOAJOA_SUPABASE_URL` 명시 주입, 또는 App Groups로 main app 키 공유 |
-| **expo-share-intent + pnpm** | isolated install로 native module 못 풀음 | apps/ios만 `node-linker=hoisted`. Reanimated와 같은 트레이드오프 |
-| **Next.js 15 cookies() in createClient** | 동기 호출 → "cookies() should be awaited" 에러 | `createClient`를 async 함수로, `const cookieStore = await cookies()` |
-| **@vercel/og** | 폰트 미주입 → 한자 □ 렌더링 | Pretendard + Noto Sans JP woff/woff2를 generator에 fetch로 주입 |
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Travelpayouts | 마커만, SubID 없이 링크 생성 | `marker=ID.subID`, SubID에 trip(.place.user) 인코딩 |
+| Stay22 (Allez) | 도메인 claim 안 함 → 전환 Unknown | settings에서 도메인 claim + campaign ID, 24h 쿠키 인지 |
+| 인앱 브라우저 | 격리 WebView로 예약 링크 오픈 | 시스템 브라우저(Custom Tabs/Safari)로 — 쿠키 보존 |
+| Postmark/SendGrid Inbound | From으로 사용자 식별 | envelope `To` 토큰으로 식별, From 무시, SPF/DKIM 검증 |
+| Google Places (플랜 그라운딩) | 좌표/영업시간 있는데 프롬프트에 안 넣음 | 추출 단계 Places 데이터를 플랜 후처리 검증에 주입 |
+| react-native-maps (Android) | iOS 키만, Android SHA-1 누락 | Android 별도 키 + SHA-1 등록, 회색지도 체크 |
+| expo-share-intent (Android) | iOS App Group 코드 재사용 | `ACTION_SEND` payload를 크로스플랫폼 API로만 읽기 |
 
----
+## Performance / Cost Traps
 
-## Performance Traps
-
-| 함정 | 증상 | 예방 | 언제 깨지나 |
-|---|---|---|---|
-| **PostGIS index 누락** — places 테이블의 `location geography` 컬럼에 GIST index 없음 | 지도 viewport 쿼리 시 full table scan, 응답 > 1s | 마이그레이션에 `CREATE INDEX places_location_gix ON places USING GIST (location)` 명시 | 보드당 places 100개 넘어가면 체감 |
-| **N+1 쿼리 in 보드 페이지** — 핀 N개 each마다 votes 별도 fetch | 보드 페이지 SSR > 2s | `vote_counts_for_places(board_id)` RPC로 한 번에 집계 (이미 ASIS 패턴) | 핀 10개부터 체감 |
-| **Edge Function cold start** — Deno isolate 매번 새로 부팅 | 첫 추출 요청 8~12s | Deno KV warm-up 또는 invocation 빈도 늘리기 (dogfooding 단계엔 OK) | 추출 빈도 낮을 때 — dogfooding에선 항상 |
-| **이미지 Optimization 안 함** — Google Places photo URL 직접 사용 | 모바일 데이터 사용량 폭증, LCP 나쁨 | Next.js `<Image>` + `cloudinary` 또는 Vercel Image Optimization 거치기 | Web `/b/[slug]` 폴리시 단계 |
-| **Realtime 구독 폭증** — 보드 페이지 visit마다 새 채널 | 무료 tier 200 concurrent 한도 hit | 채널 재사용 (singleton pattern) + 비로그인 페이지는 polling으로 | 동시 사용자 100명+ (Phase 2 한참 뒤) |
-| **추출 동시 다발** — 한 사용자가 5개 영상 share extension으로 보냄 | Edge Function 5개 동시 실행, Anthropic rate limit hit | Edge Function 큐 + 순차 처리 (또는 Supabase pg_cron + queue 테이블) | dogfooding 중에도 발생 가능 |
-
----
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| 플랜 LLM 코스트 폭증 | 추출당 $0.005 예산 초과 | 입력 장소 수·출력 토큰 상한, 재플랜 캐싱, 코스트 로깅 | 장소 많은 보드 / 잦은 재생성 |
+| 스팸 메일이 LLM 비용 태움 | 인바운드 호출 급증 | SPF/DKIM 미인증·토큰 불일치는 LLM 전에 드롭 | 인바운드 주소 공개 후 |
+| 가격비교 다중 프로바이더 동기 호출 | 예약 화면 느림 | 캐싱·타임아웃·부분 결과 표시 | 프로바이더 늘어날 때 |
 
 ## Security Mistakes
 
-| 실수 | 위험 | 예방 |
-|---|---|---|
-| **Service role key 클라이언트 번들 노출** | RLS bypass 가능, DB 전체 노출 | `SUPABASE_SERVICE_ROLE_KEY`는 Edge Function의 `Deno.env.get`만. apps/web/apps/ios 어디서도 import 금지. `.env.example`에서 명확히 분리 |
-| **Google Maps API 키 restriction 누락** | 누군가 키를 추출해 본인 앱에 사용 → 비용 폭주 | Web 키는 HTTP referrer (moajoa.app), iOS 키는 bundle ID, Server 키는 Edge Function IP/no restriction. *키 3개 분리* |
-| **share_slug 추측 가능** — 짧은 보드 slug | 비공개 보드를 외부인이 URL 추측으로 접근 | `share_slug`는 16+ chars cryptographic random (`nanoid(16)`), URL safe |
-| **`public_board_view` RPC가 visibility 체크 안 함** | RPC를 직접 호출하면 비공개 보드도 노출 | RPC 내부에서 `WHERE visibility = 'public' AND share_slug = $1`. SECURITY DEFINER라도 조건 필수 |
-| **클라이언트가 좌표 직접 INSERT** (현 `add_manual_place` 상태) | 사용자가 가짜 가게 좌표 주입 → 보드 신뢰도 파괴 | Phase 1.5 `resolve-place` Edge Function — 클라이언트는 `google_place_id`만 전달, 서버가 Places API로 검증 |
-| **Edge Function에 caller JWT 검증 누락** | 비인증 사용자가 service role 권한으로 DB 수정 | Edge Function 시작 시 `Authorization: Bearer <JWT>` 검증 후 `auth.uid()` 추출 |
-| **invitee 이메일이 RLS로 보호 안 됨** | 보드 owner가 아닌 사람이 invitations 테이블 조회로 다른 사람 이메일 수집 | invitations RLS는 invitee 본인 + 보드 owner만 SELECT |
-
----
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| 인바운드 메일 인증 미검증 | 위조 예약 주입 / 타인 데이터 오염 | SPF/DKIM/DMARC + envelope 토큰 매칭 |
+| 인바운드 토큰 = 노출형(UUID 그대로) | 토큰 추측해 타인 가계부 주입 | 추측불가 랜덤 토큰, 회전 가능 |
+| 메일 본문(카드·PNR) 평문 영구 저장 | 개인정보 유출 사고 | 구조화 필드만, 민감정보 마스킹, 원문 TTL 폐기 |
+| service role로 인바운드/플랜 처리 후 RLS 우회 노출 | 권한 상승 | Edge Function 내부에서만 service role, 클라이언트는 anon |
+| 제휴 SubID에 PII 인코딩 | 제3자 네트워크에 사용자 식별정보 누출 | opaque trip/place 토큰만, 이메일/이름 금지 |
 
 ## UX Pitfalls
 
-| 함정 | 사용자 영향 | 더 나은 접근 |
-|---|---|---|
-| **추출 30초 동안 로딩 spinner만** | 사용자가 "고장났나?" 의심하고 앱 종료 | 단계별 progress ("자막 가져오는 중 → 장소 찾는 중 → 지도에 표시 중"). Realtime으로 백엔드 status push |
-| **핀 클릭 → 영상 점프 시 잘못된 시각** (Pitfall 3) | "이 앱 못 믿겠다" | Timestamp range + -3초 offset (Pitfall 3 참조) |
-| **저신뢰 핀과 고신뢰 핀이 시각적으로 동일** | 사용자가 어느 게 정확한지 모름, 전부 의심 | confidence 별 색상/투명도 (`high`=진한 색, `low`=흐림 + ⚠️ 아이콘) |
-| **보드 첫 진입 시 빈 상태** | "뭘 해야 하지?" | 첫 보드 자동 생성 + 샘플 유튜브 링크 1개 미리 추출되어 있음 (이미 v1 active list에 있음) |
-| **공유 링크로 들어온 비로그인 사용자 → 로그인 강제** | 친구가 카톡으로 받은 사람이 "가입해야 된다고? 그냥 닫자" | `/b/[slug]`는 SSR로 즉시 렌더 (이미 결정됨). 투표만 로그인 게이트 |
-| **추출 실패 시 사용자 행동 불가** | "왜 실패했지?" 끝 | 실패 시 "수동 추가" 버튼 + 자막 없음/장소 없음/할당량 초과 등 실패 사유 명시 |
-| **여러 도시 보드에 핀이 흩어짐** | "내 핀이 어디 있지?" 검색 어려움 | 지도가 자동으로 보드 도시 + bbox로 fit. "도시별 묶기" 필터 |
-| **한국어/일본어 mixed transcript에서 한쪽만 추출** | 일본 영상에서 일본인 가게 이름이 빠짐 | LLM 프롬프트에 명시: "한·일·영 어느 언어든 장소면 추출". transcript 언어 폴백 ko → ja → en |
-
----
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| 닫힌 가게·불가능 동선 일정 | "이 앱 못 믿겠다" 즉시 이탈 | 영업시간·이동시간 그라운딩 검증 |
+| 가계부 ₩ 값이 카드 명세와 안 맞음 | 신뢰 붕괴(돈 다루는 기능) | 원통화+환율 시점 라벨, "약/추정" 표기 |
+| 옛 공유 링크 404 | 카톡에 뿌린 링크 다 깨짐 | 하위호환 리다이렉트 |
+| 여행 1개인데 목록 거쳐 진입 | 마찰 | 1개→바로진입(PRODUCT 6절) |
+| 메일 전달했는데 항목 안 생김(조용히 실패) | 가계부 빔, 원인 모름 | 파싱 실패 시 사용자에게 알림 + 수동 추가 fallback |
 
 ## "Looks Done But Isn't" Checklist
 
-배포 직전 또는 dogfooding 시작 전 검증:
-
-- [ ] **추출 파이프라인:** transcript 없는 영상은 어떻게 되나? (현재 500? `no_transcript` 상태로 graceful?)
-- [ ] **추출 파이프라인:** Places API 호출 5개 중 2개 실패 시 부분 결과가 저장되나? (all-or-nothing 아니어야 함)
-- [ ] **추출 파이프라인:** 같은 영상을 같은 보드에 다시 share extension으로 보내면 중복 핀 생기나?
-- [ ] **RLS:** 비멤버가 `/b/<private-slug>` 접근 시 정확히 404 (200 빈 데이터 X)
-- [ ] **RLS:** anon이 직접 `boards` 테이블 SELECT 시도 시 0행 반환 (에러 X, 빈 결과)
-- [ ] **RLS:** owner가 본인 보드 DELETE 시 places·links·votes 모두 cascade 되나?
-- [ ] **iOS Share Extension:** 카톡에서 공유 → 보드 선택 화면이 1초 안에 뜨나? (cold start 포함)
-- [ ] **iOS Share Extension:** Share extension에서 Supabase 호출 시 main app과 같은 user session 공유되나? (App Groups 셋업)
-- [ ] **Web `/b/[slug]`:** 카톡으로 링크 공유 시 OG 카드에 보드 제목 + 지도 썸네일이 뜨나?
-- [ ] **Web `/b/[slug]`:** Lighthouse 모바일 점수 > 80 (실제 모바일 사용자가 다수)
-- [ ] **인증:** 매직 링크 클릭 → 같은 디바이스 다른 브라우저에서 열어도 동작하나?
-- [ ] **인증:** 로그아웃 후 RSC 캐시에 이전 user 데이터 남나? (router.refresh 강제)
-- [ ] **비용:** Google Cloud billing 일일 알림 셋업됨 ($5, $20, $50)
-- [ ] **비용:** Anthropic usage dashboard 주간 점검 컨벤션
-- [ ] **추출 정확도:** sample 10개 영상으로 baseline precision/recall 측정 결과 문서화
-- [ ] **에러:** Edge Function 실패 시 로그에 link_id + 실패 단계 명시 (디버깅 가능)
-- [ ] **앱 아이콘 + splash:** 실기기에서 확인됨 (시뮬레이터 ≠ 실기기)
-- [ ] **Pretendard:** iOS·Web 양쪽에서 한자 fallback 정상 (Noto Sans JP)
-- [ ] **첫 사용자 흐름:** 로그인 → 30초 안에 첫 핀이 지도에 뜨나? (e2e cold flow)
-
----
+- [ ] **제휴 딥링크:** 링크는 열리는데 — 실제 전환 1건이 **우리 SubID로 대시보드에 어트리뷰션**되나? (클릭 ≠ 어트리뷰션)
+- [ ] **외부 예약 오픈:** 시스템 브라우저인가 격리 WebView인가? (쿠키 보존 확인)
+- [ ] **인바운드 메일:** Gmail/Outlook/Apple Mail **3개 클라이언트 전달 포맷** 다 파싱되나? From이 아니라 To 토큰으로 식별하나?
+- [ ] **메일 파싱 실패:** 실패 시 조용히 드롭 아니라 사용자 알림 + 수동 추가 경로 있나?
+- [ ] **AI 플랜:** 모든 슬롯이 영업시간 내 + 이동시간 ≤ 갭 검증 통과하나? 좌표 없는 발명 장소 없나?
+- [ ] **가계부 통화:** 원통화 코드 + 환율 시점이 레코드에 저장되나? 다통화 합계 라벨 있나?
+- [ ] **IA 재편:** 4탭 + 상세 push에서 탭바 유지? 옛 `/boards/[id]`·`/b/[slug]` 리다이렉트? 여행 0/1/N 진입 분기 테스트?
+- [ ] **share-handler:** 새 trip 라우트로 라우팅하도록 같이 고쳐졌나?
+- [ ] **Android:** share·지도·예약 외부브라우저·딥링크를 **실기기**에서 재검증했나?
+- [ ] **Data Safety 폼:** 이메일/금융/위치/어트리뷰션 데이터 + SDK 수집까지 신고했나? 제휴 수익 공시?
+- [ ] **루프 닫힘:** 가계부 지출이 어느 trip/place 추천에서 왔는지 매칭되나?
 
 ## Recovery Strategies
 
-| 함정 발생 시 | 회복 비용 | 회복 단계 |
-|---|---|---|
-| **RLS 무한 재귀 (Pitfall 4) prod에 배포됨** | HIGH | 1) 즉시 새 마이그레이션으로 해당 정책 DROP + 최소 권한으로 임시 교체 2) SECURITY DEFINER 헬퍼로 재작성 3) prod에 push 4) 로컬에 RLS 테스트 추가 |
-| **Places API 비용 폭주 (Pitfall 5) 발견됨** | MEDIUM | 1) Google Cloud에서 API key 일시 차단 2) Edge Function에 emergency switch (`EXTRACTION_ENABLED=false`) 3) FieldMask·캐시·budget 한 번에 도입 4) 사용자에게 "일시 점검" 공지 |
-| **iOS 빌드 1주 이상 박힘 (Pitfall 6)** | MEDIUM | 1) EAS Build로 즉시 전환 (Apple Dev 계정만 있으면 1일) 2) 로컬 빌드는 백로그로 미루기 3) Web으로 가능한 검증 계속 |
-| **Hallucinated places (Pitfall 1) 다수 발견됨** | LOW | 1) 영향받은 places 일괄 `low_confidence`로 마킹 2) 프롬프트에 citation 강제 패치 3) eval sample로 회귀 측정 |
-| **Wrong city (Pitfall 2) 보고됨** | LOW | 1) 영상 단위 재추출 API (`POST /api/links/:id/reextract`) 2) 사용자가 트리거 가능 3) 백엔드는 locationBias 패치 |
-| **마이그레이션 수정해버림 (Pitfall 9)** | HIGH | 1) prod DB schema vs local 차이 진단 (`pg_dump --schema-only` 비교) 2) drift fix용 새 마이그레이션 작성 3) 향후 룰 강화 |
-| **Scope creep (Pitfall 7)로 dogfooding 못 함** | HIGH | 1) `/gsd-pause-work`로 모든 활성 작업 freeze 2) PROJECT.md Out of Scope 재정독 3) 가장 작은 dogfooding 가능 단위로 plan 재작성 4) 1주 sprint로 demo 강제 |
-
----
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| SubID 누락(초기 전환 익명화) | HIGH | 과거 어트리뷰션 복구 불가 — 즉시 SubID 도입해 손실 중단 |
+| 옛 공유 링크 404 | MEDIUM | 리다이렉트 라우트 추가(앱+web). 이미 전송된 링크는 영구라 빨리 |
+| 메일 본문 무차별 저장 | MEDIUM | 레닥션 마이그레이션 + TTL 잡 도입. 노출 범위 감사 |
+| ₩ 단일통화 저장 | HIGH | 원통화 정보 소실분은 복구 불가 — 스키마 확장 후 신규부터 정확히 |
+| IA 빅뱅으로 탭바/라우트 깨짐 | MEDIUM | 중첩 `_layout` 회귀 수정, 진입 분기 케이스별 픽스 |
+| Android 패리티 미검증 | LOW-MED | Android 실기기 체크리스트 재실행, 임시 웹 예약 fallback |
 
 ## Pitfall-to-Phase Mapping
 
-로드맵 phase가 각 pitfall을 어떻게 다루는지.
-
-| Pitfall | 예방 Phase | 검증 방법 |
-|---|---|---|
-| 1. Hallucinated places | Phase 1 (citation) + Phase 2 (eval) | sample 영상 10개의 precision ≥ 0.8 |
-| 2. Wrong city | Phase 1 | bounding box 위반율 < 5% |
-| 3. Timing drift | Phase 1 (range) + Phase 1.5 (UX) | 점프 정확도 dogfooding 평가 (틀린 점프 < 20%) |
-| 4. RLS 재귀 next round | Phase 1 (컨벤션) + Phase 1.5 (테스트) | 새 마이그레이션 PR마다 RLS 테스트 첨부 |
-| 5. Places API 비용 폭주 | Phase 1 (FieldMask + budget alert) | 일일 비용 dashboard < $5 |
-| 6. iOS 빌드 시간 블랙홀 | Phase 1 (이번 주 결정) | iOS 실기기에서 앱 실행 가능 |
-| 7. Scope creep | 전 Phase | 매주 demo + Out of Scope 점검 |
-| 8. Next.js SSR 쿠키 | Phase 1 (Web 폴리시) | 로그인 → RSC 페이지 새로고침 → 세션 유지 |
-| 9. Migration append-only 위반 | 전 Phase | `supabase migration list` 정기 점검 |
-| 10. 한국어 IME + Share Ext | Phase 1.5 | 실기기 카톡 공유 테스트 |
-| 11. Pretendard 로딩 | Phase 1 (디자인 트랙) | 앱 cold start 폰트 깜빡임 없음 |
-| 12. Realtime 누수 | Phase 1.5 | Supabase dashboard 동시 연결 수 < 50 |
-| 13. OG 한자 렌더링 | Phase 1.5 | OG 이미지에 일본어 가게 이름 정상 표시 |
-| 14. Magic link rate limit | Phase 1.5 (외부 사용자 전) | Resend SMTP 전환 |
-| 15. LLM JSON 깨짐 | Phase 1 | Edge Function 파싱 실패율 < 1% |
-
----
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| 1. SubID 어트리뷰션 누락 | 가격비교/제휴 예약 | 전환 1건이 SubID로 대시보드 어트리뷰션 |
+| 2. 쿠키 격리/짧은 윈도우 | 가격비교/제휴 예약 (discuss에서 브라우저 모드 잠금) | 시스템 브라우저 오픈 + 쿠키 보존 확인 |
+| 3. 전달메일 사용자 식별 | 가계부(인바운드) — 주소 스킴 최우선 | To 토큰 식별, 타인 전달 메일 오염 안 됨 |
+| 4. 스푸핑/본문 저장 | 가계부(인바운드) — 마이그레이션과 짝 | 미인증 메일 드롭, 원문 미저장/TTL |
+| 5. LLM 플랜 환각 | 자동 AI 플랜 | 영업시간·이동시간 검증 통과율 |
+| 6. 환율 3중 불일치 | 가계부(스키마) | 원통화+환율 원자 저장, 합계 라벨 |
+| 7. IA 재편 라우트 깨짐 | 네비게이션 재편 (discuss에서 매핑/리다이렉트/진입분기 잠금) | 탭바 유지·옛 링크 리다이렉트·0/1/N 진입 |
+| 8. Android 패리티 | Android 포팅 | share·지도·예약·딥링크 실기기 통과 |
+| 9. 루프 식별자 단절 | 첫 수익화/가계부 phase에서 계약 잠금 | e2e: 클릭→메일→가계부 같은 place 매칭 |
+| 10. Data Safety 불일치 | Android 포팅 + 가계부 (ship 게이트) | 폼↔실제 흐름 일치, 제휴 공시 |
 
 ## Sources
 
-### Context: 프로젝트 내부 (검증된 1차 정보)
-- `/Users/wcb/Documents/MOAJOA/.planning/PROJECT.md` — v1 범위, 제약, key decisions
-- `/Users/wcb/Documents/MOAJOA/CLAUDE.md` — 컨벤션 (RLS·마이그레이션·import 룰)
-- `/Users/wcb/Documents/MOAJOA/docs/ARCHITECTURE.md` — 데이터 플로우, security model
-- `/Users/wcb/Documents/MOAJOA/docs/WORKSTREAMS.md` — 트랙별 상태·블로커
-- `/Users/wcb/Documents/MOAJOA/docs/SESSION-NOTES-2026-05-24.md` — 피봇 스캐폴드 + 알려진 한계
-- `/Users/wcb/Documents/MOAJOA/docs/SESSION-NOTES-2026-05-25.md` — Day 2 발견된 버그 6개 (RLS 재귀 포함)
-
-### 외부 검증 (2026년 공식 / 최신)
-- [Expo SDK 54 changelog](https://expo.dev/changelog/sdk-54) — isolated install / Reanimated 4.x peer 변경 (HIGH)
-- [Expo Monorepo guide](https://docs.expo.dev/guides/monorepos/) — pnpm node-linker 옵션 (HIGH)
-- [Upgrading to Expo 54 Survival Story (Medium)](https://medium.com/@shanavascruise/upgrading-to-expo-54-and-react-native-0-81-a-developers-survival-story-2f58abf0e326) — react-native-worklets peer 누락 이슈 (MEDIUM)
-- [Upgrading Expo SDK 54 Common Issues (Medium)](https://diko-dev99.medium.com/upgrading-to-expo-sdk-54-common-issues-and-how-to-fix-them-1b78ac6b19d3) (MEDIUM)
-- [Google Places API Usage and Billing](https://developers.google.com/maps/documentation/places/web-service/usage-and-billing) — FieldMask SKU 티어링 (HIGH)
-- [Google Places: Choose Fields](https://developers.google.com/maps/documentation/places/web-service/choose-fields) — 와일드카드 금지 권고 (HIGH)
-- [Manage Google Maps Platform costs](https://developers.google.com/maps/billing-and-pricing/manage-costs) — budget alert 셋업 (HIGH)
-- [Supabase SSR for Next.js](https://supabase.com/docs/guides/auth/server-side/nextjs) — 쿠키·middleware 패턴 (HIGH)
-- [Supabase SSR client creation](https://supabase.com/docs/guides/auth/server-side/creating-a-client) — setAll try/catch (HIGH)
-- [Next.js + Supabase cookies() should be awaited (GH discussion)](https://github.com/vercel/next.js/discussions/81445) — Next.js 15.3+ async cookies (MEDIUM)
-- [Supabase RLS Performance Best Practices](https://supabase.com/docs/guides/troubleshooting/rls-performance-and-best-practices-Z5Jjwv) (HIGH)
-- [Supabase RLS SECURITY DEFINER (DEV)](https://dev.to/kanta13jp1/supabase-rls-security-definer-preventing-infinite-recursion-in-admin-policies-4go2) — 패턴 확인 (MEDIUM)
-- [Supabase RLS Production Patterns (DEV)](https://dev.to/whoffagents/supabase-row-level-security-in-production-patterns-that-actually-work-2l78) (MEDIUM)
-- [Infinite recursion discussion (GH)](https://github.com/orgs/supabase/discussions/1138) — 42P17 트리거 패턴 (HIGH)
-- [expo-share-intent (npm)](https://www.npmjs.com/package/expo-share-intent) — config plugin 사용 (HIGH)
-- [expo-share-extension (MaxAst)](https://github.com/MaxAst/expo-share-extension) — 대안 패키지 (MEDIUM)
-- [iOS App Extensions Expo docs](https://docs.expo.dev/build-reference/app-extensions/) — entitlements 처리 (HIGH)
-- [K-HALU 한국어 hallucination 벤치마크](https://proceedings.iclr.cc/paper_files/paper/2025/file/cfcadfe84ee49908cde1fc2992c38d20-Paper-Conference.pdf) — 한국어 LLM hallucination 빈도 영문보다 높음 (MEDIUM)
-- [Expo Fonts docs](https://docs.expo.dev/develop/user-interface/fonts/) — config plugin vs runtime (HIGH)
-- [Karpathy LLM coding observations](https://x.com/karpathy/status/2015883857489522876) — Scope creep / simplicity 원칙 (이미 CLAUDE.md § 3에 반영) (HIGH)
-
-### 신뢰 등급
-- HIGH: Supabase·Expo·Google 공식 문서, 프로젝트 내부 코드/세션노트
-- MEDIUM: 검증된 커뮤니티 게시물 (DEV.to, Medium), GitHub 토론
-- LOW: 없음 (모든 항목은 최소 MEDIUM 이상 출처로 검증됨)
+- [Travelpayouts — ID and SubID (Affiliate marker)](https://support.travelpayouts.com/hc/en-us/articles/203955653-ID-and-SubID-Affiliate-marker-and-additional-marker) — 30일 쿠키, SubID 포맷 `marker=ID.subID` (HIGH)
+- [Travelpayouts — How to dynamically change SubID](https://support.travelpayouts.com/hc/en-us/articles/12729746524050-How-to-dynamically-change-SubID-in-short-affiliate-links) (HIGH)
+- [Travelpayouts — How to choose an affiliate program](https://support.travelpayouts.com/hc/en-us/articles/11395847483154-How-to-choose-an-affiliate-program) — 플랫폼 무최소트래픽 / 브랜드별 승인 (MEDIUM)
+- [Stay22 — Breaking Down Stay22 Analytics for Affiliate Tracking](https://blog.stay22.com/breaking-down-stay22-analytics-for-affiliate-tracking) — campaign ID, 24h Booking 쿠키, 도메인 claim (MEDIUM)
+- [Stay22 — Allez deep link generator](https://www.stay22.com/allez) (MEDIUM)
+- [TripIt — Inbox Sync / forwarded traveler identification](https://help.tripit.com/en/support/solutions/articles/103000063359-inbox-sync-posting-other-traveler-s-trips) — 전달 메일 트래블러 구분 불가 (HIGH)
+- [TripIt Privacy Statement](https://www.tripit.com/uhp/privacyPolicy) — 최종 배달지 읽음, 원발신자 아님 (MEDIUM)
+- [TrustedSec — Spoof-Proofing Email With SPF, DKIM, DMARC](https://www.trustedsec.com/blog/real-or-fake-spoof-proofing-email-with-spf-dkim-and-dmarc) (HIGH)
+- [Google Research — Optimizing LLM-based trip planning](https://research.google/blog/optimizing-llm-based-trip-planning/) — 그라운딩으로 환각·비현실 타이밍 제거 (HIGH)
+- [ACL 2025 — Preference-Driven LLM-Solver for Travel Planning](https://aclanthology.org/2025.acl-long.1339.pdf) — 정량 제약 취약 (MEDIUM)
+- [Foreign Exchange Transactions and Settlement Dates](https://theintactone.com/2026/02/28/foreign-exchange-transactions-and-settlement-dates/) — T+2, 예약시점 vs 결제시점 환율 (MEDIUM)
+- [expo-share-intent (achorein/GitHub)](https://github.com/achorein/expo-share-intent) — iOS extension vs Android ACTION_SEND 모델 차이 (MEDIUM)
+- [Supporting iOS Share Extensions & Android Intents on RN](https://www.devas.life/supporting-ios-share-extensions-android-intents-on-react-native/) (MEDIUM)
+- [Google Play — Developer Program Policy](https://support.google.com/googleplay/android-developer/answer/16810878?hl=en) (HIGH)
+- [Avoid Google Play Rejection: Checklist 2026 — AppTester](https://www.apptester.co/blog/avoid-google-play-rejection) — Data Safety 폼 불일치가 #1 거절 (MEDIUM)
+- 코드베이스 인라인 인용: `apps/ios/app/+native-intent.tsx`, `apps/ios/app.config.ts`(App Group), `apps/ios/app/index.tsx`(진입 분기), `supabase/migrations/0004,0005`(extraction cost 패턴) (HIGH — 직접 확인)
 
 ---
-
-*Pitfalls research for: MOAJOA (link-to-map travel curation app, post-pivot from Flutter to TS monorepo)*
-*Researched: 2026-05-25 by GSD researcher*
-*Next review: Phase 1 완료 시 (dogfooding 게이트 통과 후 — 새로 발견된 pitfall 추가)*
-
----
-
-## Phase 6 — Dogfooding Gate
-
-(Dogfooding 중 발견된 신규 pitfall append — D-19, Success Criterion 5. anchor created 2026-05-26 by Plan 06-05.)
-
-- _Empty until dogfooding starts_
+*Pitfalls research for: MOAJOA v2.0 — 발견→예약→정산 풀 루프*
+*Researched: 2026-06-21*

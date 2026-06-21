@@ -75,7 +75,7 @@
 
 ## Constraints
 
-- **Tech stack**: TypeScript strict, Next.js 15 (App Router), Expo SDK 54, Supabase, Anthropic claude-sonnet-4-6, Google Places — 이 조합에서 벗어나지 않음
+- **Tech stack**: TypeScript strict, Next.js 15 (App Router), Expo SDK 56, Supabase, Anthropic claude-sonnet-4-6, Google Places — 이 조합에서 벗어나지 않음
 - **Backend**: Supabase only — Firebase/Firestore 재도입 금지 (피봇 결정)
 - **DB migrations**: append-only — 기존 SQL 수정 금지, 새 번호 파일만 추가
 - **Workspace imports**: `.js` extension 금지 (Turbopack 호환)
