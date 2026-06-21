@@ -1,7 +1,7 @@
 // Share the current trip (v1.3 / Phase 14-04, repointed to trip vocab in 17-04).
 //
 // Flips the trip to 'shared' (server generates share_slug on first share) and
-// opens the native share sheet with the public /b/{slug} URL so friends can vote
+// opens the native share sheet with the public /t/{slug} URL so friends can vote
 // on web without an app. The "빠진 다리": iOS extraction → web voting.
 
 import { shareTrip } from '@moajoa/api';
@@ -14,7 +14,7 @@ export async function shareCurrentTrip(tripId: string): Promise<void> {
   const base =
     (Constants.expoConfig?.extra?.webUrl as string | undefined)?.replace(/\/+$/, '') ??
     'https://moajoa.app';
-  const url = `${base}/b/${slug}`;
+  const url = `${base}/t/${slug}`;
   await Share.share({
     message: `MOAJOA에서 같이 정해요! 영상 속 장소를 모아 투표해요 👇\n${url}`,
   });
