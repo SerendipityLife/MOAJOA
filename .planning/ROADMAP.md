@@ -34,7 +34,7 @@ Plans:
 
 ### Phases
 
-- [ ] **Phase 17: Trip Foundation & IA 재편** — 0016 마이그레이션 + core 식별자 계약 + Expo Router 여행 4탭 + 진입분기 + 일정 정해짐 경로 (비협상 기반)
+- [x] **Phase 17: Trip Foundation & IA 재편** — 0016 마이그레이션 + core 식별자 계약 + Expo Router 여행 4탭 + 진입분기 + 일정 정해짐 경로 (비협상 기반) — 5/5 plans 완료 (2026-06-21), phase verify 대기
 - [ ] **Phase 18: Auto Plan (추출 즉시 AI 플랜)** — 추출 완료가 플랜 생성 트리거. 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시
 - [ ] **Phase 19: Date Voting (일정 미정 분기)** — 날짜 투표 + 비로그인 초대 링크 + 집계→여행 일정 전환
 - [ ] **Phase 20: Affiliate Booking (딥링크 제휴 예약)** — 인라인 예약 카드 + 통합 체크리스트 + SubID 어트리뷰션 + 시스템 브라우저
@@ -59,7 +59,7 @@ Plans:
 - [x] 17-01-PLAN.md — core foundation: vitest wiring + Trip/TripId/TripCreate Zod (board.ts→trip.ts) + TripKeys + decideEntryRoute (NAV-01/SETUP-01/02)
 - [x] 17-02-PLAN.md — affiliate contract: buildAffiliateUrl + BookingClickContext + opaque ClickToken (ATTR-01, TDD)
 - [x] 17-03-PLAN.md — 0016 squash baseline + RLS/trigger/view/join port + api trip-vocab rename + local db reset + types regen (SETUP-02/NAV-04) — remote reset deferred
-- [ ] 17-04-PLAN.md — Expo Router 4-tab restructure + 0/1/N entry + trip header (no FAB) + share repoint + old-route delete (NAV-01/02/03/04)
+- [x] 17-04-PLAN.md — Expo Router 4-tab restructure + 0/1/N entry + trip header (no FAB) + share repoint + old-route delete (NAV-01/02/03/04)
 - [x] 17-05-PLAN.md — onboarding 정해짐/미정 branch + trip create UI (preset city/date range/auto-rep) + web /b/[slug]→/t/[slug] move (SETUP-01/02/NAV-04)
 **UI hint**: yes
 
@@ -125,7 +125,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Trip Foundation & IA 재편 | 4/5 | In Progress|  |
+| 17. Trip Foundation & IA 재편 | 5/5 | Complete | 2026-06-21 |
 | 18. Auto Plan | 0/~4 | Not started | - |
 | 19. Date Voting | 0/~3 | Not started | - |
 | 20. Affiliate Booking | 0/~3 | Not started | - |

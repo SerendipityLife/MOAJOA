@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-last_updated: "2026-06-21T13:31:53.907Z"
-last_activity: 2026-06-21 -- 17-05 완료 (온보딩 정해짐/미정 분기 + 일정 정해짐 trip create + 웹 /b→/t 이동; iOS typecheck 0 errors)
+last_updated: "2026-06-21T14:05:00.000Z"
+last_activity: 2026-06-21 -- 17-04 완료 (trip-scoped IA 재편 SUMMARY 작성 + 디바이스 UAT 승인; Phase 17 5/5 plans 전부 완료)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # STATE: MOAJOA v2.0
@@ -32,11 +32,13 @@ progress:
 
 ## Current Position
 
-Phase: 17 — Trip Foundation & IA 재편 (executing — 17-01/02/03/04/05 ✅ · phase verify 대기)
-Plan: 17-05 ✅ 완료 (Wave 4) — Task 1 (onboarding 분기) ✅ edd9318 / Task 2 (trip create) ✅ 6ede7aa / Task 3 (웹 /b→/t 이동 + 앱 trip 어휘 마이그레이션) ✅ 3fc4873
-Status: 17-05 COMPLETE — 온보딩 정해짐/미정 분기(D-11; 정해짐→/trip/create = 0-trip 첫 여행 SOLE 경로, BLOCKER 1) + 일정 정해짐 trip create(preset city + 필수 날짜 + TripCreateSchema → createTrip, representative_id는 트리거 set, success → /trip/{id}/plan) + 웹 공유 라우트 /b/[slug]→/t/[slug] 이동(public_trip_view, /b 클린 브레이크). **iOS typecheck 0 errors**(17-04 잔여 forward-ref 2건 해소: /onboarding·/trip/create) + iOS 72/72 jest. 웹 typecheck 0 errors + 62/62 vitest + next build PASS. **3 deviation(R3 blocking):** Plan 03 board API 삭제로 깨진 웹 importer(vote-island getMyBoardRole/joinSharedBoard, lib/cache getPublicBoardBySlug, dev-tool boards/ 라우트)를 trip 어휘로 마이그레이션 — Plan 03 SUMMARY가 17-04/05에 위임한 작업. dev-tool 타이틀-only create-board-button 제거(createTrip는 city+날짜 필수 + CLAUDE.md §5 = 웹 생성 금지).
-Last activity: 2026-06-21 -- 17-05 완료 (온보딩 분기 + trip create + 웹 /b→/t 이동, SETUP-01/02 + NAV-04)
-Next: 17-04 SUMMARY 미작성(라우트 파일은 존재·동작) → phase verify 전 17-04 요약/검증 확인 필요. 그 후 Phase 17 verify → Phase 18 (플랜 탭 콘텐츠).
+Phase: 17 — Trip Foundation & IA 재편 (executing — 17-01/02/03/04/05 ✅ 5/5 · phase verify 대기)
+Plan: 17-04 ✅ 완료 (Wave 3) — Task 1 (0/1/N entry + trip Stack header + 4탭 layout) ✅ 4fef904 / Task 2 (map/plan/book/ledger 탭 + me) ✅ 4022b7e / Task 3 (share repoint + 구 boards/ & (tabs) 삭제) ✅ 4079b06 / Task 4 (디바이스 UAT human-verify) ✅ 사용자 승인
+Status: 17-04 COMPLETE — trip-scoped IA 재편. 0/1/N 진입분기(decideEntryRoute: 0→/onboarding[BLOCKER 1, first-trip은 Plan 05 온보딩 소유], 1/N→/trip/{id}/plan) + /trip/[id] Stack 헤더(여행 전환 switcher + profile→/me, **no FAB**, Pitfall 1 split: 헤더=parent Stack, 탭바=(tabs)/_layout) + 4탭 하단바(지도·플랜·예약·가계부, plan default) + map 탭에 boards/[id] 콘텐츠 trip 어휘 포팅(confidence read 보존) + plan brand empty-state + book/ledger neutral 스텁 + me 글로벌 화면 이전 + share-handler `/boards/{id}`→`/trip/{tripId}/plan`(board_id→trip_id) + share-routing trip 어휘 + 구 boards/ 트리 & 글로벌 (tabs) 그룹(discover/friends 포함, Open Q4) 클린 브레이크 삭제(레거시 redirect 없음, D-15). **자동 증거: apps/ios typecheck 0 errors + jest 72/72(12 suites)** — 17-04 잔여 forward-ref 2건(/onboarding·/trip/create)은 Plan 05이 해소. **디바이스 UAT 사용자 승인**(이번 세션 원격 Supabase를 0016 trips 베이스라인으로 reset[.backups/ 백업 후 사용자 명시 승인]해 trips-native 원격에서 sim 실행 — NAV-01/02/03/04 런타임 확인). **Deviation 없음**(core LinkAdd.board_id 입력키 리네임은 Plan 03이 api 경계 매핑으로 처리·후속 plan 소유 — 본 plan과 무모순). NAV-01/02/03/04 완료.
+Last activity: 2026-06-21 -- 17-04 완료 (trip IA 재편 SUMMARY + UAT 승인, NAV-01/02/03/04)
+Next: Phase 17 = 5/5 plans 전부 완료 → Phase 17 verify(`/gsd-verify-work`) → Phase 18 (플랜 탭 콘텐츠).
+
+**17-04 완료 (2026-06-21, code commits 4fef904 + 4022b7e + 4079b06, SUMMARY 본 세션 finalize):** trip-scoped IA 재편 — 글로벌 5탭 boards IA → /trip/[id] 4탭 셸. **Task 1 (`index.tsx` + `/trip/[id]/_layout.tsx` + `header.tsx` + `(tabs)/_layout.tsx`):** auth scaffold 보존, 구 `<Redirect href="/(tabs)/boards" />` → `decideEntryRoute(listMyTrips, lastTripId)` 분기(0→/onboarding, 1/N→/trip/{tripId}/plan; 0-trip 온보딩은 BLOCKER 1 — auto-first-board 미이전, first-trip은 Plan 05 소유); parent Stack이 `header.tsx`를 `screenOptions.header`로 소유(Pitfall 1 split, 탭바는 (tabs)/_layout); 4 `Tabs.Screen`(지도·플랜·예약·가계부) 탭바 스타일 verbatim 복사, plan default, **no FAB·no new 탭**; 헤더 = "현재 여행 ▾" 여행 전환 switcher(trips 목록 + 새 여행 + per-row 삭제 Alert) + profile→/me. **Task 2:** map 탭에 `boards/[id].tsx` 콘텐츠(MapView/Marker/place-list/pin-sheet) trip 어휘로 surgical 포팅(confidence read 보존); plan brand-accented empty-state(default landing, Phase 18이 채움); book/ledger neutral-only "곧 제공돼요" 스텁(D-11); me 글로벌 stack 화면 이전. **Task 3:** share-handler `addLink board_id→trip_id` + `router.replace('/trip/{tripId}/plan')` + `listMyBoards→listMyTrips`; share-routing.ts + 테스트 trip 어휘 리네임; 구 `boards/` 트리 + 글로벌 `(tabs)` 그룹(discover/friends 포함, Open Q4) 클린 브레이크 삭제(레거시 redirect 없음, D-13/D-15). **자동 증거: apps/ios typecheck 0 errors**(17-04이 남긴 /onboarding·/trip/create forward-ref 2건은 Plan 05이 라우트 생성 + Expo typed-routes 재생성으로 해소) **+ jest 72/72(12 suites, share-routing trip 어휘 테스트 포함)**; 구조: app/boards & app/(tabs) 디스크에서 제거 확인. **Task 4 (checkpoint:human-verify — 디바이스 UAT):** 사용자가 `pnpm sim` 실행 후 승인("굿"/approved). 이번 세션 원격 Supabase를 **0016 trips 베이스라인으로 reset**(17-03서 deferred됐던 원격 마이그레이션을 `.backups/` 백업 후 사용자 명시 승인하에 실행) → trips-native 원격에서 진입분기·4탭바·헤더 switcher·repoint된 share flow를 end-to-end 확인. NAV-01/02/03/04 런타임 sign-off. **Deviation 없음** — core `LinkAdd.board_id` 입력키는 본 plan이 리네임하지 않음(Plan 03이 api 경계에서 `input.board_id→trip_id` 매핑 유지, core 입력 리네임은 후속 plan 소유 — share-handler는 call site에서 trip id를 넘기므로 무모순). **NAV-01/02/03/04 완료. Phase 17 = 5/5 plans 전부 완료.**
 
 **17-05 완료 (2026-06-21, ~23분, commits edd9318 + 6ede7aa + 3fc4873):** Phase 17 마지막 plan — 온보딩 분기 + 일정 정해짐 trip create + 웹 공유 라우트 위생. **Task 1 (`apps/ios/app/onboarding.tsx`):** "일정이 정해졌나요?" 분기 (UI-SPEC Screen 2, D-11) — 정해짐 카드(ENABLED, brand-accented, cardShadow) → `router.push('/trip/create')` = 0-trip 신규 계정 첫 여행 SOLE 경로(BLOCKER 1, Plan 03가 auto-first-board 트리거 폐기); 미정 카드(DISABLED, neutral-only `neutral.100`/`neutral.400` + `곧 제공` neutral 배지, chevron 없음, no-op — Phase 19); base CTA `여행 만들기`. **Task 2 (`apps/ios/app/trip/create.tsx`):** new-trip 폼 구조를 trip 어휘로 포팅 — 여행지(필수, CityPicker + CITY_KO_MAP) + 여행 날짜(필수 this phase, D-09; DatePickerSheet range, end≥start, 당일치기 end=start coerce) + `만든 사람이 대표(결제자)예요` 캡션(D-10; representative_id는 `trips_default_representative` 트리거가 set, client 필드 없음, SETUP-02); canSave = city AND 완전한 range; `TripCreateSchema.parse`(T-17-13) → `createTrip` → `router.replace('/trip/{id}/plan')`; error → `Alert('여행 만들기 실패', …)`. board 어휘 0건. **iOS typecheck FULLY CLEAN(0 errors)** — `.expo/types/router.d.ts` 재생성(expo start --no-dev CI 모드 brief)으로 17-04 잔여 forward-ref 2건(/onboarding·/trip/create) 해소; iOS 72/72 jest. **Task 3 (웹 `/b/[slug]`→`/t/[slug]`, D-14/NAV-04):** 전체 public SSR 트리 `git mv`(page/error/not-found/opengraph-image/_components 3종); `lib/cache.ts`→`lib/public-trip-cache.ts`(getCachedPublicTrip → getPublicTripBySlug → `public_trip_view`; BOARD_REVALIDATE_TAG → TRIP_REVALIDATE_TAG, `board:`→`trip:`); 내부 `/b/${slug}`→`/t/${slug}`(canonical/og/login redirect); `/api/revalidate` repoint; `/b/[slug]` 클린 브레이크(D-15, redirect 없음). 웹 typecheck 0 errors + **62/62 vitest** + `next build` PASS(/t/[slug] 라우트 존재). **3 DEVIATION (R3 blocking — Plan 03 board API 삭제 상속분, Plan 03 SUMMARY가 17-04/05에 위임):** (1) 깨진 웹 dev-tool boards/ 라우트를 trip 어휘로 마이그레이션(listMyTrips/getTrip/listLinksByTrip/listPlacesByTrip) + 타이틀-only `create-board-button.tsx` 제거(createTrip는 city+날짜 필수 + CLAUDE.md §5 = 웹 생성 iOS-only); (2) vote-island getMyBoardRole→getMyTripRole·joinSharedBoard→joinSharedTrip·boardId prop→tripId; (3) cache getPublicBoardBySlug→getPublicTripBySlug. **SETUP-01/02 + NAV-04 완료.** ⚠️ 17-04는 라우트 파일 존재·iOS typecheck로 동작 검증되나 SUMMARY 미작성 — phase verify 시 확인 필요.
 

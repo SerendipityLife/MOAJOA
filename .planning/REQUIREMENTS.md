@@ -209,8 +209,8 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 ### Navigation & IA (NAV)
 
 - [x] **NAV-01**: 앱 진입 시 여행이 1개면 목록 없이 그 여행으로 바로 들어간다 (0개→온보딩, 2개+→마지막 본 여행)
-- [ ] **NAV-02**: 여행 안에서 하단 탭(지도·플랜·예약·가계부)으로 단계를 전환하며, 탭바가 항상 보인다
-- [ ] **NAV-03**: 새 여행·여행 전환·내 정보를 헤더에서 접근한다 (새 여행은 별도 탭이 아니라 온보딩/여행 종료 후/헤더 +)
+- [x] **NAV-02**: 여행 안에서 하단 탭(지도·플랜·예약·가계부)으로 단계를 전환하며, 탭바가 항상 보인다
+- [x] **NAV-03**: 새 여행·여행 전환·내 정보를 헤더에서 접근한다 (새 여행은 별도 탭이 아니라 온보딩/여행 종료 후/헤더 +)
 - [x] **NAV-04**: 재편 이후에도 기존 공유 링크(웹 `/b/[slug]`, 보드 딥링크)가 깨지지 않고 열린다
 
 ### Attribution & 수익 계약 (ATTR)
@@ -273,10 +273,10 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | Phase 17 | Complete |
-| NAV-02 | Phase 17 | Pending |
-| NAV-03 | Phase 17 | Pending |
-| NAV-04 | Phase 17 | Complete (17-03: data layer trips-native + EF repointed; 17-05: web `/b/[slug]`→`/t/[slug]` route move done via public_trip_view, clean break) |
+| NAV-01 | Phase 17 | Complete (17-04: index.tsx decideEntryRoute 0/1/N branch — 0→/onboarding, 1/N→/trip/{id}/plan; device UAT approved) |
+| NAV-02 | Phase 17 | Complete (17-04: /trip/[id]/(tabs) 4-tab bar 지도·플랜·예약·가계부, always-visible, plan default; device UAT approved) |
+| NAV-03 | Phase 17 | Complete (17-04: trip header 여행 전환 switcher + profile→/me, no FAB; device UAT approved) |
+| NAV-04 | Phase 17 | Complete (17-03: data layer trips-native + EF repointed; 17-04: app share flow repointed `/boards/{id}`→`/trip/{id}/plan` + old boards/ & global (tabs) clean-break deleted, no legacy redirect; 17-05: web `/b/[slug]`→`/t/[slug]` route move via public_trip_view) |
 | ATTR-01 | Phase 17 | Done (17-02 contract lock) |
 | SETUP-01 | Phase 17 | Complete |
 | SETUP-02 | Phase 17 | Complete |
@@ -316,4 +316,4 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 ---
 *Requirements defined: 2026-05-25*
-*Last updated: 2026-06-21 — v2.0 roadmap 생성 (Phase 17~22) + v2.0 Traceability 채움 (27 reqs, 100% coverage, 중복 0). 이전: 2026-06-07 v1.1*
+*Last updated: 2026-06-21 — 17-04 완료로 NAV-02/03 Complete 마킹 + NAV-01/04 traceability에 17-04 근거 추가 (Phase 17 NAV-01/02/03/04 전부 Complete, 5/5 plans). 이전: 2026-06-21 v2.0 roadmap 생성 (Phase 17~22)*
