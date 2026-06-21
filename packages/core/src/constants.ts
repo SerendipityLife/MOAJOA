@@ -6,18 +6,18 @@
  */
 
 export const Limits = {
-  /** Max boards per user (free tier). */
-  BoardsPerUser: 20,
+  /** Max trips per user (free tier). */
+  TripsPerUser: 20,
   /** Max links per board. */
   LinksPerBoard: 50,
   /** Max members per shared board (incl. owner). */
   MembersPerBoard: 20,
   /** Max places extracted from a single link (truncated if LLM returns more). */
   PlacesPerLink: 30,
-  /** Max characters in board title. */
-  BoardTitleMax: 60,
-  /** Max characters in board description. */
-  BoardDescMax: 280,
+  /** Max characters in trip title. */
+  TripTitleMax: 60,
+  /** Max characters in trip description. */
+  TripDescMax: 280,
   /** Max characters in a vote/comment note. */
   VoteNoteMax: 140,
 } as const;
@@ -47,13 +47,13 @@ export const Gender = ['male', 'female', 'other'] as const;
 export type GenderType = (typeof Gender)[number];
 
 /**
- * Board sharing modes.
+ * Trip sharing modes.
  * - private: only owner can view
  * - shared: invited members can view/edit/vote (collaborative)
  * - public: anyone with link can view (read-only, requires login to copy)
  */
-export const BoardVisibility = ['private', 'shared', 'public'] as const;
-export type BoardVisibilityType = (typeof BoardVisibility)[number];
+export const TripVisibility = ['private', 'shared', 'public'] as const;
+export type TripVisibilityType = (typeof TripVisibility)[number];
 
 /**
  * Membership roles for shared boards.
@@ -188,4 +188,10 @@ export const OnboardKeys = {
   LinkCardDismissed: '@moajoa/onboard:link_card_dismissed',
   /** '@moajoa/onboard:walkthrough_done' — first-run tab coachmark completed. */
   WalkthroughDone: '@moajoa/onboard:walkthrough_done',
+} as const;
+
+/** AsyncStorage keys for trip state. Mirrors OnboardKeys namespace pattern. */
+export const TripKeys = {
+  /** UUID string — last trip the user opened (N-entry restore, NAV-01). */
+  LastTripId: '@moajoa/trip:last_id',
 } as const;

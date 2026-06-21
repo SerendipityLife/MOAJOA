@@ -1,5 +1,5 @@
 export * from './user';
-export * from './board';
+export * from './trip';
 export * from './link';
 export * from './place';
 export * from './vote';
