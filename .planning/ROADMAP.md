@@ -52,9 +52,15 @@ Plans:
   2. 여행 안에서 하단 탭(지도·플랜·예약·가계부)으로 단계를 전환할 수 있고 탭바가 항상 보인다
   3. 헤더에서 새 여행 만들기·여행 전환·내 정보에 접근할 수 있다 (새 여행은 별도 탭이 아님)
   4. 일정이 정해진 경우 날짜·도시를 입력하고 대표(결제자)를 지정해 여행을 생성할 수 있다
-  5. 기존 공유 링크(웹 `/b/[slug]`, 보드 딥링크)가 재편 후에도 깨지지 않고 열린다
+  5. (D-15 재해석 — 라우트 위생) 옛 라우트 패턴이 제거/이전되고 신규 공유 경로(웹 `/t/[slug]`, 앱 `/trip/[id]`)가 동작한다. 외부 사용자 0명 근거로 "옛 링크가 깨지지 않는다"는 문자 그대로의 게이트는 waive.
   6. 예약 딥링크가 trip(가능하면 place) 컨텍스트를 담은 SubID 포맷으로 생성된다 (`packages/core` 단일 헬퍼, Day1 포맷 확정)
-**Plans**: TBD (~4 plans 추정: 0016 마이그레이션+core Zod 동일 PR / 식별자 계약 + buildAffiliateUrl / Expo Router 4탭 재편 + 진입분기 / 옛 링크 리다이렉트 + 정해짐 경로 트립 생성 UI)
+**Plans**: 5 plans
+Plans:
+- [ ] 17-01-PLAN.md — core foundation: vitest wiring + Trip/TripId/TripCreate Zod (board.ts→trip.ts) + TripKeys + decideEntryRoute (NAV-01/SETUP-01/02)
+- [ ] 17-02-PLAN.md — affiliate contract: buildAffiliateUrl + BookingClickContext + opaque ClickToken (ATTR-01, TDD)
+- [ ] 17-03-PLAN.md — 0016 squash baseline + RLS/trigger/view/join port + api trip-vocab rename + [BLOCKING] db push + types regen (SETUP-02/NAV-04)
+- [ ] 17-04-PLAN.md — Expo Router 4-tab restructure + 0/1/N entry + trip header (no FAB) + share repoint + old-route delete (NAV-01/02/03/04)
+- [ ] 17-05-PLAN.md — onboarding 정해짐/미정 branch + trip create UI (preset city/date range/auto-rep) + web /b/[slug]→/t/[slug] move (SETUP-01/02/NAV-04)
 **UI hint**: yes
 
 ### Phase 18: Auto Plan (추출 즉시 AI 플랜)
@@ -119,7 +125,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Trip Foundation & IA 재편 | 0/~4 | Not started | - |
+| 17. Trip Foundation & IA 재편 | 0/5 | Planned | - |
 | 18. Auto Plan | 0/~4 | Not started | - |
 | 19. Date Voting | 0/~3 | Not started | - |
 | 20. Affiliate Booking | 0/~3 | Not started | - |
