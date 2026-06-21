@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
-import { getBoard, listLinksByBoard, listPlacesByBoard } from '@moajoa/api';
+import { getTrip, listLinksByTrip, listPlacesByTrip } from '@moajoa/api';
 import { isDevToolsEnabled } from '@/lib/env';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { AddLinkForm } from './_components/add-link-form';
@@ -15,12 +15,12 @@ export default async function BoardDetailPage({ params }: { params: Promise<{ id
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect('/login');
 
-  const board = await getBoard(supabase, id);
+  const board = await getTrip(supabase, id);
   if (!board) notFound();
 
   const [links, places] = await Promise.all([
-    listLinksByBoard(supabase, id),
-    listPlacesByBoard(supabase, id),
+    listLinksByTrip(supabase, id),
+    listPlacesByTrip(supabase, id),
   ]);
 
   return (

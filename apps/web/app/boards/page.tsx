@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { MapPin } from 'lucide-react';
-import { listMyBoards } from '@moajoa/api';
+import { listMyTrips } from '@moajoa/api';
 import { isDevToolsEnabled } from '@/lib/env';
 import { getSupabaseServer } from '@/lib/supabase/server';
-import { CreateBoardButton } from './_components/create-board-button';
 
 const VIS_PUBLIC = { label: '공개', cls: 'bg-brand-50 text-brand-700' };
 const VISIBILITY: Record<string, { label: string; cls: string }> = {
@@ -47,13 +46,12 @@ export default async function BoardsPage() {
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect('/login');
 
-  const boards = await listMyBoards(supabase);
+  const boards = await listMyTrips(supabase);
 
   return (
     <main className="min-h-screen px-6 py-8 pb-24 max-w-3xl mx-auto">
       <header className="animate-fade-up flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold tracking-tight">내 보드</h1>
-        <CreateBoardButton />
       </header>
 
       {boards.length === 0 ? (

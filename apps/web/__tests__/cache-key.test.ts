@@ -11,7 +11,7 @@ vi.mock('next/cache', () => ({
 }));
 
 vi.mock('@moajoa/api', () => ({
-  getPublicBoardBySlug: vi.fn().mockResolvedValue({
+  getPublicTripBySlug: vi.fn().mockResolvedValue({
     board: { title: 'mock' },
     places: [],
     links: [],
@@ -23,15 +23,15 @@ vi.mock('@/lib/supabase/server', () => ({
   getSupabaseServer: vi.fn().mockResolvedValue({}),
 }));
 
-describe('getCachedPublicBoard cache key isolation (Pitfall 1)', () => {
+describe('getCachedPublicTrip cache key isolation (Pitfall 1)', () => {
   beforeEach(() => {
     calls.length = 0;
   });
 
   it('uses distinct keyParts per slug', async () => {
-    const { getCachedPublicBoard } = await import('@/lib/cache');
-    await getCachedPublicBoard('slug-aaaa1111');
-    await getCachedPublicBoard('slug-bbbb2222');
+    const { getCachedPublicTrip } = await import('@/lib/public-trip-cache');
+    await getCachedPublicTrip('slug-aaaa1111');
+    await getCachedPublicTrip('slug-bbbb2222');
 
     // 2 calls recorded
     expect(calls.length).toBe(2);
@@ -44,8 +44,8 @@ describe('getCachedPublicBoard cache key isolation (Pitfall 1)', () => {
     expect(calls[0]!.keyParts).not.toEqual(calls[1]!.keyParts);
 
     // Tag also slug-scoped
-    expect(calls[0]!.opts.tags).toContain('board:slug-aaaa1111');
-    expect(calls[1]!.opts.tags).toContain('board:slug-bbbb2222');
+    expect(calls[0]!.opts.tags).toContain('trip:slug-aaaa1111');
+    expect(calls[1]!.opts.tags).toContain('trip:slug-bbbb2222');
 
     // TTL fallback = 3600s per D-03
     expect(calls[0]!.opts.revalidate).toBe(3600);

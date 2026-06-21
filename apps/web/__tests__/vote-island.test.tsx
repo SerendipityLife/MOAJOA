@@ -33,8 +33,8 @@ vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({ auth: { getUser: authGetUser } }),
 }));
 
-const joinSharedBoard = vi.fn(async (_client: unknown, _slug: string) => 'board-1');
-const getAcceptedMemberCount = vi.fn(async (_client: unknown, _boardId: string) => 0);
+const joinSharedTrip = vi.fn(async (_client: unknown, _slug: string) => 'trip-1');
+const getAcceptedMemberCount = vi.fn(async (_client: unknown, _tripId: string) => 0);
 const getVoteCounts = vi.fn(
   async (_client: unknown, _placeIds: string[]) => ({}) as Record<string, number>,
 );
@@ -42,8 +42,8 @@ const castVote = vi.fn(
   async (_client: unknown, _input: { place_id: string; kind: string }) => ({}),
 );
 const retractVote = vi.fn(async (_client: unknown, _placeId: string) => undefined);
-const getMyBoardRole = vi.fn(
-  async (_client: unknown, _boardId: string, _userId: string) =>
+const getMyTripRole = vi.fn(
+  async (_client: unknown, _tripId: string, _userId: string) =>
     null as 'owner' | 'member' | null,
 );
 const getMyVotedPlaceIds = vi.fn(
@@ -51,15 +51,15 @@ const getMyVotedPlaceIds = vi.fn(
 );
 
 vi.mock('@moajoa/api', () => ({
-  joinSharedBoard: (client: unknown, slug: string) => joinSharedBoard(client, slug),
-  getAcceptedMemberCount: (client: unknown, boardId: string) =>
-    getAcceptedMemberCount(client, boardId),
+  joinSharedTrip: (client: unknown, slug: string) => joinSharedTrip(client, slug),
+  getAcceptedMemberCount: (client: unknown, tripId: string) =>
+    getAcceptedMemberCount(client, tripId),
   getVoteCounts: (client: unknown, placeIds: string[]) => getVoteCounts(client, placeIds),
   castVote: (client: unknown, input: { place_id: string; kind: string }) =>
     castVote(client, input),
   retractVote: (client: unknown, placeId: string) => retractVote(client, placeId),
-  getMyBoardRole: (client: unknown, boardId: string, userId: string) =>
-    getMyBoardRole(client, boardId, userId),
+  getMyTripRole: (client: unknown, tripId: string, userId: string) =>
+    getMyTripRole(client, tripId, userId),
   getMyVotedPlaceIds: (client: unknown, placeIds: string[], userId: string) =>
     getMyVotedPlaceIds(client, placeIds, userId),
 }));
@@ -85,11 +85,11 @@ vi.mock('@/components', () => ({
 }));
 
 // Import AFTER mocks so the component picks them up.
-import { VoteIsland } from '@/app/b/[slug]/_components/vote-island';
+import { VoteIsland } from '@/app/t/[slug]/_components/vote-island';
 
 beforeEach(() => {
   mockUser = null;
-  joinSharedBoard.mockClear();
+  joinSharedTrip.mockClear();
   getAcceptedMemberCount.mockClear();
   getVoteCounts.mockClear();
   castVote.mockClear();
@@ -99,7 +99,7 @@ beforeEach(() => {
   authGetUser.mockClear();
   getAcceptedMemberCount.mockResolvedValue(0);
   getVoteCounts.mockResolvedValue({});
-  joinSharedBoard.mockResolvedValue('board-1');
+  joinSharedTrip.mockResolvedValue('trip-1');
 });
 
 afterEach(() => {
@@ -108,7 +108,7 @@ afterEach(() => {
 
 const baseProps = {
   slug: 'shareslug1',
-  boardId: 'board-1',
+  tripId: 'trip-1',
   places: [makePlace({ id: 'p1', name_local: '스시집' })],
 };
 
@@ -120,9 +120,9 @@ describe('VoteIsland', () => {
     const pill = await screen.findByTestId('vote-toggle-p1');
     expect(pill.textContent).toContain('가고싶어');
     fireEvent.click(pill);
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/login?next=%2Fb%2Fshareslug1'));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/login?next=%2Ft%2Fshareslug1'));
     expect(castVote).not.toHaveBeenCalled();
-    expect(joinSharedBoard).not.toHaveBeenCalled();
+    expect(joinSharedTrip).not.toHaveBeenCalled();
   });
 
   it('logged-in non-member: heart tap auto-joins then casts the vote', async () => {
@@ -132,14 +132,14 @@ describe('VoteIsland', () => {
     const heart = await screen.findByTestId('vote-toggle-p1');
     fireEvent.click(heart);
 
-    await waitFor(() => expect(joinSharedBoard).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(joinSharedTrip).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(castVote).toHaveBeenCalledTimes(1));
     expect(castVote.mock.calls[0]?.[1]).toMatchObject({ place_id: 'p1', kind: 'love' });
   });
 
   it('returning member: role=member renders voting UI without 참여하기 + hydrates my ❤️', async () => {
     mockUser = { id: 'u1' };
-    getMyBoardRole.mockResolvedValueOnce('member');
+    getMyTripRole.mockResolvedValueOnce('member');
     getMyVotedPlaceIds.mockResolvedValueOnce(['p1']);
     getVoteCounts.mockResolvedValueOnce({ p1: 2 });
     render(<VoteIsland {...baseProps} />);

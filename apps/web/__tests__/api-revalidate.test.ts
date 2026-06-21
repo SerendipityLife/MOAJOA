@@ -36,7 +36,7 @@ describe('/api/revalidate', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ ok: true, slug: 'abc12345' });
-    expect(revalidateTagSpy).toHaveBeenCalledWith('board:abc12345');
+    expect(revalidateTagSpy).toHaveBeenCalledWith('trip:abc12345');
   });
 
   it('401 on wrong secret (same length)', async () => {

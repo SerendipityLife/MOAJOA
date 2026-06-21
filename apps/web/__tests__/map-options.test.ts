@@ -27,7 +27,7 @@ afterEach(() => {
 
 describe('PublicBoardMap', () => {
   it('initializes map with gestureHandling and clickableIcons options', async () => {
-    const { PublicBoardMap } = await import('@/app/b/[slug]/_components/public-board-map');
+    const { PublicBoardMap } = await import('@/app/t/[slug]/_components/public-board-map');
     const places = [
       {
         id: 'p1',
@@ -64,7 +64,7 @@ describe('PublicBoardMap', () => {
   });
 
   it('registers click listener on marker with link_id', async () => {
-    const { PublicBoardMap } = await import('@/app/b/[slug]/_components/public-board-map');
+    const { PublicBoardMap } = await import('@/app/t/[slug]/_components/public-board-map');
     const places = [
       {
         id: 'p1',
@@ -96,7 +96,7 @@ describe('PublicBoardMap', () => {
   });
 
   it('does NOT register click listener when place has no link_id', async () => {
-    const { PublicBoardMap } = await import('@/app/b/[slug]/_components/public-board-map');
+    const { PublicBoardMap } = await import('@/app/t/[slug]/_components/public-board-map');
     const places = [
       {
         id: 'p1',

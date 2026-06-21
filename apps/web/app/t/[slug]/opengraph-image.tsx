@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { CITY_KO_MAP } from '@moajoa/core';
-import { getCachedPublicBoard } from '@/lib/cache';
+import { getCachedPublicTrip } from '@/lib/public-trip-cache';
 import { loadPretendardFonts } from '@/lib/og/pretendard';
 import { buildStaticMapsUrl, OG_GRAYSCALE_STYLE } from '@/lib/og/static-maps';
 import { getGoogleMapsKey } from '@/lib/env';
@@ -24,7 +24,7 @@ export default async function Image({ params }: Props) {
   let view, fonts;
   try {
     [view, fonts] = await Promise.all([
-      getCachedPublicBoard(slug),
+      getCachedPublicTrip(slug),
       loadPretendardFonts(),
     ]);
     console.log('[og-image] deps ready', { hasView: !!view, fontsRegular: fonts?.regular?.length, fontsSemibold: fonts?.semibold?.length });

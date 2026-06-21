@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { BOARD_REVALIDATE_TAG } from '@/lib/cache';
+import { TRIP_REVALIDATE_TAG } from '@/lib/public-trip-cache';
 
-describe('BOARD_REVALIDATE_TAG', () => {
-  it('returns board:{slug}', () => {
-    expect(BOARD_REVALIDATE_TAG('abc12345')).toBe('board:abc12345');
+describe('TRIP_REVALIDATE_TAG', () => {
+  it('returns trip:{slug}', () => {
+    expect(TRIP_REVALIDATE_TAG('abc12345')).toBe('trip:abc12345');
   });
 });

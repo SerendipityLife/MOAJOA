@@ -1,12 +1,12 @@
 import { revalidateTag } from 'next/cache';
 import { timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { BOARD_REVALIDATE_TAG } from '@/lib/cache';
+import { TRIP_REVALIDATE_TAG } from '@/lib/public-trip-cache';
 import { getRevalidateSecret } from '@/lib/env';
 
 /**
  * Webhook endpoint called by Supabase Edge Function `extract-youtube`
- * after a `done` broadcast. Invalidates the cached public board so
+ * after a `done` broadcast. Invalidates the cached public trip so
  * the next visitor gets fresh data (per CONTEXT D-04, D-20).
  *
  * Node runtime is required for `node:crypto.timingSafeEqual` — Edge
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  revalidateTag(BOARD_REVALIDATE_TAG(parsed.data.slug));
+  revalidateTag(TRIP_REVALIDATE_TAG(parsed.data.slug));
 
   return Response.json({ ok: true, slug: parsed.data.slug });
 }

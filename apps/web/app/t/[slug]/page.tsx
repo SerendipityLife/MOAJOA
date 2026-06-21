@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 import { CITY_KO_MAP } from '@moajoa/core';
-import { getCachedPublicBoard } from '@/lib/cache';
+import { getCachedPublicTrip } from '@/lib/public-trip-cache';
 import { MapSection } from './_components/map-section';
 import { VoteIsland } from './_components/vote-island';
 
@@ -24,7 +24,7 @@ function buildDescription(owner: string, cityCode: string | null, pinCount: numb
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const view = await getCachedPublicBoard(slug);
+  const view = await getCachedPublicTrip(slug);
   if (!view) return { title: 'MOAJOA' };
 
   const description = buildDescription(
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     view.board.city_code,
     view.places.length,
   );
-  const ogImage = `/b/${slug}/opengraph-image`; // metadataBase makes this absolute
+  const ogImage = `/t/${slug}/opengraph-image`; // metadataBase makes this absolute
 
   return {
     title: `${view.board.title} · MOAJOA`,
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [ogImage],
     },
     alternates: {
-      canonical: `/b/${slug}`,
+      canonical: `/t/${slug}`,
     },
     robots: {
       index: true,
@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PublicBoardPage({ params }: Props) {
   const { slug } = await params;
-  const view = await getCachedPublicBoard(slug);
+  const view = await getCachedPublicTrip(slug);
   if (!view) notFound();
 
   const cityKo = view.board.city_code ? CITY_KO_MAP[view.board.city_code] : null;
@@ -124,7 +124,7 @@ export default async function PublicBoardPage({ params }: Props) {
         {view.board.id && (
           <VoteIsland
             slug={slug}
-            boardId={view.board.id}
+            tripId={view.board.id}
             places={view.places}
             links={view.links}
           />

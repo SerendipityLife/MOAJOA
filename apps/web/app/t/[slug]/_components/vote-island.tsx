@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import type { PublicBoardView } from '@moajoa/core';
 import {
   castVote,
-  getMyBoardRole,
+  getMyTripRole,
   getMyVotedPlaceIds,
   getVoteCounts,
-  joinSharedBoard,
+  joinSharedTrip,
   retractVote,
 } from '@moajoa/api';
 import { Heart } from 'lucide-react';
@@ -23,7 +23,7 @@ type ViewLink = PublicBoardView['links'][number];
 
 interface Props {
   slug: string;
-  boardId: string;
+  tripId: string;
   places: VotePlace[];
   /** Source links from the same view — powers the per-place 출처 점프 button. */
   links?: ViewLink[];
@@ -60,7 +60,7 @@ function sourceAction(
 }
 
 /**
- * Unified place list + voting island for /b/[slug] (장소 상세 UX, 2026-06-12).
+ * Unified place list + voting island for /t/[slug] (장소 상세 UX, 2026-06-12).
  * Replaces the old VoteIsland(투표 리스트) + PlaceSummaryList(장소 리스트) pair —
  * one list where a visitor reads the 해설, expands a row for the full detail
  * ([Google 지도] photos/ratings deep link + [영상 N:NN] source jump), and votes
@@ -75,7 +75,7 @@ function sourceAction(
  */
 export function VoteIsland({
   slug,
-  boardId,
+  tripId,
   places,
   links,
   initialJoined,
@@ -121,7 +121,7 @@ export function VoteIsland({
       const uid = data.user?.id ?? null;
       setUserId(uid);
       if (uid) {
-        const role = await getMyBoardRole(client, boardId, uid).catch(() => null);
+        const role = await getMyTripRole(client, tripId, uid).catch(() => null);
         if (!active) return;
         if (role) setJoined(true);
       }
@@ -153,18 +153,18 @@ export function VoteIsland({
   async function onToggleVote(placeId: string) {
     // Hearts render for every visitor (가시성 피드백 2026-06-12). The tap
     // resolves the missing prerequisite instead of hiding the affordance:
-    //   logged-out  → /login?next= back to this board
+    //   logged-out  → /login?next= back to this trip
     //   non-member  → auto-join (slug = bearer invite, D-22) then vote
     if (!resolved) return;
     if (!userId) {
-      router.push(`/login?next=${encodeURIComponent(`/b/${slug}`)}` as never);
+      router.push(`/login?next=${encodeURIComponent(`/t/${slug}`)}` as never);
       return;
     }
     const client = getSupabaseBrowser();
     if (!joined) {
       setPending((p) => ({ ...p, [placeId]: true }));
       try {
-        await joinSharedBoard(client, slug);
+        await joinSharedTrip(client, slug);
         setJoined(true);
         void hydrateCounts(userId);
       } catch (err) {

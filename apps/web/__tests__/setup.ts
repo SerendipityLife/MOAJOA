@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 import { beforeEach, vi } from 'vitest';
 
-// Stub Supabase env vars so apps/web/lib/cache.ts createClient() call doesn't
-// throw during tests. Real Supabase calls are mocked at the @moajoa/api layer
-// (getPublicBoardBySlug etc.), so the client instance itself is never used to
+// Stub Supabase env vars so apps/web/lib/public-trip-cache.ts createClient() call
+// doesn't throw during tests. Real Supabase calls are mocked at the @moajoa/api
+// layer (getPublicTripBySlug etc.), so the client instance itself is never used to
 // fetch — but createClient still requires non-empty url/key strings.
 //
 // We use beforeEach (not beforeAll) because some tests (e.g. og-image.test.ts)
