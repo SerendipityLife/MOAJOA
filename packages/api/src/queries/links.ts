@@ -1,25 +1,30 @@
 import { detectSourceKind, type Link, type LinkAdd } from '@moajoa/core';
 import type { MoajoaSupabaseClient } from '../client';
 
-export async function listLinksByBoard(
+export async function listLinksByTrip(
   client: MoajoaSupabaseClient,
-  boardId: string,
+  tripId: string,
 ): Promise<Link[]> {
   const { data, error } = await client
     .from('links')
     .select('*')
-    .eq('board_id', boardId)
+    .eq('trip_id', tripId)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as Link[];
 }
 
 /**
- * Add a link to a board. Server normalizes URL and detects source_kind via a
+ * Add a link to a trip. Server normalizes URL and detects source_kind via a
  * trigger; for YouTube, the extraction Edge Function is invoked async.
  *
  * Why client also calls detectSourceKind: snappy UI feedback ("YouTube 분석
  * 시작됨" vs "인스타 — 큐레이션 대기").
+ *
+ * NOTE: the `LinkAdd` input still carries `board_id` — the core Link/LinkAdd
+ * field rename (board_id→trip_id) is owned by a later plan to avoid cascading
+ * into the apps/ios + apps/web call sites that still pass `board_id`. Here we
+ * map that input field onto the renamed `trip_id` DB column (0016).
  */
 export async function addLink(client: MoajoaSupabaseClient, input: LinkAdd): Promise<Link> {
   const detected = detectSourceKind(input.url) ?? 'manual';
@@ -27,7 +32,7 @@ export async function addLink(client: MoajoaSupabaseClient, input: LinkAdd): Pro
   const { data, error } = await client
     .from('links')
     .insert({
-      board_id: input.board_id,
+      trip_id: input.board_id,
       url: input.url,
       original_url: input.url,
       source_kind: detected,

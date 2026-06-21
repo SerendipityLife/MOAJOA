@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
 
   // Verify caller is a real signed-in user — not just any Bearer token. The
   // public anon key is itself a valid JWT (passes verify_jwt), and link ids
-  // are exposed to anonymous visitors via public_board_view, so a prefix-only
+  // are exposed to anonymous visitors via public_trip_view, so a prefix-only
   // check would let anyone re-fire paid extractions (T: cost abuse).
   // auth.getUser() only accepts user session tokens; anon/service keys fail.
   const authHeader = req.headers.get('Authorization');
@@ -140,12 +140,12 @@ Deno.serve(async (req) => {
     return jsonError(409, 'already processing');
   }
 
-  // Board row feeds the LLM city hint, the Places language choice, and the
+  // Trip row feeds the LLM city hint, the Places language choice, and the
   // revalidate webhook at the end (single fetch, reused).
-  const { data: board } = await admin
-    .from('boards')
+  const { data: trip } = await admin
+    .from('trips')
     .select('city_code, share_slug, visibility')
-    .eq('id', link.board_id)
+    .eq('id', link.trip_id)
     .maybeSingle();
 
   // Declared outside try so the catch handler can persist whatever metadata
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     // branch is byte-for-byte the original logic (regression 0).
     let description: string;
     let sourceKind: 'youtube' | 'blog' | 'instagram';
-    const cityHint: string | null = board?.city_code ?? null;
+    const cityHint: string | null = trip?.city_code ?? null;
 
     switch (link.source_kind) {
       case 'youtube': {
@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
     }
 
     // ---- 4. Resolve places ----
-    // displayName language follows the board's city: Korean boards get Korean
+    // displayName language follows the trip's city: Korean trips get Korean
     // names, everything else keeps the previous 'ja' default (Japan-first v1).
     const KO_CITIES = new Set(['seoul', 'busan', 'jeju']);
     const languageCode = cityHint && KO_CITIES.has(cityHint) ? 'ko' : 'ja';
@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
       try {
         // Bias the search to the place's region so chain stores resolve to the
         // in-region branch (e.g. "一蘭" → 도쿄점, not 후쿠오카 신구점). Per-place
-        // inferred_city wins; board city_code is the fallback. Text query still
+        // inferred_city wins; trip city_code is the fallback. Text query still
         // carries inferred_city as a soft disambiguator (regression 0 when no center).
         const center = cityCenter(cand.inferred_city) ?? cityCenter(cityHint);
         const place = await resolveGooglePlace({
@@ -369,7 +369,7 @@ Deno.serve(async (req) => {
     // ---- 5. Insert places ----
     if (resolved.length > 0) {
       const rows = resolved.map((r) => ({
-        board_id: link.board_id,
+        trip_id: link.trip_id,
         link_id: link.id,
         added_by: link.added_by,
         google_place_id: r.place.placeId,
@@ -390,7 +390,7 @@ Deno.serve(async (req) => {
 
       const { error: insertErr } = await admin
         .from('places')
-        .upsert(rows, { onConflict: 'board_id,google_place_id', ignoreDuplicates: true });
+        .upsert(rows, { onConflict: 'trip_id,google_place_id', ignoreDuplicates: true });
       if (insertErr) throw insertErr;
     }
 
@@ -419,11 +419,11 @@ Deno.serve(async (req) => {
     await broadcastStep(admin, link_id, 'done', 100, { places_extracted: resolved.length });
 
     // Fire-and-forget webhook to web /api/revalidate (per CONTEXT D-04, D-05).
-    // Uses the board row loaded before extraction — only POST when
+    // Uses the trip row loaded before extraction — only POST when
     // visibility=public + slug present.
     // Local dev: WEB_BASE_URL unset → skip silently (RESEARCH Pitfall 6).
     try {
-      if (board?.visibility === 'public' && board.share_slug) {
+      if (trip?.visibility === 'public' && trip.share_slug) {
         const webBase = Deno.env.get('WEB_BASE_URL');
         const revalidateSecret = Deno.env.get('REVALIDATE_SECRET');
         if (webBase && revalidateSecret) {
@@ -431,7 +431,7 @@ Deno.serve(async (req) => {
           fetch(`${webBase}/api/revalidate`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ slug: board.share_slug, secret: revalidateSecret }),
+            body: JSON.stringify({ slug: trip.share_slug, secret: revalidateSecret }),
           }).catch((err) => console.warn('[revalidate-webhook] fetch failed:', err));
         }
       }

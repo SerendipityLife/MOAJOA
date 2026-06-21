@@ -1,4 +1,4 @@
-export * from './boards';
+export * from './trips';
 export * from './links';
 export * from './places';
 export * from './votes';

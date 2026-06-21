@@ -1,14 +1,14 @@
 import type { Place, PlaceAddManual } from '@moajoa/core';
 import type { MoajoaSupabaseClient } from '../client';
 
-export async function listPlacesByBoard(
+export async function listPlacesByTrip(
   client: MoajoaSupabaseClient,
-  boardId: string,
+  tripId: string,
 ): Promise<Place[]> {
   const { data, error } = await client
     .from('places')
     .select('*')
-    .eq('board_id', boardId)
+    .eq('trip_id', tripId)
     .is('hidden_at', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -38,8 +38,10 @@ export async function addManualPlace(
   client: MoajoaSupabaseClient,
   input: PlaceAddManual,
 ): Promise<Place> {
+  // `PlaceAddManual` still carries `board_id` (core field rename owned by a
+  // later plan); map it onto the renamed `p_trip_id` RPC arg (0016).
   const { data, error } = await client.rpc('add_manual_place', {
-    p_board_id: input.board_id,
+    p_trip_id: input.board_id,
     p_google_place_id: input.google_place_id,
     p_note: input.note ?? null,
   });
@@ -67,8 +69,8 @@ export async function unhidePlace(client: MoajoaSupabaseClient, id: string): Pro
  * name_local stays as the canonical Google original (used for search fallback);
  * google_place_id remains immutable.
  *
- * RLS: `can_edit_board()` SECURITY DEFINER helper (0001_init.sql / 0002 fix)
- * gates this UPDATE. Non-members get RLS denial.
+ * RLS: `can_edit_trip()` SECURITY DEFINER helper (0016 squash) gates this
+ * UPDATE. Non-members get RLS denial.
  *
  * Per Phase 3 D-09: pin bottom sheet "이름 수정" action.
  */
@@ -109,7 +111,7 @@ export const deletePlace = hidePlace;
  * confidence (so it's no longer rendered with the "low conf" treatment).
  * Reusing source_kind avoids a separate `confirmed_at` column (D-04 schema lock).
  *
- * RLS: `can_edit_board()` SECURITY DEFINER helper (0001/0002) gates this UPDATE.
+ * RLS: `can_edit_trip()` SECURITY DEFINER helper (0016 squash) gates this UPDATE.
  * Non-members get RLS denial — wrapper does no extra check (T-05-02).
  */
 export async function confirmAiPlace(
@@ -129,7 +131,7 @@ export async function confirmAiPlace(
 /**
  * Phase 5 TRUST-04 — D-14 [잘못됨] action.
  * Soft-delete via hidden_at — same semantics as hidePlace/deletePlace
- * (places_board_idx WHERE hidden_at IS NULL already excludes hidden rows).
+ * (places_trip_idx WHERE hidden_at IS NULL already excludes hidden rows).
  * Exported with intent-aligned name for the low-confidence reject UI.
  */
 export const rejectAiPlace = hidePlace;
