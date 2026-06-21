@@ -154,13 +154,14 @@ export async function shareTrip(
 
 /**
  * Fetch the public view of a trip by share slug. Used by Next.js SSR for the
- * /b/[slug] route. Calls the `public_trip_view` SQL function which enforces
+ * /t/[slug] route. Calls the `public_trip_view` SQL function which enforces
  * "visibility in (public,shared)" and joins everything in a single round-trip.
  *
  * NOTE: the return type is still `PublicBoardView` — the core view-model rename
  * (board→trip vocab on the composite type + its `board` key) is owned by a later
- * plan to avoid cascading into apps/web's SSR consumers; the JSON shape returned
- * by `public_trip_view` is structurally identical to the previous view.
+ * plan to avoid cascading into apps/web's SSR consumers. `public_trip_view` emits
+ * the trip object under the key `trip`, so we bridge it to `board` here to match
+ * the still-board-shaped view-model the SSR consumers read.
  */
 export async function getPublicTripBySlug(
   client: MoajoaSupabaseClient,
@@ -168,5 +169,7 @@ export async function getPublicTripBySlug(
 ): Promise<PublicBoardView | null> {
   const { data, error } = await client.rpc('public_trip_view', { p_slug: slug });
   if (error) throw error;
-  return (data as PublicBoardView | null) ?? null;
+  if (data == null) return null;
+  const { trip, ...rest } = data as Record<string, unknown>;
+  return { ...rest, board: trip } as PublicBoardView;
 }
