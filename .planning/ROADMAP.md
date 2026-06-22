@@ -75,7 +75,7 @@ Plans:
   5. "친구와 같이 정하기"로 같은 플랜을 협업 투표 모드로 전환할 수 있다 (옵션)
 **Plans**: 5 plans
 Plans:
-- [ ] 18-01-PLAN.md — core 계약: plan/plan_items Zod + GeneratePlanRequest + planChannelName/PlanStep/TravelMode (TDD, Wave 1)
+- [x] 18-01-PLAN.md — core 계약: plan/plan_items Zod + GeneratePlanRequest + planChannelName/PlanStep/TravelMode (TDD, Wave 1)
 - [ ] 18-02-PLAN.md — [BLOCKING] 0017_plans.sql (plans/plan_items + RLS DEFINER 재사용 + extraction_costs google_routes) + 로컬 적용 + 타입 재생성 (Wave 1)
 - [ ] 18-03-PLAN.md — generate-plan EF: auth+can_edit_trip 게이트 + (0,0) 필터 + Claude 클러스터링 + Routes 인접 leg(Essentials) + 브로드캐스트/비용 (Wave 2)
 - [ ] 18-04-PLAN.md — @moajoa/api plans 쿼리: getPlanByTrip/generatePlan invoke/reorder/move/setTravelMode/setCollaborative(flag+share) (TDD, Wave 2)
