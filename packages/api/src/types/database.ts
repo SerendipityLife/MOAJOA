@@ -326,6 +326,92 @@ export type Database = {
           },
         ]
       }
+      plan_items: {
+        Row: {
+          created_at: string
+          day_index: number
+          id: string
+          is_anchor: boolean
+          leg_travel_seconds: number | null
+          place_id: string
+          plan_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          day_index: number
+          id?: string
+          is_anchor?: boolean
+          leg_travel_seconds?: number | null
+          place_id: string
+          plan_id: string
+          sort_order: number
+        }
+        Update: {
+          created_at?: string
+          day_index?: number
+          id?: string
+          is_anchor?: boolean
+          leg_travel_seconds?: number | null
+          place_id?: string
+          plan_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_items_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          collaborative: boolean
+          created_at: string
+          id: string
+          status: string
+          travel_mode: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          collaborative?: boolean
+          created_at?: string
+          id?: string
+          status?: string
+          travel_mode?: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          collaborative?: boolean
+          created_at?: string
+          id?: string
+          status?: string
+          travel_mode?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plans_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
