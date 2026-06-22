@@ -77,7 +77,7 @@ Plans:
 Plans:
 - [x] 18-01-PLAN.md — core 계약: plan/plan_items Zod + GeneratePlanRequest + planChannelName/PlanStep/TravelMode (TDD, Wave 1)
 - [x] 18-02-PLAN.md — [BLOCKING] 0017_plans.sql (plans/plan_items + RLS DEFINER 재사용 + extraction_costs google_routes) + 로컬 적용 + 타입 재생성 (Wave 1)
-- [ ] 18-03-PLAN.md — generate-plan EF: auth+can_edit_trip 게이트 + (0,0) 필터 + Claude 클러스터링 + Routes 인접 leg(Essentials) + 브로드캐스트/비용 (Wave 2)
+- [x] 18-03-PLAN.md — generate-plan EF: auth+can_edit_trip 게이트 + (0,0) 필터 + Claude 클러스터링 + Routes 인접 leg(Essentials) + 브로드캐스트/비용 (Wave 2)
 - [ ] 18-04-PLAN.md — @moajoa/api plans 쿼리: getPlanByTrip/generatePlan invoke/reorder/move/setTravelMode/setCollaborative(flag+share) (TDD, Wave 2)
 - [ ] 18-05-PLAN.md — plan.tsx States A–F(버튼→스켈레톤→초안) + 드래그 재배치 + 미배치 풀 + 필수 앵커 + 협업 토글 + 디바이스 UAT (Wave 3)
 **UI hint**: yes
@@ -132,7 +132,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 17. Trip Foundation & IA 재편 | 5/5 | Complete | 2026-06-21 |
-| 18. Auto Plan | 0/~4 | Not started | - |
+| 18. Auto Plan | 3/5 | In Progress|  |
 | 19. Date Voting | 0/~3 | Not started | - |
 | 20. Affiliate Booking | 0/~3 | Not started | - |
 | 21. Travel Ledger | 0/~4 | Not started | - |

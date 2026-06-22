@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-last_updated: "2026-06-22T06:48:00.000Z"
-last_activity: 2026-06-22 -- Completed 18-02-PLAN.md
+last_updated: "2026-06-22T06:57:59.447Z"
+last_activity: 2026-06-22
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 13
-  completed_plans: 10
-  percent: 77
+  completed_plans: 11
+  percent: 85
 ---
 
 # STATE: MOAJOA v2.0
@@ -33,10 +33,12 @@ progress:
 ## Current Position
 
 Phase: 18 (Auto Plan (사용자 트리거 AI 플랜)) — EXECUTING
-Plan: 3 of 5
-Status: Executing Phase 18
-Last activity: 2026-06-22 -- Completed 18-02-PLAN.md
-Next: 18-03-PLAN.md — generate-plan EF: auth+can_edit_trip 게이트 + (0,0) 필터 + Claude 클러스터링 + Routes 인접 leg(Essentials) + 브로드캐스트/비용 (Wave 2). 18-02가 plans/plan_items 테이블 + google_routes provider를 로컬에 적용했으므로 EF가 upsert/insert/logCost 대상 보유.
+Plan: 4 of 5
+Status: Ready to execute
+Last activity: 2026-06-22 -- Completed 18-03-PLAN.md
+Next: 18-04-PLAN.md — packages/api `queries/plans.ts` (getPlanByTrip embed via plans_trip_id_fkey + generatePlan invoke + reorder/setTravelMode/setCollaborative) (Wave 2). 18-03이 generate-plan EF를 출하했으므로 invoke 대상(`{ plan_id, day_count, placed_count, unplaced_count }`) 보유.
+
+**18-03 완료 (2026-06-22, ~6분, commits c1d654e + e58bc31):** Phase 18 Wave 2 AI 코어 — `generate-plan` Edge Function (extract-youtube 80% 재조합 + Routes/Claude 2개 신규 외부면). **Task 1 (pipeline TDD RED→GREEN, c1d654e):** `routes.ts` `computeRoutesLeg(o,d,mode,key)→seconds|null` — v2 `computeRoutes`, **FieldMask `routes.duration` ONLY**(Essentials, Pitfall 1), DRIVE→`TRAFFIC_UNAWARE`/TRANSIT→`LESS_WALKING`, **(0,0) endpoint → fetch 호출 없이 null 단락**(T-18-14), `"840s"`→840 파싱, `!res.ok`/빈 routes→null; `claude.ts` `buildPlanPrompt`+`callClaudePlan`(claude-sonnet-4-6, max_tokens 4096, temperature 0)+`PlanLLMOutput` zod+`validatePlanIds`(입력셋 교집합·dedup·never-drop=days∪unplaced 누락분 pool로 auto-append, T-18-12). **23 deno 테스트 GREEN**(FieldMask 헤더 정확 단언, (0,0) fetch 미호출, null-on-failure, id-validation). `deno.json` extract-youtube 복사. **Task 2 (index.ts 핸들러, e58bc31):** auth.getUser 코스트게이트(T-18-08 verbatim) + 서비스롤 can_edit_trip 동치(owner OR accepted owner/editor 멤버 — RLS 헬퍼는 auth.uid()=null이라 명시 쿼리로 복제, T-18-09 403) before 유료호출; placeable 로드(trip_id, hidden_at IS NULL, − removed_place_ids), (0,0)→pool 분할; Claude 클러스터→validatePlanIds→(0,0) pool 병합; Routes 인접쌍만(leg=항목 INTO, day 첫항목 null), travel_mode 소문자→대문자 매핑; draft 멱등 덮어쓰기(delete draft→insert, Pitfall 5); plans/plan_items write; `plan:{trip_id}` broadcast loading(10)/clustering(50)/routing(80)/done(100)+error; Anthropic+google_routes 각 leg `extraction_costs`(link_id null) 로깅. `deno check index.ts` clean, grep 게이트 16 매치. **라이브 Routes 검증(A1/A2 — 코드 버그 아님, 유저측 게이트):** Shibuya→Shinjuku 실호출 — **Routes API ENABLED 확인**: WALK 200 `3310s`✅, DRIVE 200 `864s`✅(A2 필드패스 `routes[0].duration` 확정). **TRANSIT은 200 `{}`(빈 routes)→null→"이동시간 —"**: default travel_mode=transit이므로 현재 키로 transit leg 전부 "이동시간 —". RESEARCH A1(transit 데이터/SKU 가용성)과 일치 = **PLAN-04 transit-시간 표시의 유저측 게이트**(GCP 프로젝트/키에 Routes transit capability 활성 또는 walk/drive 수용). EF는 graceful 분해(빈/null leg→"이동시간 —", T-18-11/Pitfall 4 라이브 검증됨). **Deviation 없음** — plan대로 실행, 라이브 발견은 plan이 명시 anticipate(A1/A2)한 기록 사항. **핸드오프:** 04 invoke 반환 `{plan_id,day_count,placed_count,unplaced_count}` + getPlanByTrip embed; 05 iOS subscribePlanProgress(plan:{trip_id}) + day_index/sort_order 렌더 + leg null→"이동시간 —". **PLAN-01/03/04 (EF 측면) 충족 — end-to-end는 18-05/phase verify, transit-시간은 유저측 Routes transit 활성 게이트.**
 
 **18-02 완료 (2026-06-22, ~3분, commits 45cbe29 + 140b7ca):** Phase 18 Wave 1 영속화 계층 — `0017_plans.sql` (append-only, 0016 무수정) + 로컬 적용 + database.ts 재생성. **Task 1 (0017_plans.sql):** `plans`(trip_id FK cascade, status CHECK['generating','draft'], travel_mode CHECK['transit','walk','drive'], collaborative default false, timestamps — 18-01 PlanSchema와 정확 일치) + `plans_one_draft_per_trip` partial unique(`where status='draft'`, D-11 덮어쓰기) + `plans_set_updated_at` 트리거(0016 set_updated_at() 재사용·무재정의); `plan_items`(plan_id/place_id FK cascade, day_index/sort_order ≥0 CHECK, leg_travel_seconds nullable+≥0, is_anchor, unique(plan_id,place_id) — 18-01 PlanItemSchema 일치). **8 RLS 정책:** plans는 `can_*_trip(trip_id)` 직접(컬럼 소유); plan_items는 부모 plan의 trip_id로 라우팅 `exists(select 1 from plans p where p.id=plan_items.plan_id and can_edit_trip(p.trip_id))` — votes→places 허용 EXISTS idiom(0016 L529), inner can_*_trip이 DEFINER 경계 = 42P17 가드. **extraction_costs.provider CHECK** 가산 확장 `('anthropic','google_places','google_routes')`(T-18-07). grep 게이트 9 매치, helper 재정의 0, plan_items p.trip_id 라우팅(직접-trip_id bypass 0). **Task 2 [BLOCKING] (로컬 적용 + 타입 재생성):** 라이브 로컬 DB에서 `extraction_costs_provider_check` 제약명 정확 확인(psql pg_constraint) 후 `supabase migration up --local`로 pending 0017만 비파괴 적용 — **42P17 recursion 0건**, exit 0. psql 직접 검증: plans/plan_items 테이블 존재, plans_one_draft_per_trip 인덱스, RLS enabled(둘 다 t), 정책 8개(4+4), 제약 = `CHECK(provider = ANY(ARRAY['anthropic','google_places','google_routes']))`. `pnpm supabase:types` → database.ts +86줄(plans/plan_items Row/Insert/Update + plans_trip_id_fkey→trips relationship), `pnpm --filter @moajoa/api typecheck` exit 0. **1 DEVIATION (검증 게이트 명확화, 코드 변경 0):** plan의 `grep "google_routes" database.ts` 게이트는 Supabase gen types 설계상 불통과 — gen types는 CHECK 제약을 TS string-literal union으로 introspect하지 않고 모든 CHECK 텍스트 컬럼을 plain `string`으로 타입화(extraction_costs.provider/plans.status/plans.travel_mode/links.extraction_status 전부 동일). 실질 충족은 (a) DB 제약 직접 검증(3 provider 포함) + (b) app-level string-literal 계약은 @moajoa/core Zod(PlanSchema.status enum, TravelMode) = 18-01 출하분이 narrowing 담당. plans/plan_items 타입은 존재(게이트 나머지 절반 `grep "plans:|plan_items:"` = 2 매치). **원격 db push DEFERRED** — phase verify/user-side(17-03 패턴, SUPABASE_ACCESS_TOKEN+linked project+interactive 필요). 다운스트림 03/04 비차단(로컬 타입이 빌드 계약, EF는 배포 시 타깃 DB 대상). **핸드오프:** 03 EF가 plans upsert(draft unique)/plan_items insert/logCost(provider='google_routes', link_id=null) 대상 보유; 04 getPlanByTrip의 `.select('*, plan_items(*)')`는 plans_trip_id_fkey relationship으로 embed 해소; 05 iOS는 plan_items를 day_index/sort_order로 렌더, leg_travel_seconds=null → "이동시간 —". **PLAN-01~05 (영속화 측면) 충족.**
 
@@ -140,7 +142,7 @@ Plan: 1 of 1
 - **Next action:** Phase 5 Wave 5 — 05-06 (lib/onboarding.ts AsyncStorage wrapper + OnboardCard component + [id].tsx visibility wire — ONBOARD-02). After that, end-of-phase UAT batch covers all Phase 5 live verification.
 - **Phase 6: Dogfooding Gate** — ✓ TEMPLATES COMPLETE 2026-05-26 (5/5 plans, ~14분 total, 10 commits 1137306+8591d0f+ed9f644+6df9283+c08802a+145d099+b654978+5b3a609+e11400c+97e225a). 06-01 pre-dogfooding-checklist (D-01 6 그룹 A~F + D-02 sign-off, 105 lines) + manual-uat-phase3.md N2 SQL substitute (set_config + 42501 expected) + 7 Evidence: 라인. 06-02 sample-videos.md 12-row matrix (D-04) + samples.json (D-05 schema, JSON.parse 12 entries) + ground-truth/_template.json (confidence_label high/medium/low) + ground-truth/README.md (per-video procedure, D-06 매칭, quality bar). 06-03 daily-log-template.md (7 Day blocks + End-of-Week SQL Snapshot + 7일 Pass/Fail Summary, D-10/D-11/D-12/D-13) + incidents.md (4-label policy P0/P1/expected-v1-limit/noise) + scripts/dogfooding/{p90-duration,daily-aggregate,measure-accuracy}.sql 3종 (percentile_cont + hidden_at IS NULL + jsonb_agg FILTER) + scripts/dogfooding/README.md (setup/args/output destinations). 06-04 friend-share-checklist.md (Friend A/B 양식 × D-15 5체크 + device meta + locale + 피드백, 97 lines) + screenshots/README.md (D-16 layout + NN-step.png 명명 + locale labeling). 06-05 pass-evaluator.md (D-20 11 criteria + D-21 4 fail → next phase mapping + decision tree) + extraction-baseline-TEMPLATE.md (D-09 5-part: Meta/Per-video/Aggregate/Top5/v2 시드) + PASS-TEMPLATE.md (D-22 sign-off 13 필드 + Phase 1.5 unlock) + PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append (D-19, idempotent). 모든 5 plans `autonomous: true` — production code 수정 0건, documentation/SQL templates only. Phase 6 dogfooding 실행 (7일 본인 여행 + 12 영상 ground truth + 친구 2명 share + baseline measurement)은 user-side work — 본 5 plans는 그 양식과 SQL을 미리 준비하는 것이 scope.
 - **Next action:** Phase 6 dogfooding execution (user-side) — pre-dogfooding-checklist.md sign-off → 7일 daily-log + incidents append → Day 5~6 친구 share → Day 7+1 baseline 측정 + pass-evaluator 평가 → PASS.md (또는 FAIL-YYYY-MM-DD.md) 작성 → Phase 1.5 unlock (협업·투표).
-- **Progress:** [█████░░░░░] 50%
+- **Progress:** [█████████░] 85%
 
 ---
 
@@ -264,6 +266,7 @@ Plan: 1 of 1
 | 260612-p0p1 | 도그푸딩 P0/P1: OG 이미지 500(Satori woff2+flex) + 로그인→/boards 루프(?next=+안내 페이지) — 라이브 검증 | 2026-06-12 | 08cb410 | v2-backlog #4·#6 해소 |
 | 260612-place | 장소 상세 UX: 통합 리스트(해설+펼침+Google지도/영상점프+inline ❤️) + 0013 view 필드 — 라이브 검증 | 2026-06-12 | 1131357 | 사용자 결정: 투표는 인라인 |
 | Phase 17-trip-foundation-ia P01 | ~7 min | 3 tasks | 11 files |
+| Phase 18 P03 | 6min | 2 tasks | 6 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 
