@@ -1,10 +1,11 @@
 ---
 phase: 18
 slug: auto-plan-ai
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-22
+reviewed_at: 2026-06-22
 ---
 
 # Phase 18 — UI Design Contract
