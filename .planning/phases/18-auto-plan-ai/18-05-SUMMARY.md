@@ -45,7 +45,7 @@ decisions:
 metrics:
   duration: "~40min"
   completed: "2026-06-22"
-  tasks: 2 of 3 (Task 3 device UAT pending)
+  tasks: 3 of 3 (Task 3 device UAT — user-approved 2026-06-22)
   files: 7
 ---
 
