@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-status: phase_complete
-last_updated: "2026-06-21T14:57:08.767Z"
-last_activity: 2026-06-21 -- Phase 17 완료 — verify 통과 (6/6 criteria, 7/7 reqs) + code review 2 blocker(CR-01/HR-01) inline fix + 원격 0016 마이그레이션
+status: executing
+last_updated: "2026-06-22T06:33:24.917Z"
+last_activity: 2026-06-22 -- Phase 18 planning complete
 progress:
   total_phases: 7
-  completed_phases: 1
-  total_plans: 8
+  completed_phases: 2
+  total_plans: 13
   completed_plans: 8
-  percent: 100
+  percent: 62
 ---
 
 # STATE: MOAJOA v2.0
@@ -34,8 +34,8 @@ progress:
 
 Phase: 17 — Trip Foundation & IA 재편 (✅ COMPLETE — 5/5 plans · verify 통과 6/6 criteria · 7/7 reqs · code review 2 blocker fixed)
 Plan: 17-04 ✅ 완료 (Wave 3) — Task 1 (0/1/N entry + trip Stack header + 4탭 layout) ✅ 4fef904 / Task 2 (map/plan/book/ledger 탭 + me) ✅ 4022b7e / Task 3 (share repoint + 구 boards/ & (tabs) 삭제) ✅ 4079b06 / Task 4 (디바이스 UAT human-verify) ✅ 사용자 승인
-Status: 17-04 COMPLETE — trip-scoped IA 재편. 0/1/N 진입분기(decideEntryRoute: 0→/onboarding[BLOCKER 1, first-trip은 Plan 05 온보딩 소유], 1/N→/trip/{id}/plan) + /trip/[id] Stack 헤더(여행 전환 switcher + profile→/me, **no FAB**, Pitfall 1 split: 헤더=parent Stack, 탭바=(tabs)/_layout) + 4탭 하단바(지도·플랜·예약·가계부, plan default) + map 탭에 boards/[id] 콘텐츠 trip 어휘 포팅(confidence read 보존) + plan brand empty-state + book/ledger neutral 스텁 + me 글로벌 화면 이전 + share-handler `/boards/{id}`→`/trip/{tripId}/plan`(board_id→trip_id) + share-routing trip 어휘 + 구 boards/ 트리 & 글로벌 (tabs) 그룹(discover/friends 포함, Open Q4) 클린 브레이크 삭제(레거시 redirect 없음, D-15). **자동 증거: apps/ios typecheck 0 errors + jest 72/72(12 suites)** — 17-04 잔여 forward-ref 2건(/onboarding·/trip/create)은 Plan 05이 해소. **디바이스 UAT 사용자 승인**(이번 세션 원격 Supabase를 0016 trips 베이스라인으로 reset[.backups/ 백업 후 사용자 명시 승인]해 trips-native 원격에서 sim 실행 — NAV-01/02/03/04 런타임 확인). **Deviation 없음**(core LinkAdd.board_id 입력키 리네임은 Plan 03이 api 경계 매핑으로 처리·후속 plan 소유 — 본 plan과 무모순). NAV-01/02/03/04 완료.
-Last activity: 2026-06-21 -- 17-04 완료 (trip IA 재편 SUMMARY + UAT 승인, NAV-01/02/03/04)
+Status: Ready to execute
+Last activity: 2026-06-22 -- Phase 18 planning complete
 Next: Phase 17 완료 + verify 통과 (17-VERIFICATION.md, 17-REVIEW.md) → Phase 18 (Auto Plan — 추출 즉시 AI 플랜). `/gsd-discuss-phase 18` 권장 (18 CONTEXT.md 미생성).
 
 **17-04 완료 (2026-06-21, code commits 4fef904 + 4022b7e + 4079b06, SUMMARY 본 세션 finalize):** trip-scoped IA 재편 — 글로벌 5탭 boards IA → /trip/[id] 4탭 셸. **Task 1 (`index.tsx` + `/trip/[id]/_layout.tsx` + `header.tsx` + `(tabs)/_layout.tsx`):** auth scaffold 보존, 구 `<Redirect href="/(tabs)/boards" />` → `decideEntryRoute(listMyTrips, lastTripId)` 분기(0→/onboarding, 1/N→/trip/{tripId}/plan; 0-trip 온보딩은 BLOCKER 1 — auto-first-board 미이전, first-trip은 Plan 05 소유); parent Stack이 `header.tsx`를 `screenOptions.header`로 소유(Pitfall 1 split, 탭바는 (tabs)/_layout); 4 `Tabs.Screen`(지도·플랜·예약·가계부) 탭바 스타일 verbatim 복사, plan default, **no FAB·no new 탭**; 헤더 = "현재 여행 ▾" 여행 전환 switcher(trips 목록 + 새 여행 + per-row 삭제 Alert) + profile→/me. **Task 2:** map 탭에 `boards/[id].tsx` 콘텐츠(MapView/Marker/place-list/pin-sheet) trip 어휘로 surgical 포팅(confidence read 보존); plan brand-accented empty-state(default landing, Phase 18이 채움); book/ledger neutral-only "곧 제공돼요" 스텁(D-11); me 글로벌 stack 화면 이전. **Task 3:** share-handler `addLink board_id→trip_id` + `router.replace('/trip/{tripId}/plan')` + `listMyBoards→listMyTrips`; share-routing.ts + 테스트 trip 어휘 리네임; 구 `boards/` 트리 + 글로벌 `(tabs)` 그룹(discover/friends 포함, Open Q4) 클린 브레이크 삭제(레거시 redirect 없음, D-13/D-15). **자동 증거: apps/ios typecheck 0 errors**(17-04이 남긴 /onboarding·/trip/create forward-ref 2건은 Plan 05이 라우트 생성 + Expo typed-routes 재생성으로 해소) **+ jest 72/72(12 suites, share-routing trip 어휘 테스트 포함)**; 구조: app/boards & app/(tabs) 디스크에서 제거 확인. **Task 4 (checkpoint:human-verify — 디바이스 UAT):** 사용자가 `pnpm sim` 실행 후 승인("굿"/approved). 이번 세션 원격 Supabase를 **0016 trips 베이스라인으로 reset**(17-03서 deferred됐던 원격 마이그레이션을 `.backups/` 백업 후 사용자 명시 승인하에 실행) → trips-native 원격에서 진입분기·4탭바·헤더 switcher·repoint된 share flow를 end-to-end 확인. NAV-01/02/03/04 런타임 sign-off. **Deviation 없음** — core `LinkAdd.board_id` 입력키는 본 plan이 리네임하지 않음(Plan 03이 api 경계에서 `input.board_id→trip_id` 매핑 유지, core 입력 리네임은 후속 plan 소유 — share-handler는 call site에서 trip id를 넘기므로 무모순). **NAV-01/02/03/04 완료. Phase 17 = 5/5 plans 전부 완료.**
