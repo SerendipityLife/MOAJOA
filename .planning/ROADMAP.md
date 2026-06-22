@@ -35,7 +35,7 @@ Plans:
 ### Phases
 
 - [x] **Phase 17: Trip Foundation & IA 재편** — 0016 마이그레이션 + core 식별자 계약 + Expo Router 여행 4탭 + 진입분기 + 일정 정해짐 경로 (비협상 기반) — 5/5 plans 완료 + verify 통과 (6/6 criteria, 7/7 reqs, 2026-06-21)
-- [ ] **Phase 18: Auto Plan (추출 즉시 AI 플랜)** — 추출 완료가 플랜 생성 트리거. 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시
+- [ ] **Phase 18: Auto Plan (사용자 트리거 AI 플랜)** — 추출로 장소를 모은 뒤 plan 탭 "플랜 만들기"로 AI 초안 생성(추출 직후 자동 아님). 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시
 - [ ] **Phase 19: Date Voting (일정 미정 분기)** — 날짜 투표 + 비로그인 초대 링크 + 집계→여행 일정 전환
 - [ ] **Phase 20: Affiliate Booking (딥링크 제휴 예약)** — 인라인 예약 카드 + 통합 체크리스트 + SubID 어트리뷰션 + 시스템 브라우저
 - [ ] **Phase 21: Travel Ledger (메일 전달 가계부)** — 전용 전달주소 + AI 메일 파싱 + 통화·환율·결제시점 보존 + 수동 fallback
@@ -63,12 +63,12 @@ Plans:
 - [x] 17-05-PLAN.md — onboarding 정해짐/미정 branch + trip create UI (preset city/date range/auto-rep) + web /b/[slug]→/t/[slug] move (SETUP-01/02/NAV-04)
 **UI hint**: yes
 
-### Phase 18: Auto Plan (추출 즉시 AI 플랜)
-**Goal**: 링크 추출이 끝나면 영상 속 장소로 AI 플랜 초안이 자동 생성되고, 사용자가 장소를 추가/제거/재배치하며, 일정에 이동시간이 그라운딩된다. "아하 순간"을 즉시 만든다.
+### Phase 18: Auto Plan (사용자 트리거 AI 플랜)
+**Goal**: 추출로 모은 장소로 사용자가 plan 탭에서 "플랜 만들기"를 누르면 AI가 동선·날짜별 일정 초안을 짜고, 사용자가 장소를 추가/제거/재배치하며, 일정에 이동시간이 그라운딩된다. AI가 초안을 대신 짜주는 "아하 순간"을 만든다. (추출 직후 자동 생성 아님 — 한 trip에 링크 여러 개를 모은 뒤 사용자가 생성. CONTEXT D-01)
 **Depends on**: Phase 17 (식별자 계약 + 플랜 탭 라우팅). Phase 19와 병렬 가능
 **Requirements**: PLAN-01, PLAN-02, PLAN-03, PLAN-04, PLAN-05
 **Success Criteria** (what must be TRUE):
-  1. 추출 완료 직후 사용자 조작 없이 동선·날짜별 일정 플랜 초안이 플랜 탭에 나타난다
+  1. plan 탭의 "플랜 만들기"를 누르면 그 시점 trip의 추출 장소로 동선·날짜별 일정 플랜 초안이 생성되어 나타난다 (D-01 재해석 — 추출 직후 자동이 아니라 사용자 트리거)
   2. 플랜이 "초안"으로 명시되고, 사용자가 장소를 추가/제거하고 순서를 드래그로 재배치할 수 있다
   3. '필수 장소'를 선택하면 그 주변으로 동선이 재구성된다
   4. 일정 항목 사이에 이동시간이 표시된다 (Google Routes API 그라운딩 — 좌표 없는 장소는 자동배치 제외)
