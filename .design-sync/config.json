@@ -1,0 +1,48 @@
+{
+  "projectId": "c3ed9446-2e0c-4a4b-bd18-99c09c8ef490",
+  "shape": "package",
+  "pkg": "@moajoa/web",
+  "globalName": "MoajoaUI",
+  "tsconfig": "tsconfig.json",
+  "srcDir": "components",
+  "cssEntry": "./.ds-sync.generated.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "extraFonts": ["./.ds-fonts/pretendard.css"],
+  "overrides": {
+    "Dialog": { "cardMode": "single", "viewport": "500x340", "primaryStory": "Confirm" },
+    "BottomSheet": { "cardMode": "single", "viewport": "480x460", "primaryStory": "Open" },
+    "ToastProvider": { "cardMode": "single", "viewport": "420x260", "primaryStory": "Success" },
+    "Select": { "cardMode": "single", "viewport": "300x360", "primaryStory": "Open" },
+    "DropdownMenu": { "cardMode": "single", "viewport": "320x360", "primaryStory": "Open" },
+    "Popover": { "cardMode": "single", "viewport": "340x320", "primaryStory": "Open" },
+    "Tooltip": { "cardMode": "single", "viewport": "360x220", "primaryStory": "Hint" }
+  },
+  "componentSrcMap": {
+    "Button": "components/button.tsx",
+    "Input": "components/input.tsx",
+    "Chip": "components/chip.tsx",
+    "Card": "components/card.tsx",
+    "Dialog": "components/dialog.tsx",
+    "BottomSheet": "components/bottom-sheet.tsx",
+    "ToastProvider": "components/toast.tsx",
+    "Select": "components/select.tsx",
+    "DropdownMenu": "components/dropdown-menu.tsx",
+    "Popover": "components/popover.tsx",
+    "Tooltip": "components/tooltip.tsx",
+    "Tabs": "components/tabs.tsx"
+  },
+  "dtsPropsFor": {
+    "Button": "  /** Visual style. Default \"primary\". */\n  variant?: \"primary\" | \"outline\" | \"text\";\n  /** Control height & padding. Default \"md\". */\n  size?: \"md\" | \"sm\";\n  children?: React.ReactNode;\n  className?: string;\n  disabled?: boolean;\n  type?: \"button\" | \"submit\" | \"reset\";\n  onClick?: React.MouseEventHandler<HTMLButtonElement>;\n  /** Accepts every native <button> attribute. */\n  [prop: string]: unknown;",
+    "Input": "  /** Render the danger/error border (sets aria-invalid). */\n  invalid?: boolean;\n  value?: string;\n  defaultValue?: string;\n  placeholder?: string;\n  type?: string;\n  disabled?: boolean;\n  className?: string;\n  onChange?: React.ChangeEventHandler<HTMLInputElement>;\n  /** Accepts every native <input> attribute. */\n  [prop: string]: unknown;",
+    "Chip": "  /** Selected (brand-tinted) state. Sets aria-selected. */\n  selected?: boolean;\n  children?: React.ReactNode;\n  className?: string;\n  disabled?: boolean;\n  onClick?: React.MouseEventHandler<HTMLButtonElement>;\n  /** Renders as a <button>; accepts every native button attribute. */\n  [prop: string]: unknown;",
+    "Card": "  /** Element tag to render. Default \"div\". */\n  as?: \"div\" | \"article\" | \"section\";\n  children?: React.ReactNode;\n  className?: string;\n  /** Accepts every native attribute of the chosen element. */\n  [prop: string]: unknown;",
+    "Dialog": "  /** Whether the dialog is open (controlled by the parent). */\n  open: boolean;\n  /** Requested close: backdrop click, Escape, or an action button. */\n  onClose: () => void;\n  /** Header title. */\n  title: string;\n  /** Optional supporting copy under the title. */\n  description?: string;\n  /** Body content. */\n  children?: React.ReactNode;\n  /** Footer action buttons. */\n  actions?: Array<{ label: string; onClick: () => void; variant?: \"primary\" | \"outline\" | \"text\" }>;",
+    "BottomSheet": "  /** Whether the sheet is open (controlled by the parent). */\n  open: boolean;\n  /** Requested close: backdrop click or Escape. */\n  onClose: () => void;\n  /** Optional header title. */\n  title?: string;\n  /** Sheet body content. */\n  children: React.ReactNode;",
+    "ToastProvider": "  /** App subtree that may call useToast() to show snackbars. */\n  children: React.ReactNode;\n  /* useToast() returns { toast(message: string, options?: { variant?: \"default\" | \"success\" | \"error\" | \"info\"; duration?: number }): void }. */",
+    "Select": "  /** Controlled selected value. */\n  value?: string;\n  /** Uncontrolled initial value. */\n  defaultValue?: string;\n  /** Fires when the selection changes. */\n  onValueChange?: (value: string) => void;\n  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  disabled?: boolean;\n  required?: boolean;\n  name?: string;\n  dir?: \"ltr\" | \"rtl\";\n  /** Compose with SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator. */\n  children?: React.ReactNode;",
+    "DropdownMenu": "  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  modal?: boolean;\n  dir?: \"ltr\" | \"rtl\";\n  /** Compose with DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuShortcut. */\n  children?: React.ReactNode;",
+    "Popover": "  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  modal?: boolean;\n  /** Compose with PopoverTrigger, PopoverContent, PopoverAnchor. */\n  children?: React.ReactNode;",
+    "Tooltip": "  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  /** Hover delay in ms before showing. Default 0 (instant). */\n  delayDuration?: number;\n  /** Compose with TooltipTrigger and TooltipContent. The provider is built in. */\n  children?: React.ReactNode;",
+    "Tabs": "  /** Controlled active tab value. */\n  value?: string;\n  defaultValue?: string;\n  onValueChange?: (value: string) => void;\n  orientation?: \"horizontal\" | \"vertical\";\n  dir?: \"ltr\" | \"rtl\";\n  className?: string;\n  /** Compose with TabsList, TabsTrigger, TabsContent. */\n  children?: React.ReactNode;"
+  }
+}
