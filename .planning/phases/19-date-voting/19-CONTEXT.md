@@ -45,6 +45,7 @@
   - 실시간 = 기존 Supabase broadcast 패턴 재사용(`subscribeExtractProgress`/`subscribePlanProgress`의 `*:{trip_id}` 채널 idiom).
   - 어뷰즈 = votes와 동일 기기토큰 + 레이트 제한.
   - **익명 write는 votes로 이미 구축할 보안면(anon RLS + 코드=bearer)을 재사용 → 증분이지 새 모델 아님.**
+  - **(UI-phase 추가, 2026-06-23)** 표현 = **채팅식** 인라인 스레드(투표 페이지 하단). + **presence UI**(현재 poll 보는 중인 익명 참여자 닉네임/수 표시) = Supabase Realtime **Presence**를 같은 채널에 얹음(증분).
 
 ### Claude's Discretion
 - 옵션 개수 상한(2–10 권장), poll code 형식(trip share_slug 파생 vs 독립 코드), 정확한 테이블 분할(votes 통합 vs range/grid 분리, comments 테이블), 실시간 채널명, 웹 라우트(`/poll/[code]` 신규 vs `/t/[slug]` 재사용), soft nudge 정확 문구·배치, 기기토큰 생성/저장 방식.
