@@ -195,3 +195,21 @@ export const TripKeys = {
   /** UUID string — last trip the user opened (N-entry restore, NAV-01). */
   LastTripId: '@moajoa/trip:last_id',
 } as const;
+
+/** Phase 18 — Realtime Broadcast channel for plan generation progress (trip-scoped, D-02). */
+export const PLAN_CHANNEL_PREFIX = 'plan:';
+export function planChannelName(tripId: string): string {
+  return `plan:${tripId}`;
+}
+/** Plan generation broadcast steps (D-02). done/error terminal (not in PLAN_STEP_KO). */
+export const PlanStep = ['loading', 'clustering', 'routing', 'done', 'error'] as const;
+export type PlanStepType = (typeof PlanStep)[number];
+/** Korean labels for plan steps — UI never displays raw step strings. Mirror EXTRACT_STEP_KO. */
+export const PLAN_STEP_KO = {
+  loading: '장소 불러오기',
+  clustering: '동선 짜기',
+  routing: '이동시간 계산',
+} as const;
+/** Per-plan travel mode toggle (D-08). default = transit (일본 도시 자유여행). */
+export const TravelMode = ['transit', 'walk', 'drive'] as const;
+export type TravelModeType = (typeof TravelMode)[number];
