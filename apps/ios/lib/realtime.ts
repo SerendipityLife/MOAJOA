@@ -1,4 +1,4 @@
-import { extractChannelName } from '@moajoa/core';
+import { extractChannelName, planChannelName } from '@moajoa/core';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
@@ -29,6 +29,36 @@ export function subscribeExtractProgress(
     .channel(extractChannelName(linkId))
     .on('broadcast', { event: 'progress' }, (msg) => {
       onProgress(msg.payload as ExtractProgress);
+    })
+    .subscribe();
+  return channel;
+}
+
+export interface PlanProgress {
+  step: 'loading' | 'clustering' | 'routing' | 'done' | 'error';
+  progress_pct?: number;
+  error?: string;
+}
+
+/**
+ * Phase 18 — subscribe to the trip-scoped plan:{trip_id} Realtime broadcast
+ * channel that the generate-plan Edge Function emits to during AI plan
+ * generation (D-02). Mirrors subscribeExtractProgress; the plan UI (State C)
+ * maps the broadcast steps to PLAN_STEP_KO and reacts to done/error terminals.
+ *
+ * Caller MUST clean up the channel in useEffect return:
+ *   const ch = subscribePlanProgress(tripId, handler);
+ *   return () => { supabase.removeChannel(ch); }
+ * (same leak guard as subscribeExtractProgress).
+ */
+export function subscribePlanProgress(
+  tripId: string,
+  onProgress: (p: PlanProgress) => void,
+): RealtimeChannel {
+  const channel = supabase
+    .channel(planChannelName(tripId))
+    .on('broadcast', { event: 'progress' }, (msg) => {
+      onProgress(msg.payload as PlanProgress);
     })
     .subscribe();
   return channel;
