@@ -73,7 +73,13 @@ Plans:
   3. '필수 장소'를 선택하면 그 주변으로 동선이 재구성된다
   4. 일정 항목 사이에 이동시간이 표시된다 (Google Routes API 그라운딩 — 좌표 없는 장소는 자동배치 제외)
   5. "친구와 같이 정하기"로 같은 플랜을 협업 투표 모드로 전환할 수 있다 (옵션)
-**Plans**: TBD (~4 plans 추정: generate-plan EF[claude 클러스터링/순서 + Routes 행렬 후처리] / 플랜 데이터 모델 + 초안 상태 / plan.tsx 드래그 재배치 UI / 필수 장소 + 협업 전환 토글). Routes 비용 vs <$0.005 예산 plan-phase에서 검증
+**Plans**: 5 plans
+Plans:
+- [ ] 18-01-PLAN.md — core 계약: plan/plan_items Zod + GeneratePlanRequest + planChannelName/PlanStep/TravelMode (TDD, Wave 1)
+- [ ] 18-02-PLAN.md — [BLOCKING] 0017_plans.sql (plans/plan_items + RLS DEFINER 재사용 + extraction_costs google_routes) + 로컬 적용 + 타입 재생성 (Wave 1)
+- [ ] 18-03-PLAN.md — generate-plan EF: auth+can_edit_trip 게이트 + (0,0) 필터 + Claude 클러스터링 + Routes 인접 leg(Essentials) + 브로드캐스트/비용 (Wave 2)
+- [ ] 18-04-PLAN.md — @moajoa/api plans 쿼리: getPlanByTrip/generatePlan invoke/reorder/move/setTravelMode/setCollaborative(flag+share) (TDD, Wave 2)
+- [ ] 18-05-PLAN.md — plan.tsx States A–F(버튼→스켈레톤→초안) + 드래그 재배치 + 미배치 풀 + 필수 앵커 + 협업 토글 + 디바이스 UAT (Wave 3)
 **UI hint**: yes
 
 ### Phase 19: Date Voting (일정 미정 분기)
