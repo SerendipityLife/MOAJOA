@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-status: executing
-last_updated: "2026-06-22T08:30:00.000Z"
+status: verifying
+last_updated: "2026-06-22T10:09:53.897Z"
 last_activity: 2026-06-22
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 12
-  percent: 92
+  completed_plans: 13
+  percent: 100
 ---
 
 # STATE: MOAJOA v2.0
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 18 (Auto Plan (사용자 트리거 AI 플랜)) — EXECUTING
-Plan: 5 of 5
+Phase: 19
+Plan: Not started
 Status: 18-05 코드 완료 — 디바이스 UAT 대기 (checkpoint:human-verify)
-Last activity: 2026-06-22 -- 18-05-PLAN.md Task 1/2 + Task 3 컴포넌트 빌드 완료, Task 3 디바이스 UAT 대기
+Last activity: 2026-06-22
 Next: 사용자 디바이스/sim UAT (PLAN-01..05) — `pnpm --filter @moajoa/ios sim`로 State B→C→D→E 확인(플랜 만들기→realtime 진행→초안 렌더; 드래그 재배치; 제거/일정에 추가; 필수+재생성; 모드 토글 leg 재계산; 협업 공유). 승인 시 PLAN-01..05 sign-off + 18-05 완료 처리. 그 후 Phase 18 verify.
 
 **18-05 코드 완료 (2026-06-22, ~40분, commits 5a454b9 + cb63909 + b461d05 — Task 3 디바이스 UAT 대기):** Phase 18 Wave 3 — apps/ios plan 탭 채우기 (States A–F). **Task 1 (realtime, 5a454b9):** `lib/realtime.ts`에 `subscribePlanProgress(tripId,cb)+PlanProgress` append(subscribeExtractProgress 무수정 — diff=import줄+append블록만), planChannelName으로 `plan:{trip_id}` 구독·payload pass-through·removeChannel 계약; realtime.test.ts +3 케이스(채널명 `plan:{trip_id}`·payload·identity). **drag-library 결정(Open Q1): gesture-handler ~2.31.2 + Reanimated ~4.3.1 핸드롤(신규 dep 0)** — reanimated-dnd@2.0.0은 peer 호환(npm view 검증) but 신규 네이티브 dep은 dev build 없이(sim/device 미가용) 검증 불가 = 런타임 크래시 리스크(jest는 네이티브 mock이라 못 잡음); placed↔pool이 명시 affordance(D-13)라 same-list reorder만 필요 → 핸드롤이 더 단순·설치된 Reanimated-4-safe 프리미티브 사용. draggable-flatlist 미채택(Pitfall 3, package.json 부재 확인). **Task 2 (plan.tsx, b461d05):** 상태머신(loaded/generating/error/plan) → State A(무장소·스텁 verbatim·자동생성 안함 D-01) / B(장소·초안無 → 플랜 만들기 버튼 ≥44px → runGenerate([])) / C(생성중·step-indicator 카드 ActivityIndicator #2979FF + PLAN_STEP_KO 3스텝 + 비활성 플랜을 짜고 있어요… Pitfall5; subscribePlanProgress generating-게이트 effect, done→refetch·error→F·removeChannel cleanup) / D·E(초안 칩·플랜 다시 만들기 ghost·TravelModeToggle·DaySection 드래그+leg pill·UnplacedPool·친구와 같이 정하기) / F(에러 + 다시 시도, no-placeable variant). 모드 변경=setTravelMode 후 same-anchor regenerate(D-08); 재생성=Alert.alert 확인 → anchor_place_ids 전달 generatePlan(D-10/D-11). **Task 3 컴포넌트 (cb63909):** plan-item-row(place-card + reorder-three 핸들 + 필수 star + 제거 #EF4444 + LegPill {n}분/이동시간 —), day-section(Day N + 핸드롤 long-press Gesture.Pan reorder → onReorder), unplaced-pool(미배치 + 일정에 추가 add-circle brand + coordinateless 헬퍼 D-09), travel-mode-toggle(3-seg 전철/도보/차 default 전철 brand-50 active D-08). **자동 증거: apps/ios jest 13 suites/79 tests GREEN**(realtime 6, plan 4 — State A 빈·State B 버튼+미자동생성·버튼탭→generatePlan·State D 초안칩+Day1), **pnpm typecheck exit 0**; plan.tsx 필수 문자열 전부 존재, draggable-flatlist grep 0. **1 DEVIATION (Rule 3 blocking):** plan.test.tsx에서 @expo/vector-icons(ESM transform 미허용)·Reanimated 4/worklets(네이티브 미초기화) jest import 실패 → 테스트 파일 스코프 jest.mock 3종(icons 문자열 스텁·reanimated default.View+identity hooks·gesture-handler no-op Gesture.Pan체인) 추가, 드래그 LOGIC은 디바이스 UAT 검증·RNTL은 렌더 상태 계약 커버. 글로벌 jest-setup 무수정(12-suite 베이스라인 보호). **Task 3 디바이스/sim UAT는 executor 수행 불가(checkpoint:human-verify)** — 코드·자동테스트 완료·커밋, PLAN-01..05는 UAT sign-off까지 Pending.

@@ -35,7 +35,7 @@ Plans:
 ### Phases
 
 - [x] **Phase 17: Trip Foundation & IA 재편** — 0016 마이그레이션 + core 식별자 계약 + Expo Router 여행 4탭 + 진입분기 + 일정 정해짐 경로 (비협상 기반) — 5/5 plans 완료 + verify 통과 (6/6 criteria, 7/7 reqs, 2026-06-21)
-- [ ] **Phase 18: Auto Plan (사용자 트리거 AI 플랜)** — 추출로 장소를 모은 뒤 plan 탭 "플랜 만들기"로 AI 초안 생성(추출 직후 자동 아님). 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시
+- [x] **Phase 18: Auto Plan (사용자 트리거 AI 플랜)** — 추출로 장소를 모은 뒤 plan 탭 "플랜 만들기"로 AI 초안 생성(추출 직후 자동 아님). 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시 (completed 2026-06-22)
 - [ ] **Phase 19: Date Voting (일정 미정 분기)** — 날짜 투표 + 비로그인 초대 링크 + 집계→여행 일정 전환
 - [ ] **Phase 20: Affiliate Booking (딥링크 제휴 예약)** — 인라인 예약 카드 + 통합 체크리스트 + SubID 어트리뷰션 + 시스템 브라우저
 - [ ] **Phase 21: Travel Ledger (메일 전달 가계부)** — 전용 전달주소 + AI 메일 파싱 + 통화·환율·결제시점 보존 + 수동 fallback
@@ -132,7 +132,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 17. Trip Foundation & IA 재편 | 5/5 | Complete | 2026-06-21 |
-| 18. Auto Plan | 4/5 | In Progress (18-05 코드 완료, 디바이스 UAT 대기) |  |
+| 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
 | 19. Date Voting | 0/~3 | Not started | - |
 | 20. Affiliate Booking | 0/~3 | Not started | - |
 | 21. Travel Ledger | 0/~4 | Not started | - |

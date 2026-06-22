@@ -228,11 +228,11 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 ### Auto Plan (PLAN)
 
-- [ ] **PLAN-01**: 사용자가 plan 탭에서 "플랜 만들기"를 누르면 그 시점 trip의 추출 장소로 AI 플랜(동선·날짜별 일정) 초안이 생성된다 (추출 직후 자동 아님 — 한 trip에 링크 여러 개를 모은 뒤 사용자가 생성. CONTEXT 18 D-01)
-- [ ] **PLAN-02**: 플랜은 "초안"으로 명시되고, 사용자가 장소를 추가/제거/재배치할 수 있다
-- [ ] **PLAN-03**: '필수 장소'를 선택하면 그 주변으로 동선이 구성된다
-- [ ] **PLAN-04**: 일정 항목에 이동시간이 표시된다 (Routes 그라운딩)
-- [ ] **PLAN-05**: "친구와 같이 정하기"로 같은 플랜을 협업 투표 모드로 전환한다 (옵션)
+- [x] **PLAN-01**: 사용자가 plan 탭에서 "플랜 만들기"를 누르면 그 시점 trip의 추출 장소로 AI 플랜(동선·날짜별 일정) 초안이 생성된다 (추출 직후 자동 아님 — 한 trip에 링크 여러 개를 모은 뒤 사용자가 생성. CONTEXT 18 D-01)
+- [x] **PLAN-02**: 플랜은 "초안"으로 명시되고, 사용자가 장소를 추가/제거/재배치할 수 있다
+- [x] **PLAN-03**: '필수 장소'를 선택하면 그 주변으로 동선이 구성된다
+- [x] **PLAN-04**: 일정 항목에 이동시간이 표시된다 (Routes 그라운딩)
+- [x] **PLAN-05**: "친구와 같이 정하기"로 같은 플랜을 협업 투표 모드로 전환한다 (옵션)
 
 ### Booking (BOOK)
 
@@ -280,11 +280,11 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | ATTR-01 | Phase 17 | Done (17-02 contract lock) |
 | SETUP-01 | Phase 17 | Complete |
 | SETUP-02 | Phase 17 | Complete |
-| PLAN-01 | Phase 18 | Pending |
-| PLAN-02 | Phase 18 | Pending |
-| PLAN-03 | Phase 18 | Pending |
-| PLAN-04 | Phase 18 | Pending |
-| PLAN-05 | Phase 18 | Pending |
+| PLAN-01 | Phase 18 | Done |
+| PLAN-02 | Phase 18 | Done |
+| PLAN-03 | Phase 18 | Done |
+| PLAN-04 | Phase 18 | Done |
+| PLAN-05 | Phase 18 | Done |
 | POLL-01 | Phase 19 | Pending |
 | POLL-02 | Phase 19 | Pending |
 | POLL-03 | Phase 19 | Pending |
