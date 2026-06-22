@@ -26,10 +26,11 @@ const SLUG = 'happy-fox-42';
  * `.delete().eq()`) and still get `{ data, error }`. Spies on each builder method
  * record the exact arguments so we can assert query shape.
  */
-function makeChain(result: { data: unknown; error: unknown }) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> & {
-    then?: (...a: unknown[]) => unknown;
-  } = {} as never;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MockChain = Record<string, any>;
+
+function makeChain(result: { data: unknown; error: unknown }): MockChain {
+  const chain: MockChain = {};
   const methods = ['select', 'eq', 'is', 'order', 'update', 'insert', 'delete'];
   for (const m of methods) chain[m] = vi.fn(() => chain);
   chain.single = vi.fn(() => Promise.resolve(result));
@@ -208,7 +209,7 @@ describe('setCollaborative — flip flag + reuse shareTrip (D-14, flag + share o
     const client = {
       from: vi.fn((table: string) => {
         fromCalls.push(table);
-        const chain: Record<string, ReturnType<typeof vi.fn>> = {} as never;
+        const chain: MockChain = {};
         for (const m of ['select', 'eq', 'is', 'order', 'insert', 'delete']) {
           chain[m] = vi.fn(() => chain);
         }
@@ -239,7 +240,7 @@ describe('setCollaborative — flip flag + reuse shareTrip (D-14, flag + share o
   it('throws when the plans update returns { error }', async () => {
     const client = {
       from: vi.fn(() => {
-        const chain: Record<string, ReturnType<typeof vi.fn>> = {} as never;
+        const chain: MockChain = {};
         for (const m of ['select', 'eq', 'is', 'order', 'insert', 'delete', 'update']) {
           chain[m] = vi.fn(() => chain);
         }
