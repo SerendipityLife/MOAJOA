@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-last_updated: "2026-06-22T06:38:06.000Z"
-last_activity: 2026-06-22 -- Completed 18-01-PLAN.md
+last_updated: "2026-06-22T06:48:00.000Z"
+last_activity: 2026-06-22 -- Completed 18-02-PLAN.md
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 13
-  completed_plans: 9
-  percent: 69
+  completed_plans: 10
+  percent: 77
 ---
 
 # STATE: MOAJOA v2.0
@@ -33,10 +33,12 @@ progress:
 ## Current Position
 
 Phase: 18 (Auto Plan (사용자 트리거 AI 플랜)) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Executing Phase 18
-Last activity: 2026-06-22 -- Completed 18-01-PLAN.md
-Next: 18-02-PLAN.md [BLOCKING] — 0017_plans.sql (plans/plan_items + RLS DEFINER 재사용 + extraction_costs google_routes) + 로컬 적용 + 타입 재생성. 18-01이 락한 PlanSchema/PlanItemSchema 컬럼 형태가 0017 DDL 계약.
+Last activity: 2026-06-22 -- Completed 18-02-PLAN.md
+Next: 18-03-PLAN.md — generate-plan EF: auth+can_edit_trip 게이트 + (0,0) 필터 + Claude 클러스터링 + Routes 인접 leg(Essentials) + 브로드캐스트/비용 (Wave 2). 18-02가 plans/plan_items 테이블 + google_routes provider를 로컬에 적용했으므로 EF가 upsert/insert/logCost 대상 보유.
+
+**18-02 완료 (2026-06-22, ~3분, commits 45cbe29 + 140b7ca):** Phase 18 Wave 1 영속화 계층 — `0017_plans.sql` (append-only, 0016 무수정) + 로컬 적용 + database.ts 재생성. **Task 1 (0017_plans.sql):** `plans`(trip_id FK cascade, status CHECK['generating','draft'], travel_mode CHECK['transit','walk','drive'], collaborative default false, timestamps — 18-01 PlanSchema와 정확 일치) + `plans_one_draft_per_trip` partial unique(`where status='draft'`, D-11 덮어쓰기) + `plans_set_updated_at` 트리거(0016 set_updated_at() 재사용·무재정의); `plan_items`(plan_id/place_id FK cascade, day_index/sort_order ≥0 CHECK, leg_travel_seconds nullable+≥0, is_anchor, unique(plan_id,place_id) — 18-01 PlanItemSchema 일치). **8 RLS 정책:** plans는 `can_*_trip(trip_id)` 직접(컬럼 소유); plan_items는 부모 plan의 trip_id로 라우팅 `exists(select 1 from plans p where p.id=plan_items.plan_id and can_edit_trip(p.trip_id))` — votes→places 허용 EXISTS idiom(0016 L529), inner can_*_trip이 DEFINER 경계 = 42P17 가드. **extraction_costs.provider CHECK** 가산 확장 `('anthropic','google_places','google_routes')`(T-18-07). grep 게이트 9 매치, helper 재정의 0, plan_items p.trip_id 라우팅(직접-trip_id bypass 0). **Task 2 [BLOCKING] (로컬 적용 + 타입 재생성):** 라이브 로컬 DB에서 `extraction_costs_provider_check` 제약명 정확 확인(psql pg_constraint) 후 `supabase migration up --local`로 pending 0017만 비파괴 적용 — **42P17 recursion 0건**, exit 0. psql 직접 검증: plans/plan_items 테이블 존재, plans_one_draft_per_trip 인덱스, RLS enabled(둘 다 t), 정책 8개(4+4), 제약 = `CHECK(provider = ANY(ARRAY['anthropic','google_places','google_routes']))`. `pnpm supabase:types` → database.ts +86줄(plans/plan_items Row/Insert/Update + plans_trip_id_fkey→trips relationship), `pnpm --filter @moajoa/api typecheck` exit 0. **1 DEVIATION (검증 게이트 명확화, 코드 변경 0):** plan의 `grep "google_routes" database.ts` 게이트는 Supabase gen types 설계상 불통과 — gen types는 CHECK 제약을 TS string-literal union으로 introspect하지 않고 모든 CHECK 텍스트 컬럼을 plain `string`으로 타입화(extraction_costs.provider/plans.status/plans.travel_mode/links.extraction_status 전부 동일). 실질 충족은 (a) DB 제약 직접 검증(3 provider 포함) + (b) app-level string-literal 계약은 @moajoa/core Zod(PlanSchema.status enum, TravelMode) = 18-01 출하분이 narrowing 담당. plans/plan_items 타입은 존재(게이트 나머지 절반 `grep "plans:|plan_items:"` = 2 매치). **원격 db push DEFERRED** — phase verify/user-side(17-03 패턴, SUPABASE_ACCESS_TOKEN+linked project+interactive 필요). 다운스트림 03/04 비차단(로컬 타입이 빌드 계약, EF는 배포 시 타깃 DB 대상). **핸드오프:** 03 EF가 plans upsert(draft unique)/plan_items insert/logCost(provider='google_routes', link_id=null) 대상 보유; 04 getPlanByTrip의 `.select('*, plan_items(*)')`는 plans_trip_id_fkey relationship으로 embed 해소; 05 iOS는 plan_items를 day_index/sort_order로 렌더, leg_travel_seconds=null → "이동시간 —". **PLAN-01~05 (영속화 측면) 충족.**
 
 **18-01 완료 (2026-06-22, ~2분, TDD RED→GREEN commits 3dde029 + ad26409):** Phase 18 Wave 1 공유 계약을 `@moajoa/core`에 락 — 모든 다운스트림(EF·api·iOS)이 import. **plan.ts:** `PlanSchema`(id/trip_id/status enum['generating','draft']/travel_mode/collaborative/timestamps) + `PlanItemSchema`(plan_id/place_id/day_index≥0/sort_order≥0/leg_travel_seconds nullable·null=`이동시간 —`/is_anchor) — 0017 컬럼 모델; `GeneratePlanRequestSchema` ResolvePlaceRequest `.default()` idiom 미러 → travel_mode='transit'(D-08)·anchor_place_ids=[](D-10)·removed_place_ids=[](D-11) default, bad travel_mode + non-uuid trip_id/anchor reject(T-18-01 mitigation 공급); `GeneratePlanResultSchema`(plan_id+day/placed/unplaced count) invoke 반환. **constants.ts (surgical append, TripKeys 아래·extraction 블록 무수정):** `planChannelName(tripId)='plan:{tripId}'` 단일 빌더(T-18-02 client↔EF drift 방지) + `PLAN_CHANNEL_PREFIX` + `PlanStep`['loading','clustering','routing','done','error'] + `PLAN_STEP_KO`(done/error terminal omit, EXTRACT_STEP_KO 미러) + `TravelMode`['transit','walk','drive'] enum-from-const(TripVisibility idiom). **barrel:** `export * from './plan'`. **자동 증거:** plan.test.ts 12/12 + full core suite **62/62**(50 기존 무회귀 → 62), `pnpm --filter @moajoa/core typecheck` exit 0; constants.ts diff = ADDITIONS-only(extraction 블록 0 edit), planChannelName+extractChannelName 공존. **Deviation 없음** — plan 스펙 그대로 실행. **핸드오프:** 03 EF는 Deno라 @moajoa/core import 불가 → request schema 로컬 재선언하되 GeneratePlanRequest 미러 + 채널 리터럴 `plan:{tripId}` 사용; 04 api invoke 반환 GeneratePlanResult; 05 iOS subscribePlanProgress가 planChannelName 구독·진행 라벨 PLAN_STEP_KO.
 
