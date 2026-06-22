@@ -34,7 +34,7 @@ progress:
 
 Phase: 19
 Plan: Not started
-Status: Phase 19 컨텍스트 수집 완료 (discuss-phase, 2026-06-23) — 4개 영역 잠금 + 댓글 포함 (commit f65c773)
+Status: Phase 19 컨텍스트 + UI-SPEC 완료 (discuss-phase f65c773 / ui-phase 3d08157, 검증 6/6 PASS) — 플래닝 준비됨
 Last activity: 2026-06-23
 Next: `/gsd-plan-phase 19` — 추정 ~5 플랜: (1) 0018 마이그(date_polls/options/votes/comments) + anon-write RLS/RPC(코드=bearer), (2) @moajoa/core 스키마 + api 쿼리, (3) iOS 미정 trip create(날짜 optional) + 온보딩 미정 카드 활성화 + plan 탭 관리 카드 + 확정, (4) 웹 비로그인 투표 island(range+grid 두 모드) + 집계 + 확정 결과 화면 가입 CTA, (5) 익명 flat 댓글 스레드(실시간). 잠금: 비로그인+닉네임+기기토큰 dedup / 날짜없는 trip 즉시생성+trip_id FK / 두 모드(가능·불가 2단) / 호스트만 확정→trip 날짜 set, poll closed. 상세: `.planning/phases/19-date-voting/19-CONTEXT.md`.
 
