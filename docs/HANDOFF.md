@@ -1,142 +1,144 @@
-# MOAJOA 동료 핸드오프 — 2026-05-25
+# MOAJOA 동료 핸드오프 — 2026-06-22 (v2.0)
 
-> 이 문서는 **동료가 오늘 합류했을 때** 어디서부터 어떻게 시작할지 한 페이지로 보여주려고 만든 거예요.
-> 더 자세한 컨텍스트는 `CLAUDE.md`(프로젝트 룰) · `.planning/PROJECT.md`(컨셉) · `.planning/ROADMAP.md`(전체 phase 계획) · `docs/WORKSTREAMS.md`(원본 워크스트림 정의)를 보면 돼요.
-
-## 1. 30초 컨텍스트
-
-- **MOAJOA**: 유튜브·블로그·인스타 링크 → 영상 속 장소 자동 추출 → 지도 보드. 친구와 공유·투표.
-- **상태:** 2026-05-24 Flutter ASIS → TS 모노레포로 피봇 시작. 스캐폴드 + 인증·DB·Edge Function 배포는 완료.
-- **현재 마일스톤:** v1 (자기 dogfooding 가능선). 6 phase로 분해됨.
-- **워크플로우:** [GSD (Get Shit Done) Redux](https://github.com/open-gsd/get-shit-done-redux). `/gsd-*` 슬래시 커맨드로 phase별 진행. CLAUDE.md §2 참고.
-
-## 2. 진행 상황 한눈에
-
-| Phase | 이름 | 상태 | 누가 |
-|---|---|---|---|
-| **1** | Build Unblock & Hygiene | ✅ 완료 2026-05-25 (01-04 EAS N/A) | wcb (iOS) + 동료 (Web/Backend dep) |
-| **2** | Extraction Pipeline Hardening | ✅ 완료 2026-05-25 | Backend (동료) |
-| **3** | iOS Save Flow | 미시작 (Phase 1·2 끝남 → 시작 가능) | iOS = wcb |
-| **4** | Public Board (Web) | 미시작 (Phase 2 끝남 → 시작 가능) | Web (동료) |
-| **5** | Trust UI & Onboarding | 미시작 (3+4 끝나야) | 양쪽 cross-cut |
-| **6** | Dogfooding Gate | 미시작 (전부 끝나야) | wcb (사용자 본인) |
-
-### Phase 1 세부 상태 (전부 완료)
-- ✅ **01-01 Brand assets** — Pretendard 4-weight 폰트, icon/splash PNG 산출, sharp export 파이프라인, pnpm hoist scope `apps/ios/`로 한정.
-- ✅ **01-02 iOS prebuild + smoke screen** — Path A 14분 prebuild + 실기기 install + smoke screen 시각 검증 통과. 새 pitfall 2개 발견 + 수정 (CocoaPods+Ruby locale, pnpm+nativewind transitive hoist).
-- ✅ **01-03 Web dev-tool gate** — `/boards` 307 redirect + Pretendard next/font/local + Client null gate. V2/V6/V8 모두 통과.
-- 🚫 **01-04 EAS Build fallback** — N/A (Path A 성공으로 EAS 전환 불필요). Phase 3+ 단계에서 필요해지면 재활성화.
-
-## 3. 영역 분할
-
-### 🙋 **내가 (wcb) 하는 영역 — 손대지 말아주세요**
-
-| 경로 | 이유 |
-|---|---|
-| `apps/ios/**` | iOS Native build. 본인 아이폰+Mac+Apple Developer cert로만 검증 가능. Phase 1.2 → 3 → 5(iOS 부분) → 6 line. |
-| `docs/SESSION-NOTES-*.md` | 본인 빌드 timeline 기록용 (D-14 timebox). 새 entry 추가는 ok, 기존 timeline 수정은 X. |
-| `.planning/STATE.md` 의 "Performance Metrics" 섹션 | 본인 dogfooding 측정값 (Phase 6) 채워나갈 거임. |
-
-### 🤝 **동료가 시작할 수 있는 영역 — 추천 순서**
-
-**(추천) 1순위: Phase 4 — Public Board (Web)**
-
-> Phase 2 완료로 의존성 풀림. Phase 3(iOS, wcb)와 **file-disjoint** (`apps/web/**` vs `apps/ios/**`), 병렬 진행 가능.
-
-- **파일 영역:** `apps/web/**` (특히 `apps/web/app/b/[slug]/**` 새로 만들 것), `apps/web/lib/env.ts` (확장 가능, 이미 wired)
-- **요구사항:** VIEW-01 ~ VIEW-06 (`.planning/REQUIREMENTS.md` §Public Board Viewing)
-- **첫 step:** `/gsd-discuss-phase 4` → `/gsd-plan-phase 4` → `/gsd-execute-phase 4`.
-- **핵심 deliverable:**
-  1. `/b/[slug]` SSR 페이지 (p90 TTFB < 800ms, Vercel Edge Cache)
-  2. iPhone Safari 모바일 viewport 대응 (핀치줌, 핀 탭)
-  3. 카톡 OG 카드 — `/b/[slug]/opengraph-image` (Satori + Pretendard-Bold.ttf 이미 `apps/web/assets/`에 있음, Phase 4 consumer)
-  4. SEO meta (`<head>` 토큰: title/description/og:*/twitter:*)
-  5. 핀 탭 → `youtube.com/watch?v=...&t=Xs` 새 탭
-  6. Edge Function → `/api/revalidate?slug=...` webhook (Phase 2가 이미 broadcast 셋업했으므로 마무리 wire-up만)
-- **주의:**
-  - `apps/web/middleware.ts`는 **D-09 lock** (Supabase 세션 refresh 전용). 손대지 말 것.
-  - `apps/web/lib/env.ts`는 향후 `NEXT_PUBLIC_*` 게이트의 정식 위치. 새 env 변수 필요하면 여기에 helper 추가.
-  - next/font/local Pretendard는 이미 `apps/web/app/layout.tsx`에 wired. OG에 쓸 Pretendard-Bold.ttf는 `apps/web/assets/`에 있음.
-
-**2순위: Phase 5 사전 리서치 (cross-cut)**
-
-Phase 5 = Trust UI + Onboarding. Phase 3 + 4 둘 다 끝나야 본격 시작이지만 `/gsd-research-phase 5` 또는 `/gsd-discuss-phase 5`를 미리 돌려놓으면 phase 3+4 끝나자마자 plan 가능.
-
-**3순위 이후:**
-
-| 영역 | 파일 | 비고 |
-|---|---|---|
-| 디자이너 워드마크 정교화 | `packages/ui-tokens/src/brand/wordmark.svg` | 현재 6개 사각형 placeholder. Pretendard Bold outline path로 교체 후 `pnpm --filter @moajoa/ui-tokens run export-assets` 재실행하면 모든 PNG 자동 갱신. |
-| 별도 chore PR | `packages/api/src/types/database.ts` line 1 | 동료의 `06ee485` typegen commit에서 `Initialising login role...` 로그 한 줄 박힘. typecheck 실패 원인. 한 줄 제거 후 commit. |
-
-## 4. 공유 영역 (둘 다 손댈 수 있음, 합의 필요)
-
-| 경로 | 변경 시 영향 | 협의 방법 |
-|---|---|---|
-| `packages/core/src/schemas/**` | Web · iOS · Edge Function 모두 import (Zod 스키마) | PR 분리 + 이 한 commit에 schema + SQL 마이그레이션 짝지어 commit |
-| `packages/core/src/constants.ts` | 도메인 한도·enum. 전부 import | 추가는 OK. 기존 값 변경은 PR description에 BREAKING 표시 |
-| `packages/ui-tokens/src/**` (brand/ 제외) | Web Tailwind + iOS NativeWind 둘 다 영향 | 변경 시 양쪽 시각 확인 후 commit |
-| `supabase/migrations/**` | append-only, 한 번 prod 적용되면 영구 | 새 번호 파일만. 동시 PR이 같은 번호 쓰면 충돌 — 머지 순서대로 rename |
-| `packages/api/src/queries/**` | 누구든 새 helper 추가는 OK | 기존 함수 시그니처 변경 시 caller (apps/web · apps/ios · supabase/functions) 전부 확인 |
-| `apps/web/lib/env.ts` | 향후 `NEXT_PUBLIC_*` 게이트 추가 위치 | 같은 helper 패턴 (`isDevToolsEnabled` 형식)으로 늘려나가기 |
-| `.planning/ROADMAP.md` | phase 진행도 표시 | plan 완료 시 `[ ]` → `[x]` + Progress Table 갱신 |
-| `.planning/STATE.md` | 현재 어디 있는지 | `Current Position` 섹션만 갱신, 다른 곳은 GSD 워크플로우가 만진다 |
-
-## 5. 동료가 첫날 해야 할 일 체크리스트
-
-1. [ ] **레포 클론 + 초기 setup**
-   ```bash
-   git clone https://github.com/SerendipityLife/MOAJOA.git
-   cd MOAJOA
-   pnpm install
-   ```
-2. [ ] **읽을 것 (순서대로):**
-   - `CLAUDE.md` — 프로젝트 룰 + GSD 워크플로우 + Karpathy 4
-   - `.planning/PROJECT.md` — 컨셉
-   - `.planning/REQUIREMENTS.md` — 29개 요구사항
-   - `.planning/ROADMAP.md` — 6 phase
-   - `docs/WORKSTREAMS.md` — 워크스트림 정의 (피봇 직후 작성, 일부는 outdated — 본 HANDOFF가 더 최신)
-   - `docs/SESSION-NOTES-2026-05-24.md` + `docs/SESSION-NOTES-2026-05-25.md` — 그동안의 결정 + 막힌 지점
-3. [ ] **환경변수 셋업**
-   - `cp .env.local.example .env.local` (root, apps/web, apps/ios, supabase 각각)
-   - 실제 키는 wcb한테 따로 받기 (1Password / 노션 비밀 페이지)
-4. [ ] **Supabase 로컬 연결**
-   ```bash
-   pnpm supabase login        # 본인 Supabase 계정으로
-   pnpm supabase link --project-ref <ref>   # wcb한테 ref 받기
-   pnpm supabase:types        # DB 타입 생성됐는지 확인
-   ```
-5. [ ] **첫 빌드 확인 (Backend만 만질 거면 step 5 web/iOS는 skip 가능)**
-   ```bash
-   pnpm --filter @moajoa/web build     # web 빌드
-   pnpm -r typecheck                   # 모든 워크스페이스 typecheck
-   ```
-6. [ ] **GSD 워크플로우 익히기**
-   - `/gsd-progress` — 현재 상태 보기
-   - `/gsd-discuss-phase 2` — Phase 2 회색지대 결정 시작 (← 첫 작업)
-7. [ ] **첫 PR 룰**
-   - Conventional Commits (`feat(02-XX):`, `chore:`, etc.)
-   - 마이그레이션 변경 시 PR description에 `BREAKING DB CHANGE` 명시
-   - `.env.local` 절대 commit 금지
-
-## 6. 막혔을 때 어디 물어보나
-
-| 영역 | wcb한테 물어볼 것 |
-|---|---|
-| iOS 빌드 | (이건 wcb 영역. 동료가 손댈 일 없음.) |
-| Supabase 키 / 프로젝트 ref | 비밀 채널 또는 직접 |
-| 디자인 토큰 변경하고 싶은데 영향 범위 모르겠음 | PR draft + 노션 / 디스코드 |
-| GSD 워크플로우 자체 | https://github.com/open-gsd/get-shit-done-redux 또는 `/gsd-help` |
-| Karpathy 4 원칙 적용 헷갈림 | CLAUDE.md §3 + 실제 PR review |
-
-## 7. 동시 작업 충돌 회피 룰
-
-- **항상 본인 phase만 만지기.** wcb가 Phase 1.2 / 3 / 5(iOS) 작업할 때 동료는 Phase 2 / 4. 5는 둘 다 들어가지만 그때는 plan 단위로 file ownership 명시.
-- **공유 영역(§4) 건드릴 거면 먼저 알리기.** 슬랙/디스코드 한 줄이면 충분 — "지금 packages/core/schemas/board.ts에 city_code 컬럼 zod 추가합니다" 식.
-- **마이그레이션 번호 충돌:** 둘이 동시에 `0004_*.sql` 만들면 머지 순서대로 rename + 늦은 쪽이 본인 마이그레이션 안의 참조도 갱신.
-- **pnpm-lock.yaml 변경은 별도 commit으로.** 다른 작업과 섞이면 리뷰 어려움.
+> **동료가 v2.0 개발에 합류했을 때** 어디까지 됐고 / 뭘 / 어디서 시작하면 되는지 한 페이지로 보여주는 문서.
+> 더 자세한 건 `CLAUDE.md`(룰) · `.planning/PROJECT.md`(컨셉) · `docs/PRODUCT.md`(제품 단일 출처) · `.planning/ROADMAP.md`(phase 계획) · `docs/WORKSTREAMS.md`(파일 경계).
 
 ---
 
-**문서 작성:** 2026-05-25, wcb
-**다음 갱신 트리거:** Phase 2 시작 시점, Phase 1.2(iOS) 완료 시점 또는 워크플로우 합의 변경 시
+## 1. 30초 컨텍스트
+
+- **MOAJOA**: 유튜브 링크 → 영상 속 장소 자동 추출 → 지도. 친구와 공유·결정.
+- **v2.0 비전:** 추출+투표에 머물던 걸 **발견 → 결정 → 플랜 → 예약 → 정산** 풀 루프로 확장. 네비게이션을 **여행 4단계(지도·플랜·예약·가계부)**로 재편. 제휴 수수료(Travelpayouts·Stay22)를 MVP에 내장.
+- **팀:** 2인 사이드 프로젝트. 느슨한 페이싱.
+- **워크플로우:** [GSD Redux](https://github.com/open-gsd/get-shit-done-redux). `/gsd-*` 슬래시 커맨드로 phase별 진행 (`/gsd-discuss-phase N` → `/gsd-plan-phase N` → `/gsd-execute-phase N`). CLAUDE.md §2.
+
+---
+
+## 2. 진행 상황 한눈에
+
+**v1 baseline(추출·인증·DB·웹열람) 동작 + v2.0 Phase 17 완료.** 다음은 18~22.
+
+| Phase | 이름 | 상태 | 의존 |
+|---|---|---|---|
+| **17** | Trip Foundation & IA 재편 | ✅ **완료 2026-06-21** (5/5 plan, verify 6/6, code review 해소) | — (비협상 기반) |
+| **18** | Auto Plan (추출 즉시 AI 플랜) | ⬜ 미시작 | 17 |
+| **19** | Date Voting (일정 미정 분기) | ⬜ 미시작 | 17 |
+| **20** | Affiliate Booking (딥링크 제휴 예약) | ⬜ 미시작 | 17 + 18 |
+| **21** | Travel Ledger (메일 전달 가계부) | ⬜ 미시작 | 17 (메일 인프라 리드타임 ↑ → 일찍 시작 권장) |
+| **22** | Android Parity | ⬜ 미시작 | 17~21 전부 (마지막) |
+
+### ⚠️ Phase 17이 바꾼 것 — pull 받으면 **반드시** 알아야 함
+
+Phase 17은 "비협상 기반"이라 레포 전반을 갈아엎었어요. 모르고 시작하면 깨집니다.
+
+1. **`boards` → `trips` 전면 rename.** DB 테이블·`packages/core` Zod·`packages/api` 쿼리·라우트 전부 trip 어휘.
+   - `packages/core/src/schemas/board.ts` → **`trip.ts`** (`Trip`/`TripId`/`TripCreate`), `packages/api/.../queries/boards.ts` → **`trips.ts`**.
+2. **0016 trips-native squash.** 기존 `0001~0014`는 `supabase/migrations/_archive/`로 이동, **`0016_trips_baseline.sql` 하나만 active.** (0015는 0016에 흡수)
+   - → **로컬 DB는 반드시 `supabase db reset`** 해야 trips 스키마가 적용됨 (아래 §4 체크리스트).
+   - 원격 Supabase는 이미 0016 베이스라인으로 reset 완료(`.backups/`에 이전 덤프 백업).
+3. **식별자 계약 (모든 후속 phase가 import).** `packages/core/src/booking.ts`의 **`buildAffiliateUrl`가 예약 딥링크 만드는 유일한 헬퍼** — 손조립 절대 금지. SubID = `c_<base62>` opaque 토큰(`tripId.placeId.userId` 컨텍스트). 예약 관련 작업(Phase 20)은 전부 이 헬퍼 경유.
+4. **IA 재편.** 진입 = `apps/ios/app/index.tsx`의 `decideEntryRoute`(0개→온보딩 / 1개→그 여행 / N개→마지막 본 여행). 여행 안 = `app/trip/[id]/(tabs)/{map,plan,book,ledger}`, 탭바 상시. 헤더 = 여행 전환 ▾ + 프로필. **가운데 ＋ FAB 제거.** 옛 `app/boards/`·글로벌 `(tabs)/` **삭제**(레거시 redirect 없음).
+5. **웹 공개 공유 라우트 `/b/[slug]` → `/t/[slug]`** (`apps/web/app/t/[slug]/`).
+
+전체 결정 근거: `.planning/phases/17-trip-foundation-ia/17-CONTEXT.md`(결정 15개) · `17-RESEARCH.md` · `17-VERIFICATION.md`.
+
+---
+
+## 3. 어디서 개발하나 — 다음 작업 분할 (2인 병렬)
+
+**의존성 그래프:** `17 ✅` → **18·19·21 지금 바로 착수 가능**(전부 17만 의존) → `20`은 18 후 → `22` 마지막.
+
+```
+        ┌── 18 Auto Plan ──────────── 20 Affiliate Booking ──┐
+17 ✅ ──┼── 19 Date Voting ───────────────────────────────────┼── 22 Android
+        └── 21 Travel Ledger (메일 인프라 일찍) ───────────────┘
+```
+
+### 추천 분할 (파일 경계가 거의 안 겹치게)
+
+| 누가 | 추천 Phase | 주 파일 영역 | 왜 |
+|---|---|---|---|
+| **wcb (iOS 주력)** | **Phase 18 — Auto Plan** | `apps/ios/app/trip/[id]/(tabs)/plan.tsx`(드래그 재배치 UI) + `supabase/functions/generate-plan/`(EF) + `packages/core`(플랜 모델) | iOS 디바이스 검증이 필요한 plan.tsx 중심. extract 완료가 곧 플랜 트리거. |
+| **동료** | **Phase 19 — Date Voting** *또는* **Phase 21 — Travel Ledger** | 19: `apps/web/`(비로그인 투표 island) + `supabase/migrations`(date_polls) / 21: `supabase/functions/{inbound,parse}-email/` + 메일 인프라 | 19는 웹 중심이라 iOS-heavy 18과 file-disjoint. 21은 **메일 프로바이더 셋업 리드타임이 길어** 빨리 시작하면 좋음. |
+
+> **둘 다 같은 phase를 하고 싶다면** plan 단위로 file ownership을 나누세요 (`/gsd-plan-phase`가 wave/파일 경계를 만들어 줌).
+
+### 각 phase 시작하는 법
+```
+/gsd-discuss-phase 18      # 회색지대 결정 (레이아웃·API·에러처리)
+/gsd-plan-phase 18         # plan 생성 + 검증
+/gsd-execute-phase 18      # 실행 (atomic commit)
+```
+사소한 수정은 `/gsd-quick`. 진행 확인은 `/gsd-progress`, 이어서 할 땐 `/gsd-resume-work`.
+
+각 phase의 요구사항 ID·성공기준은 `.planning/ROADMAP.md`의 해당 Phase Details 참고 (18=PLAN-01~05, 19=POLL-01~03, 20=BOOK-01~03+ATTR-02, 21=LEDGER-01~06, 22=AND-01~02).
+
+---
+
+## 4. 첫날 셋업 체크리스트
+
+1. [ ] **레포 + 의존성** (pnpm 9.12, Node 20+)
+   ```bash
+   git clone https://github.com/SerendipityLife/MOAJOA.git
+   cd MOAJOA && pnpm install
+   ```
+2. [ ] **읽기 (순서대로):** `CLAUDE.md` → `docs/PRODUCT.md` → `.planning/ROADMAP.md`(Phase 18~22) → 이 HANDOFF → `docs/WORKSTREAMS.md`(파일 경계)
+3. [ ] **환경변수:** 각 디렉터리의 `.env.local.example` 복사 (`./`, `apps/web/`, `apps/ios/`, `supabase/`). **실제 키는 wcb한테 받기** (1Password/노션 — 슬랙 붙여넣기 X). CLAUDE.md §4.7.
+4. [ ] **Supabase — ⚠️ 0016 적용이 핵심**
+   ```bash
+   pnpm supabase login
+   pnpm supabase link --project-ref <wcb한테 받기>
+   pnpm supabase:start          # 로컬 스택
+   pnpm supabase:reset          # ⚠️ 0016 trips-native 베이스라인 적용 (필수)
+   pnpm supabase:types          # packages/api/src/types/database.ts 재생성
+   ```
+5. [ ] **그린 확인**
+   ```bash
+   pnpm --filter @moajoa/core test    # vitest — Trip/booking/entry-route 계약 (50+ 통과)
+   pnpm -r typecheck                  # 전 워크스페이스
+   ```
+6. [ ] **실행 (만질 영역만)**
+   ```bash
+   pnpm web:dev      # Next.js (web 작업 시)
+   pnpm ios:sim      # iOS 로컬 시뮬 (expo run:ios는 Xcode26서 깨짐 → sim 스크립트 사용). 실기기는 EAS (wcb)
+   ```
+7. [ ] **첫 PR 룰:** Conventional Commits(`feat(19-01): ...`), 마이그레이션 변경 시 PR에 `BREAKING DB CHANGE`, `.env.local` 절대 commit 금지.
+
+---
+
+## 5. 공유·충돌 위험 영역 (변경 전 한 줄 알리기)
+
+| 경로 | 영향 | 룰 |
+|---|---|---|
+| `packages/core/src/schemas/**`, `booking.ts`, `entry-route.ts`, `constants.ts` | Web·iOS·EF 전부 import | 변경은 **SQL 마이그레이션과 짝지어** PR. 추가는 OK, 기존 시그니처 변경은 caller 전부 확인 |
+| `supabase/migrations/**` | **append-only 재개** — 새 번호는 **`0017_*`부터** | **`0016_trips_baseline.sql` 수정 절대 금지** (squash는 일회성이었음). 동시 PR이 같은 번호면 머지 순서대로 rename |
+| `packages/api/src/queries/**` | trip 어휘 쿼리 레이어 | 새 helper 추가 OK, 시그니처 변경 시 caller 확인 |
+| `packages/ui-tokens/**`, `.design-sync/**` | Web Tailwind + iOS NativeWind 시각 / claude.ai/design 동기화 입력(동료가 PR #1로 추가) | 양쪽 시각 확인 후 |
+| `apps/ios/**` | iOS Native — 디바이스 검증은 wcb | iOS 작업은 wcb와 조율 |
+| `.planning/ROADMAP.md`, `STATE.md` | 진행도 | GSD 워크플로우가 대부분 자동 갱신 |
+
+---
+
+## 6. 알려진 빚 / deferred (다음 phase에서 정리)
+
+`.planning/phases/17-trip-foundation-ia/deferred-items.md`:
+- **실패/대기 링크 화면(Phase 7)이 라우트·진입점 상실.** 클린 브레이크로 `app/boards/failed.tsx` 삭제됨. `lib/pending.ts` 상태 로직은 살아있으나 trip IA 아래 재배치할 UI가 없음 → 미래 plan에서 `/trip/[id]/...` 하위에 재배치.
+- **`components/onboarding/coachmark.tsx` orphaned.** 글로벌 `(tabs)` 삭제로 importer 없음. 선재 컴포넌트라 보존(CLAUDE.md §3.3).
+- **MR-01: `add_manual_place`가 lat/lng 없으면 `(0,0)` 기록** — 0001부터 내려온 선재 이슈. 별도 후속 태스크로 분리됨.
+
+---
+
+## 7. 막혔을 때
+
+| 영역 | 어디로 |
+|---|---|
+| Supabase 키 / project-ref / 환경변수 | wcb (비밀 채널) |
+| iOS 빌드·디바이스 | wcb 영역 |
+| GSD 워크플로우 | `/gsd-help` 또는 https://github.com/open-gsd/get-shit-done-redux |
+| 제품 의도·범위 | `docs/PRODUCT.md` (단일 출처) |
+| 코딩 원칙 헷갈림 | `CLAUDE.md` §3 (Karpathy 4) |
+
+---
+
+**작성:** 2026-06-22, wcb (Phase 17 완료 직후)
+**다음 갱신 트리거:** Phase 18/19/21 중 첫 완료 시점, 또는 작업 분할 합의 변경 시
