@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-last_updated: "2026-06-23T03:36:01.981Z"
-last_activity: 2026-06-23 -- Phase null planning complete
+last_updated: "2026-06-23T04:24:02.033Z"
+last_activity: 2026-06-23 -- 19-01 완료 (0018_date_polls.sql 로컬 적용 42P17=0 + database.ts 재생성 + anon 보안매트릭스)
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 17
-  completed_plans: 13
-  percent: 76
+  completed_plans: 14
+  percent: 82
 ---
 
 # STATE: MOAJOA v2.0
@@ -33,10 +33,12 @@ progress:
 ## Current Position
 
 Phase: 19
-Plan: Not started (4 plans ready)
-Status: Ready to execute
-Last activity: 2026-06-23 -- Phase 19 planning complete (verified 12/12, 1 revision iteration)
-Next: `/gsd-execute-phase 19` (권장: `/clear` 먼저 — fresh context; Wave 1 Task 2는 colima Docker 필요).
+Plan: 1 of 4 complete
+Status: executing
+Last activity: 2026-06-23 -- 19-01 완료 (0018_date_polls.sql 로컬 적용 42P17=0 + database.ts 재생성 + anon 보안매트릭스)
+Next: Wave 2 — `/gsd-execute-phase 19` (19-02 @moajoa/core+api; W3 병렬 19-03 iOS ∥ 19-04 web).
+
+**19-01 완료 (2026-06-23, ~6분, commits be3232e + e3a8e9f):** Phase 19 Wave 1 — `0018_date_polls.sql` (append-only, 0016/0017 무수정) + 로컬 적용 + database.ts 재생성 + psql `set role anon` 보안매트릭스. **Task 1 (0018, be3232e):** 4 테이블(`date_polls` trip_id FK + poll_code unique + mode/status CHECK / `date_poll_options` end>=start / `date_votes` option_id|vote_date nullable + availability CHECK / `date_comments` body 1..140) + `ensure_poll_code` 트리거(0016 ensure_share_slug entropy 미러, share_slug→poll_code 독립코드 gen_random_bytes >=8) + `date_votes_dedup` unique index `nulls not distinct`(PG17, per-mode nullable dedup, Pitfall 4) + `date_polls_set_updated_at`(set_updated_at 재사용·무재정의). **RLS deny-by-default:** date_polls는 can_read/can_edit_trip 직접; options/votes/comments는 부모 poll의 trip_id로 라우팅 `exists(...can_*_trip(p.trip_id))`(votes→places 허용 EXISTS idiom 0016 L529, inner can_*_trip=DEFINER 경계=42P17 가드). votes/comments는 authenticated READ만 — **anon INSERT 정책/grant 0건**. **5 anon-grant SECURITY DEFINER RPC**(join_shared_trip bearer-validate 미러, `grant ... to authenticated, anon`): `cast_date_vote`(code+open 게이트, device-scoped upsert on conflict matching dedup index), `poll_view_by_code`(메타+range options jsonb), `poll_vote_tally`(range=per-option / grid=per-date count+nicknames, **device_token 절대 미노출** T-19-07), `post_poll_comment`(open 게이트+body 1..140+5초 per-device throttle), `delete_poll_comment`(device_token 일치 OR am_trip_owner host moderation). **owner-only:** `confirm_poll_date`(INVOKER + am_trip_owner 가드, atomic trip.start/end_date UPDATE + poll status='closed', `to authenticated` NO anon) + `create_dateless_trip_with_poll`(INVOKER, owner RLS + trips_default_representative 트리거 정상 발화). grep 게이트 전부 PASS(anon-grant 5, helper 재정의 0, insert into date_votes는 cast_date_vote 안에만, 0016/0017 git diff 0). **Task 2 [BLOCKING→Docker UP] (e3a8e9f):** colima Docker UP 확인(오케스트레이터 게이트 해소) → `pnpm supabase:reset` 0016+0017+0018 클린 적용 **42P17 recursion=0, dropped-object=0**(benign NOTICE만). `pnpm supabase:types` → database.ts +187줄(4 테이블 Row/Insert/Update + 7 RPC 시그니처), `pnpm --filter @moajoa/api typecheck` exit 0. **psql `set role anon` 보안매트릭스 전부 PASS:** poll_code 12자 `^[a-z0-9]+$`(A) / anon cast 성공(B) / 동일기기 재투표 dedup upsert=1행(C) / anon 직접 INSERT → RLS permission denied(D) / bad code raise(E) / closed poll raise(F) / tally jsonb shape + device_token 미노출(G) / **owner confirm 원자적 성공(trip dates set + poll closed) + non-owner member confirm → exact 'host only' + non-member → RLS 'poll not found' 더 강한 거부, 둘 다 write 롤백(H)**. **1 Issue(검증 하네스 아티팩트, 마이그레이션 무버그):** `set_config(...,is_local=true)`가 psql autocommit 문장경계서 소멸 → confirm의 INVOKER `auth.uid()` null → date_polls SELECT RLS 0행 → 'poll not found'. `BEGIN; set local role authenticated; set_config; confirm; COMMIT;` 한 트랜잭션 래핑으로 해소(owner 성공/member 'host only'/non-member 'poll not found' 전부 정상). **Deviation 없음.** **원격 db push DEFERRED**(17-03/18-02 선례, phase-verify/user-side). **핸드오프:** 19-02 core/api는 생성된 database.ts 타입 + 검증된 anon-grant/RLS/dedup 매트릭스 위에 RPC 래퍼 빌드; 19-04 web anon island는 5 anon RPC를 anon키로 로그인 없이 호출; 19-03 iOS는 confirm_poll_date(host) + create_dateless_trip_with_poll. **POLL-01/02/03 (데이터+보안 측면) 충족.**
 
 **Phase 19 플래닝 완료 (2026-06-23):** 4 플랜 / 3 웨이브, plan-checker VERIFICATION PASSED (12/12 dims, iteration 2서 통과). 산출물: 19-RESEARCH(HIGH conf, dc3521c) + 19-PATTERNS(14파일→analog) + 19-VALIDATION(서명완료, nyquist_compliant) + 19-01..04-PLAN. **웨이브:** W1=19-01 `0018_date_polls.sql`(date_polls/date_poll_options/date_votes/date_comments 4테이블 + ensure_poll_code 트리거 + anon-grant SECURITY DEFINER RPC 5종[cast_date_vote/poll_vote_tally/post·delete comment/create_dateless_trip] + owner confirm_poll_date + [BLOCKING] 로컬 apply+typegen+psql `set role anon` 보안매트릭스, autonomous:false=Docker게이트). W2=19-02 @moajoa/core(date-poll 스키마+contiguousBlock 연속블록 추천 + pollChannelName) + @moajoa/api(date-polls.ts: RPC 래퍼 + getPollByTrip + setPollMode, TDD). W3 병렬=19-03 iOS(온보딩 미정 활성화 + dateless create + plan탭 관리카드[범위형/그리드 모드토글 D-07, 0표/공유전 게이트] + 호스트 확정 + subscribePollChannel) ∥ 19-04 웹 anon island(`/poll/[code]`: 닉네임게이트 + 2모드 투표 + 라이브집계 + presence + 채팅 + closed 가입CTA). **잠금/결정:** 익명 write=anon-grant DEFINER RPC만(직접 anon INSERT 0, 코드=bearer + 기기토큰 dedup `nulls not distinct` PG17 + poll-open 게이트); 하드 IP rate-limit 보류(A4); D-07 모드토글 추가(유저결정); D-03 soft-nudge 보류(유저결정, 알림인프라 범위밖); 댓글 closed후 read-only; 원격 db push 보류(17-03/18-02 선례). 상세: `.planning/phases/19-date-voting/19-CONTEXT.md` + `*-PLAN.md`.
 
@@ -150,7 +152,7 @@ Plan: 1 of 1
 - **Next action:** Phase 5 Wave 5 — 05-06 (lib/onboarding.ts AsyncStorage wrapper + OnboardCard component + [id].tsx visibility wire — ONBOARD-02). After that, end-of-phase UAT batch covers all Phase 5 live verification.
 - **Phase 6: Dogfooding Gate** — ✓ TEMPLATES COMPLETE 2026-05-26 (5/5 plans, ~14분 total, 10 commits 1137306+8591d0f+ed9f644+6df9283+c08802a+145d099+b654978+5b3a609+e11400c+97e225a). 06-01 pre-dogfooding-checklist (D-01 6 그룹 A~F + D-02 sign-off, 105 lines) + manual-uat-phase3.md N2 SQL substitute (set_config + 42501 expected) + 7 Evidence: 라인. 06-02 sample-videos.md 12-row matrix (D-04) + samples.json (D-05 schema, JSON.parse 12 entries) + ground-truth/_template.json (confidence_label high/medium/low) + ground-truth/README.md (per-video procedure, D-06 매칭, quality bar). 06-03 daily-log-template.md (7 Day blocks + End-of-Week SQL Snapshot + 7일 Pass/Fail Summary, D-10/D-11/D-12/D-13) + incidents.md (4-label policy P0/P1/expected-v1-limit/noise) + scripts/dogfooding/{p90-duration,daily-aggregate,measure-accuracy}.sql 3종 (percentile_cont + hidden_at IS NULL + jsonb_agg FILTER) + scripts/dogfooding/README.md (setup/args/output destinations). 06-04 friend-share-checklist.md (Friend A/B 양식 × D-15 5체크 + device meta + locale + 피드백, 97 lines) + screenshots/README.md (D-16 layout + NN-step.png 명명 + locale labeling). 06-05 pass-evaluator.md (D-20 11 criteria + D-21 4 fail → next phase mapping + decision tree) + extraction-baseline-TEMPLATE.md (D-09 5-part: Meta/Per-video/Aggregate/Top5/v2 시드) + PASS-TEMPLATE.md (D-22 sign-off 13 필드 + Phase 1.5 unlock) + PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append (D-19, idempotent). 모든 5 plans `autonomous: true` — production code 수정 0건, documentation/SQL templates only. Phase 6 dogfooding 실행 (7일 본인 여행 + 12 영상 ground truth + 친구 2명 share + baseline measurement)은 user-side work — 본 5 plans는 그 양식과 SQL을 미리 준비하는 것이 scope.
 - **Next action:** Phase 6 dogfooding execution (user-side) — pre-dogfooding-checklist.md sign-off → 7일 daily-log + incidents append → Day 5~6 친구 share → Day 7+1 baseline 측정 + pass-evaluator 평가 → PASS.md (또는 FAIL-YYYY-MM-DD.md) 작성 → Phase 1.5 unlock (협업·투표).
-- **Progress:** [█████████░] 85%
+- **Progress:** [████████░░] 82%
 
 ---
 
@@ -279,6 +281,7 @@ Plan: 1 of 1
 | 260612-place | 장소 상세 UX: 통합 리스트(해설+펼침+Google지도/영상점프+inline ❤️) + 0013 view 필드 — 라이브 검증 | 2026-06-12 | 1131357 | 사용자 결정: 투표는 인라인 |
 | Phase 17-trip-foundation-ia P01 | ~7 min | 3 tasks | 11 files |
 | Phase 18 P03 | 6min | 2 tasks | 6 files |
+| Phase 19 P01 | 6min | 2 tasks | 2 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 

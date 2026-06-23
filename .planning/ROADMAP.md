@@ -92,7 +92,7 @@ Plans:
   3. 투표가 집계되어 보이고, 확정된 날짜가 해당 여행의 일정으로 전환된다
 **Plans**: 4 plans
 Plans:
-- [ ] 19-01-PLAN.md — 0018_date_polls.sql (4 tables + ensure_poll_code trigger + 6 anon/owner RPCs) + [BLOCKING] 로컬 적용 + 타입 재생성 + psql 보안 단언 (Wave 1)
+- [x] 19-01-PLAN.md — 0018_date_polls.sql (4 tables + ensure_poll_code trigger + 6 anon/owner RPCs) + [BLOCKING] 로컬 적용 + 타입 재생성 + psql 보안 단언 (Wave 1)
 - [ ] 19-02-PLAN.md — @moajoa/core 스키마(date-poll + contiguousBlock) + constants(pollChannelName) + @moajoa/api RPC 래퍼 (Wave 2, TDD)
 - [ ] 19-03-PLAN.md — iOS 호스트: 온보딩 미정 활성화 + 날짜없는 trip create + plan 탭 관리 카드 + 호스트 확정 + subscribePollChannel (Wave 3)
 - [ ] 19-04-PLAN.md — 웹 비로그인 투표 island(/poll/[code]: 닉네임 게이트·두 모드·실시간 집계·presence·채팅·확정 결과 전환 CTA) (Wave 3)
@@ -138,7 +138,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 17. Trip Foundation & IA 재편 | 5/5 | Complete | 2026-06-21 |
 | 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
-| 19. Date Voting | 0/4 | Planned | - |
+| 19. Date Voting | 1/4 | In Progress|  |
 | 20. Affiliate Booking | 0/~3 | Not started | - |
 | 21. Travel Ledger | 0/~4 | Not started | - |
 | 22. Android Parity | 0/~2 | Not started | - |
