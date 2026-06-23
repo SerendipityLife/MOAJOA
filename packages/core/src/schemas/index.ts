@@ -6,3 +6,4 @@ export * from './vote';
 export * from './membership';
 export * from './extraction';
 export * from './plan';
+export * from './date-poll';

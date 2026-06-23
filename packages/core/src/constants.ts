@@ -196,6 +196,18 @@ export const TripKeys = {
   LastTripId: '@moajoa/trip:last_id',
 } as const;
 
+/**
+ * Phase 19 — anon date-poll device identity. The poll device token namespaces
+ * an anonymous voter so dedup (cast_date_vote upsert) is per-device. Mirrors the
+ * OnboardKeys/TripKeys namespace idiom. Note: web uses the bare 'moajoa:...'
+ * localStorage key shape (RESEARCH device-token snippet); centralized here so the
+ * source of truth is shared.
+ */
+export const PollKeys = {
+  /** Anonymous voter device token (localStorage). */
+  DeviceToken: 'moajoa:poll_device_token',
+} as const;
+
 /** Phase 18 — Realtime Broadcast channel for plan generation progress (trip-scoped, D-02). */
 export const PLAN_CHANNEL_PREFIX = 'plan:';
 export function planChannelName(tripId: string): string {
@@ -213,3 +225,24 @@ export const PLAN_STEP_KO = {
 /** Per-plan travel mode toggle (D-08). default = transit (일본 도시 자유여행). */
 export const TravelMode = ['transit', 'walk', 'drive'] as const;
 export type TravelModeType = (typeof TravelMode)[number];
+
+/**
+ * Phase 19 — Realtime Broadcast channel for a date poll (trip-scoped, mirrors
+ * planChannelName). ONE public channel carries votes + comments + presence (D-11).
+ * Keyed by trip_id so the host (plan tab) and anon voters (web /poll/[code])
+ * subscribe to the same channel.
+ */
+export const POLL_CHANNEL_PREFIX = 'poll:';
+export function pollChannelName(tripId: string): string {
+  return `poll:${tripId}`;
+}
+/** Date-poll mode (D-07). range = candidate date ranges; grid = per-day availability. */
+export const DatePollMode = ['range', 'grid'] as const;
+export type DatePollModeType = (typeof DatePollMode)[number];
+/** Per-vote availability on a candidate date/range (UI-SPEC 4b 가능/불가). */
+export const DateAvailability = ['available', 'unavailable'] as const;
+export type DateAvailabilityType = (typeof DateAvailability)[number];
+/** Max candidate ranges a host may add in range mode. */
+export const POLL_RANGE_OPTIONS_MAX = 10;
+/** Max span of days a grid-mode poll window may cover. */
+export const POLL_GRID_WINDOW_MAX_DAYS = 60;
