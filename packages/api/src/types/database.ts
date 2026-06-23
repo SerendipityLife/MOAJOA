@@ -58,6 +58,159 @@ export type Database = {
           },
         ]
       }
+      date_comments: {
+        Row: {
+          body: string
+          created_at: string
+          device_token: string
+          id: string
+          nickname: string
+          poll_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          device_token: string
+          id?: string
+          nickname: string
+          poll_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          device_token?: string
+          id?: string
+          nickname?: string
+          poll_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_comments_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "date_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      date_poll_options: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          poll_id: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          poll_id: string
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          poll_id?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "date_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      date_polls: {
+        Row: {
+          created_at: string
+          id: string
+          mode: string
+          poll_code: string | null
+          status: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mode: string
+          poll_code?: string | null
+          status?: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mode?: string
+          poll_code?: string | null
+          status?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_polls_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      date_votes: {
+        Row: {
+          availability: string
+          created_at: string
+          device_token: string
+          id: string
+          nickname: string
+          option_id: string | null
+          poll_id: string
+          vote_date: string | null
+        }
+        Insert: {
+          availability?: string
+          created_at?: string
+          device_token: string
+          id?: string
+          nickname: string
+          option_id?: string | null
+          poll_id: string
+          vote_date?: string | null
+        }
+        Update: {
+          availability?: string
+          created_at?: string
+          device_token?: string
+          id?: string
+          nickname?: string
+          option_id?: string | null
+          poll_id?: string
+          vote_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "date_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "date_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "date_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extraction_costs: {
         Row: {
           cost_usd: number | null
@@ -797,6 +950,29 @@ export type Database = {
       can_edit_trip: { Args: { p_trip_id: string }; Returns: boolean }
       can_read_trip: { Args: { p_trip_id: string }; Returns: boolean }
       can_vote_trip: { Args: { p_trip_id: string }; Returns: boolean }
+      cast_date_vote: {
+        Args: {
+          p_availability?: string
+          p_code: string
+          p_device_token: string
+          p_nickname: string
+          p_option_id?: string
+          p_vote_date?: string
+        }
+        Returns: undefined
+      }
+      confirm_poll_date: {
+        Args: { p_end_date: string; p_poll_id: string; p_start_date: string }
+        Returns: undefined
+      }
+      create_dateless_trip_with_poll: {
+        Args: { p_city_code: string; p_mode: string; p_title: string }
+        Returns: Json
+      }
+      delete_poll_comment: {
+        Args: { p_comment_id: string; p_device_token: string }
+        Returns: undefined
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -931,9 +1107,20 @@ export type Database = {
       gettransactionid: { Args: never; Returns: unknown }
       join_shared_trip: { Args: { p_share_slug: string }; Returns: string }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      poll_view_by_code: { Args: { p_code: string }; Returns: Json }
+      poll_vote_tally: { Args: { p_code: string }; Returns: Json }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
+      post_poll_comment: {
+        Args: {
+          p_body: string
+          p_code: string
+          p_device_token: string
+          p_nickname: string
+        }
+        Returns: Json
+      }
       postgis_constraint_dims: {
         Args: { geomcolumn: string; geomschema: string; geomtable: string }
         Returns: number
