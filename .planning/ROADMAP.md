@@ -95,7 +95,7 @@ Plans:
 - [x] 19-01-PLAN.md — 0018_date_polls.sql (4 tables + ensure_poll_code trigger + 6 anon/owner RPCs) + [BLOCKING] 로컬 적용 + 타입 재생성 + psql 보안 단언 (Wave 1)
 - [x] 19-02-PLAN.md — @moajoa/core 스키마(date-poll + contiguousBlock) + constants(pollChannelName) + @moajoa/api RPC 래퍼 (Wave 2, TDD)
 - [x] 19-03-PLAN.md — iOS 호스트: 온보딩 미정 활성화 + 날짜없는 trip create + plan 탭 관리 카드 + 호스트 확정 + subscribePollChannel (Wave 3) — 코드+자동테스트 완료(13 suites/87 green, typecheck 0), 디바이스 UAT 대기
-- [ ] 19-04-PLAN.md — 웹 비로그인 투표 island(/poll/[code]: 닉네임 게이트·두 모드·실시간 집계·presence·채팅·확정 결과 전환 CTA) (Wave 3)
+- [x] 19-04-PLAN.md — 웹 비로그인 투표 island(/poll/[code]: 닉네임 게이트·두 모드·실시간 집계·presence·채팅·확정 결과 전환 CTA) (Wave 3) — 코드+자동테스트 완료(web 11 suites/65 green, typecheck 0, build PASS /poll/[code]), 크로스브라우저 UAT 대기
 
 ### Phase 20: Affiliate Booking (딥링크 제휴 예약)
 **Goal**: 플랜의 숙소·액티비티·교통·유심 슬롯에 맥락형 인라인 예약 카드가 뜨고, 대표가 통합 예약 체크리스트에서 한 번에 진행한다. 모든 클릭이 SubID로 어트리뷰션되고 시스템 브라우저로 열려 제휴 쿠키가 보존된다.
@@ -138,7 +138,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 17. Trip Foundation & IA 재편 | 5/5 | Complete | 2026-06-21 |
 | 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
-| 19. Date Voting | 2/4 | In Progress|  |
+| 19. Date Voting | 4/4 | UAT Pending |  |
 | 20. Affiliate Booking | 0/~3 | Not started | - |
 | 21. Travel Ledger | 0/~4 | Not started | - |
 | 22. Android Parity | 0/~2 | Not started | - |
