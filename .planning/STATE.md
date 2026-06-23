@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-status: planning
-last_updated: "2026-06-23T00:00:00.000Z"
-last_activity: 2026-06-23
+status: executing
+last_updated: "2026-06-23T03:36:01.981Z"
+last_activity: 2026-06-23 -- Phase null planning complete
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 13
+  total_plans: 17
   completed_plans: 13
-  percent: 100
+  percent: 76
 ---
 
 # STATE: MOAJOA v2.0
@@ -33,10 +33,12 @@ progress:
 ## Current Position
 
 Phase: 19
-Plan: Not started
-Status: Phase 19 컨텍스트 + UI-SPEC 완료 (discuss-phase f65c773 / ui-phase 3d08157, 검증 6/6 PASS) — 플래닝 준비됨
-Last activity: 2026-06-23
-Next: `/gsd-plan-phase 19` — 추정 ~5 플랜: (1) 0018 마이그(date_polls/options/votes/comments) + anon-write RLS/RPC(코드=bearer), (2) @moajoa/core 스키마 + api 쿼리, (3) iOS 미정 trip create(날짜 optional) + 온보딩 미정 카드 활성화 + plan 탭 관리 카드 + 확정, (4) 웹 비로그인 투표 island(range+grid 두 모드) + 집계 + 확정 결과 화면 가입 CTA, (5) 익명 flat 댓글 스레드(실시간). 잠금: 비로그인+닉네임+기기토큰 dedup / 날짜없는 trip 즉시생성+trip_id FK / 두 모드(가능·불가 2단) / 호스트만 확정→trip 날짜 set, poll closed. 상세: `.planning/phases/19-date-voting/19-CONTEXT.md`.
+Plan: Not started (4 plans ready)
+Status: Ready to execute
+Last activity: 2026-06-23 -- Phase 19 planning complete (verified 12/12, 1 revision iteration)
+Next: `/gsd-execute-phase 19` (권장: `/clear` 먼저 — fresh context; Wave 1 Task 2는 colima Docker 필요).
+
+**Phase 19 플래닝 완료 (2026-06-23):** 4 플랜 / 3 웨이브, plan-checker VERIFICATION PASSED (12/12 dims, iteration 2서 통과). 산출물: 19-RESEARCH(HIGH conf, dc3521c) + 19-PATTERNS(14파일→analog) + 19-VALIDATION(서명완료, nyquist_compliant) + 19-01..04-PLAN. **웨이브:** W1=19-01 `0018_date_polls.sql`(date_polls/date_poll_options/date_votes/date_comments 4테이블 + ensure_poll_code 트리거 + anon-grant SECURITY DEFINER RPC 5종[cast_date_vote/poll_vote_tally/post·delete comment/create_dateless_trip] + owner confirm_poll_date + [BLOCKING] 로컬 apply+typegen+psql `set role anon` 보안매트릭스, autonomous:false=Docker게이트). W2=19-02 @moajoa/core(date-poll 스키마+contiguousBlock 연속블록 추천 + pollChannelName) + @moajoa/api(date-polls.ts: RPC 래퍼 + getPollByTrip + setPollMode, TDD). W3 병렬=19-03 iOS(온보딩 미정 활성화 + dateless create + plan탭 관리카드[범위형/그리드 모드토글 D-07, 0표/공유전 게이트] + 호스트 확정 + subscribePollChannel) ∥ 19-04 웹 anon island(`/poll/[code]`: 닉네임게이트 + 2모드 투표 + 라이브집계 + presence + 채팅 + closed 가입CTA). **잠금/결정:** 익명 write=anon-grant DEFINER RPC만(직접 anon INSERT 0, 코드=bearer + 기기토큰 dedup `nulls not distinct` PG17 + poll-open 게이트); 하드 IP rate-limit 보류(A4); D-07 모드토글 추가(유저결정); D-03 soft-nudge 보류(유저결정, 알림인프라 범위밖); 댓글 closed후 read-only; 원격 db push 보류(17-03/18-02 선례). 상세: `.planning/phases/19-date-voting/19-CONTEXT.md` + `*-PLAN.md`.
 
 **Phase 18 완료 (2026-06-22, commits 353036e + 9fe8346):** verify passed (5/5 must-haves, PLAN-01..05 sign-off, 디바이스 UAT user-approved). 아래 18-xx 진행 이력 보존.
 
