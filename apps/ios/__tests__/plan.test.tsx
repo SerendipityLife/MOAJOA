@@ -30,11 +30,34 @@ jest.mock('@moajoa/api', () => ({
   moveToDay: jest.fn(),
   setAnchor: jest.fn(),
   setCollaborative: jest.fn(),
+  // Phase 19 date-poll wrappers (only fire on the dateless management branch).
+  getPollByTrip: jest.fn(),
+  getPollTally: jest.fn(),
+  setPollMode: jest.fn(),
+  confirmPollDate: jest.fn(),
 }));
 
 // @expo/vector-icons ships untranspiled ESM not in the transform allowlist;
 // the icon glyph is irrelevant to this screen's behavior, so stub it.
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+
+// @gorhom/bottom-sheet pulls in react-native-reanimated worklets at import time,
+// which jest can't initialize (same constraint as the gesture/reanimated mocks
+// below; 18-05 precedent). The confirm-sheet interaction is exercised on device
+// (Task 3 UAT) — here we only assert the management-card render contract, so a
+// pass-through stub of the sheet primitives is sufficient.
+jest.mock('@gorhom/bottom-sheet', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const BottomSheet = React.forwardRef(
+    ({ children }: { children: React.ReactNode }, _ref: unknown) => <View>{children}</View>,
+  );
+  return {
+    __esModule: true,
+    default: BottomSheet,
+    BottomSheetView: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
+  };
+});
 
 // Reanimated 4 / gesture-handler need native worklets at import time, which
 // jest can't initialize. The DaySection drag uses them only for the visual
@@ -67,6 +90,7 @@ jest.mock('react-native-gesture-handler', () => ({
 
 jest.mock('@/lib/realtime', () => ({
   subscribePlanProgress: jest.fn(() => ({ name: 'plan:trip-1' })),
+  subscribePollChannel: jest.fn(() => ({ name: 'poll:trip-1' })),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: { removeChannel: jest.fn() } }));
 jest.mock('@/lib/toast', () => ({ showToast: jest.fn() }));
@@ -82,6 +106,8 @@ const generatePlan = api.generatePlan as jest.Mock;
 const getTrip = api.getTrip as jest.Mock;
 const listPlacesByTrip = api.listPlacesByTrip as jest.Mock;
 const getPlanByTrip = api.getPlanByTrip as jest.Mock;
+const getPollByTrip = api.getPollByTrip as jest.Mock;
+const getPollTally = api.getPollTally as jest.Mock;
 
 const TRIP = {
   id: 'trip-1',
@@ -99,11 +125,16 @@ const PLACE = {
   lng: 139.7,
 };
 
+// A dateless trip (no start_date) → the Phase 19 management card branch.
+const DATELESS_TRIP = { id: 'trip-1', start_date: null, end_date: null, title: 'Tokyo' };
+
 beforeEach(() => {
   generatePlan.mockClear();
   getTrip.mockResolvedValue(TRIP);
   listPlacesByTrip.mockResolvedValue([]);
   getPlanByTrip.mockResolvedValue(null);
+  getPollByTrip.mockResolvedValue(null);
+  getPollTally.mockResolvedValue({ mode: 'grid', status: 'open', tally: [] });
 });
 
 test('State A: renders 아직 플랜이 없어요 when there are no places', async () => {
@@ -162,4 +193,60 @@ test('State D: a draft plan renders the 초안 chip and a Day header', async () 
   await waitFor(() => expect(getByText('초안')).toBeTruthy());
   expect(getByText('Day 1')).toBeTruthy();
   expect(getByText('시부야')).toBeTruthy();
+});
+
+// --- Phase 19: 날짜 투표 management card (D-05 dateless branch) -----------------
+
+test('dateless + open poll renders the 날짜 투표 management card with the empty-state summary', async () => {
+  getTrip.mockResolvedValue(DATELESS_TRIP);
+  getPollByTrip.mockResolvedValue({
+    id: 'poll-1',
+    poll_code: 'abcd1234',
+    mode: 'grid',
+    status: 'open',
+  });
+  getPollTally.mockResolvedValue({ mode: 'grid', status: 'open', tally: [] });
+  const { getByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('날짜 투표 진행 중')).toBeTruthy());
+  expect(getByText('아직 아무도 투표하지 않았어요')).toBeTruthy();
+  // Mode toggle (D-07) + share + confirm affordances are present.
+  expect(getByText('범위형')).toBeTruthy();
+  expect(getByText('그리드')).toBeTruthy();
+  expect(getByText('초대 링크 복사')).toBeTruthy();
+  expect(getByText('확정')).toBeTruthy();
+});
+
+test('with votes the summary line shows 참여 {N}명 + 최다 후보', async () => {
+  getTrip.mockResolvedValue(DATELESS_TRIP);
+  getPollByTrip.mockResolvedValue({
+    id: 'poll-1',
+    poll_code: 'abcd1234',
+    mode: 'grid',
+    status: 'open',
+  });
+  getPollTally.mockResolvedValue({
+    mode: 'grid',
+    status: 'open',
+    tally: [
+      { vote_date: '2026-07-01', available_count: 2, nicknames: ['윤', '소'] },
+      { vote_date: '2026-07-02', available_count: 1, nicknames: ['윤'] },
+    ],
+  });
+  const { getByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('참여 2명 · 최다 후보 2026-07-01')).toBeTruthy());
+});
+
+test('a closed poll does NOT render the management card (card unmounts after 확정)', async () => {
+  getTrip.mockResolvedValue(DATELESS_TRIP);
+  listPlacesByTrip.mockResolvedValue([]);
+  getPollByTrip.mockResolvedValue({
+    id: 'poll-1',
+    poll_code: 'abcd1234',
+    mode: 'grid',
+    status: 'closed',
+  });
+  const { queryByText, getByText } = render(<TripPlanScreen />);
+  // Falls through to State A (no places) — the management card never shows.
+  await waitFor(() => expect(getByText('아직 플랜이 없어요')).toBeTruthy());
+  expect(queryByText('날짜 투표 진행 중')).toBeNull();
 });

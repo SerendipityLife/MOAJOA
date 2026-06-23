@@ -12,9 +12,13 @@
 //     D-13), 필수 anchor star (D-10).
 //   F error — error copy + 다시 시도 retry.
 import { Ionicons } from '@expo/vector-icons';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
+  confirmPollDate,
   generatePlan,
   getPlanByTrip,
+  getPollByTrip,
+  getPollTally,
   getTrip,
   listPlacesByTrip,
   moveToDay,
@@ -22,22 +26,34 @@ import {
   reorderPlanItem,
   setAnchor,
   setCollaborative,
+  setPollMode,
   setTravelMode,
   type PlanWithItems,
 } from '@moajoa/api';
 import {
+  contiguousBlock,
+  type DatePollModeType,
   PLAN_STEP_KO,
   type Place,
   type PlanStepType,
   type TravelModeType,
   type Trip,
 } from '@moajoa/core';
+import Constants from 'expo-constants';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Share,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
-import { subscribePlanProgress } from '@/lib/realtime';
+import { subscribePlanProgress, subscribePollChannel } from '@/lib/realtime';
 import { showToast } from '@/lib/toast';
 import { shareCurrentTrip } from '@/lib/share-board';
 import { DaySection, type DayItem } from '@/components/plan/day-section';
@@ -76,6 +92,52 @@ function dayDateLabel(trip: Trip | null, dayIndex: number): string | null {
   return d.toISOString().slice(0, 10);
 }
 
+// --- Date-poll (Phase 19) ----------------------------------------------------
+// Host-readable poll metadata (getPollByTrip — no voter PII, T-19-07).
+type PollMeta = {
+  id: string;
+  poll_code: string | null;
+  mode: DatePollModeType;
+  status: 'open' | 'closed';
+};
+// One range-mode tally entry: a candidate option + its available count + voters.
+type RangeTally = {
+  option_id: string;
+  start_date: string;
+  end_date: string;
+  available_count: number;
+  nicknames: string[];
+};
+// One grid-mode tally entry: a single day's available count + voters.
+type GridTally = {
+  vote_date: string;
+  available_count: number;
+  nicknames: string[];
+};
+type PollTally = {
+  mode: DatePollModeType;
+  status: 'open' | 'closed';
+  tally: (RangeTally | GridTally)[];
+};
+
+/** Distinct voter nicknames across all tally entries = participation count N. */
+function tallyVoterCount(tally: PollTally | null): number {
+  if (!tally) return 0;
+  const names = new Set<string>();
+  for (const t of tally.tally) for (const n of t.nicknames ?? []) names.add(n);
+  return names.size;
+}
+
+/** The leader entry (most 가능) — the 최다 후보 the summary line surfaces. */
+function tallyLeaderLabel(tally: PollTally | null): string | null {
+  if (!tally || tally.tally.length === 0) return null;
+  const leader = [...tally.tally].sort(
+    (a, b) => (b.available_count ?? 0) - (a.available_count ?? 0),
+  )[0];
+  if (!leader || (leader.available_count ?? 0) === 0) return null;
+  return 'vote_date' in leader ? leader.vote_date : leader.start_date;
+}
+
 export default function TripPlanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -85,6 +147,13 @@ export default function TripPlanScreen() {
   const [generating, setGenerating] = useState(false);
   const [progressStep, setProgressStep] = useState<PlanStepType | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Date-poll (Phase 19): host-readable poll meta + live tally for the 날짜 투표
+  // management card. Only loaded for a dateless trip (D-05 branch).
+  const [poll, setPoll] = useState<PollMeta | null>(null);
+  const [tally, setTally] = useState<PollTally | null>(null);
+  const confirmSheetRef = useRef<BottomSheet>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -103,6 +172,35 @@ export default function TripPlanScreen() {
       setLoaded(true);
     }
   }, [id]);
+
+  // D-05: load the poll meta + tally ONLY when the trip is dateless (no start_date).
+  // A dated trip never reads the poll seam (keeps the dated path identical).
+  const isDateless = !!trip && !trip.start_date;
+  const refetchTally = useCallback(async () => {
+    if (!poll?.poll_code) return;
+    try {
+      setTally((await getPollTally(supabase, poll.poll_code)) as PollTally);
+    } catch (err) {
+      console.warn('[getPollTally] failed:', err);
+    }
+  }, [poll?.poll_code]);
+
+  const loadPoll = useCallback(async () => {
+    if (!id) return;
+    try {
+      const p = (await getPollByTrip(supabase, id)) as PollMeta | null;
+      setPoll(p);
+      if (p?.poll_code) {
+        setTally((await getPollTally(supabase, p.poll_code)) as PollTally);
+      }
+    } catch (err) {
+      console.warn('[loadPoll] failed:', err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (isDateless) void loadPoll();
+  }, [isDateless, loadPoll]);
 
   // D-01: initial load ONLY fetches; it NEVER calls generatePlan. Generation is
   // user-triggered by the 플랜 만들기 button.
@@ -132,6 +230,19 @@ export default function TripPlanScreen() {
       supabase.removeChannel(channel);
     };
   }, [id, generating, load]);
+
+  // Phase 19: while the 날짜 투표 management card is showing (dateless + open poll),
+  // subscribe to poll:{trip_id}; refetch the tally on every vote / presence sync so
+  // the summary line stays live. Same leak guard as the plan-progress effect.
+  useEffect(() => {
+    if (!id || !isDateless || poll?.status === 'closed') return;
+    const channel = subscribePollChannel(id, (e) => {
+      if (e.kind === 'vote' || e.kind === 'presence') void refetchTally();
+    });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, isDateless, poll?.status, refetchTally]);
 
   const runGenerate = useCallback(
     async (anchorPlaceIds: string[]) => {
@@ -270,12 +381,213 @@ export default function TripPlanScreen() {
     }
   }, [plan, id, load]);
 
+  // --- Date-poll handlers (Phase 19) -----------------------------------------
+
+  // D-07: host switches range↔grid on the management card, gated to the pre-share /
+  // 0-vote window. setPollMode is owner-guarded by date_polls_write RLS (T-19-04).
+  const onChangePollMode = useCallback(
+    async (mode: DatePollModeType) => {
+      if (!poll || poll.mode === mode) return;
+      try {
+        await setPollMode(supabase, poll.id, mode);
+        await loadPoll(); // refetch so the card + confirm flow reflect the new mode
+      } catch (err) {
+        Alert.alert('모드 변경 실패', err instanceof Error ? err.message : String(err));
+      }
+    },
+    [poll, loadPoll],
+  );
+
+  const pollUrl = useCallback((code: string) => {
+    const base =
+      (Constants.expoConfig?.extra?.webUrl as string | undefined)?.replace(/\/+$/, '') ??
+      'https://moajoa.app';
+    return `${base}/poll/${code}`;
+  }, []);
+
+  const onShareInvite = useCallback(async () => {
+    if (!poll?.poll_code) return;
+    const url = pollUrl(poll.poll_code);
+    await Share.share({
+      message: `MOAJOA에서 같이 날짜 정해요! 가능한 날짜에 투표해 주세요 👇\n${url}`,
+    });
+  }, [poll?.poll_code, pollUrl]);
+
+  const onShareCode = useCallback(async () => {
+    if (!poll?.poll_code) return;
+    await Share.share({ message: poll.poll_code });
+  }, [poll?.poll_code]);
+
+  // D-09: open the inline confirm sheet (range options or grid block) on 확정.
+  const openConfirm = useCallback(() => {
+    setConfirmOpen(true);
+    confirmSheetRef.current?.snapToIndex(0);
+  }, []);
+  const closeConfirm = useCallback(() => {
+    confirmSheetRef.current?.close();
+    setConfirmOpen(false);
+  }, []);
+
+  // Destructive confirm (UI-SPEC) → confirmPollDate → refetch the trip so
+  // start_date is now set (the card unmounts, normal plan renders).
+  const onConfirmPick = useCallback(
+    (startDate: string, endDate: string) => {
+      if (!poll) return;
+      Alert.alert(
+        '이 날짜로 확정하면 투표가 마감돼요.',
+        '다시 투표를 받으려면 새 투표를 만들어야 해요.',
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '확정하기',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await confirmPollDate(supabase, { pollId: poll.id, startDate, endDate });
+                closeConfirm();
+                await load(); // trip.start_date now set → card unmounts
+              } catch (err) {
+                Alert.alert('확정 실패', err instanceof Error ? err.message : String(err));
+              }
+            },
+          },
+        ],
+      );
+    },
+    [poll, closeConfirm, load],
+  );
+
   // --- Render ----------------------------------------------------------------
 
   if (!loaded) {
     return (
       <SafeAreaView edges={['bottom']} className="flex-1 bg-white items-center justify-center">
         <ActivityIndicator color="#2979FF" />
+      </SafeAreaView>
+    );
+  }
+
+  // Phase 19 (D-05) — 날짜 투표 management card. Rendered ONLY when the trip is
+  // dateless (no start_date) AND the poll is still open. After 확정, the trip gets
+  // dates → !isDateless → this branch falls through to the normal plan render.
+  if (isDateless && poll && poll.status !== 'closed') {
+    const N = tallyVoterCount(tally);
+    const canChangeMode = N === 0; // T-19-11: lock the toggle once a vote exists
+    const leaderDate = tallyLeaderLabel(tally);
+    return (
+      <SafeAreaView edges={['bottom']} className="flex-1 bg-white">
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 }}>
+          <View
+            className="bg-white rounded-2xl px-4 py-4"
+            style={{
+              shadowColor: '#1E293B',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.06,
+              shadowRadius: 10,
+            }}
+          >
+            {/* Header */}
+            <View className="flex-row items-center">
+              <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
+                <Ionicons name="calendar" size={20} color="#2979FF" />
+              </View>
+              <Text className="ml-3 text-base font-semibold text-neutral-900">
+                날짜 투표 진행 중
+              </Text>
+            </View>
+
+            {/* Mode toggle (D-07) — 범위형 / 그리드. Locked once any vote exists. */}
+            <View className="flex-row rounded-xl bg-neutral-100 p-1 mt-4">
+              {(['range', 'grid'] as const).map((m) => {
+                const active = poll.mode === m;
+                const labelKo = m === 'range' ? '범위형' : '그리드';
+                return (
+                  <Pressable
+                    key={m}
+                    onPress={() => {
+                      if (canChangeMode && !active) void onChangePollMode(m);
+                    }}
+                    disabled={!canChangeMode}
+                    className={`flex-1 items-center justify-center rounded-lg py-2 ${
+                      active ? 'bg-brand-50' : ''
+                    }`}
+                    style={{ minHeight: 44, opacity: canChangeMode ? 1 : 0.6 }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active, disabled: !canChangeMode }}
+                  >
+                    <Text
+                      className={`text-xs ${
+                        active ? 'font-semibold text-brand-600' : 'text-neutral-500'
+                      }`}
+                    >
+                      {labelKo}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Summary line */}
+            <Text className="text-sm text-neutral-500 mt-3">
+              {N === 0
+                ? '아직 아무도 투표하지 않았어요'
+                : `참여 ${N}명${leaderDate ? ` · 최다 후보 ${leaderDate}` : ''}`}
+            </Text>
+
+            {/* Share row */}
+            <View className="flex-row mt-4" style={{ gap: 8 }}>
+              <Pressable
+                onPress={onShareInvite}
+                className="flex-1 items-center justify-center rounded-lg border border-neutral-200 py-2.5 active:bg-brand-50"
+                style={{ minHeight: 44 }}
+                accessibilityRole="button"
+              >
+                <Text className="text-sm text-neutral-700">초대 링크 복사</Text>
+              </Pressable>
+              <Pressable
+                onPress={onShareCode}
+                className="flex-1 items-center justify-center rounded-lg border border-neutral-200 py-2.5 active:bg-brand-50"
+                style={{ minHeight: 44 }}
+                accessibilityRole="button"
+              >
+                <Text className="text-sm text-neutral-700">코드 공유</Text>
+              </Pressable>
+            </View>
+
+            {/* Confirm */}
+            <Pressable
+              onPress={openConfirm}
+              className="items-center justify-center rounded-lg bg-brand-500 py-3 mt-3 active:opacity-90"
+              style={{ minHeight: 44 }}
+              accessibilityRole="button"
+            >
+              <Text className="text-sm font-semibold text-white">확정</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+
+        {/* Confirm sheet (D-09, INLINE). range → option list; grid → 연속 블록 추천. */}
+        <BottomSheet
+          ref={confirmSheetRef}
+          index={-1}
+          snapPoints={['55%']}
+          enablePanDownToClose
+          onClose={() => setConfirmOpen(false)}
+          backgroundStyle={{ backgroundColor: '#fff' }}
+        >
+          <BottomSheetView>
+            {confirmOpen && (
+              <View className="px-6 pt-2 pb-8 bg-white">
+                <Text className="text-lg font-semibold text-neutral-900">날짜 확정</Text>
+                {poll.mode === 'range' ? (
+                  <RangeConfirmList tally={tally} onPick={onConfirmPick} />
+                ) : (
+                  <GridConfirmBlock tally={tally} onPick={onConfirmPick} />
+                )}
+              </View>
+            )}
+          </BottomSheetView>
+        </BottomSheet>
       </SafeAreaView>
     );
   }
@@ -490,5 +802,85 @@ export default function TripPlanScreen() {
         </Pressable>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/**
+ * range-mode confirm list (D-09) — each candidate option with its 가능 count;
+ * tapping an option confirms that range. Advisory tally only (T-19-02 — the
+ * authoritative count lives server-side; the host still picks).
+ */
+function RangeConfirmList({
+  tally,
+  onPick,
+}: {
+  tally: PollTally | null;
+  onPick: (startDate: string, endDate: string) => void;
+}) {
+  const options = (tally?.tally ?? []).filter((t): t is RangeTally => 'option_id' in t);
+  if (options.length === 0) {
+    return <Text className="text-sm text-neutral-500 mt-3">후보 날짜가 아직 없어요.</Text>;
+  }
+  return (
+    <View className="mt-3" style={{ gap: 8 }}>
+      {options.map((o) => (
+        <Pressable
+          key={o.option_id}
+          onPress={() => onPick(o.start_date, o.end_date)}
+          className="flex-row items-center justify-between rounded-lg border border-neutral-200 px-4 py-3 active:bg-brand-50"
+          style={{ minHeight: 44 }}
+          accessibilityRole="button"
+        >
+          <Text className="text-base text-neutral-900">
+            {o.start_date === o.end_date ? o.start_date : `${o.start_date} – ${o.end_date}`}
+          </Text>
+          <Text className="text-sm text-neutral-500">{o.available_count}명 가능</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * grid-mode confirm block (D-09) — surfaces the best 연속 블록(N박) per run length
+ * via contiguousBlock (advisory only); the host taps one to confirm. Also lists
+ * single days so a 당일치기 is reachable.
+ */
+function GridConfirmBlock({
+  tally,
+  onPick,
+}: {
+  tally: PollTally | null;
+  onPick: (startDate: string, endDate: string) => void;
+}) {
+  const perDay = (tally?.tally ?? [])
+    .filter((t): t is GridTally => 'vote_date' in t)
+    .map((t) => ({ date: t.vote_date, count: t.available_count }));
+  if (perDay.length === 0) {
+    return <Text className="text-sm text-neutral-500 mt-3">아직 투표가 없어요.</Text>;
+  }
+  // Suggest the best contiguous window for 1~3 days (skip lengths that don't fit).
+  const suggestions = [1, 2, 3]
+    .map((runLength) => ({ runLength, block: contiguousBlock(perDay, runLength) }))
+    .filter((s): s is { runLength: number; block: { start: string; end: string } } => !!s.block);
+  return (
+    <View className="mt-3" style={{ gap: 8 }}>
+      {suggestions.map(({ runLength, block }) => (
+        <Pressable
+          key={runLength}
+          onPress={() => onPick(block.start, block.end)}
+          className="flex-row items-center justify-between rounded-lg border border-neutral-200 px-4 py-3 active:bg-brand-50"
+          style={{ minHeight: 44 }}
+          accessibilityRole="button"
+        >
+          <Text className="text-base text-neutral-900">
+            {block.start === block.end ? block.start : `${block.start} – ${block.end}`}
+          </Text>
+          <Text className="text-sm text-neutral-500">
+            {runLength === 1 ? '당일' : `${runLength - 1}박`} 추천
+          </Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }
