@@ -545,20 +545,23 @@ export async function castDateVote(
 
 **If this table looks long:** these are deliberately surfaced product/structure choices in Claude's Discretion (per CONTEXT) — none contradict a locked decision. A4 is the only one with real security weight and is flagged for confirmation.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Rate-limit strength for anon writes (A4)**
    - What we know: non-guessable code + poll-open gate + per-device dedup are enforceable in-RPC; nickname/length caps too.
    - What's unclear: whether the user wants hard per-IP limits (needs edge proxy / `http` extension — out of MVP Postgres scope).
    - Recommendation: ship the in-RPC controls + a per-device comment throttle; document IP-level limiting as a deferred hardening task. Confirm acceptable in discuss.
+   - **RESOLVED:** Plan 01 (0018) ships the in-RPC controls — non-guessable poll_code + poll-open gate + per-device dedup index + the 5-second per-device comment throttle in `post_poll_comment`. Hard per-IP limiting stays deferred (accepted residual risk, T-19-02/T-19-03).
 
 2. **Poll option count cap (Claude's Discretion: 2–10 recommended)**
    - What we know: CONTEXT recommends 2–10; range mode needs a sane upper bound; grid uses a date window not discrete options.
    - Recommendation: `POLL_RANGE_OPTIONS_MAX = 10` constant + a CHECK or app-level guard. For grid, cap the window (e.g., ≤ 60 days) to bound the per-day vote matrix.
+   - **RESOLVED:** Plan 02 (Task 1) adds `POLL_RANGE_OPTIONS_MAX = 10` and `POLL_GRID_WINDOW_MAX_DAYS = 60` to `packages/core/src/constants.ts`.
 
 3. **Does the chat thread stay open after `status='closed'`? (UI-SPEC Screen 5 says "read-only or still-open per planner")**
    - What we know: votes are frozen on close; comments could remain open for "see you there!" chatter.
    - Recommendation: gate `post_poll_comment` on `status='open'` for symmetry (simplest, no edge case), OR allow comments while closed by checking a separate flag. Default to read-only on close unless the user wants post-confirm chatter.
+   - **RESOLVED:** read-only on close — Plan 01's `post_poll_comment` keeps the `status='open'` gate, and Plan 04 (Task 3) renders the chat thread read-only (no compose row) when `status==='closed'`.
 
 ## Environment Availability
 
