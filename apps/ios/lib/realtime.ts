@@ -1,4 +1,4 @@
-import { extractChannelName, planChannelName } from '@moajoa/core';
+import { extractChannelName, planChannelName, pollChannelName } from '@moajoa/core';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
@@ -59,6 +59,45 @@ export function subscribePlanProgress(
     .channel(planChannelName(tripId))
     .on('broadcast', { event: 'progress' }, (msg) => {
       onProgress(msg.payload as PlanProgress);
+    })
+    .subscribe();
+  return channel;
+}
+
+/**
+ * One poll-channel event. The single poll:{trip_id} channel (D-11) carries
+ * vote/comment broadcasts + presence; the management card (Plan 03) only
+ * refetches the tally on 'vote'/'presence', while the web island (Plan 04)
+ * also reacts to 'comment'.
+ */
+export type PollEvent =
+  | { kind: 'vote'; payload: unknown }
+  | { kind: 'comment'; payload: unknown }
+  | { kind: 'presence'; viewers: number };
+
+/**
+ * Phase 19 — subscribe to the trip-scoped poll:{trip_id} Realtime channel.
+ * Mirrors subscribePlanProgress: a thin wiring layer over supabase.channel(...).
+ * One channel carries date-vote + comment broadcasts and presence (D-11).
+ *
+ * Caller MUST clean up the channel in useEffect return:
+ *   const ch = subscribePollChannel(tripId, handler);
+ *   return () => { supabase.removeChannel(ch); }
+ * (same leak guard as subscribeExtractProgress / subscribePlanProgress).
+ */
+export function subscribePollChannel(
+  tripId: string,
+  onEvent: (e: PollEvent) => void,
+): RealtimeChannel {
+  const channel = supabase
+    .channel(pollChannelName(tripId))
+    .on('broadcast', { event: 'vote' }, (msg) => onEvent({ kind: 'vote', payload: msg.payload }))
+    .on('broadcast', { event: 'comment' }, (msg) =>
+      onEvent({ kind: 'comment', payload: msg.payload }),
+    )
+    .on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState();
+      onEvent({ kind: 'presence', viewers: Object.keys(state).length });
     })
     .subscribe();
   return channel;

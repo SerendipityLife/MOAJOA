@@ -4,12 +4,11 @@
 // Plan 03 retired the auto-first-board trigger, so the 정해짐 card is the SOLE
 // entry into first-trip creation (BLOCKER 1) — there is no auto-created board.
 //
-// Two stacked path cards:
+// Two stacked path cards (Phase 19 — POLL-01 activated the 미정 card):
 //   - 정해짐  (ENABLED, brand-accented) → /trip/create
-//   - 미정    (DISABLED, neutral-only "곧 제공" stub — Phase 19 fills it, D-11)
-// Color contract (UI-SPEC): brand accent is rationed — only the enabled card and
-// the base CTA carry brand; the disabled card is neutral.100/400 with a neutral
-// "곧 제공" badge and NO chevron, so a disabled control never looks primary.
+//   - 미정    (ENABLED, brand-accented) → /trip/create?dateless=1 (날짜 투표)
+// Color contract (UI-SPEC Screen 1): both path cards now carry brand; the dateless
+// path routes to a date-vote trip the host shares for friends to vote on.
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -62,25 +61,25 @@ export default function Onboarding() {
           <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
         </Pressable>
 
-        {/* 미정 card — DISABLED, NEUTRAL only (no brand accent, D-11). No-op. */}
-        <View
-          accessibilityRole="text"
-          accessibilityLabel="아직 미정이에요. 곧 제공돼요."
-          className="mt-3 bg-neutral-100 rounded-2xl px-4 py-4 flex-row items-center"
+        {/* 미정 card — Phase 19 (POLL-01): ENABLED, brand-accented. Tap → dateless
+            create (?dateless=1). Mirrors the 정해짐 card structure; brand accent now
+            extends to both path cards (UI-SPEC Screen 1). */}
+        <Pressable
+          onPress={() => router.push('/trip/create?dateless=1')}
+          accessibilityRole="button"
+          accessibilityLabel="날짜 투표로 일정 정하기"
+          style={cardShadow}
+          className="mt-4 bg-white rounded-2xl px-4 py-4 flex-row items-center active:bg-neutral-50"
         >
-          <View className="w-11 h-11 rounded-xl bg-neutral-200 items-center justify-center">
-            <Ionicons name="help-circle-outline" size={22} color="#9CA3AF" />
+          <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
+            <Ionicons name="calendar-outline" size={22} color="#2979FF" />
           </View>
           <View className="flex-1 ml-3">
-            <View className="flex-row items-center">
-              <Text className="text-base font-semibold text-neutral-400">아직 미정이에요</Text>
-              <View className="ml-2 px-1.5 py-0.5 rounded-md bg-neutral-100">
-                <Text className="text-xs font-semibold text-neutral-500">곧 제공</Text>
-              </View>
-            </View>
-            <Text className="mt-0.5 text-sm text-neutral-400">날짜 투표로 함께 정해요</Text>
+            <Text className="text-base font-semibold text-neutral-900">아직 미정이에요</Text>
+            <Text className="mt-0.5 text-sm text-neutral-500">날짜 투표로 함께 정해요</Text>
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+        </Pressable>
 
         {/* Base primary CTA — routes the same as the 정해짐 card. */}
         <Pressable

@@ -12,10 +12,10 @@
 // Ownership (BLOCKER 1): createTrip here is the only path that mints a user's
 // first trip — the auto-first-board trigger is gone (Plan 03). It must work for a
 // brand-new 0-trip account, so there is no precondition on an existing trip.
-import { createTrip } from '@moajoa/api';
-import { TripCreateSchema } from '@moajoa/core';
+import { createDatelessTrip, createTrip } from '@moajoa/api';
+import { TripCreateDatelessSchema, TripCreateSchema } from '@moajoa/core';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +48,12 @@ function FieldTag({ required }: { required?: boolean }) {
 }
 
 export default function NewTripScreen() {
+  // Phase 19 (POLL-01) — the dateless variant. ?dateless=1 (from the onboarding
+  // 미정 card) hides the date card + date picker and creates a trip with null
+  // dates + an open poll, landing on the plan-tab management card.
+  const { dateless } = useLocalSearchParams<{ dateless?: string }>();
+  const isDateless = dateless === '1';
+
   const [cityCode, setCityCode] = useState<string | null>(null);
   const [cityKo, setCityKo] = useState<string | null>(null);
   const [start, setStart] = useState<Date | null>(null);
@@ -60,23 +66,43 @@ export default function NewTripScreen() {
   const rangeLabel = formatDateRangeKo(start, end);
   // A complete date range = start chosen AND an end (day-trip = same day, which
   // the picker stores as end == null after a single tap — so require an explicit
-  // end). canSave gates the CTA on city AND a full range (D-09).
+  // end). canSave gates the CTA on city AND a full range (D-09); the dateless
+  // variant drops the date gate (city-only).
   const hasDateRange = !!start && !!end;
-  const canSave = !!cityCode && !!cityKo && hasDateRange && !saving;
+  const canSave = !!cityCode && !!cityKo && (isDateless || hasDateRange) && !saving;
   // Helper shown when only the start date is chosen — nudges the day-trip case.
-  const needsEnd = !!start && !end;
+  const needsEnd = !isDateless && !!start && !end;
 
   async function submit() {
-    if (!cityCode || !cityKo || !start || !end || saving) return;
+    if (!cityCode || !cityKo || saving) return;
+    if (!isDateless && (!start || !end)) return;
     setSaving(true);
     try {
+      if (isDateless) {
+        // Dateless create (D-04): no dates, an explicit default mode 'grid'
+        // (the when2meet-style default — NOT a silently-final choice; the host
+        // switches range↔grid on the plan-tab management card before the first
+        // vote/share, D-07). create_dateless_trip_with_poll mints trip + open poll.
+        const payload = TripCreateDatelessSchema.parse({
+          title: autoBoardTitle(cityKo, null, null),
+          city_code: cityCode,
+          poll_mode: 'grid',
+        });
+        const res = (await createDatelessTrip(supabase, {
+          title: payload.title,
+          cityCode: payload.city_code,
+          mode: payload.poll_mode,
+        })) as { trip_id: string };
+        router.replace(`/trip/${res.trip_id}/plan`);
+        return;
+      }
       // Validate through TripCreateSchema (required dates, end >= start refine)
       // before hitting the network — T-17-13 input integrity (city/date).
       const payload = TripCreateSchema.parse({
         title: autoBoardTitle(cityKo, start, end),
         city_code: cityCode,
-        start_date: toYMD(start),
-        end_date: toYMD(end),
+        start_date: toYMD(start!),
+        end_date: toYMD(end!),
       });
       const trip = await createTrip(supabase, payload);
       // representative_id was set to the creator by the DB trigger (SETUP-02).
@@ -129,32 +155,35 @@ export default function NewTripScreen() {
           <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
         </Pressable>
 
-        {/* 여행 날짜 (required this phase, D-09) */}
-        <Pressable
-          onPress={() => setDateOpen(true)}
-          style={cardShadow}
-          accessibilityRole="button"
-          accessibilityLabel="여행 날짜 선택"
-          className="bg-white rounded-2xl px-4 py-4 mb-2 flex-row items-center active:bg-neutral-50"
-        >
-          <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
-            <Ionicons name="calendar" size={20} color="#2979FF" />
-          </View>
-          <View className="flex-1 ml-3">
-            <View className="flex-row items-center">
-              <Text className="text-sm font-semibold tracking-[0.5px] text-neutral-500">
-                여행 날짜
-              </Text>
-              <FieldTag required />
+        {/* 여행 날짜 (required this phase, D-09) — HIDDEN in the dateless variant
+            (POLL-01); the date is decided later by the poll. */}
+        {!isDateless && (
+          <Pressable
+            onPress={() => setDateOpen(true)}
+            style={cardShadow}
+            accessibilityRole="button"
+            accessibilityLabel="여행 날짜 선택"
+            className="bg-white rounded-2xl px-4 py-4 mb-2 flex-row items-center active:bg-neutral-50"
+          >
+            <View className="w-11 h-11 rounded-xl bg-brand-50 items-center justify-center">
+              <Ionicons name="calendar" size={20} color="#2979FF" />
             </View>
-            <Text
-              className={`text-base mt-0.5 ${rangeLabel ? 'font-semibold text-neutral-900' : 'text-neutral-400'}`}
-            >
-              {rangeLabel || '날짜를 선택하세요'}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
-        </Pressable>
+            <View className="flex-1 ml-3">
+              <View className="flex-row items-center">
+                <Text className="text-sm font-semibold tracking-[0.5px] text-neutral-500">
+                  여행 날짜
+                </Text>
+                <FieldTag required />
+              </View>
+              <Text
+                className={`text-base mt-0.5 ${rangeLabel ? 'font-semibold text-neutral-900' : 'text-neutral-400'}`}
+              >
+                {rangeLabel || '날짜를 선택하세요'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+          </Pressable>
+        )}
 
         {/* Inline helper when only the start date is chosen (day-trip nudge). */}
         {needsEnd && (
@@ -170,16 +199,16 @@ export default function NewTripScreen() {
           <Text className="text-sm text-neutral-500 ml-1.5">만든 사람이 대표(결제자)예요</Text>
         </View>
 
-        {/* CTA — 여행 만들기 */}
+        {/* CTA — 여행 만들기 / 날짜 투표 시작하기 (dateless variant) */}
         <Pressable
           onPress={submit}
           disabled={!canSave}
           accessibilityRole="button"
-          accessibilityLabel="여행 만들기"
+          accessibilityLabel={isDateless ? '날짜 투표 시작하기' : '여행 만들기'}
           className={`rounded-2xl py-4 items-center ${canSave ? 'bg-brand-500' : 'bg-neutral-200'}`}
         >
           <Text className={`text-base font-semibold ${canSave ? 'text-white' : 'text-neutral-400'}`}>
-            여행 만들기
+            {isDateless ? '날짜 투표 시작하기' : '여행 만들기'}
           </Text>
         </Pressable>
       </ScrollView>
@@ -195,19 +224,21 @@ export default function NewTripScreen() {
         }}
       />
 
-      <DatePickerSheet
-        visible={dateOpen}
-        initialStart={start}
-        initialEnd={end}
-        onClose={() => setDateOpen(false)}
-        onConfirm={(s, e) => {
-          setStart(s);
-          // Day-trip: a single tap leaves end null. Coerce to start so the range
-          // is complete (end == start), satisfying the required-range gate (D-09).
-          setEnd(e ?? s);
-          setDateOpen(false);
-        }}
-      />
+      {!isDateless && (
+        <DatePickerSheet
+          visible={dateOpen}
+          initialStart={start}
+          initialEnd={end}
+          onClose={() => setDateOpen(false)}
+          onConfirm={(s, e) => {
+            setStart(s);
+            // Day-trip: a single tap leaves end null. Coerce to start so the range
+            // is complete (end == start), satisfying the required-range gate (D-09).
+            setEnd(e ?? s);
+            setDateOpen(false);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }

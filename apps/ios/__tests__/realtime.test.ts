@@ -17,10 +17,14 @@ interface FakeChannel {
   name: string;
   on: jest.Mock;
   subscribe: jest.Mock;
+  presenceState: jest.Mock;
+  /** Handlers captured per (type, event) key, e.g. 'broadcast:progress', 'presence:sync'. */
+  handlers: Record<string, (msg: { payload: unknown }) => void>;
 }
 
 let lastChannel: FakeChannel | null = null;
 let lastBroadcastHandler: ((msg: { payload: unknown }) => void) | undefined;
+let mockPresenceState: Record<string, unknown> = {};
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -29,10 +33,19 @@ jest.mock('@/lib/supabase', () => ({
         name,
         on: jest.fn(),
         subscribe: jest.fn(),
+        presenceState: jest.fn(() => mockPresenceState),
+        handlers: {},
       };
       ch.on.mockImplementation(
-        (_event: string, _filter: unknown, handler: (msg: { payload: unknown }) => void) => {
+        (
+          type: string,
+          filter: { event?: string },
+          handler: (msg: { payload: unknown }) => void,
+        ) => {
+          // Last-handler shim (extract/plan single-broadcast tests) + keyed capture
+          // (poll multi-event tests) so the same fake serves both contracts.
           lastBroadcastHandler = handler;
+          ch.handlers[`${type}:${filter?.event ?? ''}`] = handler;
           return ch;
         },
       );
@@ -43,11 +56,16 @@ jest.mock('@/lib/supabase', () => ({
   },
 }));
 
-import { subscribeExtractProgress, subscribePlanProgress } from '@/lib/realtime';
+import {
+  subscribeExtractProgress,
+  subscribePlanProgress,
+  subscribePollChannel,
+} from '@/lib/realtime';
 
 beforeEach(() => {
   lastChannel = null;
   lastBroadcastHandler = undefined;
+  mockPresenceState = {};
 });
 
 test('subscribeExtractProgress uses extract:{link_id} channel name', () => {
@@ -90,5 +108,45 @@ test('subscribePlanProgress broadcast progress event invokes onProgress with pay
 
 test('subscribePlanProgress returns the supabase channel (caller can removeChannel)', () => {
   const result = subscribePlanProgress('trip-xyz', () => {});
+  expect(result).toBe(lastChannel);
+});
+
+// Phase 19: subscribePollChannel is the date-poll sibling. The single
+// poll:{trip_id} channel (D-11) carries vote/comment broadcasts + presence:
+//   1. channel name is `poll:{trip_id}` (pollChannelName).
+//   2. the 'vote' / 'comment' broadcasts fire onEvent with kind + raw payload.
+//   3. presence sync fires onEvent with kind:'presence' + the viewer count.
+//   4. the returned channel === supabase.channel(...) for removeChannel cleanup.
+
+test('subscribePollChannel uses poll:{trip_id} channel name', () => {
+  subscribePollChannel('t1', () => {});
+  expect(lastChannel).not.toBeNull();
+  expect(lastChannel!.name).toBe('poll:t1');
+});
+
+test('subscribePollChannel vote broadcast invokes onEvent with kind:vote + payload', () => {
+  const onEvent = jest.fn();
+  subscribePollChannel('t1', onEvent);
+  lastChannel!.handlers['broadcast:vote']!({ payload: { nickname: '윤' } });
+  expect(onEvent).toHaveBeenCalledWith({ kind: 'vote', payload: { nickname: '윤' } });
+});
+
+test('subscribePollChannel comment broadcast invokes onEvent with kind:comment + payload', () => {
+  const onEvent = jest.fn();
+  subscribePollChannel('t1', onEvent);
+  lastChannel!.handlers['broadcast:comment']!({ payload: { body: '안녕' } });
+  expect(onEvent).toHaveBeenCalledWith({ kind: 'comment', payload: { body: '안녕' } });
+});
+
+test('subscribePollChannel presence sync invokes onEvent with viewer count', () => {
+  const onEvent = jest.fn();
+  mockPresenceState = { a: [{}], b: [{}] };
+  subscribePollChannel('t1', onEvent);
+  lastChannel!.handlers['presence:sync']!({ payload: {} });
+  expect(onEvent).toHaveBeenCalledWith({ kind: 'presence', viewers: 2 });
+});
+
+test('subscribePollChannel returns the supabase channel (caller can removeChannel)', () => {
+  const result = subscribePollChannel('t-xyz', () => {});
   expect(result).toBe(lastChannel);
 });
