@@ -9,6 +9,9 @@ import {
   createDatelessTrip,
   getPollByTrip,
   setPollMode,
+  getPollOptions,
+  addPollOption,
+  removePollOption,
 } from './date-polls';
 import type { MoajoaSupabaseClient } from '../client';
 
@@ -227,5 +230,64 @@ describe('setPollMode — host mode switch (D-07), owner-guarded by RLS', () => 
   it('throws when the update returns { error }', async () => {
     const { client } = makeClient({ result: { data: null, error: { message: 'denied' } } });
     await expect(setPollMode(client, POLL, 'range')).rejects.toBeTruthy();
+  });
+});
+
+describe('getPollOptions — host candidate-window read (GAP-19A), owner-gated by RLS', () => {
+  it("reads date_poll_options by poll_id, ordered by start_date", async () => {
+    const rows = [{ id: OPTION, start_date: '2026-04-03', end_date: '2026-04-05' }];
+    const { client, from, chain } = makeClient({ result: { data: rows, error: null } });
+    const out = await getPollOptions(client, POLL);
+    expect(from).toHaveBeenCalledWith('date_poll_options');
+    expect(chain.eq).toHaveBeenCalledWith('poll_id', POLL);
+    expect(chain.order).toHaveBeenCalledWith('start_date');
+    expect(out).toEqual(rows);
+  });
+
+  it('returns [] when there are no options', async () => {
+    const { client } = makeClient({ result: { data: null, error: null } });
+    expect(await getPollOptions(client, POLL)).toEqual([]);
+  });
+
+  it('throws when the read returns { error }', async () => {
+    const { client } = makeClient({ result: { data: null, error: { message: 'denied' } } });
+    await expect(getPollOptions(client, POLL)).rejects.toBeTruthy();
+  });
+});
+
+describe('addPollOption — host candidate-window insert (GAP-19A), owner-gated by RLS', () => {
+  it('inserts {poll_id,start_date,end_date} and returns the row', async () => {
+    const row = { id: OPTION, start_date: '2026-04-03', end_date: '2026-04-05' };
+    const { client, from, chain } = makeClient({ result: { data: row, error: null } });
+    const out = await addPollOption(client, POLL, { startDate: '2026-04-03', endDate: '2026-04-05' });
+    expect(from).toHaveBeenCalledWith('date_poll_options');
+    expect(chain.insert).toHaveBeenCalledWith({
+      poll_id: POLL,
+      start_date: '2026-04-03',
+      end_date: '2026-04-05',
+    });
+    expect(out).toEqual(row);
+  });
+
+  it('throws when the insert returns { error }', async () => {
+    const { client } = makeClient({ result: { data: null, error: { message: 'denied' } } });
+    await expect(
+      addPollOption(client, POLL, { startDate: '2026-04-03', endDate: '2026-04-05' }),
+    ).rejects.toBeTruthy();
+  });
+});
+
+describe('removePollOption — host candidate-window delete (GAP-19A), owner-gated by RLS', () => {
+  it('deletes date_poll_options scoped by option id', async () => {
+    const { client, from, chain } = makeClient({ result: { data: null, error: null } });
+    await removePollOption(client, OPTION);
+    expect(from).toHaveBeenCalledWith('date_poll_options');
+    expect(chain.delete).toHaveBeenCalled();
+    expect(chain.eq).toHaveBeenCalledWith('id', OPTION);
+  });
+
+  it('throws when the delete returns { error }', async () => {
+    const { client } = makeClient({ result: { data: null, error: { message: 'denied' } } });
+    await expect(removePollOption(client, OPTION)).rejects.toBeTruthy();
   });
 });

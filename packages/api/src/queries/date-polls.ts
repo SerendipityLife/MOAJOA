@@ -146,3 +146,56 @@ export async function setPollMode(
   const { error } = await client.from('date_polls').update({ mode }).eq('id', pollId);
   if (error) throw error;
 }
+
+/** A candidate date window the host proposes for voters (date_poll_options). */
+export interface PollOption {
+  id: string;
+  start_date: string;
+  end_date: string;
+}
+
+/**
+ * Host candidate-date writes (POLL-01, D-07 / GAP-19A). The host proposes the
+ * windows voters vote on: range = several discrete ranges, grid = one wide window
+ * the web grid expands into per-day cells. Like setPollMode these are direct
+ * table writes gated by the existing `date_poll_options_write` RLS
+ * (`can_edit_trip(trip_id)`, Plan 01) — no new RPC. The plan-tab card locks
+ * editing once the first vote arrives (mirror the mode-toggle 0-vote gate) so a
+ * mid-poll change can't strand cast votes.
+ */
+export async function getPollOptions(
+  client: MoajoaSupabaseClient,
+  pollId: string,
+): Promise<PollOption[]> {
+  const { data, error } = await client
+    .from('date_poll_options')
+    .select('id, start_date, end_date')
+    .eq('poll_id', pollId)
+    .order('start_date');
+  if (error) throw error;
+  return (data as PollOption[] | null) ?? [];
+}
+
+/** Add one candidate window (RLS owner-gated). Returns the inserted row. */
+export async function addPollOption(
+  client: MoajoaSupabaseClient,
+  pollId: string,
+  input: { startDate: string; endDate: string },
+): Promise<PollOption> {
+  const { data, error } = await client
+    .from('date_poll_options')
+    .insert({ poll_id: pollId, start_date: input.startDate, end_date: input.endDate })
+    .select('id, start_date, end_date')
+    .single();
+  if (error) throw error;
+  return data as PollOption;
+}
+
+/** Remove one candidate window by id (RLS owner-gated). */
+export async function removePollOption(
+  client: MoajoaSupabaseClient,
+  optionId: string,
+): Promise<void> {
+  const { error } = await client.from('date_poll_options').delete().eq('id', optionId);
+  if (error) throw error;
+}
