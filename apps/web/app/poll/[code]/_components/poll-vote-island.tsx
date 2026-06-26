@@ -99,6 +99,13 @@ export function PollVoteIsland({
   const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>['channel']> | null>(
     null,
   );
+  // The single shared poll channel, surfaced as state so <PollChat> binds its
+  // comment events onto THIS instance instead of opening a second channel on the
+  // same topic (a same-topic 2nd channel silently steals the topic's deliveries —
+  // vote/presence would stop fanning out). One channel = host-parity (poll:{tripId}).
+  const [sharedChannel, setSharedChannel] = useState<
+    ReturnType<ReturnType<typeof getSupabaseBrowser>['channel']> | null
+  >(null);
 
   // Hydrate the persisted nickname client-side (returning visitor skips the gate).
   useEffect(() => {
@@ -142,6 +149,7 @@ export function PollVoteIsland({
       config: { presence: { key: deviceToken } },
     });
     channelRef.current = channel;
+    setSharedChannel(channel);
 
     channel
       .on('broadcast', { event: 'vote' }, () => {
@@ -159,6 +167,7 @@ export function PollVoteIsland({
 
     return () => {
       channelRef.current = null;
+      setSharedChannel(null);
       void client.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -304,7 +313,7 @@ export function PollVoteIsland({
           </p>
         </div>
 
-        <PollChat code={code} tripId={tripId} status={status} nickname={nickname} />
+        <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
       </section>
     );
   }
@@ -488,7 +497,7 @@ export function PollVoteIsland({
         )}
       </div>
 
-      <PollChat code={code} tripId={tripId} status={status} nickname={nickname} />
+      <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
     </section>
   );
 }

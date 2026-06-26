@@ -2,16 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { postComment, deleteComment } from '@moajoa/api';
-import { pollChannelName } from '@moajoa/core';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { getDeviceToken } from '@/lib/device-token';
 import { useToast, Dialog } from '@/components';
 
+/** The single shared poll channel instance, owned by <PollVoteIsland>. */
+type PollChannel = ReturnType<ReturnType<typeof getSupabaseBrowser>['channel']>;
+
 interface Props {
   code: string;
-  tripId: string;
   status: 'open' | 'closed';
   nickname: string;
+  /**
+   * The ONE shared poll channel (poll:{tripId}) created + subscribed by the
+   * parent island. Chat binds its comment events onto this instance rather than
+   * opening a second channel on the same topic (which would silently steal the
+   * topic's deliveries from the island — vote/presence would stop fanning out).
+   * Null until the island's channel is ready (or skipped via the test seam).
+   */
+  channel: PollChannel | null;
   /** Test seam: seed the thread (skips realtime subscribe). */
   initialMessages?: ChatMessage[];
 }
@@ -47,7 +56,7 @@ function relTime(iso: string): string {
  * Read-only when the poll is closed (matches Plan 01's post_poll_comment poll-open
  * gate — RESEARCH Open Q3 default).
  */
-export function PollChat({ code, tripId, status, nickname, initialMessages }: Props) {
+export function PollChat({ code, status, nickname, channel, initialMessages }: Props) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages ?? []);
   const [draft, setDraft] = useState('');
@@ -58,33 +67,28 @@ export function PollChat({ code, tripId, status, nickname, initialMessages }: Pr
     null,
   );
 
-  // Subscribe a comment listener on the SHARED poll channel (broadcast fan-out).
+  // Bind comment fan-out onto the island's SINGLE shared channel. The island owns
+  // the channel lifecycle (subscribe + removeChannel) — chat only adds its two
+  // broadcast bindings (which receive even though they are added after the channel
+  // is already subscribed) and sends on the same instance. No second channel.
   useEffect(() => {
-    if (initialMessages) return; // test seam: skip realtime
-    const client = getSupabaseBrowser();
-    const channel = client.channel(pollChannelName(tripId), {
-      config: { presence: { key: getDeviceToken() } },
-    });
+    if (initialMessages || !channel) return; // test seam, or channel not ready yet
     channelRef.current = channel;
 
     channel
       .on('broadcast', { event: 'comment' }, (msg) => {
         const c = msg.payload as ChatMessage;
-        setMessages((prev) =>
-          prev.some((m) => m.id === c.id) ? prev : [...prev, c],
-        );
+        setMessages((prev) => (prev.some((m) => m.id === c.id) ? prev : [...prev, c]));
       })
       .on('broadcast', { event: 'comment_deleted' }, (msg) => {
         const { id } = msg.payload as { id: string };
         setMessages((prev) => prev.filter((m) => m.id !== id));
-      })
-      .subscribe();
+      });
 
     return () => {
       channelRef.current = null;
-      void client.removeChannel(channel);
     };
-  }, [tripId, initialMessages]);
+  }, [channel, initialMessages]);
 
   async function send() {
     const body = draft.trim();
