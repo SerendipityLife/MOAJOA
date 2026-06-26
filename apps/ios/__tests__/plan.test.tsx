@@ -35,6 +35,9 @@ jest.mock('@moajoa/api', () => ({
   getPollTally: jest.fn(),
   setPollMode: jest.fn(),
   confirmPollDate: jest.fn(),
+  getPollOptions: jest.fn(),
+  addPollOption: jest.fn(),
+  removePollOption: jest.fn(),
 }));
 
 // @expo/vector-icons ships untranspiled ESM not in the transform allowlist;
@@ -92,6 +95,11 @@ jest.mock('@/lib/realtime', () => ({
   subscribePlanProgress: jest.fn(() => ({ name: 'plan:trip-1' })),
   subscribePollChannel: jest.fn(() => ({ name: 'poll:trip-1' })),
 }));
+// The candidate-window picker is a device-driven sheet (Task 3 UAT); stub it so
+// this render-contract test doesn't pull in the calendar/Modal internals.
+jest.mock('@/components/boards/date-picker-sheet', () => ({
+  DatePickerSheet: () => null,
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: { removeChannel: jest.fn() } }));
 jest.mock('@/lib/toast', () => ({ showToast: jest.fn() }));
 jest.mock('@/lib/share-board', () => ({ shareCurrentTrip: jest.fn() }));
@@ -108,6 +116,7 @@ const listPlacesByTrip = api.listPlacesByTrip as jest.Mock;
 const getPlanByTrip = api.getPlanByTrip as jest.Mock;
 const getPollByTrip = api.getPollByTrip as jest.Mock;
 const getPollTally = api.getPollTally as jest.Mock;
+const getPollOptions = api.getPollOptions as jest.Mock;
 
 const TRIP = {
   id: 'trip-1',
@@ -135,6 +144,7 @@ beforeEach(() => {
   getPlanByTrip.mockResolvedValue(null);
   getPollByTrip.mockResolvedValue(null);
   getPollTally.mockResolvedValue({ mode: 'grid', status: 'open', tally: [] });
+  getPollOptions.mockResolvedValue([]);
 });
 
 test('State A: renders 아직 플랜이 없어요 when there are no places', async () => {
@@ -234,6 +244,44 @@ test('with votes the summary line shows 참여 {N}명 + 최다 후보', async ()
   });
   const { getByText } = render(<TripPlanScreen />);
   await waitFor(() => expect(getByText('참여 2명 · 최다 후보 2026-07-01')).toBeTruthy());
+});
+
+test('range poll with no candidates: shows the empty-candidate hint + gates sharing (GAP-19A)', async () => {
+  getTrip.mockResolvedValue(DATELESS_TRIP);
+  getPollByTrip.mockResolvedValue({
+    id: 'poll-1',
+    poll_code: 'abcd1234',
+    mode: 'range',
+    status: 'open',
+  });
+  getPollTally.mockResolvedValue({ mode: 'range', status: 'open', tally: [] });
+  getPollOptions.mockResolvedValue([]);
+  const { getByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('날짜 투표 진행 중')).toBeTruthy());
+  expect(getByText('후보 날짜')).toBeTruthy();
+  expect(getByText('투표할 후보 날짜를 2개 이상 추가해주세요')).toBeTruthy();
+  expect(getByText('후보 날짜 추가')).toBeTruthy();
+  // Share is gated until ≥2 candidates exist.
+  expect(getByText('후보 날짜를 2개 이상 추가하면 친구를 초대할 수 있어요')).toBeTruthy();
+});
+
+test('range poll with ≥2 candidates: lists them + lifts the share gate (GAP-19A)', async () => {
+  getTrip.mockResolvedValue(DATELESS_TRIP);
+  getPollByTrip.mockResolvedValue({
+    id: 'poll-1',
+    poll_code: 'abcd1234',
+    mode: 'range',
+    status: 'open',
+  });
+  getPollTally.mockResolvedValue({ mode: 'range', status: 'open', tally: [] });
+  getPollOptions.mockResolvedValue([
+    { id: 'o1', start_date: '2026-04-03', end_date: '2026-04-05' },
+    { id: 'o2', start_date: '2026-04-10', end_date: '2026-04-12' },
+  ]);
+  const { getByText, queryByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('2026-04-03 ~ 2026-04-05')).toBeTruthy());
+  expect(getByText('2026-04-10 ~ 2026-04-12')).toBeTruthy();
+  expect(queryByText('후보 날짜를 2개 이상 추가하면 친구를 초대할 수 있어요')).toBeNull();
 });
 
 test('a closed poll does NOT render the management card (card unmounts after 확정)', async () => {

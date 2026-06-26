@@ -14,15 +14,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
+  addPollOption,
   confirmPollDate,
   generatePlan,
   getPlanByTrip,
   getPollByTrip,
+  getPollOptions,
   getPollTally,
   getTrip,
   listPlacesByTrip,
   moveToDay,
   moveToPool,
+  type PollOption,
+  removePollOption,
   reorderPlanItem,
   setAnchor,
   setCollaborative,
@@ -36,6 +40,8 @@ import {
   PLAN_STEP_KO,
   type Place,
   type PlanStepType,
+  POLL_GRID_WINDOW_MAX_DAYS,
+  POLL_RANGE_OPTIONS_MAX,
   type TravelModeType,
   type Trip,
 } from '@moajoa/core';
@@ -59,6 +65,8 @@ import { shareCurrentTrip } from '@/lib/share-board';
 import { DaySection, type DayItem } from '@/components/plan/day-section';
 import { UnplacedPool } from '@/components/plan/unplaced-pool';
 import { TravelModeToggle } from '@/components/plan/travel-mode-toggle';
+import { DatePickerSheet } from '@/components/boards/date-picker-sheet';
+import { toYMD } from '@/lib/trip-format';
 
 type ProgressStep = keyof typeof PLAN_STEP_KO; // loading | clustering | routing
 const PROGRESS_ORDER: ProgressStep[] = ['loading', 'clustering', 'routing'];
@@ -152,6 +160,10 @@ export default function TripPlanScreen() {
   // management card. Only loaded for a dateless trip (D-05 branch).
   const [poll, setPoll] = useState<PollMeta | null>(null);
   const [tally, setTally] = useState<PollTally | null>(null);
+  // Phase 19 (GAP-19A, D-07): host candidate windows voters vote on. range =
+  // several ranges; grid = one wide window. Empty until the host adds them.
+  const [options, setOptions] = useState<PollOption[]>([]);
+  const [optionSheetOpen, setOptionSheetOpen] = useState(false);
   const confirmSheetRef = useRef<BottomSheet>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -190,8 +202,11 @@ export default function TripPlanScreen() {
     try {
       const p = (await getPollByTrip(supabase, id)) as PollMeta | null;
       setPoll(p);
-      if (p?.poll_code) {
-        setTally((await getPollTally(supabase, p.poll_code)) as PollTally);
+      if (p) {
+        setOptions(await getPollOptions(supabase, p.id));
+        if (p.poll_code) {
+          setTally((await getPollTally(supabase, p.poll_code)) as PollTally);
+        }
       }
     } catch (err) {
       console.warn('[loadPoll] failed:', err);
@@ -398,6 +413,54 @@ export default function TripPlanScreen() {
     [poll, loadPoll],
   );
 
+  // GAP-19A: host adds the candidate windows voters vote on (date_poll_options,
+  // owner-gated RLS). range = append up to POLL_RANGE_OPTIONS_MAX discrete ranges;
+  // grid = ONE window (re-setting replaces it) ≤ POLL_GRID_WINDOW_MAX_DAYS days.
+  // Editing is locked once the first vote lands (canEditOptions, mirrors the mode
+  // toggle's 0-vote gate) so a change can't strand cast votes.
+  const onAddOption = useCallback(
+    async (start: Date, end: Date | null) => {
+      if (!poll) return;
+      const startYMD = toYMD(start);
+      const endYMD = toYMD(end ?? start);
+      const spanDays = Math.round((new Date(endYMD).getTime() - new Date(startYMD).getTime()) / 86400000) + 1;
+      try {
+        if (poll.mode === 'grid') {
+          if (spanDays > POLL_GRID_WINDOW_MAX_DAYS) {
+            Alert.alert('기간이 너무 길어요', `투표 기간은 최대 ${POLL_GRID_WINDOW_MAX_DAYS}일까지예요.`);
+            return;
+          }
+          // Single window — replace any existing window.
+          for (const o of options) await removePollOption(supabase, o.id);
+          await addPollOption(supabase, poll.id, { startDate: startYMD, endDate: endYMD });
+        } else {
+          if (options.length >= POLL_RANGE_OPTIONS_MAX) {
+            Alert.alert('후보가 너무 많아요', `후보 날짜는 최대 ${POLL_RANGE_OPTIONS_MAX}개까지예요.`);
+            return;
+          }
+          await addPollOption(supabase, poll.id, { startDate: startYMD, endDate: endYMD });
+        }
+        setOptions(await getPollOptions(supabase, poll.id));
+      } catch (err) {
+        Alert.alert('후보 날짜 추가 실패', err instanceof Error ? err.message : String(err));
+      }
+    },
+    [poll, options],
+  );
+
+  const onRemoveOption = useCallback(
+    async (optionId: string) => {
+      if (!poll) return;
+      try {
+        await removePollOption(supabase, optionId);
+        setOptions(await getPollOptions(supabase, poll.id));
+      } catch (err) {
+        Alert.alert('후보 날짜 삭제 실패', err instanceof Error ? err.message : String(err));
+      }
+    },
+    [poll],
+  );
+
   const pollUrl = useCallback((code: string) => {
     const base =
       (Constants.expoConfig?.extra?.webUrl as string | undefined)?.replace(/\/+$/, '') ??
@@ -473,6 +536,10 @@ export default function TripPlanScreen() {
   if (isDateless && poll && poll.status !== 'closed') {
     const N = tallyVoterCount(tally);
     const canChangeMode = N === 0; // T-19-11: lock the toggle once a vote exists
+    const canEditOptions = N === 0; // GAP-19A: lock candidates once a vote exists
+    // Share is meaningful only once there is something to vote on (D-07 decision):
+    // range needs ≥2 candidate ranges, grid needs its 1 window.
+    const hasCandidates = poll.mode === 'range' ? options.length >= 2 : options.length >= 1;
     const leaderDate = tallyLeaderLabel(tally);
     return (
       <SafeAreaView edges={['bottom']} className="flex-1 bg-white">
@@ -527,6 +594,61 @@ export default function TripPlanScreen() {
               })}
             </View>
 
+            {/* Candidate windows (GAP-19A, D-07). range = several ranges; grid = 1
+                window. Editable only before the first vote; share is gated on these. */}
+            <Text className="text-sm font-semibold text-neutral-700 mt-4">
+              {poll.mode === 'range' ? '후보 날짜' : '투표 기간'}
+            </Text>
+            {options.length === 0 ? (
+              <Text className="text-xs text-neutral-400 mt-1">
+                {poll.mode === 'range'
+                  ? '투표할 후보 날짜를 2개 이상 추가해주세요'
+                  : '투표할 기간을 정해주세요'}
+              </Text>
+            ) : (
+              <View className="mt-2" style={{ gap: 6 }}>
+                {options.map((o) => (
+                  <View
+                    key={o.id}
+                    className="flex-row items-center justify-between rounded-lg bg-neutral-50 px-3 py-2"
+                  >
+                    <Text className="text-sm text-neutral-800">
+                      {o.start_date === o.end_date
+                        ? o.start_date
+                        : `${o.start_date} ~ ${o.end_date}`}
+                    </Text>
+                    {canEditOptions && (
+                      <Pressable
+                        onPress={() => void onRemoveOption(o.id)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel="후보 날짜 삭제"
+                      >
+                        <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+            {canEditOptions && (poll.mode === 'range' || options.length === 0) && (
+              <Pressable
+                onPress={() => setOptionSheetOpen(true)}
+                disabled={poll.mode === 'range' && options.length >= POLL_RANGE_OPTIONS_MAX}
+                className="flex-row items-center justify-center rounded-lg border border-dashed border-brand-200 py-2.5 mt-2 active:bg-brand-50"
+                style={{
+                  minHeight: 44,
+                  opacity: poll.mode === 'range' && options.length >= POLL_RANGE_OPTIONS_MAX ? 0.5 : 1,
+                }}
+                accessibilityRole="button"
+              >
+                <Ionicons name="add" size={16} color="#2979FF" />
+                <Text className="text-sm text-brand-600 ml-1">
+                  {poll.mode === 'range' ? '후보 날짜 추가' : '투표 기간 설정'}
+                </Text>
+              </Pressable>
+            )}
+
             {/* Summary line */}
             <Text className="text-sm text-neutral-500 mt-3">
               {N === 0
@@ -534,25 +656,36 @@ export default function TripPlanScreen() {
                 : `참여 ${N}명${leaderDate ? ` · 최다 후보 ${leaderDate}` : ''}`}
             </Text>
 
-            {/* Share row */}
+            {/* Share row — gated until there is something to vote on (D-07). */}
             <View className="flex-row mt-4" style={{ gap: 8 }}>
               <Pressable
                 onPress={onShareInvite}
+                disabled={!hasCandidates}
                 className="flex-1 items-center justify-center rounded-lg border border-neutral-200 py-2.5 active:bg-brand-50"
-                style={{ minHeight: 44 }}
+                style={{ minHeight: 44, opacity: hasCandidates ? 1 : 0.5 }}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: !hasCandidates }}
               >
                 <Text className="text-sm text-neutral-700">초대 링크 복사</Text>
               </Pressable>
               <Pressable
                 onPress={onShareCode}
+                disabled={!hasCandidates}
                 className="flex-1 items-center justify-center rounded-lg border border-neutral-200 py-2.5 active:bg-brand-50"
-                style={{ minHeight: 44 }}
+                style={{ minHeight: 44, opacity: hasCandidates ? 1 : 0.5 }}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: !hasCandidates }}
               >
                 <Text className="text-sm text-neutral-700">코드 공유</Text>
               </Pressable>
             </View>
+            {!hasCandidates && (
+              <Text className="text-xs text-neutral-400 mt-1.5 text-center">
+                {poll.mode === 'range'
+                  ? '후보 날짜를 2개 이상 추가하면 친구를 초대할 수 있어요'
+                  : '투표 기간을 정하면 친구를 초대할 수 있어요'}
+              </Text>
+            )}
 
             {/* Confirm */}
             <Pressable
@@ -588,6 +721,19 @@ export default function TripPlanScreen() {
             )}
           </BottomSheetView>
         </BottomSheet>
+
+        {/* Candidate-window picker (GAP-19A). range = a candidate range; grid = the
+            voting window. Reuses the create-flow DatePickerSheet. */}
+        <DatePickerSheet
+          visible={optionSheetOpen}
+          initialStart={null}
+          initialEnd={null}
+          onClose={() => setOptionSheetOpen(false)}
+          onConfirm={(s, e) => {
+            setOptionSheetOpen(false);
+            void onAddOption(s, e);
+          }}
+        />
       </SafeAreaView>
     );
   }
