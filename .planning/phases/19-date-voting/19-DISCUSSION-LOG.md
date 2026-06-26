@@ -104,3 +104,38 @@
 
 ## Deferred Ideas
 - 마감일 자동확정 · 3단 가능성 · 댓글 고도화(중첩/멘션/이미지) · 이메일 초대 발송 · poll 재오픈 · 장소+날짜 결합 투표.
+
+---
+
+## 후속 (UAT-driven, 2026-06-27) — 후보 날짜 입력 갭 + 실시간 충돌
+
+> 휴먼 UAT(웹 2-브라우저 라이브) 실행 중 발견된 2개 차단성 이슈에 대한 후속 결정.
+
+### 발견된 결함
+- **GAP-19A — 후보 날짜 입력 표면 부재:** D-07이 range="후보 범위 N개 제안", grid="윈도우(예: 한 달)"를 정했으나, 이를 입력하는 UI/쓰기 경로가 앱 어디에도 미구현. `create_dateless_trip_with_poll`은 옵션 0개 poll만 생성 → 초대받은 voter는 "투표할 날짜가 아직 없어요"(grid)/빈 목록(range)으로 투표 불가. POLL-02 end-to-end 동작 불가. (백엔드 무관 — 옵션 수동 주입 시 투표 정상.)
+- **GAP-19B — 같은 토픽 채널 충돌:** PollVoteIsland와 PollChat이 동일 토픽 `poll:{tripId}`로 같은 클라이언트에서 채널 2개 구독 → Realtime이 토픽당 한 바인딩에만 전달 → chat(comment)만 살고 island의 vote broadcast·presence가 죽음. raw supabase-js 최소 재현으로 확정. 유닛 264개는 채널 목킹이라 미포착(라이브 2-클라이언트에서만 노출).
+
+### 결정 (후보 날짜 입력)
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| plan 카드에서 입력 | D-05 관리 카드에 "후보 날짜 추가" 단계. create는 도시-only 유지(D-04) | ✓ |
+| create 플로우에서 입력 | dateless create의 숨긴 날짜 피커를 후보 입력으로 부활 | |
+| 둘 다 | 생성 시 기본 + 카드 편집 | |
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| 후보 있어야 공유 활성 | range ≥2 / grid 윈도우 ≥1 있어야 초대 공유 버튼 활성 (빈 poll 링크 차단) | ✓ |
+| 공유 항상 허용 | 후보 없어도 공유 | |
+
+**Notes (잠금):**
+- iOS 전용(후보 입력=호스트 관리 액션, web 금지 §5). web은 열람·투표만.
+- 입력 shape는 D-07 그대로: range=후보 범위 여러 개(각 `date_poll_options` 1행), grid=윈도우 1개(option 1행). 기존 `DatePickerSheet` 재사용.
+- 후보 날짜는 모드 토글(D-07 lock, `canChangeMode=N===0`)처럼 **첫 투표 후 잠금**.
+- 쓰기 경로: `date_poll_options_write` RLS(authenticated, can_edit_trip) 경유 — `setPollMode` 패턴 따라 `@moajoa/api` 타입드 래퍼 추가(새 마이그레이션 불필요).
+
+### 결정 (GAP-19B 수정)
+- 코드 주석이 이미 의도한 "단일 공개 채널 공유(chat reuses it)"대로, **chat이 island의 단일 채널을 재사용**하도록 수정(같은 토픽 2채널 → 1채널). 설계 변경 아님, 의도 복원.
+
+### iOS UAT(항목 1)
+- GAP-19A를 iOS에 구현한 뒤, Claude가 sim에서 onboarding→생성→카드(후보 추가→공유)→토글→확정까지 idb 구동 검증.
