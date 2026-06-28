@@ -139,3 +139,34 @@
 
 ### iOS UAT(항목 1)
 - GAP-19A를 iOS에 구현한 뒤, Claude가 sim에서 onboarding→생성→카드(후보 추가→공유)→토글→확정까지 idb 구동 검증.
+
+---
+
+## 후속 (UAT-driven, 2026-06-28) — presence 미동작(SDK 핀) + 마이그 이력 정합
+
+> phase 19 휴먼 UAT 잔여 2항목(presence 원격 검증, 0019 이력 정합) 처리 중 발견.
+
+### GAP-19D — presence("지금 N명 보는 중") 미동작: realtime-js 2.10.2 ↔ 현재 서버 비호환
+- **증상:** PollVoteIsland presence strip이 원격 realtime에서도 안 뜸. "로컬 미검증"이 아니라 실제 미동작 — 사람이 2-브라우저로 봤어도 양쪽 빈 화면.
+- **격리 증거(코드와 동일 SDK·키·서버로 직접 재현):**
+  - broadcast(투표 fan-out, GAP-19B 수정분)는 **정상** — 2-클라이언트 ping 송수신 OK. 채널 조인·publishable 키 인증 문제 없음.
+  - presence만 실패 — `track()`은 `"ok"`인데 `sync` 콜백 영영 안 뜸. raw 프레임: 서버는 `presence_diff` 정상 전송하나 **초기 `presence_state` 스냅샷 미전송**.
+  - realtime-js 2.10.2 소스: `presence_state`로 `joinRef` 세팅 전엔 모든 diff를 `pendingDiffs`에 큐잉하고 `onSync` 미호출 → state 안 오면 영영 잠김.
+  - 최신 realtime-js **2.108.2로 동일 테스트 → PASS**(두 클라 2명 수렴).
+- **근본 원인:** 핀된 `@supabase/supabase-js@^2.45.4`(→ realtime-js 2.10.2)가 현재 Realtime 서버 presence 프로토콜과 비호환. `poll-vote-island.tsx` 앱 코드 자체는 정상.
+- **현재 영향:** presence strip은 `viewers > 0` 게이트 → 깨진 UI 없이 조용히 no-op. 사용자 피해 0.
+
+### 결정 (presence)
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| 지금 보류 + supabase-js 업그레이드 별도 phase | no-op이라 무피해, 근본 fix는 전용 phase에서 회귀 테스트하며 | ✓ |
+| broadcast 하트비트로 재구현 | 의존성 안 건드림, poll-vote-island에 격리 | (업그레이드 후 버려질 single-use 코드라 비채택) |
+| supabase-js 즉시 업그레이드 | 근본 해결 | (web/iOS RN realtime/Edge + @supabase/ssr 0.5.1 회귀 위험 → dot 켜자고 급행 X) |
+
+**Notes (잠금):**
+- fix = `@supabase/supabase-js` 모노레포 전체 업그레이드(packages/api, apps/web, apps/ios). 검증 기준 = realtime-js가 presence 정상 버전(2.108.2 PASS 확인). 블라스트: iOS(RN) realtime 트랜스포트·`@supabase/ssr 0.5.1` 호환·DB types 재생성.
+- 별도 GSD phase로 큐잉(다음 마일스톤 후보). 그 전까지 presence strip은 무피해 no-op으로 둠.
+
+### 마이그레이션 이력 정합 (확인)
+- `supabase migration list` → `0019 | 0019` 원격 정합 확인. 노트 시점(0019 미기록) 이후 정렬 완료 → `migration repair` 불필요(멱등 no-op).
