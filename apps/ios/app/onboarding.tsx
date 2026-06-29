@@ -28,15 +28,20 @@ export default function Onboarding() {
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
       <ScrollView
         className="flex-1"
-        contentContainerClassName="px-6 pt-10 pb-12"
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+          paddingVertical: 48,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {/* Warm intro (welcome.tsx tone) — display headline + body. */}
         <Text className="text-4xl font-semibold leading-tight text-neutral-900">
-          링크 하나로{'\n'}여행이 시작돼요
+          귀찮은 여행 장소 추가{'\n'}이제 맡겨주세요✈️
         </Text>
         <Text className="mt-4 text-base leading-relaxed text-neutral-500">
-          유튜브 링크를 던지면 영상 속 장소가 지도에 모여요. 첫 여행을 만들어 볼까요?
+          유튜브 링크를 넣으면 영상 속 장소가 지도에 자동으로 추가돼요.
         </Text>
 
         {/* Branch heading */}
@@ -76,7 +81,7 @@ export default function Onboarding() {
           </View>
           <View className="flex-1 ml-3">
             <Text className="text-base font-semibold text-neutral-900">아직 미정이에요</Text>
-            <Text className="mt-0.5 text-sm text-neutral-500">날짜 투표로 함께 정해요</Text>
+            <Text className="mt-0.5 text-sm text-neutral-500">친구, 가족, 연인과 함께 투표로 정해요</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
         </Pressable>

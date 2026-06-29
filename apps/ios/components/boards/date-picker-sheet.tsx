@@ -27,13 +27,15 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 // Cells for a month grid: leading blanks (nulls) to align weekday 0=Sun, then days.
+// Always padded to 6 rows (42 cells) so the sheet height stays fixed when paging
+// between a 5-week and a 6-week month (only the days change, not the layout).
 function monthCells(year: number, month: number): (Date | null)[] {
   const lead = new Date(year, month, 1).getDay();
   const days = new Date(year, month + 1, 0).getDate();
   const cells: (Date | null)[] = [];
   for (let i = 0; i < lead; i++) cells.push(null);
   for (let d = 1; d <= days; d++) cells.push(new Date(year, month, d));
-  while (cells.length % 7 !== 0) cells.push(null);
+  while (cells.length < 42) cells.push(null);
   return cells;
 }
 

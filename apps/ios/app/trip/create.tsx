@@ -127,9 +127,29 @@ export default function NewTripScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="px-5 pt-2 pb-10"
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+          paddingVertical: 24,
+        }}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Intro copy (onboarding tone) — headline + body above the form fields.
+            Subtitle drops "날짜" in the dateless variant since the date card is
+            hidden (dates are decided later by the poll). */}
+        <Text className="text-4xl font-semibold leading-tight text-neutral-900">
+          어디로 떠나볼까요?
+        </Text>
+        <Text
+          className="mt-2 text-base leading-relaxed text-neutral-500"
+          style={{ marginBottom: 20 }}
+        >
+          {isDateless
+            ? '여행지만 정하면 바로 시작할 수 있어요.'
+            : '여행지와 날짜만 정하면 바로 시작할 수 있어요.'}
+        </Text>
+
         {/* 여행지 (required) */}
         <Pressable
           onPress={() => setCityOpen(true)}
@@ -191,13 +211,7 @@ export default function NewTripScreen() {
             종료 날짜도 골라주세요 (당일치기면 같은 날 한 번 더 탭)
           </Text>
         )}
-        {!needsEnd && <View className="mb-2" />}
-
-        {/* Representative caption (D-10, SETUP-02) — no input field. */}
-        <View className="flex-row items-center mb-6 ml-1">
-          <Ionicons name="person-circle-outline" size={16} color="#9CA3AF" />
-          <Text className="text-sm text-neutral-500 ml-1.5">만든 사람이 대표(결제자)예요</Text>
-        </View>
+        {!needsEnd && <View className="mb-6" />}
 
         {/* CTA — 여행 만들기 / 날짜 투표 시작하기 (dateless variant) */}
         <Pressable
