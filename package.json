@@ -31,7 +31,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@supabase/supabase-js": "2.45.4",
+      "@supabase/supabase-js": "2.110.0",
       "react": "19.2.3",
       "react-dom": "19.2.3"
     },
