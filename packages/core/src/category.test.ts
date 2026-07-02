@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { placeVibe, VIBE_META, type Vibe } from './category';
+import { placeVibe, VIBE_META, isBookableActivity, type Vibe } from './category';
 
 describe('placeVibe — exact vibe-key passthrough (6 canonical keys)', () => {
   const keys: Vibe[] = ['food', 'cafe', 'nature', 'culture', 'shopping', 'other'];
@@ -75,5 +75,35 @@ describe('VIBE_META — color hex per canonical vibe', () => {
     for (const k of keys) {
       expect(VIBE_META[k].color).toMatch(/^#[0-9A-Fa-f]{6}$/);
     }
+  });
+});
+
+describe('isBookableActivity — D-08 bookability boundary (Phase 20)', () => {
+  it('culture-family categories are bookable', () => {
+    for (const c of ['tourist_attraction', 'museum', 'temple']) {
+      expect(isBookableActivity(c)).toBe(true);
+    }
+  });
+
+  it('theme-park family is bookable (placeVibe says nature, D-08 overrides)', () => {
+    for (const c of ['amusement_park', 'theme_park', 'aquarium', 'zoo', 'water_park']) {
+      expect(isBookableActivity(c)).toBe(true);
+    }
+  });
+
+  it('food/cafe are NOT bookable', () => {
+    for (const c of ['ramen_restaurant', 'cafe', 'coffee_shop']) {
+      expect(isBookableActivity(c)).toBe(false);
+    }
+  });
+
+  it('shopping is NOT bookable', () => {
+    expect(isBookableActivity('clothing_store')).toBe(false);
+  });
+
+  it('null/undefined/empty are NOT bookable', () => {
+    expect(isBookableActivity(null)).toBe(false);
+    expect(isBookableActivity(undefined)).toBe(false);
+    expect(isBookableActivity('')).toBe(false);
   });
 });
