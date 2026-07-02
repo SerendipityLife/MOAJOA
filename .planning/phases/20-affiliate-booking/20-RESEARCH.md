@@ -518,16 +518,16 @@ CONTEXT가 명시 금지: 독립 wave/plan. lockfile 변경이 예약 코드 커
 | A6 | Agoda `textToSearch` + checkIn/checkOut 파라미터가 로그인 없이 검색결과를 프리필한다 | 검색 딥링크 표 | 숙소 카드가 빈 검색으로 착지 → Booking.com(ss 파라미터, 공식 문서 확인됨)으로 폴백 |
 | A7 | EAS/Vercel 빌드 환경 Node ≥22 (supabase-js 2.110.0 요건) | Standard Stack | 빌드 실패 시 2.109.0으로 핀 (Node20 마지막 지원) |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **KKday 동적 딥링크 템플릿 파라미터 (p 또는 promo_id / campaign_id)**
+1. **KKday 동적 딥링크 템플릿 파라미터 (p 또는 promo_id / campaign_id)** — RESOLVED: 20-05 Task 3 blocking human-action checkpoint (대시보드 복사, skip 시 tp.st 폴백)
    - What we know: 네트워크는 Involve Asia(invl.me), 목적지 `url=` 통과 구조 확인. 공개 문서에 프로그램 ID 없음.
    - What's unclear: tp.media/r 형식의 KKday p/campaign_id 값.
    - Recommendation: **plan의 사전 준비물(checkpoint)** — 사용자가 대시보드 Tools→Links에서 kkday.com 목적지로 딥링크 1개 생성·복사 (동시에 Klook·Airalo 템플릿도 복사해 A3/A5의 trs·promo_id 대조까지 한 번에, 총 5분). 획득 전까지 KKday 버튼은 tp.st 정적 링크 + `?sub_id=` 폴백 가능(목적지 타깃만 손해).
-2. **제휴 고지 위치 (D-16 planner 숙제)**
+2. **제휴 고지 위치 (D-16 planner 숙제)** — RESOLVED: D-16 — me.tsx 안내 페이지 + footerVisible 플래그 기본 OFF (20-07 Task 3)
    - What we know: Travelpayouts 약관은 "법적 요건 + 각 프로그램 약관을 만족하는 고지"를 파트너 책임으로 규정 [CITED: support.travelpayouts.com Terms]. **링크 인접 고지를 명시 강제하는 조항은 발견 못 함.** 한국 표시광고법(공정위 지침)상 대가성 링크는 소비자가 인지 가능한 고지가 필요하다는 일반 원칙 존재 [ASSUMED — 법률 자문 아님].
    - Recommendation: D-16대로 설정/안내 페이지 고지로 시작하되, 카드 하단에 극소 문구("예약 시 수수료를 받을 수 있어요") 1줄을 **옵션 플래그**로 준비해 두면 규정 이슈 판명 시 즉시 승격 가능. planner가 카드 컴포넌트에 optional footer slot만 넣으면 됨.
-3. **booking_clicks ↔ 체크리스트 항목 매핑 방식**
+3. **booking_clicks ↔ 체크리스트 항목 매핑 방식** — RESOLVED: 0021 nullable checklist_item_id FK + item-id 전달 채택 (20-02 Task 1 / 20-04 Task 2)
    - What we know: FK(checklist_item_id) 방식이 가장 명시적. 대안은 (trip,place,provider) 매칭.
    - Recommendation: FK 채택(위 0021 골자). 인라인 카드 탭 시점에 항목이 아직 없을 수 있음(체크리스트 미방문) → reconcile을 클릭 핸들러에서도 lazy 실행하거나 checklist_item_id를 nullable로 두고 사후 매칭 — planner 재량, nullable + 사후 매칭이 단순.
 
