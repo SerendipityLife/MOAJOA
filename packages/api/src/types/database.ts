@@ -9,8 +9,61 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      booking_checklist_items: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          place_id: string | null
+          source: string
+          status: string
+          title: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          place_id?: string | null
+          source?: string
+          status?: string
+          title: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          place_id?: string | null
+          source?: string
+          status?: string
+          title?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_checklist_items_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_checklist_items_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_clicks: {
         Row: {
+          checklist_item_id: string | null
+          click_token: string | null
           created_at: string
           id: string
           place_id: string | null
@@ -19,6 +72,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          checklist_item_id?: string | null
+          click_token?: string | null
           created_at?: string
           id?: string
           place_id?: string | null
@@ -27,6 +82,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          checklist_item_id?: string | null
+          click_token?: string | null
           created_at?: string
           id?: string
           place_id?: string | null
@@ -35,6 +92,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "booking_clicks_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "booking_checklist_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "booking_clicks_place_id_fkey"
             columns: ["place_id"]
