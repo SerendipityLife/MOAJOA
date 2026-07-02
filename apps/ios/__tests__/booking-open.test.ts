@@ -20,7 +20,13 @@ const mockExtra: Record<string, string | undefined> = {};
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
-  default: { expoConfig: { extra: mockExtra } },
+  default: {
+    // Lazy getter: the hoisted factory runs before `mockExtra` is initialized,
+    // so capture it at ACCESS time, not factory time.
+    get expoConfig() {
+      return { extra: mockExtra };
+    },
+  },
 }));
 
 jest.mock('expo-linking', () => ({

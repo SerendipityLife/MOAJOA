@@ -1,8 +1,4 @@
-import type {
-  AffiliateProviderType,
-  ChecklistItem,
-  ChecklistStatusType,
-} from '@moajoa/core';
+import type { ChecklistItem, ChecklistStatusType } from '@moajoa/core';
 import type { MoajoaSupabaseClient } from '../client';
 
 /**
@@ -31,7 +27,10 @@ export interface BookingClickInput {
   trip_id: string;
   place_id?: string | null;
   user_id: string;
-  provider: AffiliateProviderType;
+  /** Free-text provider tag mirroring the unconstrained booking_clicks.provider
+   * column: 'klook' | 'kkday' | 'airalo' | 'agoda_direct' | 'booking_direct' | …
+   * — non-affiliate direct-search clicks log too (D-05: '확인함' 전이에 필요). */
+  provider: string;
   click_token: string;
   checklist_item_id?: string | null;
 }

@@ -87,6 +87,16 @@ const config: ExpoConfig = {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     webUrl: process.env.EXPO_PUBLIC_WEB_URL ?? 'https://moajoa.app',
+    // Phase 20 — Travelpayouts affiliate attribution. marker/trs are account
+    // values but public-by-design (they ride on every outbound link), so
+    // EXPO_PUBLIC_* client exposure is allowed (CONTEXT). No defaults on
+    // purpose: undefined = unwired, and lib/booking.ts warns instead of
+    // opening an unattributed link (T-20-10 — never hardcode here).
+    tpMarker: process.env.EXPO_PUBLIC_TP_MARKER,
+    tpTrs: process.env.EXPO_PUBLIC_TP_TRS,
+    tpKkdayP: process.env.EXPO_PUBLIC_TP_KKDAY_P,
+    tpKkdayCampaignId: process.env.EXPO_PUBLIC_TP_KKDAY_CAMPAIGN_ID,
+    tpKkdayFallback: process.env.EXPO_PUBLIC_TP_KKDAY_FALLBACK,
     eas: {
       projectId: 'a186ba87-ad59-4f2f-a719-326e51eda3fd',
       // No manual `build.experimental.ios.appExtensions` here. expo-share-intent
