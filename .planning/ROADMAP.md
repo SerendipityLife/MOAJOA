@@ -125,13 +125,13 @@ Plans:
   3. 숙소·액티비티 비교 링크(1~2곳)가 제시된다 (실시간 가격비교 위젯은 범위 외)
   4. 예약 링크를 누르면 시스템 브라우저로 열려 제휴 쿠키가 보존되고, 클릭이 SubID로 기록된다
 
-**Plans**: 3/7 plans executed
+**Plans**: 4/7 plans executed
 Plans:
 
 - [x] 20-01-PLAN.md — supabase-js 2.45.4→2.110.0 + @supabase/ssr 0.12.0 (GAP-19D presence, 독립 wave 1 — 정당성 체크포인트 + 전체 회귀 게이트)
 - [x] 20-02-PLAN.md — 0021_booking.sql (booking_clicks 토큰·정책 + booking_checklist_items) + [BLOCKING] 라이브 적용·typegen·RLS 매트릭스 (Wave 2, pooler 체크포인트)
 - [x] 20-03-PLAN.md — @moajoa/core: buildAffiliateUrl 실규격(라이브 실측) + buildDirectSearchUrl + BOOKING_REGION_MAP + isBookableActivity + checklist 파생 순수함수 (Wave 2)
-- [ ] 20-04-PLAN.md — @moajoa/api bookings.ts (체크리스트 CRUD + reconcile + logBookingClick '확인함' 전이, TDD) (Wave 3)
+- [x] 20-04-PLAN.md — @moajoa/api bookings.ts (체크리스트 CRUD + reconcile + logBookingClick '확인함' 전이, TDD) (Wave 3)
 - [ ] 20-05-PLAN.md — iOS 기반: TP env 배선 + 클릭 핸들러(mint→open→log, 오픈-선행 계약) + CompareFrameCard + KKday 템플릿 체크포인트 (Wave 4)
 - [ ] 20-06-PLAN.md — plan 탭 '여행 준비' 클러스터 + 예약성 항목 비교 strip (Wave 5, ∥ 20-07)
 - [ ] 20-07-PLAN.md — book 탭 체크리스트 홈 + ChecklistRow + me 제휴 안내 (Wave 5, ∥ 20-06)
@@ -174,6 +174,6 @@ Plans:
 | 17. Trip Foundation & IA 재편 | 5/5 | Complete | 2026-06-21 |
 | 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
 | 19. Date Voting | 4/4 | UAT Pending |  |
-| 20. Affiliate Booking | 3/7 | In Progress|  |
+| 20. Affiliate Booking | 4/7 | In Progress|  |
 | 21. Travel Ledger | 0/~4 | Not started | - |
 | 22. Android Parity | 0/~2 | Not started | - |
