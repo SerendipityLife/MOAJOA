@@ -2,17 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-current_phase: 19
+current_phase: 20
+current_phase_name: Affiliate Booking (딥링크 제휴 예약
 status: executing
 stopped_at: Phase 20 planned (7 plans / 5 waves, checker passed after 1 fix pass)
-last_updated: "2026-07-02T16:22:01.836Z"
-last_activity: 2026-06-23
-last_activity_desc: "19-04 코드 완료 (web 비로그인 투표 island /poll/[code]: 닉네임 게이트 + 2모드 투표 + 라이브집계 + Presence + 채팅 + closed CTA; web 11 suites/65 green, typecheck 0, build PASS; 크로스브라우저 UAT 대기)"
+last_updated: "2026-07-02T16:47:45.023Z"
+last_activity: 2026-07-02
+last_activity_desc: Phase 20 execution started
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 21
-  completed_plans: 14
+  completed_plans: 15
   percent: 50
 ---
 
@@ -35,10 +36,10 @@ progress:
 
 ## Current Position
 
-Phase: 19
-Plan: 4 of 4 코드 완료 (전 플랜 코드+자동테스트 done; iOS 디바이스 UAT + web 크로스브라우저 UAT 대기)
-Status: executing (Phase 19 UAT 대기)
-Last activity: 2026-06-23 -- 19-04 코드 완료 (web 비로그인 투표 island /poll/[code]: 닉네임 게이트 + 2모드 투표 + 라이브집계 + Presence + 채팅 + closed CTA; web 11 suites/65 green, typecheck 0, build PASS; 크로스브라우저 UAT 대기)
+Phase: 20 (Affiliate Booking (딥링크 제휴 예약)) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-07-02 — Phase 20 execution started
 Next: `/gsd-verify-work`로 phase 19 UAT 라우팅 — 19-03 iOS 디바이스 UAT(온보딩→create→모드→관리→확정) + 19-04 web 크로스브라우저 e2e(2 브라우저 anon 투표·라이브 tally/presence/chat·closed 확정 CTA). 둘 다 user-approved 후 phase 19 ship.
 
 **19-04 코드 완료 (2026-06-23, ~7분, commits 3c48a98 + 14219c0 + e3edc38 + 76e3ed3 — Task 4 크로스브라우저 UAT 대기):** Phase 19 Wave 3 (∥ 19-03) — apps/web 비로그인 투표 island `/poll/[code]`. 파일트리 19-03(apps/ios)와 완전 disjoint, 동일 @moajoa/api anon RPC + pollChannelName 채널 위에 빌드. **Task 1 utils (3c48a98):** `device-token.ts` SSR-가드 `getDeviceToken`(localStorage UUID via `PollKeys.DeviceToken`, server서 '' 반환) + nickname store 헬퍼; `poll-cache.ts` `getCachedPoll`=public-trip-cache.ts 미러(`unstable_cache`, 콜백 **내부** `createClient<Database>` anon 클라, **정적 메타만** 캐시[id/trip_id/mode/status/options], cookies-free → 뮤터블 상태 캐시 금지 Pitfall 2), `POLL_REVALIDATE_TAG`. **Task 3 chat (14219c0):** `poll-chat.tsx` flat anon 스레드(D-11) — 본인 버블 brand-tinted 우/타인 neutral 좌, empty `첫 메시지를 남겨보세요 💬`; send=`postComment` anon RPC optimistic append + rollback toast `메시지를 보내지 못했어요…` + 공유 `poll:{tripId}` 채널 broadcast 팬아웃; 본인 삭제=`deleteComment` `이 메시지를 삭제할까요?` Dialog confirm 뒤; `status==='closed'`시 compose 숨김(read-only, post_poll_comment poll-open 게이트). **Task 2 island (e3edc38):** `poll-vote-island.tsx` `'use client'` — **닉네임 게이트(D-01)** 빈값 투표시 toast `닉네임을 입력해야 투표할 수 있어요.` + RPC 미호출; **2 binary 모드(D-07)** range 후보 카드 가능/불가(가능=`bg-brand-500`)·grid tap-per-cell 캘린더(옵션 윈도우 합집합 날짜셀, drag 보류 RESEARCH fallback); **optimistic castDateVote + rollback + toast**(vote-island onToggleVote 템플릿: 선택 flip + tally 델타 → RPC → vote broadcast | 롤백 + 에러 toast); **라이브 Doodle 집계** `getPollTally` **useEffect 하이드레이트**(캐시 props 금지 GOTCHA) — `{N}명 가능` + nickname chips + **최다** leader 배지/bar, peer vote broadcast시 refetch 화해; **Presence** `channel.track({nickname})` + `지금 N명 보는 중`(0 숨김/1 단수) + `removeChannel` cleanup; **closed(Screen 5)** 투표 UI → `확정: {range}` 결과 + `이 여행에 함께하기` 매직링크 CTA 스왑(chat read-only 유지). `__tests__/poll-vote-island.test.tsx` +3(닉네임 게이트 블록·optimistic 롤백·closed CTA). **Task 1 shell (76e3ed3):** `/poll/[code]/page.tsx` cookies-free SSR 셸 — `generateMetadata`+default가 `getCachedPoll` 정적 메타만 사용(**셸에 tally/vote fetch 0**, `getPollTally` grep 0), noindex bearer 페이지, 잘못된 코드→not-found 셸, `<PollVoteIsland>` 정적 props 마운트. **자동 증거: web 11 suites/65 tests GREEN**(기존 62→65, +3 island), **typecheck exit 0**, **`build` PASS**(라우트 테이블 `ƒ /poll/[code]` — cookies-free 캐시 SSR에 맞는 dynamic). 전 grep 게이트 PASS(getDeviceToken export·SSR 가드·unstable_cache·createClient<Database>·셸 getPollTally 0·<PollVoteIsland·castDateVote·닉네임 copy·pollChannelName·track·removeChannel·island getPollTally in useEffect·이 여행에 함께하기·지금 presence·postComment/deleteComment·첫 메시지·삭제 confirm·send-fail toast·status==='open' compose 게이트). **3 DEVIATION:** (1) **Rule 3 blocking** — plan의 co-located 테스트 경로(`app/poll/[code]/_components/*.test.tsx`)는 vitest `include`(`__tests__/**`)가 안 글롭 → `apps/web/__tests__/poll-vote-island.test.tsx`로 배치(vote-island.test.tsx 동일 컨벤션); (2) **Rule 1 bug** — closed 테스트 `getByText(/확정/)` 다중매치 → `getByRole('heading')`; (3) **Rule 1 bug** — 미사용 `rangeCountByOption` memo(TS6133) 제거(useMemo는 GridCalendar 잔존). **결정:** (a) **chat=라이브 broadcast-only(히스토리 fetch 없음)** — anon 댓글 read 경로 부재 확인(date_comments_read=authenticated만, anon comment-list RPC 없음 = Plan 01 설계). 스레드 empty 시작·라이브 comment broadcast + 본인 optimistic append로 채움(UI-SPEC 4d "Realtime append" + plan acceptance 일치; anon read RPC 추가=새 append-only 마이그레이션=architectural Rule 4 범위밖·미요청). (b) grid=tap-per-cell(drag 명시 optional). **핸드오프:** web anon 투표면 완성(코드+테스트+빌드). Phase 19 verify가 19-04 크로스브라우저 e2e(2 브라우저 anon 투표·라이브 tally/presence/chat·closed 확정 CTA)를 19-03 iOS 디바이스 UAT와 함께 라우팅. CTA는 `/login` 매직링크 연결(post-signup authed 핸드오프는 island 범위밖 D-03). **POLL-02/03 (web 측면) 충족 — 코드+자동테스트 done, 크로스브라우저 UAT 사용자측 대기.**
@@ -161,7 +162,7 @@ Plan: 1 of 1
 - **Next action:** Phase 5 Wave 5 — 05-06 (lib/onboarding.ts AsyncStorage wrapper + OnboardCard component + [id].tsx visibility wire — ONBOARD-02). After that, end-of-phase UAT batch covers all Phase 5 live verification.
 - **Phase 6: Dogfooding Gate** — ✓ TEMPLATES COMPLETE 2026-05-26 (5/5 plans, ~14분 total, 10 commits 1137306+8591d0f+ed9f644+6df9283+c08802a+145d099+b654978+5b3a609+e11400c+97e225a). 06-01 pre-dogfooding-checklist (D-01 6 그룹 A~F + D-02 sign-off, 105 lines) + manual-uat-phase3.md N2 SQL substitute (set_config + 42501 expected) + 7 Evidence: 라인. 06-02 sample-videos.md 12-row matrix (D-04) + samples.json (D-05 schema, JSON.parse 12 entries) + ground-truth/_template.json (confidence_label high/medium/low) + ground-truth/README.md (per-video procedure, D-06 매칭, quality bar). 06-03 daily-log-template.md (7 Day blocks + End-of-Week SQL Snapshot + 7일 Pass/Fail Summary, D-10/D-11/D-12/D-13) + incidents.md (4-label policy P0/P1/expected-v1-limit/noise) + scripts/dogfooding/{p90-duration,daily-aggregate,measure-accuracy}.sql 3종 (percentile_cont + hidden_at IS NULL + jsonb_agg FILTER) + scripts/dogfooding/README.md (setup/args/output destinations). 06-04 friend-share-checklist.md (Friend A/B 양식 × D-15 5체크 + device meta + locale + 피드백, 97 lines) + screenshots/README.md (D-16 layout + NN-step.png 명명 + locale labeling). 06-05 pass-evaluator.md (D-20 11 criteria + D-21 4 fail → next phase mapping + decision tree) + extraction-baseline-TEMPLATE.md (D-09 5-part: Meta/Per-video/Aggregate/Top5/v2 시드) + PASS-TEMPLATE.md (D-22 sign-off 13 필드 + Phase 1.5 unlock) + PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append (D-19, idempotent). 모든 5 plans `autonomous: true` — production code 수정 0건, documentation/SQL templates only. Phase 6 dogfooding 실행 (7일 본인 여행 + 12 영상 ground truth + 친구 2명 share + baseline measurement)은 user-side work — 본 5 plans는 그 양식과 SQL을 미리 준비하는 것이 scope.
 - **Next action:** Phase 6 dogfooding execution (user-side) — pre-dogfooding-checklist.md sign-off → 7일 daily-log + incidents append → Day 5~6 친구 share → Day 7+1 baseline 측정 + pass-evaluator 평가 → PASS.md (또는 FAIL-YYYY-MM-DD.md) 작성 → Phase 1.5 unlock (협업·투표).
-- **Progress:** [████████░░] 82%
+- **Progress:** [███████░░░] 71%
 
 ---
 
@@ -291,6 +292,7 @@ Plan: 1 of 1
 | Phase 17-trip-foundation-ia P01 | ~7 min | 3 tasks | 11 files |
 | Phase 18 P03 | 6min | 2 tasks | 6 files |
 | Phase 19 P01 | 6min | 2 tasks | 2 files |
+| Phase 20 P01 | 35m | 3 tasks | 5 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 
@@ -304,7 +306,7 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-02T16:22:01.806Z
+**Last session:** 2026-07-02T16:46:27.900Z
 **Stopped at:** Phase 20 planned (7 plans / 5 waves, checker passed after 1 fix pass)
 **Resume file:** .planning/phases/20-affiliate-booking/20-01-PLAN.md
 
@@ -361,3 +363,8 @@ Plan: 1 of 1
 ---
 
 *STATE initialized: 2026-05-25 by roadmapper*
+
+## Decisions
+
+- [Phase 20]: supabase-js 2.110.0 확정 (fallback 2.109.0 미사용 — 전 suite 무회귀)
+- [Phase 20]: 이 Windows 머신에서 pnpm install은 apps/ios 안에서 실행 (node-linker=hoisted flat layout 유지 — root 실행 시 ios jest 전멸)
