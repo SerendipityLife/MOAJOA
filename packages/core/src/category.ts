@@ -42,3 +42,16 @@ export const VIBE_META: Record<Vibe, { color: string; labelKo: string }> = {
   shopping: { color: '#8D6E63', labelKo: '쇼핑' },
   other: { color: '#2979FF', labelKo: '기타' },
 };
+
+// Phase 20 (D-08) — bookability boundary for activity checklist/compare cards.
+// culture-family places (attractions, museums, temples) are ticket-bookable; the theme-park
+// family lands in 'nature' via the 'park'/'zoo'/'aquarium' needles above but IS bookable,
+// so it gets an explicit needle list here. food/cafe/shopping stay structurally false.
+const BOOKABLE_EXTRA = ['amusement', 'theme_park', 'aquarium', 'zoo', 'water_park'];
+
+export function isBookableActivity(category: string | null | undefined): boolean {
+  if (!category) return false;
+  if (placeVibe(category) === 'culture') return true;
+  const c = category.toLowerCase();
+  return BOOKABLE_EXTRA.some((n) => c.includes(n));
+}
