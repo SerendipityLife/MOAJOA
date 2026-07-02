@@ -4,14 +4,14 @@ milestone: v2.0
 milestone_name: — 전면 개편
 current_phase: 19
 status: executing
-stopped_at: Phase 20 context gathered
-last_updated: "2026-07-02T14:03:56.491Z"
+stopped_at: Phase 20 planned (7 plans / 5 waves, checker passed after 1 fix pass)
+last_updated: "2026-07-02T16:22:01.836Z"
 last_activity: 2026-06-23
 last_activity_desc: "19-04 코드 완료 (web 비로그인 투표 island /poll/[code]: 닉네임 게이트 + 2모드 투표 + 라이브집계 + Presence + 채팅 + closed CTA; web 11 suites/65 green, typecheck 0, build PASS; 크로스브라우저 UAT 대기)"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 14
+  total_plans: 21
   completed_plans: 14
   percent: 50
 ---
@@ -304,9 +304,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-02T14:03:56.482Z
-**Stopped at:** Phase 20 context gathered
-**Resume file:** .planning/phases/20-affiliate-booking/20-CONTEXT.md
+**Last session:** 2026-07-02T16:22:01.806Z
+**Stopped at:** Phase 20 planned (7 plans / 5 waves, checker passed after 1 fix pass)
+**Resume file:** .planning/phases/20-affiliate-booking/20-01-PLAN.md
 
 다음 세션에서 이어할 때:
 
