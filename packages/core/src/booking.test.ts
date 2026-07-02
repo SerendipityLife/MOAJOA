@@ -211,10 +211,13 @@ describe('buildAffiliateUrl — Korean place name passes with EXACTLY one encodi
       { program: 'klook', marker: MARKER, dest },
       TOKEN,
     );
-    // the fully-assembled URL embeds the once-encoded destination…
+    // the destination layer carries the name encoded exactly once (a double-encoded query
+    // here is the Pitfall 7 breakage that lands %EC… garbage in the platform search box)…
+    expect(dest).toContain(encodeURIComponent('팀랩 플래닛'));
+    expect(dest).not.toContain(encodeURIComponent(encodeURIComponent('팀랩 플래닛')));
+    // …the assembled URL embeds the whole destination encoded once more (one encode per
+    // nesting layer — TP decodes the wrapper, the platform decodes the inner query)…
     expect(url).toContain(encodeURIComponent(dest));
-    // …never a double-encoded Korean fragment…
-    expect(url).not.toContain(encodeURIComponent(encodeURIComponent('팀랩 플래닛')));
     // …and one decode restores the destination whose inner query is the original name.
     const custom = new URL(url).searchParams.get('custom_url');
     expect(custom).toBe(dest);
