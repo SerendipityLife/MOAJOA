@@ -217,7 +217,7 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 ### Attribution & 수익 계약 (ATTR)
 
 - [x] **ATTR-01**: 모든 예약 딥링크가 trip(가능하면 place) 컨텍스트를 담은 SubID로 생성되어, 전환이 어느 여행/장소에서 났는지 식별된다 — 계약 락 완료 (17-02: buildAffiliateUrl 단일 헬퍼 + opaque c_<base62> ClickToken + BookingClickContext; 토큰 발행·리다이렉트 EF는 Phase 20)
-- [ ] **ATTR-02**: 예약 링크는 시스템 브라우저로 열려 제휴 쿠키가 보존된다 (인앱 WebView 격리 회피)
+- [x] **ATTR-02**: 예약 링크는 시스템 브라우저로 열려 제휴 쿠키가 보존된다 (인앱 WebView 격리 회피)
 
 ### Trip Setup & Date Voting (SETUP)
 
@@ -292,7 +292,7 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | BOOK-01 | Phase 20 | Complete |
 | BOOK-02 | Phase 20 | Complete |
 | BOOK-03 | Phase 20 | Complete |
-| ATTR-02 | Phase 20 | Pending |
+| ATTR-02 | Phase 20 | Complete |
 | LEDGER-01 | Phase 21 | Pending |
 | LEDGER-02 | Phase 21 | Pending |
 | LEDGER-03 | Phase 21 | Pending |
