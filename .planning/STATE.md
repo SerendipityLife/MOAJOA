@@ -2,15 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
+current_phase: 19
 status: executing
-last_updated: "2026-06-23T05:03:44.000Z"
-last_activity: 2026-06-23 -- 19-04 코드 완료 (web 비로그인 투표 island /poll/[code]: 닉네임 게이트 + range/grid 2모드 optimistic castDateVote + 라이브 Doodle 집계 + Presence + 채팅 + closed 확정 결과/함께하기 CTA; web 11 suites/65 green, typecheck 0, build PASS; 크로스브라우저 UAT 대기)
+stopped_at: Phase 20 context gathered
+last_updated: "2026-07-02T14:03:56.491Z"
+last_activity: 2026-06-23
+last_activity_desc: "19-04 코드 완료 (web 비로그인 투표 island /poll/[code]: 닉네임 게이트 + 2모드 투표 + 라이브집계 + Presence + 채팅 + closed CTA; web 11 suites/65 green, typecheck 0, build PASS; 크로스브라우저 UAT 대기)"
 progress:
-  total_phases: 7
+  total_phases: 6
   completed_phases: 3
-  total_plans: 17
-  completed_plans: 17
-  percent: 100
+  total_plans: 14
+  completed_plans: 14
+  percent: 50
 ---
 
 # STATE: MOAJOA v2.0
@@ -300,6 +303,10 @@ Plan: 1 of 1
 ---
 
 ## Session Continuity
+
+**Last session:** 2026-07-02T14:03:56.482Z
+**Stopped at:** Phase 20 context gathered
+**Resume file:** .planning/phases/20-affiliate-booking/20-CONTEXT.md
 
 다음 세션에서 이어할 때:
 
