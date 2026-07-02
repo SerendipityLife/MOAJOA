@@ -87,3 +87,7 @@ ds-bundle/
 .design-sync/node_modules
 apps/web/.ds-sync.generated.css
 apps/web/.ds-fonts/
+
+# 두폴더 (마이두 동기화 대상 — 커밋 금지)
+zx_DooFolder/
+zy_Coworker_*/
