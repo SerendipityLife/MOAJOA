@@ -6,14 +6,14 @@ current_phase: 20
 current_phase_name: Affiliate Booking (딥링크 제휴 예약
 status: executing
 stopped_at: Phase 20 planned (7 plans / 5 waves, checker passed after 1 fix pass)
-last_updated: "2026-07-02T16:47:45.023Z"
+last_updated: "2026-07-02T17:04:55.365Z"
 last_activity: 2026-07-02
 last_activity_desc: Phase 20 execution started
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 21
-  completed_plans: 15
+  completed_plans: 16
   percent: 50
 ---
 
@@ -37,7 +37,7 @@ progress:
 ## Current Position
 
 Phase: 20 (Affiliate Booking (딥링크 제휴 예약)) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-07-02 — Phase 20 execution started
 Next: `/gsd-verify-work`로 phase 19 UAT 라우팅 — 19-03 iOS 디바이스 UAT(온보딩→create→모드→관리→확정) + 19-04 web 크로스브라우저 e2e(2 브라우저 anon 투표·라이브 tally/presence/chat·closed 확정 CTA). 둘 다 user-approved 후 phase 19 ship.
@@ -162,7 +162,7 @@ Plan: 1 of 1
 - **Next action:** Phase 5 Wave 5 — 05-06 (lib/onboarding.ts AsyncStorage wrapper + OnboardCard component + [id].tsx visibility wire — ONBOARD-02). After that, end-of-phase UAT batch covers all Phase 5 live verification.
 - **Phase 6: Dogfooding Gate** — ✓ TEMPLATES COMPLETE 2026-05-26 (5/5 plans, ~14분 total, 10 commits 1137306+8591d0f+ed9f644+6df9283+c08802a+145d099+b654978+5b3a609+e11400c+97e225a). 06-01 pre-dogfooding-checklist (D-01 6 그룹 A~F + D-02 sign-off, 105 lines) + manual-uat-phase3.md N2 SQL substitute (set_config + 42501 expected) + 7 Evidence: 라인. 06-02 sample-videos.md 12-row matrix (D-04) + samples.json (D-05 schema, JSON.parse 12 entries) + ground-truth/_template.json (confidence_label high/medium/low) + ground-truth/README.md (per-video procedure, D-06 매칭, quality bar). 06-03 daily-log-template.md (7 Day blocks + End-of-Week SQL Snapshot + 7일 Pass/Fail Summary, D-10/D-11/D-12/D-13) + incidents.md (4-label policy P0/P1/expected-v1-limit/noise) + scripts/dogfooding/{p90-duration,daily-aggregate,measure-accuracy}.sql 3종 (percentile_cont + hidden_at IS NULL + jsonb_agg FILTER) + scripts/dogfooding/README.md (setup/args/output destinations). 06-04 friend-share-checklist.md (Friend A/B 양식 × D-15 5체크 + device meta + locale + 피드백, 97 lines) + screenshots/README.md (D-16 layout + NN-step.png 명명 + locale labeling). 06-05 pass-evaluator.md (D-20 11 criteria + D-21 4 fail → next phase mapping + decision tree) + extraction-baseline-TEMPLATE.md (D-09 5-part: Meta/Per-video/Aggregate/Top5/v2 시드) + PASS-TEMPLATE.md (D-22 sign-off 13 필드 + Phase 1.5 unlock) + PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append (D-19, idempotent). 모든 5 plans `autonomous: true` — production code 수정 0건, documentation/SQL templates only. Phase 6 dogfooding 실행 (7일 본인 여행 + 12 영상 ground truth + 친구 2명 share + baseline measurement)은 user-side work — 본 5 plans는 그 양식과 SQL을 미리 준비하는 것이 scope.
 - **Next action:** Phase 6 dogfooding execution (user-side) — pre-dogfooding-checklist.md sign-off → 7일 daily-log + incidents append → Day 5~6 친구 share → Day 7+1 baseline 측정 + pass-evaluator 평가 → PASS.md (또는 FAIL-YYYY-MM-DD.md) 작성 → Phase 1.5 unlock (협업·투표).
-- **Progress:** [███████░░░] 71%
+- **Progress:** [████████░░] 76%
 
 ---
 
@@ -293,6 +293,7 @@ Plan: 1 of 1
 | Phase 18 P03 | 6min | 2 tasks | 6 files |
 | Phase 19 P01 | 6min | 2 tasks | 2 files |
 | Phase 20 P01 | 35m | 3 tasks | 5 files |
+| Phase 20 P03 | 13m | 3 tasks | 9 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 
@@ -306,7 +307,7 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-02T16:46:27.900Z
+**Last session:** 2026-07-02T17:03:47.838Z
 **Stopped at:** Phase 20 planned (7 plans / 5 waves, checker passed after 1 fix pass)
 **Resume file:** .planning/phases/20-affiliate-booking/20-01-PLAN.md
 
@@ -368,3 +369,5 @@ Plan: 1 of 1
 
 - [Phase 20]: supabase-js 2.110.0 확정 (fallback 2.109.0 미사용 — 전 suite 무회귀)
 - [Phase 20]: 이 Windows 머신에서 pnpm install은 apps/ios 안에서 실행 (node-linker=hoisted flat layout 유지 — root 실행 시 ios jest 전멸)
+- [Phase 20]: 20-03: no-program travelpayouts call keeps 17-02 generic tp.media/r passthrough (legacy contract tests byte-identical)
+- [Phase 20]: 20-03: Pitfall 7 double-encoding assertion belongs at the dest layer — wrapper %25 is correct one-encode-per-layer nesting

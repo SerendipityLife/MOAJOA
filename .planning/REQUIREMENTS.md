@@ -187,6 +187,7 @@ Roadmap (2026-06-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | COLLAB-02 | Phase 10 | Code complete (backend+web island; 라이브 @ 10-03) |
 
 **Coverage:**
+
 - v1 requirements: 29 total → mapped to phases 1~6: 29 ✓
 - v1.1 requirements: 8 total → mapped to phases 8~10: 8 ✓
 - Unmapped: 0
@@ -236,9 +237,9 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 ### Booking (BOOK)
 
-- [ ] **BOOK-01**: 플랜의 숙소/액티비티/교통/유심 슬롯에 맥락형 인라인 예약 카드(딥링크)가 표시된다
-- [ ] **BOOK-02**: 통합 '예약 체크리스트'에서 대표가 필요한 예약을 한 곳에서 진행하고 완료/미완료 상태를 본다
-- [ ] **BOOK-03**: 숙소·액티비티 비교 링크(1~2곳)를 제시한다 (실시간 가격비교 위젯은 범위 외)
+- [x] **BOOK-01**: 플랜의 숙소/액티비티/교통/유심 슬롯에 맥락형 인라인 예약 카드(딥링크)가 표시된다
+- [x] **BOOK-02**: 통합 '예약 체크리스트'에서 대표가 필요한 예약을 한 곳에서 진행하고 완료/미완료 상태를 본다
+- [x] **BOOK-03**: 숙소·액티비티 비교 링크(1~2곳)를 제시한다 (실시간 가격비교 위젯은 범위 외)
 
 ### Ledger / 가계부 (LEDGER)
 
@@ -288,9 +289,9 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | POLL-01 | Phase 19 | Complete |
 | POLL-02 | Phase 19 | Complete |
 | POLL-03 | Phase 19 | Complete |
-| BOOK-01 | Phase 20 | Pending |
-| BOOK-02 | Phase 20 | Pending |
-| BOOK-03 | Phase 20 | Pending |
+| BOOK-01 | Phase 20 | Complete |
+| BOOK-02 | Phase 20 | Complete |
+| BOOK-03 | Phase 20 | Complete |
 | ATTR-02 | Phase 20 | Pending |
 | LEDGER-01 | Phase 21 | Pending |
 | LEDGER-02 | Phase 21 | Pending |
@@ -302,11 +303,13 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | AND-02 | Phase 22 | Pending |
 
 **Coverage:**
+
 - v2.0 requirements: 27 total → mapped to phases 17~22: 27 ✓
 - Unmapped: 0
 - Duplicate mappings: 0
 
 **Phase별 매핑 요약:**
+
 - Phase 17 (Trip Foundation & IA): NAV-01..04, ATTR-01, SETUP-01/02 — 7
 - Phase 18 (Auto Plan): PLAN-01..05 — 5
 - Phase 19 (Date Voting): POLL-01..03 — 3
