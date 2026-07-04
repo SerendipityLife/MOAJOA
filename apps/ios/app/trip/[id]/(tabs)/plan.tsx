@@ -69,11 +69,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
-import { openBooking, openDirectSearch } from '@/lib/booking';
+import { kkdayAvailable, openBooking, openDirectSearch } from '@/lib/booking';
 import { subscribePlanProgress, subscribePollChannel } from '@/lib/realtime';
 import { showToast } from '@/lib/toast';
 import { shareCurrentTrip } from '@/lib/share-board';
-import { CompareFrameCard } from '@/components/booking/compare-frame-card';
+import { CompareFrameCard, type CompareRow } from '@/components/booking/compare-frame-card';
 import { DaySection, type DayItem } from '@/components/plan/day-section';
 import { UnplacedPool } from '@/components/plan/unplaced-pool';
 import { TravelModeToggle } from '@/components/plan/travel-mode-toggle';
@@ -971,6 +971,54 @@ export default function TripPlanScreen() {
   const autoItemId = (kind: 'stay' | 'esim' | 'transport') =>
     checklist.find((c) => c.source === 'auto' && c.kind === kind)?.id;
 
+  // Phase 20 (D-07/D-08) — per-item 예약 비교 compact strip, injected into
+  // DaySection so its drag/reorder internals stay untouched. Bookable
+  // categories only — 맛집/카페 NEVER get a strip. No expanded state in the
+  // plan tab (the full labeled frame lives in the book tab, D-03).
+  const renderBookingStrip = (placeId: string) => {
+    if (!showBookingCluster) return null;
+    const place = placesById.get(placeId);
+    if (!place || !isBookableActivity(place.category)) return null;
+    const query = place.name_ko ?? place.name_local;
+    const itemId = checklist.find((c) => c.kind === 'activity' && c.place_id === placeId)?.id;
+    const stripCtx = { ...bookingCtx, placeId };
+    const rows: CompareRow[] = [
+      {
+        providerName: 'Klook',
+        labelKo: COMPARE_LABELS.klook,
+        onView: () =>
+          void openBooking({
+            program: 'klook',
+            destUrl: buildSearchDestUrl('klook', query),
+            ctx: stripCtx,
+            checklistItemId: itemId,
+            providerLabel: 'Klook',
+          }),
+      },
+    ];
+    // KKday env unwired → graceful hide (Klook-only strip, never a dead button).
+    if (kkdayAvailable()) {
+      rows.push({
+        providerName: 'KKday',
+        labelKo: COMPARE_LABELS.kkday,
+        onView: () =>
+          void openBooking({
+            program: 'kkday',
+            destUrl: buildSearchDestUrl('kkday', query),
+            ctx: stripCtx,
+            checklistItemId: itemId,
+            providerLabel: 'KKday',
+          }),
+      });
+    }
+    return (
+      // ml-11 clears the drag-handle column; mb-2.5 keeps the row rhythm (Screen 2).
+      <View className="ml-11 mb-2.5">
+        <CompareFrameCard variant="compact" rows={rows} />
+      </View>
+    );
+  };
+
   // Group placed items into ordered day buckets.
   const dayBuckets: DayItem[][] = Array.from({ length: days }, () => []);
   for (const it of [...plan.plan_items].sort((a, b) => a.sort_order - b.sort_order)) {
@@ -1094,6 +1142,7 @@ export default function TripPlanScreen() {
             onReorder={onReorder}
             onToggleAnchor={onToggleAnchor}
             onRemove={onRemove}
+            renderBookingStrip={renderBookingStrip}
           />
         ))}
 

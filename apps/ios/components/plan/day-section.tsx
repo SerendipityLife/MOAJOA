@@ -11,6 +11,7 @@
 // Placed↔pool is NOT drag — it is the explicit 제거 / 일정에 추가 affordance (D-13).
 import { Ionicons } from '@expo/vector-icons';
 import type { Place } from '@moajoa/core';
+import { Fragment, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -44,6 +45,10 @@ interface Props {
   onReorder: (itemId: string, toIndex: number) => void;
   onToggleAnchor: (itemId: string, next: boolean) => void;
   onRemove: (itemId: string) => void;
+  /** Phase 20 (D-08) — parent-injected booking strip slot, rendered right
+   * after each row. The parent owns the bookability gate + click handlers;
+   * this component stays booking-blind. */
+  renderBookingStrip?: (placeId: string) => ReactNode;
 }
 
 function DraggableRow({
@@ -117,6 +122,7 @@ export function DaySection({
   onReorder,
   onToggleAnchor,
   onRemove,
+  renderBookingStrip,
 }: Props) {
   return (
     <View className="mt-6">
@@ -125,16 +131,18 @@ export function DaySection({
         {dateLabel && <Text className="text-xs text-neutral-500 ml-2">{dateLabel}</Text>}
       </View>
       {items.map((item, index) => (
-        <DraggableRow
-          key={item.itemId}
-          item={item}
-          index={index}
-          count={items.length}
-          modeIcon={modeIcon}
-          onReorder={onReorder}
-          onToggleAnchor={onToggleAnchor}
-          onRemove={onRemove}
-        />
+        <Fragment key={item.itemId}>
+          <DraggableRow
+            item={item}
+            index={index}
+            count={items.length}
+            modeIcon={modeIcon}
+            onReorder={onReorder}
+            onToggleAnchor={onToggleAnchor}
+            onRemove={onRemove}
+          />
+          {renderBookingStrip?.(item.place.id)}
+        </Fragment>
       ))}
     </View>
   );
