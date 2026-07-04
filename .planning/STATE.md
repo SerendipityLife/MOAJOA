@@ -5,8 +5,8 @@ milestone_name: — 전면 개편
 current_phase: 20
 current_phase_name: Affiliate Booking (딥링크 제휴 예약
 status: verifying
-stopped_at: Completed 20-02-PLAN.md (0021 live-applied, RLS matrix 6/6 PASS)
-last_updated: "2026-07-04T20:17:08.551Z"
+stopped_at: Phase 20 executed 7/7 + verification passed (code) — 6 human UAT items pending
+last_updated: "2026-07-04T20:59:02.705Z"
 last_activity: 2026-07-02
 last_activity_desc: Phase 20 execution started
 progress:
@@ -312,9 +312,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-04T20:16:01.459Z
-**Stopped at:** Completed 20-02-PLAN.md (0021 live-applied, RLS matrix 6/6 PASS)
-**Resume file:** None
+**Last session:** 2026-07-04T20:59:02.688Z
+**Stopped at:** Phase 20 executed 7/7 + verification passed (code) — 6 human UAT items pending
+**Resume file:** .planning/phases/20-affiliate-booking/20-HUMAN-UAT.md
 
 다음 세션에서 이어할 때:
 
