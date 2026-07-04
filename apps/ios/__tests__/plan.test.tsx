@@ -38,6 +38,18 @@ jest.mock('@moajoa/api', () => ({
   getPollOptions: jest.fn(),
   addPollOption: jest.fn(),
   removePollOption: jest.fn(),
+  // Phase 20 booking checklist wrappers (plan-tab cluster wiring).
+  listChecklist: jest.fn(),
+  reconcileChecklist: jest.fn(),
+}));
+
+// Phase 20 — the click handlers open system Safari + read env; both are out of
+// scope for this render-contract test, so stub the whole lib. kkdayAvailable
+// true keeps the KKday mini button visible in the 예약 비교 strip cases.
+jest.mock('@/lib/booking', () => ({
+  openBooking: jest.fn(),
+  openDirectSearch: jest.fn(),
+  kkdayAvailable: jest.fn(() => true),
 }));
 
 // @expo/vector-icons ships untranspiled ESM not in the transform allowlist;
@@ -100,7 +112,13 @@ jest.mock('@/lib/realtime', () => ({
 jest.mock('@/components/boards/date-picker-sheet', () => ({
   DatePickerSheet: () => null,
 }));
-jest.mock('@/lib/supabase', () => ({ supabase: { removeChannel: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    removeChannel: jest.fn(),
+    // Phase 20: load() reads the auth user for click attribution (bookingCtx).
+    auth: { getUser: jest.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+  },
+}));
 jest.mock('@/lib/toast', () => ({ showToast: jest.fn() }));
 jest.mock('@/lib/share-board', () => ({ shareCurrentTrip: jest.fn() }));
 jest.mock('expo-router', () => ({
@@ -117,6 +135,8 @@ const getPlanByTrip = api.getPlanByTrip as jest.Mock;
 const getPollByTrip = api.getPollByTrip as jest.Mock;
 const getPollTally = api.getPollTally as jest.Mock;
 const getPollOptions = api.getPollOptions as jest.Mock;
+const listChecklist = api.listChecklist as jest.Mock;
+const reconcileChecklist = api.reconcileChecklist as jest.Mock;
 
 const TRIP = {
   id: 'trip-1',
@@ -145,6 +165,8 @@ beforeEach(() => {
   getPollByTrip.mockResolvedValue(null);
   getPollTally.mockResolvedValue({ mode: 'grid', status: 'open', tally: [] });
   getPollOptions.mockResolvedValue([]);
+  listChecklist.mockResolvedValue([]);
+  reconcileChecklist.mockResolvedValue(undefined);
 });
 
 test('State A: renders 아직 플랜이 없어요 when there are no places', async () => {
@@ -297,4 +319,101 @@ test('a closed poll does NOT render the management card (card unmounts after 확
   // Falls through to State A (no places) — the management card never shows.
   await waitFor(() => expect(getByText('아직 플랜이 없어요')).toBeTruthy());
   expect(queryByText('날짜 투표 진행 중')).toBeNull();
+});
+
+// --- Phase 20: 여행 준비 booking cluster + 예약 비교 strip (D-04/D-08/D-09) ----
+
+const TOKYO_TRIP = { ...TRIP, city_code: 'tokyo' };
+const SEOUL_TRIP = { ...TRIP, city_code: 'seoul' };
+
+// One-item draft plan placing `placeId` on Day 1 (State D shape).
+function draftPlanWith(placeId: string) {
+  return {
+    id: 'plan-1',
+    trip_id: 'trip-1',
+    status: 'draft',
+    travel_mode: 'transit',
+    collaborative: false,
+    plan_items: [
+      {
+        id: 'item-1',
+        plan_id: 'plan-1',
+        place_id: placeId,
+        day_index: 0,
+        sort_order: 0,
+        leg_travel_seconds: null,
+        is_anchor: false,
+      },
+    ],
+  };
+}
+
+test('dated + draft plan + tokyo renders the 여행 준비 cluster (stay card + esim + transport rows)', async () => {
+  getTrip.mockResolvedValue(TOKYO_TRIP);
+  listPlacesByTrip.mockResolvedValue([PLACE]);
+  getPlanByTrip.mockResolvedValue(draftPlanWith(PLACE.id));
+  const { getByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('여행 준비')).toBeTruthy());
+  expect(getByText('숙소 예약')).toBeTruthy();
+  expect(getByText('여행 유심')).toBeTruthy();
+  expect(getByText('JR 패스')).toBeTruthy();
+});
+
+test('uncovered city (seoul): cluster renders WITHOUT esim/transport rows — not disabled, absent (D-09)', async () => {
+  getTrip.mockResolvedValue(SEOUL_TRIP);
+  listPlacesByTrip.mockResolvedValue([PLACE]);
+  getPlanByTrip.mockResolvedValue(draftPlanWith(PLACE.id));
+  const { getByText, queryByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('여행 준비')).toBeTruthy());
+  expect(getByText('숙소 예약')).toBeTruthy();
+  expect(queryByText('여행 유심')).toBeNull();
+  expect(queryByText('JR 패스')).toBeNull();
+});
+
+test('no draft plan (State B): the 여행 준비 cluster does not render (D-04)', async () => {
+  getTrip.mockResolvedValue(TOKYO_TRIP);
+  listPlacesByTrip.mockResolvedValue([PLACE]);
+  getPlanByTrip.mockResolvedValue(null);
+  const { getByText, queryByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('장소가 모였어요')).toBeTruthy());
+  expect(queryByText('여행 준비')).toBeNull();
+});
+
+test('dateless + open poll: management card renders and the cluster stays off (mutual exclusion)', async () => {
+  getTrip.mockResolvedValue(DATELESS_TRIP);
+  getPollByTrip.mockResolvedValue({
+    id: 'poll-1',
+    poll_code: 'abcd1234',
+    mode: 'grid',
+    status: 'open',
+  });
+  const { getByText, queryByText } = render(<TripPlanScreen />);
+  await waitFor(() => expect(getByText('날짜 투표 진행 중')).toBeTruthy());
+  expect(queryByText('여행 준비')).toBeNull();
+  expect(queryByText('예약 비교')).toBeNull();
+});
+
+test('예약 비교 strip renders under bookable items only — never under 맛집 (D-08)', async () => {
+  const attraction = {
+    ...PLACE,
+    id: 'place-a',
+    name_ko: '센소지',
+    category: 'tourist_attraction',
+  };
+  getTrip.mockResolvedValue(TOKYO_TRIP);
+  listPlacesByTrip.mockResolvedValue([attraction]);
+  getPlanByTrip.mockResolvedValue(draftPlanWith(attraction.id));
+  const positive = render(<TripPlanScreen />);
+  await waitFor(() => expect(positive.getByText('예약 비교')).toBeTruthy());
+  expect(positive.getByText('Klook')).toBeTruthy();
+  expect(positive.getByText('KKday')).toBeTruthy();
+  positive.unmount();
+
+  const ramen = { ...PLACE, id: 'place-r', name_ko: '이치란', category: 'ramen_restaurant' };
+  listPlacesByTrip.mockResolvedValue([ramen]);
+  getPlanByTrip.mockResolvedValue(draftPlanWith(ramen.id));
+  const negative = render(<TripPlanScreen />);
+  // The cluster still shows (dated + plan) — only the strip must be absent.
+  await waitFor(() => expect(negative.getByText('여행 준비')).toBeTruthy());
+  expect(negative.queryByText('예약 비교')).toBeNull();
 });
