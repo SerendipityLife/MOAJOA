@@ -91,3 +91,6 @@ apps/web/.ds-fonts/
 # 두폴더 (마이두 동기화 대상 — 커밋 금지)
 zx_DooFolder/
 zy_Coworker_*/
+
+# GSD research cache (machine-local)
+.planning/research/.cache/
