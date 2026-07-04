@@ -22,10 +22,12 @@ import {
   getPollOptions,
   getPollTally,
   getTrip,
+  listChecklist,
   listPlacesByTrip,
   moveToDay,
   moveToPool,
   type PollOption,
+  reconcileChecklist,
   removePollOption,
   reorderPlanItem,
   setAnchor,
@@ -35,8 +37,16 @@ import {
   type PlanWithItems,
 } from '@moajoa/api';
 import {
+  BOOKING_REGION_MAP,
+  buildAiraloDestUrl,
+  buildSearchDestUrl,
+  type ChecklistItem,
+  CITY_KO_MAP,
+  COMPARE_LABELS,
   contiguousBlock,
   type DatePollModeType,
+  deriveChecklistAutos,
+  isBookableActivity,
   PLAN_STEP_KO,
   type Place,
   type PlanStepType,
@@ -59,9 +69,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
+import { openBooking, openDirectSearch } from '@/lib/booking';
 import { subscribePlanProgress, subscribePollChannel } from '@/lib/realtime';
 import { showToast } from '@/lib/toast';
 import { shareCurrentTrip } from '@/lib/share-board';
+import { CompareFrameCard } from '@/components/booking/compare-frame-card';
 import { DaySection, type DayItem } from '@/components/plan/day-section';
 import { UnplacedPool } from '@/components/plan/unplaced-pool';
 import { TravelModeToggle } from '@/components/plan/travel-mode-toggle';
@@ -98,6 +110,63 @@ function dayDateLabel(trip: Trip | null, dayIndex: number): string | null {
   const d = new Date(trip.start_date);
   d.setDate(d.getDate() + dayIndex);
   return d.toISOString().slice(0, 10);
+}
+
+// --- Booking cluster (Phase 20) ----------------------------------------------
+// Same opacity-light row shadow as plan-item-row.tsx (visual continuity).
+const ROW_SHADOW = {
+  shadowColor: '#1E293B',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.05,
+  shadowRadius: 4,
+  elevation: 1,
+} as const;
+
+/** Display names for BOOKING_REGION_MAP transport providers (copy stays in core). */
+const PROVIDER_NAME = { klook: 'Klook', kkday: 'KKday' } as const;
+
+/** 'YYYY-MM-DD' → 'MM.DD' (stay-card prefill caption, UI-SPEC Screen 1). */
+function mmdd(ymd: string): string {
+  return `${ymd.slice(5, 7)}.${ymd.slice(8, 10)}`;
+}
+
+/**
+ * Phase 20 (D-03/D-11) — mirror the core-derived auto checklist into the DB so
+ * a plan-tab [보기] tap carries a checklist item id and flips the SAME item the
+ * book tab shows (one dataset, two surfaces). Failure is supplementary-data
+ * quiet (console.warn): the cluster still renders, clicks still open — only
+ * the '확인함' linkage degrades until the next load.
+ */
+async function reconcileTripChecklist(
+  tripId: string,
+  trip: Trip | null,
+  places: Place[],
+  plan: PlanWithItems | null,
+  existing: ChecklistItem[],
+): Promise<ChecklistItem[]> {
+  // D-04 gate — dateless / no-draft trips keep every booking surface off.
+  if (!plan || !trip?.start_date) return existing;
+  const region = trip.city_code ? BOOKING_REGION_MAP[trip.city_code] : undefined;
+  const placedIds = new Set(plan.plan_items.map((it) => it.place_id));
+  const bookablePlaces = places
+    .filter((p) => placedIds.has(p.id) && isBookableActivity(p.category))
+    .map((p) => ({ placeId: p.id, title: p.name_ko ?? p.name_local }));
+  const diff = deriveChecklistAutos({
+    covered: {
+      esimSlug: region?.esimSlug ?? null,
+      transportLabel: region?.transport?.labelKo ?? null,
+    },
+    bookablePlaces,
+    existing,
+  });
+  if (diff.toInsert.length === 0 && diff.toDeleteIds.length === 0) return existing;
+  try {
+    await reconcileChecklist(supabase, tripId, diff);
+    return await listChecklist(supabase, tripId);
+  } catch (err) {
+    console.warn('[reconcileTripChecklist] failed:', err);
+    return existing;
+  }
 }
 
 // --- Date-poll (Phase 19) ----------------------------------------------------
@@ -156,6 +225,12 @@ export default function TripPlanScreen() {
   const [progressStep, setProgressStep] = useState<PlanStepType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Phase 20 (D-03): booking checklist rows — plan-tab clicks carry these ids
+  // so the book tab's '확인함' transition points at the SAME item. userId feeds
+  // the click-attribution context (booking_clicks WITH CHECK user_id=auth.uid()).
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
   // Date-poll (Phase 19): host-readable poll meta + live tally for the 날짜 투표
   // management card. Only loaded for a dateless trip (D-05 branch).
   const [poll, setPoll] = useState<PollMeta | null>(null);
@@ -170,14 +245,23 @@ export default function TripPlanScreen() {
   const load = useCallback(async () => {
     if (!id) return;
     try {
-      const [t, ps, pl] = await Promise.all([
+      const [t, ps, pl, cl, auth] = await Promise.all([
         getTrip(supabase, id),
         listPlacesByTrip(supabase, id),
         getPlanByTrip(supabase, id),
+        // Checklist is supplementary data (D-03): a failed read only degrades
+        // the '확인함' linkage — the plan render never blocks on it.
+        listChecklist(supabase, id).catch((err) => {
+          console.warn('[listChecklist] failed:', err);
+          return [] as ChecklistItem[];
+        }),
+        supabase.auth.getUser(),
       ]);
       setTrip(t);
       setPlaces(ps);
       setPlan(pl);
+      setUserId(auth.data.user?.id ?? null);
+      setChecklist(await reconcileTripChecklist(id, t, ps, pl, cl));
     } catch (err) {
       console.error(err);
     } finally {
@@ -867,6 +951,26 @@ export default function TripPlanScreen() {
   const days = dayCount(trip);
   const modeIcon = MODE_ICON[plan.travel_mode];
 
+  // Phase 20 (D-04) — booking cluster gate: draft plan + confirmed dates. The
+  // exact inverse of the 19-03 dateless management card gate (mutually
+  // exclusive: no state renders both).
+  const showBookingCluster = !!plan && !!trip?.start_date;
+  const region = trip?.city_code ? BOOKING_REGION_MAP[trip.city_code] : undefined;
+  // D-09: mapping null → the row simply doesn't exist (never disabled/준비중).
+  const esimSlug = region?.esimSlug ?? null;
+  const transport = region?.transport ?? null;
+  const cityKo = trip?.city_code ? CITY_KO_MAP[trip.city_code] : undefined;
+  const stayCity = cityKo ?? trip?.title ?? '';
+  const stayCheckIn = trip?.start_date ?? '';
+  const stayCheckOut = trip?.end_date ?? trip?.start_date ?? '';
+  const stayCaption =
+    trip?.start_date != null
+      ? `${cityKo ? `${cityKo} · ` : ''}${mmdd(trip.start_date)}–${mmdd(trip.end_date ?? trip.start_date)}`
+      : undefined;
+  const bookingCtx = { tripId: id ?? '', userId: userId ?? '' };
+  const autoItemId = (kind: 'stay' | 'esim' | 'transport') =>
+    checklist.find((c) => c.source === 'auto' && c.kind === kind)?.id;
+
   // Group placed items into ordered day buckets.
   const dayBuckets: DayItem[][] = Array.from({ length: days }, () => []);
   for (const it of [...plan.plan_items].sort((a, b) => a.sort_order - b.sort_order)) {
@@ -905,6 +1009,79 @@ export default function TripPlanScreen() {
         <View className="mt-4">
           <TravelModeToggle mode={plan.travel_mode} onChange={onChangeMode} />
         </View>
+
+        {/* Phase 20 (D-01/D-02) — booking prep cluster: exactly 1 big stay card
+            + ≤2 compact rows, once per trip, above the day list. Brand color
+            appears only on [보기] (광고판 금지). */}
+        {showBookingCluster && (
+          <View className="mt-6">
+            <Text className="text-sm font-semibold text-neutral-500 mb-2">여행 준비</Text>
+            <CompareFrameCard
+              variant="full"
+              icon="bed-outline"
+              title="숙소 예약"
+              caption={stayCaption}
+              rows={[
+                {
+                  providerName: 'Agoda',
+                  labelKo: COMPARE_LABELS.agoda,
+                  onView: () =>
+                    void openDirectSearch({
+                      provider: 'agoda',
+                      params: { city: stayCity, checkIn: stayCheckIn, checkOut: stayCheckOut },
+                      ctx: bookingCtx,
+                      checklistItemId: autoItemId('stay'),
+                    }),
+                },
+                {
+                  providerName: 'Booking.com',
+                  labelKo: COMPARE_LABELS.booking,
+                  onView: () =>
+                    void openDirectSearch({
+                      provider: 'booking',
+                      params: { city: stayCity, checkIn: stayCheckIn, checkOut: stayCheckOut },
+                      ctx: bookingCtx,
+                      checklistItemId: autoItemId('stay'),
+                    }),
+                },
+              ]}
+            />
+            {esimSlug !== null && (
+              <BookingRowCard
+                icon="cellular-outline"
+                title="여행 유심"
+                providerName="Airalo"
+                labelKo={COMPARE_LABELS.airalo}
+                onView={() =>
+                  void openBooking({
+                    program: 'airalo',
+                    destUrl: buildAiraloDestUrl(esimSlug),
+                    ctx: bookingCtx,
+                    checklistItemId: autoItemId('esim'),
+                    providerLabel: 'Airalo',
+                  })
+                }
+              />
+            )}
+            {transport !== null && (
+              <BookingRowCard
+                icon="train-outline"
+                title={transport.labelKo}
+                providerName={PROVIDER_NAME[transport.provider]}
+                labelKo={COMPARE_LABELS[transport.provider]}
+                onView={() =>
+                  void openBooking({
+                    program: transport.provider,
+                    destUrl: buildSearchDestUrl(transport.provider, transport.searchQuery),
+                    ctx: bookingCtx,
+                    checklistItemId: autoItemId('transport'),
+                    providerLabel: PROVIDER_NAME[transport.provider],
+                  })
+                }
+              />
+            )}
+          </View>
+        )}
 
         {/* Day sections */}
         {dayBuckets.map((items, di) => (
@@ -948,6 +1125,54 @@ export default function TripPlanScreen() {
         </Pressable>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/**
+ * Phase 20 (UI-SPEC Screen 1) — single-provider compact booking row (여행 유심 /
+ * 교통 패스). plan-item-row anatomy: neutral icon chip + title block + [보기]
+ * CTA (the only brand element, ≥44px hit via hitSlop). Rendered ONLY when the
+ * region mapping covers the affordance (D-09).
+ */
+function BookingRowCard({
+  icon,
+  title,
+  providerName,
+  labelKo,
+  onView,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  providerName: string;
+  labelKo: string;
+  onView: () => void;
+}) {
+  return (
+    <View
+      style={ROW_SHADOW}
+      className="bg-white rounded-2xl px-4 py-3 mt-2.5 flex-row items-center"
+    >
+      <View className="w-10 h-10 rounded-xl bg-neutral-100 items-center justify-center">
+        <Ionicons name={icon} size={18} color="#4B5563" />
+      </View>
+      <View className="flex-1 px-3">
+        <Text className="text-sm font-semibold text-neutral-900" numberOfLines={1}>
+          {title}
+        </Text>
+        <Text className="text-xs text-neutral-500 mt-0.5" numberOfLines={1}>
+          {providerName} ─ {labelKo}
+        </Text>
+      </View>
+      <Pressable
+        onPress={onView}
+        hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
+        className="bg-brand-50 rounded-full px-3 py-1.5 active:opacity-70"
+        accessibilityRole="button"
+        accessibilityLabel={`${providerName}에서 보기`}
+      >
+        <Text className="text-xs font-semibold text-brand-600">보기</Text>
+      </Pressable>
+    </View>
   );
 }
 
