@@ -39,7 +39,7 @@ Plans:
 - [x] **Phase 17: Trip Foundation & IA 재편** — 0016 마이그레이션 + core 식별자 계약 + Expo Router 여행 4탭 + 진입분기 + 일정 정해짐 경로 (비협상 기반) — 5/5 plans 완료 + verify 통과 (6/6 criteria, 7/7 reqs, 2026-06-21)
 - [x] **Phase 18: Auto Plan (사용자 트리거 AI 플랜)** — 추출로 장소를 모은 뒤 plan 탭 "플랜 만들기"로 AI 초안 생성(추출 직후 자동 아님). 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시 (completed 2026-06-22)
 - [ ] **Phase 19: Date Voting (일정 미정 분기)** — 날짜 투표 + 비로그인 초대 링크 + 집계→여행 일정 전환
-- [ ] **Phase 20: Affiliate Booking (딥링크 제휴 예약)** — 인라인 예약 카드 + 통합 체크리스트 + SubID 어트리뷰션 + 시스템 브라우저
+- [x] **Phase 20: Affiliate Booking (딥링크 제휴 예약)** — 인라인 예약 카드 + 통합 체크리스트 + SubID 어트리뷰션 + 시스템 브라우저 (completed 2026-07-04)
 - [ ] **Phase 21: Travel Ledger (메일 전달 가계부)** — 전용 전달주소 + AI 메일 파싱 + 통화·환율·결제시점 보존 + 수동 fallback
 - [ ] **Phase 22: Android Parity** — Android 빌드·실행·공유시트 + 핵심 4단계 동작 (대표/결제자 대응)
 
@@ -125,7 +125,7 @@ Plans:
   3. 숙소·액티비티 비교 링크(1~2곳)가 제시된다 (실시간 가격비교 위젯은 범위 외)
   4. 예약 링크를 누르면 시스템 브라우저로 열려 제휴 쿠키가 보존되고, 클릭이 SubID로 기록된다
 
-**Plans**: 6/7 plans executed
+**Plans**: 7/7 plans complete
 Plans:
 
 - [x] 20-01-PLAN.md — supabase-js 2.45.4→2.110.0 + @supabase/ssr 0.12.0 (GAP-19D presence, 독립 wave 1 — 정당성 체크포인트 + 전체 회귀 게이트)
@@ -134,7 +134,7 @@ Plans:
 - [x] 20-04-PLAN.md — @moajoa/api bookings.ts (체크리스트 CRUD + reconcile + logBookingClick '확인함' 전이, TDD) (Wave 3)
 - [x] 20-05-PLAN.md — iOS 기반: TP env 배선 + 클릭 핸들러(mint→open→log, 오픈-선행 계약) + CompareFrameCard + KKday 템플릿 체크포인트 (Wave 4)
 - [x] 20-06-PLAN.md — plan 탭 '여행 준비' 클러스터 + 예약성 항목 비교 strip (Wave 5, ∥ 20-07)
-- [ ] 20-07-PLAN.md — book 탭 체크리스트 홈 + ChecklistRow + me 제휴 안내 (Wave 5, ∥ 20-06)
+- [x] 20-07-PLAN.md — book 탭 체크리스트 홈 + ChecklistRow + me 제휴 안내 (Wave 5, ∥ 20-06)
 
 **UI hint**: yes
 
@@ -174,6 +174,6 @@ Plans:
 | 17. Trip Foundation & IA 재편 | 5/5 | Complete | 2026-06-21 |
 | 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
 | 19. Date Voting | 4/4 | UAT Pending |  |
-| 20. Affiliate Booking | 6/7 | In Progress|  |
+| 20. Affiliate Booking | 7/7 | Complete   | 2026-07-04 |
 | 21. Travel Ledger | 0/~4 | Not started | - |
 | 22. Android Parity | 0/~2 | Not started | - |

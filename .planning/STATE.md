@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: — 전면 개편
 current_phase: 20
 current_phase_name: Affiliate Booking (딥링크 제휴 예약
-status: executing
+status: verifying
 stopped_at: Completed 20-02-PLAN.md (0021 live-applied, RLS matrix 6/6 PASS)
-last_updated: "2026-07-04T20:00:33.393Z"
+last_updated: "2026-07-04T20:17:08.551Z"
 last_activity: 2026-07-02
 last_activity_desc: Phase 20 execution started
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 21
-  completed_plans: 20
-  percent: 50
+  completed_plans: 21
+  percent: 67
 ---
 
 # STATE: MOAJOA v2.0
@@ -38,7 +38,7 @@ progress:
 
 Phase: 20 (Affiliate Booking (딥링크 제휴 예약)) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-02 — Phase 20 execution started
 Next: `/gsd-verify-work`로 phase 19 UAT 라우팅 — 19-03 iOS 디바이스 UAT(온보딩→create→모드→관리→확정) + 19-04 web 크로스브라우저 e2e(2 브라우저 anon 투표·라이브 tally/presence/chat·closed 확정 CTA). 둘 다 user-approved 후 phase 19 ship.
 
@@ -162,7 +162,7 @@ Plan: 1 of 1
 - **Next action:** Phase 5 Wave 5 — 05-06 (lib/onboarding.ts AsyncStorage wrapper + OnboardCard component + [id].tsx visibility wire — ONBOARD-02). After that, end-of-phase UAT batch covers all Phase 5 live verification.
 - **Phase 6: Dogfooding Gate** — ✓ TEMPLATES COMPLETE 2026-05-26 (5/5 plans, ~14분 total, 10 commits 1137306+8591d0f+ed9f644+6df9283+c08802a+145d099+b654978+5b3a609+e11400c+97e225a). 06-01 pre-dogfooding-checklist (D-01 6 그룹 A~F + D-02 sign-off, 105 lines) + manual-uat-phase3.md N2 SQL substitute (set_config + 42501 expected) + 7 Evidence: 라인. 06-02 sample-videos.md 12-row matrix (D-04) + samples.json (D-05 schema, JSON.parse 12 entries) + ground-truth/_template.json (confidence_label high/medium/low) + ground-truth/README.md (per-video procedure, D-06 매칭, quality bar). 06-03 daily-log-template.md (7 Day blocks + End-of-Week SQL Snapshot + 7일 Pass/Fail Summary, D-10/D-11/D-12/D-13) + incidents.md (4-label policy P0/P1/expected-v1-limit/noise) + scripts/dogfooding/{p90-duration,daily-aggregate,measure-accuracy}.sql 3종 (percentile_cont + hidden_at IS NULL + jsonb_agg FILTER) + scripts/dogfooding/README.md (setup/args/output destinations). 06-04 friend-share-checklist.md (Friend A/B 양식 × D-15 5체크 + device meta + locale + 피드백, 97 lines) + screenshots/README.md (D-16 layout + NN-step.png 명명 + locale labeling). 06-05 pass-evaluator.md (D-20 11 criteria + D-21 4 fail → next phase mapping + decision tree) + extraction-baseline-TEMPLATE.md (D-09 5-part: Meta/Per-video/Aggregate/Top5/v2 시드) + PASS-TEMPLATE.md (D-22 sign-off 13 필드 + Phase 1.5 unlock) + PITFALLS.md §"Phase 6 — Dogfooding Gate" anchor append (D-19, idempotent). 모든 5 plans `autonomous: true` — production code 수정 0건, documentation/SQL templates only. Phase 6 dogfooding 실행 (7일 본인 여행 + 12 영상 ground truth + 친구 2명 share + baseline measurement)은 user-side work — 본 5 plans는 그 양식과 SQL을 미리 준비하는 것이 scope.
 - **Next action:** Phase 6 dogfooding execution (user-side) — pre-dogfooding-checklist.md sign-off → 7일 daily-log + incidents append → Day 5~6 친구 share → Day 7+1 baseline 측정 + pass-evaluator 평가 → PASS.md (또는 FAIL-YYYY-MM-DD.md) 작성 → Phase 1.5 unlock (협업·투표).
-- **Progress:** [██████████] 95%
+- **Progress:** [██████████] 100%
 
 ---
 
@@ -298,6 +298,7 @@ Plan: 1 of 1
 | Phase 20 P04 | ~4min | 2 tasks | 3 files |
 | Phase 20 P05 | ~15min | 3 tasks | 6 files |
 | Phase 20 P06 | 12min | 3 tasks | 3 files |
+| Phase 20 P07 | ~15min | 3 tasks | 5 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 
@@ -311,7 +312,7 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-04T19:59:39.272Z
+**Last session:** 2026-07-04T20:16:01.459Z
 **Stopped at:** Completed 20-02-PLAN.md (0021 live-applied, RLS matrix 6/6 PASS)
 **Resume file:** None
 
@@ -384,3 +385,6 @@ Plan: 1 of 1
 - [Phase ?]: 20-05: KKday 템플릿 실값 p=9074/campaign_id=633, trs=545555 공통 확보 (A5 Klook 4110 대조 성공, A3 trs 귀속 확인) — env 기입만 남음
 - [Phase ?]: 20-06: 유심/교통 행은 로컬 BookingRowCard 단일행 카드 (UI-SPEC Screen 1 single-provider row shape)
 - [Phase ?]: 20-06: userId는 load()의 auth.getUser 1회 확보 — 탭 핸들러 내 await 금지(D-14)
+- [Phase ?]: 20-07: kind 서브라인 라벨은 ChecklistRow 로컬 상수 (UI-SPEC 미잠금, provider 카피는 core만)
+- [Phase ?]: 20-07: 조용한 refetch 실패는 error 화면 미전환 — D-15 조용함을 에러 경로에도 적용, 초기/재시도 로드만 State F
+- [Phase ?]: 20-07: done 해제 착지는 listClickedChecklistItemIds 클릭 기록 원천 판정 (clicked/todo), 조회 실패는 ∅ soft-fail
