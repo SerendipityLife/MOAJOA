@@ -248,6 +248,15 @@ export default function MeScreen() {
             ]}
           />
 
+          {/* Phase 20 (D-16) — 제휴 고지 홈: 정적 neutral 섹션, 브랜드·링크 없음
+              (UI-SPEC Screen 5). 카드 footer 고지 플래그는 기본 OFF 유지. */}
+          <View className="bg-white rounded-3xl p-5 mb-4" style={cardShadow}>
+            <Text className="text-base font-semibold text-neutral-900">제휴 안내</Text>
+            <Text className="text-sm text-neutral-500 leading-relaxed mt-2">
+              MOAJOA는 일부 예약 링크에서 제휴 수수료를 받을 수 있어요. 결제 금액은 달라지지 않아요.
+            </Text>
+          </View>
+
           {/* Logout */}
           <Pressable
             onPress={() =>
