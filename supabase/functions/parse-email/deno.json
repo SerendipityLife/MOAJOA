@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "supabase-js": "jsr:@supabase/supabase-js@2",
+    "zod": "npm:zod@3",
+    "postal-mime": "npm:postal-mime@2"
+  },
+  "tasks": {
+    "test": "deno test --allow-net --allow-env --allow-read pipeline/*.test.ts"
+  }
+}
