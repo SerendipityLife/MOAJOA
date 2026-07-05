@@ -97,6 +97,11 @@ const config: ExpoConfig = {
     tpKkdayP: process.env.EXPO_PUBLIC_TP_KKDAY_P,
     tpKkdayCampaignId: process.env.EXPO_PUBLIC_TP_KKDAY_CAMPAIGN_ID,
     tpKkdayFallback: process.env.EXPO_PUBLIC_TP_KKDAY_FALLBACK,
+    // Phase 21 (LEDGER-01) — mail-forwarding address domain. No default on
+    // purpose: undefined = unwired until 21-04 Task 5 sets it, and the me-tab
+    // card renders a placeholder instead of `<token>@undefined` (T-21-18,
+    // never hardcode a domain — CLAUDE.md §4.7).
+    forwardingDomain: process.env.EXPO_PUBLIC_FORWARDING_DOMAIN,
     eas: {
       projectId: 'a186ba87-ad59-4f2f-a719-326e51eda3fd',
       // No manual `build.experimental.ios.appExtensions` here. expo-share-intent

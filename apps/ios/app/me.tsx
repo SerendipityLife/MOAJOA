@@ -8,13 +8,16 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Image, LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getOrCreateForwardingAddress } from '@moajoa/api';
 import {
   BirthdaySheet,
   GENDER_LABELS,
   GenderSheet,
   NicknameSheet,
 } from '@/components/me/profile-sheets';
+import { buildForwardingAddress, copyForwardingAddress } from '@/lib/forwarding-address';
 import { supabase } from '@/lib/supabase';
+import { showToast } from '@/lib/toast';
 import { toYMD } from '@/lib/trip-format';
 
 /**
@@ -107,6 +110,8 @@ export default function MeScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [editing, setEditing] = useState<'nickname' | 'gender' | 'birthday' | null>(null);
   const [expanded, setExpanded] = useState(false);
+  // LEDGER-01 — the user's mail-forwarding address (issued once, then displayed).
+  const [forwardingAddr, setForwardingAddr] = useState<string | null>(null);
 
   function toggleExpand() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -134,6 +139,26 @@ export default function MeScreen() {
       }
     });
   }, []);
+
+  // LEDGER-01 — issue (or fetch) the forwarding token once on mount, then build
+  // the display address. Domain is env-wired; unwired → buildForwardingAddress
+  // returns null → the card shows a "준비 중" placeholder (no broken address).
+  useEffect(() => {
+    getOrCreateForwardingAddress(supabase)
+      .then(({ token }) => setForwardingAddr(buildForwardingAddress(token)))
+      .catch((err) => console.warn('[getOrCreateForwardingAddress] failed:', err));
+  }, []);
+
+  async function copyAddress() {
+    if (!forwardingAddr) return;
+    try {
+      await copyForwardingAddress(forwardingAddr);
+      showToast('주소를 복사했어요', 'success');
+    } catch (err) {
+      console.warn('[copyForwardingAddress] failed:', err);
+      showToast('복사에 실패했어요', 'error');
+    }
+  }
 
   // Persist a profile patch and reflect it locally. Surfaces failures (RLS, network).
   async function patch(fields: Partial<Profile>) {
@@ -247,6 +272,44 @@ export default function MeScreen() {
               { icon: 'shield-checkmark-outline', label: '개인정보처리방침', onPress: soon },
             ]}
           />
+
+          {/* Phase 21 (LEDGER-01) — 내 예약 메일 주소 카드. 예약·결제 메일을 이
+              주소로 전달하면 가계부에 자동 정리. 도메인 미배선(env undefined) 시
+              placeholder. 복사 CTA = 이 phase 시작 CTA(brand accent reserved). */}
+          <View className="bg-white rounded-3xl p-5 mb-4" style={cardShadow}>
+            <Text className="text-base font-semibold text-neutral-900">내 예약 메일 주소</Text>
+            <Text className="text-sm text-neutral-500 leading-relaxed mt-2">
+              예약·결제 메일을 이 주소로 전달하면 가계부에 자동으로 정리돼요.
+            </Text>
+            <View className="bg-neutral-50 rounded-xl px-4 py-3 mt-3">
+              <Text selectable className="text-sm font-semibold text-neutral-900">
+                {forwardingAddr ?? '주소를 준비 중이에요'}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => void copyAddress()}
+              disabled={!forwardingAddr}
+              className={`flex-row items-center justify-center rounded-xl py-3 mt-3 ${
+                forwardingAddr ? 'bg-brand-50 active:opacity-70' : 'bg-neutral-100'
+              }`}
+              style={{ minHeight: 44 }}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !forwardingAddr }}
+            >
+              <Ionicons
+                name="copy-outline"
+                size={16}
+                color={forwardingAddr ? '#2979FF' : '#9CA3AF'}
+              />
+              <Text
+                className={`ml-2 text-sm font-semibold ${
+                  forwardingAddr ? 'text-brand-600' : 'text-neutral-400'
+                }`}
+              >
+                주소 복사
+              </Text>
+            </Pressable>
+          </View>
 
           {/* Phase 20 (D-16) — 제휴 고지 홈: 정적 neutral 섹션, 브랜드·링크 없음
               (UI-SPEC Screen 5). 카드 footer 고지 플래그는 기본 OFF 유지. */}
