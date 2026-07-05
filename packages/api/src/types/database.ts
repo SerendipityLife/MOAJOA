@@ -319,6 +319,98 @@ export type Database = {
           },
         ]
       }
+      forwarding_addresses: {
+        Row: {
+          created_at: string
+          id: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ledger_entries: {
+        Row: {
+          amount_foreign: number | null
+          amount_krw: number | null
+          card_last4: string | null
+          created_at: string
+          currency: string | null
+          fx_as_of: string | null
+          fx_rate: number | null
+          fx_source: string | null
+          id: string
+          merchant: string | null
+          owner_user_id: string
+          paid_at: string | null
+          platform: string | null
+          raw_expires_at: string | null
+          raw_mime: string | null
+          status: string
+          trip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_foreign?: number | null
+          amount_krw?: number | null
+          card_last4?: string | null
+          created_at?: string
+          currency?: string | null
+          fx_as_of?: string | null
+          fx_rate?: number | null
+          fx_source?: string | null
+          id?: string
+          merchant?: string | null
+          owner_user_id: string
+          paid_at?: string | null
+          platform?: string | null
+          raw_expires_at?: string | null
+          raw_mime?: string | null
+          status?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_foreign?: number | null
+          amount_krw?: number | null
+          card_last4?: string | null
+          created_at?: string
+          currency?: string | null
+          fx_as_of?: string | null
+          fx_rate?: number | null
+          fx_source?: string | null
+          id?: string
+          merchant?: string | null
+          owner_user_id?: string
+          paid_at?: string | null
+          platform?: string | null
+          raw_expires_at?: string | null
+          raw_mime?: string | null
+          status?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       links: {
         Row: {
           added_by: string
