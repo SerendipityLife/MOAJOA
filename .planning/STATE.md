@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-current_phase: 20
-current_phase_name: Affiliate Booking (딥링크 제휴 예약
-status: verifying
-stopped_at: Phase 20 executed 7/7 + verification passed (code) — 6 human UAT items pending
-last_updated: "2026-07-04T20:59:02.705Z"
-last_activity: 2026-07-02
-last_activity_desc: Phase 20 execution started
+current_phase: 21
+current_phase_name: Travel Ledger (메일 전달 가계부)
+status: discussed
+stopped_at: Phase 21 discussed — CONTEXT locked (4 user decisions); Phase 19 UAT 2건 + Phase 20 UAT 6건 human 대기 유지
+last_updated: "2026-07-05T03:14:10.000Z"
+last_activity: 2026-07-05
+last_activity_desc: Phase 21 discuss 완료 (메일 인프라 = Cloudflare Email Routing)
 progress:
   total_phases: 6
   completed_phases: 4
@@ -36,11 +36,15 @@ progress:
 
 ## Current Position
 
-Phase: 20 (Affiliate Booking (딥링크 제휴 예약)) — EXECUTING
-Plan: 7 of 7
-Status: Phase complete — ready for verification
-Last activity: 2026-07-02 — Phase 20 execution started
-Next: `/gsd-verify-work`로 phase 19 UAT 라우팅 — 19-03 iOS 디바이스 UAT(온보딩→create→모드→관리→확정) + 19-04 web 크로스브라우저 e2e(2 브라우저 anon 투표·라이브 tally/presence/chat·closed 확정 CTA). 둘 다 user-approved 후 phase 19 ship.
+Phase: 21 (Travel Ledger (메일 전달 가계부)) — DISCUSSED
+Plan: 0 of ~4 (planning 대기)
+Status: Context locked — ready for planning
+Last activity: 2026-07-05 — Phase 21 discuss 완료
+Next: `/gsd-plan-phase 21` (연구 플래그: 메일 전달 포맷 + CF Email Routing catch-all/서브도메인 범위 실측 + 환율 API 선택). ⚠️ 외부 준비물(사용자 측, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화. 병행 대기: Phase 19 UAT 2건(19-HUMAN-UAT.md) + Phase 20 UAT 6건(20-HUMAN-UAT.md) → `/gsd-verify-work` sign-off 후 19·20 동시 ship.
+
+**Phase 21 discuss 완료 (2026-07-05):** 회색지대 4개 사용자 결정 — (1) **메일 인프라 = Cloudflare Email Routing + Email Worker**(무료·DNS 이전 = 사용자 측 외부 준비물; Worker가 raw MIME을 `inbound-email` EF로 POST, 공유 시크릿 + `verify_jwt=false`; 리서치 STACK안 채택, SendGrid/Mailgun 기각 — catch-all→To 토큰 패턴 동일해 스왑 비용 낮음) (2) **가계부 = trip 멤버 공유 열람**(수정·삭제·확정은 전달한 본인만, can_read_trip 헬퍼 재사용; 미분류 행은 본인-only) (3) **trip 매칭 = AI 추정 + 미분류 인박스**(확신 시만 자동 배정, 애매하면 trip_id NULL → 가계부 탭 1탭 배정, LEDGER-06 수정 UX와 단일 흐름) (4) **환율 = 메일 명시값 우선(fx_source='email') + 결제일 기준 무료 API fallback**(API 선택 plan 실측). 리서치 선잠금 유지: To 토큰 식별(From 안티피처)·SPF/DKIM 게이트·환율 5요소 원자 저장·claude-sonnet-4-6 + extract-youtube 파이프라인 미러·본문 최소저장/TTL·영수증 사진 안티피처. 마이그레이션은 0022부터. 산출물: `.planning/phases/21-travel-ledger/21-CONTEXT.md` + `21-DISCUSSION-LOG.md`.
+
+이전 Next(phase 19·20 UAT, 보존): `/gsd-verify-work`로 phase 19 UAT 라우팅 — 19-03 iOS 디바이스 UAT(온보딩→create→모드→관리→확정) + 19-04 web 크로스브라우저 e2e(2 브라우저 anon 투표·라이브 tally/presence/chat·closed 확정 CTA). 둘 다 user-approved 후 phase 19 ship.
 
 **19-04 코드 완료 (2026-06-23, ~7분, commits 3c48a98 + 14219c0 + e3edc38 + 76e3ed3 — Task 4 크로스브라우저 UAT 대기):** Phase 19 Wave 3 (∥ 19-03) — apps/web 비로그인 투표 island `/poll/[code]`. 파일트리 19-03(apps/ios)와 완전 disjoint, 동일 @moajoa/api anon RPC + pollChannelName 채널 위에 빌드. **Task 1 utils (3c48a98):** `device-token.ts` SSR-가드 `getDeviceToken`(localStorage UUID via `PollKeys.DeviceToken`, server서 '' 반환) + nickname store 헬퍼; `poll-cache.ts` `getCachedPoll`=public-trip-cache.ts 미러(`unstable_cache`, 콜백 **내부** `createClient<Database>` anon 클라, **정적 메타만** 캐시[id/trip_id/mode/status/options], cookies-free → 뮤터블 상태 캐시 금지 Pitfall 2), `POLL_REVALIDATE_TAG`. **Task 3 chat (14219c0):** `poll-chat.tsx` flat anon 스레드(D-11) — 본인 버블 brand-tinted 우/타인 neutral 좌, empty `첫 메시지를 남겨보세요 💬`; send=`postComment` anon RPC optimistic append + rollback toast `메시지를 보내지 못했어요…` + 공유 `poll:{tripId}` 채널 broadcast 팬아웃; 본인 삭제=`deleteComment` `이 메시지를 삭제할까요?` Dialog confirm 뒤; `status==='closed'`시 compose 숨김(read-only, post_poll_comment poll-open 게이트). **Task 2 island (e3edc38):** `poll-vote-island.tsx` `'use client'` — **닉네임 게이트(D-01)** 빈값 투표시 toast `닉네임을 입력해야 투표할 수 있어요.` + RPC 미호출; **2 binary 모드(D-07)** range 후보 카드 가능/불가(가능=`bg-brand-500`)·grid tap-per-cell 캘린더(옵션 윈도우 합집합 날짜셀, drag 보류 RESEARCH fallback); **optimistic castDateVote + rollback + toast**(vote-island onToggleVote 템플릿: 선택 flip + tally 델타 → RPC → vote broadcast | 롤백 + 에러 toast); **라이브 Doodle 집계** `getPollTally` **useEffect 하이드레이트**(캐시 props 금지 GOTCHA) — `{N}명 가능` + nickname chips + **최다** leader 배지/bar, peer vote broadcast시 refetch 화해; **Presence** `channel.track({nickname})` + `지금 N명 보는 중`(0 숨김/1 단수) + `removeChannel` cleanup; **closed(Screen 5)** 투표 UI → `확정: {range}` 결과 + `이 여행에 함께하기` 매직링크 CTA 스왑(chat read-only 유지). `__tests__/poll-vote-island.test.tsx` +3(닉네임 게이트 블록·optimistic 롤백·closed CTA). **Task 1 shell (76e3ed3):** `/poll/[code]/page.tsx` cookies-free SSR 셸 — `generateMetadata`+default가 `getCachedPoll` 정적 메타만 사용(**셸에 tally/vote fetch 0**, `getPollTally` grep 0), noindex bearer 페이지, 잘못된 코드→not-found 셸, `<PollVoteIsland>` 정적 props 마운트. **자동 증거: web 11 suites/65 tests GREEN**(기존 62→65, +3 island), **typecheck exit 0**, **`build` PASS**(라우트 테이블 `ƒ /poll/[code]` — cookies-free 캐시 SSR에 맞는 dynamic). 전 grep 게이트 PASS(getDeviceToken export·SSR 가드·unstable_cache·createClient<Database>·셸 getPollTally 0·<PollVoteIsland·castDateVote·닉네임 copy·pollChannelName·track·removeChannel·island getPollTally in useEffect·이 여행에 함께하기·지금 presence·postComment/deleteComment·첫 메시지·삭제 confirm·send-fail toast·status==='open' compose 게이트). **3 DEVIATION:** (1) **Rule 3 blocking** — plan의 co-located 테스트 경로(`app/poll/[code]/_components/*.test.tsx`)는 vitest `include`(`__tests__/**`)가 안 글롭 → `apps/web/__tests__/poll-vote-island.test.tsx`로 배치(vote-island.test.tsx 동일 컨벤션); (2) **Rule 1 bug** — closed 테스트 `getByText(/확정/)` 다중매치 → `getByRole('heading')`; (3) **Rule 1 bug** — 미사용 `rangeCountByOption` memo(TS6133) 제거(useMemo는 GridCalendar 잔존). **결정:** (a) **chat=라이브 broadcast-only(히스토리 fetch 없음)** — anon 댓글 read 경로 부재 확인(date_comments_read=authenticated만, anon comment-list RPC 없음 = Plan 01 설계). 스레드 empty 시작·라이브 comment broadcast + 본인 optimistic append로 채움(UI-SPEC 4d "Realtime append" + plan acceptance 일치; anon read RPC 추가=새 append-only 마이그레이션=architectural Rule 4 범위밖·미요청). (b) grid=tap-per-cell(drag 명시 optional). **핸드오프:** web anon 투표면 완성(코드+테스트+빌드). Phase 19 verify가 19-04 크로스브라우저 e2e(2 브라우저 anon 투표·라이브 tally/presence/chat·closed 확정 CTA)를 19-03 iOS 디바이스 UAT와 함께 라우팅. CTA는 `/login` 매직링크 연결(post-signup authed 핸드오프는 island 범위밖 D-03). **POLL-02/03 (web 측면) 충족 — 코드+자동테스트 done, 크로스브라우저 UAT 사용자측 대기.**
 
