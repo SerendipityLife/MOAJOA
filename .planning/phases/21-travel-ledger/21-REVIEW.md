@@ -20,7 +20,7 @@ files_reviewed_list:
   - apps/ios/app/me.tsx
   - apps/ios/lib/forwarding-address.ts
 findings:
-  critical: 1
+  critical: 0
   warning: 4
   info: 5
   total: 10
@@ -60,6 +60,8 @@ re-derives KRW instead of trusting the stored billed amount (undermining the
 ## Critical Issues
 
 ### CR-01: Ledger UPDATE RLS allows cross-trip expense injection (authorization gap)
+
+**Status:** ✅ RESOLVED — `supabase/migrations/0023_ledger_update_check.sql` (append-only) drops+recreates the `ledger_entries: update own` policy with a tightened `WITH CHECK` (`owner_user_id = auth.uid() and (trip_id is null or can_read_trip(trip_id))`), so an owner can no longer assign their row to a trip they cannot read. RLS matrix: CR-01a (out-of-trip assign) DENIED, CR-01b (member-trip assign) allowed, CR-01c/d owner-gate + share regressions PASS. `can_read_trip` is the 0016 SECURITY DEFINER helper (42P17 guard holds). Commit `a0d4a0a`.
 
 **File:** `supabase/migrations/0022_ledger.sql:129-132` (+ `packages/api/src/queries/ledger.ts:63-77`)
 
