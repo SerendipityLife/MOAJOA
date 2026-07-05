@@ -48,9 +48,11 @@ interface Props {
   entry: LedgerEntry;
   /** Fires only when the row is actionable (unassigned / needs_review). */
   onPress: () => void;
+  /** Long-press affordance — delete on a confirmed (ready) row (iOS idiom). */
+  onLongPress?: () => void;
 }
 
-export function LedgerRow({ entry, onPress }: Props) {
+export function LedgerRow({ entry, onPress, onLongPress }: Props) {
   const isUnassigned = entry.trip_id === null;
   const isNeedsReview = entry.status === 'needs_review';
   const actionable = isUnassigned || isNeedsReview;
@@ -74,7 +76,8 @@ export function LedgerRow({ entry, onPress }: Props) {
   return (
     <Pressable
       onPress={actionable ? onPress : undefined}
-      disabled={!actionable}
+      onLongPress={onLongPress}
+      disabled={!actionable && !onLongPress}
       style={ROW_SHADOW}
       className="bg-white rounded-2xl mb-2.5 px-3 py-3 flex-row items-center"
       accessibilityRole={actionable ? 'button' : undefined}
