@@ -40,7 +40,7 @@ Plans:
 - [x] **Phase 18: Auto Plan (사용자 트리거 AI 플랜)** — 추출로 장소를 모은 뒤 plan 탭 "플랜 만들기"로 AI 초안 생성(추출 직후 자동 아님). 동선·이동시간(Routes 그라운딩)·드래그 재배치·"초안" 명시 (completed 2026-06-22)
 - [ ] **Phase 19: Date Voting (일정 미정 분기)** — 날짜 투표 + 비로그인 초대 링크 + 집계→여행 일정 전환
 - [x] **Phase 20: Affiliate Booking (딥링크 제휴 예약)** — 인라인 예약 카드 + 통합 체크리스트 + SubID 어트리뷰션 + 시스템 브라우저 (completed 2026-07-04)
-- [ ] **Phase 21: Travel Ledger (메일 전달 가계부)** — 전용 전달주소 + AI 메일 파싱 + 통화·환율·결제시점 보존 + 수동 fallback
+- [x] **Phase 21: Travel Ledger (메일 전달 가계부)** — 전용 전달주소 + AI 메일 파싱 + 통화·환율·결제시점 보존 + 수동 fallback (completed 2026-07-05)
 - [ ] **Phase 22: Android Parity** — Android 빌드·실행·공유시트 + 핵심 4단계 동작 (대표/결제자 대응)
 
 ### Phase Details
@@ -158,7 +158,7 @@ Plans:
 - [x] 21-02-PLAN.md — @moajoa/core `schemas/ledger.ts` (LedgerEntrySchema + LedgerParseOutputSchema[LLM 계약] + deriveAmountKrw/needsReview 순수함수) (Wave 2, ∥ 21-03)
 - [x] 21-03-PLAN.md — @moajoa/api `ledger.ts`/`forwarding.ts` (list/assign/update/delete + getOrCreateForwardingAddress, house 계약, TDD) (Wave 2, ∥ 21-02)
 - [~] 21-04-PLAN.md — CF Email Worker(얇은 raw→EF) + `inbound-email` EF(시크릿+To토큰 게이트+저장+fire-forget) + `parse-email` EF(postal-mime + claude 재활용 + Frankfurter 환율 fallback + trip 매칭) + config.toml verify_jwt=false (Wave 3, autonomous:false) — 🟡 CODE-COMPLETE 2026-07-05 (Task 1–4 done, deno test 21 green·양 EF check clean; commits a07f118·ef91f2b·17e8054·519b1b1). **Task 5 PENDING**(human-action): CF 인프라 배포·DNS 이전·INGEST_SECRET
-- [ ] 21-05-PLAN.md — ledger.tsx(book 상태머신 미러 + 미분류/needs_review 1탭 흐름) + LedgerRow(환율 출처 3색) + LedgerEntrySheet + me.tsx 전달주소 카드 + expo-clipboard 복사 (Wave 4)
+- [~] 21-05-PLAN.md — ledger.tsx(book 상태머신 미러 + 미분류/needs_review 1탭 흐름) + LedgerRow(환율 출처 3색) + LedgerEntrySheet + me.tsx 전달주소 카드 + expo-clipboard 복사 (Wave 4) — 🟡 CODE-COMPLETE 2026-07-05 (Task 1–4 done, jest 127 green·typecheck 0; commits 8924ce0·efc0e72·4284941·e34aa40). **Task 5 PENDING**(human-verify): 디바이스 + 실메일 UAT, 21-04 Task 5 CF 배포 전제 → phase-verify 이관
 
 **메일 인프라 결정** (discuss 2026-07-05): Cloudflare Email Routing + Email Worker (SendGrid/Mailgun 기각). SPF/DKIM은 CF 수신 거부(2025-07-03~)에 위임, To 토큰 매칭 + 미매칭 drop. 환율 = 메일 명시값 우선 + Frankfurter(무료·키없음·historical) fallback. trip = AI 매칭 + 미분류 인박스. 가계부 = 멤버 공유 열람.
 **⚠️ 외부 준비물** (사용자, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화 + Worker 배포.
@@ -174,7 +174,9 @@ Plans:
   1. Android 실기기에서 앱이 빌드·실행되고 핵심 흐름(여행·플랜·예약·가계부)이 동작한다
   2. Android 공유시트(ACTION_SEND)로 링크를 MOAJOA에 보낼 수 있다
 
-**Plans**: 3/5 plans executed
+**Plans**: 5/5 plans complete
+
+- [x] 21-04-PLAN.md
 
 ### Progress
 
@@ -184,5 +186,5 @@ Plans:
 | 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
 | 19. Date Voting | 4/4 | UAT Pending |  |
 | 20. Affiliate Booking | 7/7 | Complete   | 2026-07-04 |
-| 21. Travel Ledger | 3/5 (+21-04 code) | In Progress|  |
+| 21. Travel Ledger | 5/5 | Complete   | 2026-07-05 |
 | 22. Android Parity | 0/~2 | Not started | - |

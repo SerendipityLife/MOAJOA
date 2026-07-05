@@ -243,12 +243,12 @@ Phase 6 완료 조건 (Karpathy goal-driven execution):
 
 ### Ledger / 가계부 (LEDGER)
 
-- [ ] **LEDGER-01**: 각 사용자에게 개인 전용 전달 주소가 발급된다
+- [x] **LEDGER-01**: 각 사용자에게 개인 전용 전달 주소가 발급된다
 - [ ] **LEDGER-02**: 예약 메일을 전달하면 AI가 파싱해 가계부에 자동 정리된다 (플랫폼·카드·통화·금액·결제일)
-- [ ] **LEDGER-03**: 외화 결제는 통화·환율·결제 시점이 보존되어 환율 차이를 확인할 수 있다
+- [x] **LEDGER-03**: 외화 결제는 통화·환율·결제 시점이 보존되어 환율 차이를 확인할 수 있다
 - [ ] **LEDGER-04**: 앱을 거치지 않은 예약(직접 예약 항공권 등)도 메일만 오면 가계부에 포착된다
 - [ ] **LEDGER-05**: 등록된 주소에서 온 메일만 수신·처리한다 (식별·보안)
-- [ ] **LEDGER-06**: 파싱이 애매하면 사용자가 1탭으로 확인·수정한다 (fallback)
+- [x] **LEDGER-06**: 파싱이 애매하면 사용자가 1탭으로 확인·수정한다 (fallback)
 
 ### Android (AND)
 
@@ -293,12 +293,12 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | BOOK-02 | Phase 20 | Complete |
 | BOOK-03 | Phase 20 | Complete |
 | ATTR-02 | Phase 20 | Complete |
-| LEDGER-01 | Phase 21 | Pending |
+| LEDGER-01 | Phase 21 | Complete |
 | LEDGER-02 | Phase 21 | Pending |
-| LEDGER-03 | Phase 21 | Pending |
+| LEDGER-03 | Phase 21 | Complete |
 | LEDGER-04 | Phase 21 | Pending |
 | LEDGER-05 | Phase 21 | Pending |
-| LEDGER-06 | Phase 21 | Pending |
+| LEDGER-06 | Phase 21 | Complete |
 | AND-01 | Phase 22 | Pending |
 | AND-02 | Phase 22 | Pending |
 
