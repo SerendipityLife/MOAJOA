@@ -126,6 +126,22 @@ test('unassigned inbox: 어느 여행인지 확인해주세요 label + the row r
   expect(getByText('미분류')).toBeTruthy();
 });
 
+test('WR-01: an email-sourced row displays the STORED amount_krw, not the re-derived value', async () => {
+  // Mail billed JPY 3,400 as ₩32,000 (rate 9.41). round(3400 × 9.41) = 31,994 —
+  // the '실청구' badge promises the real charge, so the stored 32,000 must win.
+  const emailRow = ledgerEntry({
+    fx_source: 'email',
+    currency: 'JPY',
+    amount_foreign: 3400,
+    fx_rate: 9.41,
+    amount_krw: 32000,
+  });
+  listUnassignedLedger.mockResolvedValue([emailRow]);
+  const { getByText, queryByText } = render(<TripLedgerScreen />);
+  await waitFor(() => expect(getByText('≈ ₩32,000')).toBeTruthy());
+  expect(queryByText('≈ ₩31,994')).toBeNull();
+});
+
 test('needs_review row 1-tap opens the review sheet (결제 정보를 확인해주세요)', async () => {
   const review = ledgerEntry({ id: 'entry-2', status: 'needs_review', trip_id: 'trip-1' });
   listLedger.mockResolvedValue([review]);

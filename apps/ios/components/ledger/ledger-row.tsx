@@ -71,7 +71,10 @@ export function LedgerRow({ entry, onPress, onLongPress }: Props) {
     entry.amount_foreign !== null
       ? `${entry.amount_foreign.toLocaleString()} ${entry.currency ?? ''}`.trim()
       : '—';
-  const amountKrw = deriveAmountKrw(entry.amount_foreign, entry.fx_rate);
+  // WR-01: prefer the STORED amount_krw (for fx_source='email' it is the exact billed
+  // KRW from the mail — the '실청구' badge promises this); only re-derive when null
+  // (frankfurter/unavailable rows), where re-deriving round(foreign×rate) is expected.
+  const amountKrw = entry.amount_krw ?? deriveAmountKrw(entry.amount_foreign, entry.fx_rate);
 
   return (
     <Pressable

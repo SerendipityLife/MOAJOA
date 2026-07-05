@@ -248,8 +248,10 @@ export default function TripLedgerScreen() {
 
   const confirmEntries = [...unassigned, ...needsReviewList];
   const readyEntries = ledger.filter((e) => e.status === 'ready' && e.trip_id !== null);
+  // WR-01: sum the STORED amount_krw per entry (exact billed KRW for email rows);
+  // only re-derive when null so the trip total never drifts from the real charge.
   const totalKrw = readyEntries.reduce(
-    (sum, e) => sum + (deriveAmountKrw(e.amount_foreign, e.fx_rate) ?? 0),
+    (sum, e) => sum + (e.amount_krw ?? deriveAmountKrw(e.amount_foreign, e.fx_rate) ?? 0),
     0,
   );
 
