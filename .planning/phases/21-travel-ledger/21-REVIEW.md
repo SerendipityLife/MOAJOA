@@ -21,7 +21,7 @@ files_reviewed_list:
   - apps/ios/lib/forwarding-address.ts
 findings:
   critical: 0
-  warning: 4
+  warning: 1
   info: 5
   total: 10
 status: issues_found
@@ -113,6 +113,8 @@ trips inside `assignTripToEntry` for a clearer error.
 
 ### WR-01: iOS re-derives KRW from a rounded rate, contradicting the "실청구" trust badge
 
+**Status:** ✅ RESOLVED — `ledger-row.tsx` KRW display and `ledger.tsx` trip total now use `entry.amount_krw ?? deriveAmountKrw(...)`, so email-sourced rows show the exact billed KRW from the mail and only frankfurter/unavailable rows re-derive. iOS test added (JPY 3,400 billed ₩32,000 shows ₩32,000, not the drifted ₩31,994). Commit `89026b2`.
+
 **File:** `apps/ios/components/ledger/ledger-row.tsx:74,113-114` and `apps/ios/app/trip/[id]/(tabs)/ledger.tsx:251-254`
 
 **Issue:** The row and the trip total both compute KRW as
@@ -160,6 +162,8 @@ return new Response(JSON.stringify({ status: 'accepted' }), {
 
 ### WR-03: Fire-and-forget parse trigger has no `EdgeRuntime.waitUntil` — may be dropped
 
+**Status:** ✅ RESOLVED — the un-awaited `fetch(parseUrl, ...)` is now wrapped in `EdgeRuntime.waitUntil(...)` so the Supabase Deno runtime keeps the isolate alive until the trigger is delivered (still NO await — Pitfall 5). PARSE_EMAIL_URL-unset local skip guard preserved. `deno check` green. Commit `e1125c8`.
+
 **File:** `supabase/functions/inbound-email/index.ts:106-121`
 
 **Issue:** The parse trigger is a bare, un-awaited `fetch(parseUrl, ...).catch(() => {})`
@@ -183,6 +187,8 @@ EdgeRuntime.waitUntil(
 ```
 
 ### WR-04: Unassigned inbox surfaces pending/processing/failed rows as assignable; manual assign races the pipeline
+
+**Status:** ✅ RESOLVED — `listUnassignedLedger` now adds `.in('status', ['ready','needs_review'])` (keeping the `trip_id is null` filter), hiding pending/processing/failed rows from the assign inbox and closing the assign→pipeline clobber race (a row is assignable only after parse-email's final UPDATE, and the atomic claim scans pending/failed). parse-email's final UPDATE left unchanged (minimal scope). `ledger.test.ts` chain assertion updated. Commit `a2db121`.
 
 **File:** `apps/ios/app/trip/[id]/(tabs)/ledger.tsx:249` and `packages/api/src/queries/ledger.ts:37-47`
 
