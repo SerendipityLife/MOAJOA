@@ -1,0 +1,13 @@
+{
+  "name": "moajoa-inbound-email",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Thin Cloudflare Email Worker — forwards raw MIME to the Supabase inbound-email EF (Phase 21).",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^3"
+  }
+}

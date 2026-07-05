@@ -1,0 +1,21 @@
+# inbound-email — Cloudflare Email Worker (Phase 21, LEDGER-05).
+# Thin forwarder: raw MIME + envelope → Supabase inbound-email EF.
+#
+# Email trigger is NOT declared here — it is bound in the Cloudflare dashboard
+# under Email Routing (catch-all on the apex zone, or the ledger subdomain).
+# That rule points at this Worker after `wrangler deploy`.
+
+name = "moajoa-inbound-email"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+
+# --- Runtime configuration (set at deploy time; NEVER commit secrets) --------
+# Non-secret var:
+#   [vars]
+#   INBOUND_EF_URL = "https://<project-ref>.supabase.co/functions/v1/inbound-email"
+#
+# Secret (wrangler secret put INGEST_SECRET) — must equal the EF's INGEST_SECRET
+# (supabase secrets set INGEST_SECRET=<same value>):
+#   wrangler secret put INGEST_SECRET
+#
+# This Worker holds NO database or LLM credentials — only the two above.
