@@ -78,6 +78,8 @@ describe('listUnassignedLedger — unclassified inbox (trip_id null), created_at
     expect(from).toHaveBeenCalledWith('ledger_entries');
     expect(chain.select).toHaveBeenCalledWith('*');
     expect(chain.is).toHaveBeenCalledWith('trip_id', null);
+    // WR-04: only actionable rows are assignable (hides pending/processing/failed).
+    expect(chain.in).toHaveBeenCalledWith('status', ['ready', 'needs_review']);
     expect(chain.order).toHaveBeenCalledWith('created_at');
   });
 

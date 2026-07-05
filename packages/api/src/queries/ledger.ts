@@ -33,6 +33,12 @@ export async function listLedger(
  * The unclassified inbox: owner-private entries not yet assigned a trip (D-05).
  * RLS returns only the caller's own rows for the trip_id-null arm, so no owner
  * filter is needed here.
+ *
+ * WR-04: scope to actionable rows only ('ready' / 'needs_review'). This hides
+ * mid-parse (pending/processing) and failed rows from the assign inbox, and — since
+ * a row only becomes assignable AFTER parse-email's final UPDATE flips it to
+ * ready/needs_review, and the atomic claim scans `.in('status',['pending','failed'])`
+ * — also closes the assign→pipeline clobber race.
  */
 export async function listUnassignedLedger(
   client: MoajoaSupabaseClient,
@@ -41,6 +47,7 @@ export async function listUnassignedLedger(
     .from('ledger_entries')
     .select('*')
     .is('trip_id', null)
+    .in('status', ['ready', 'needs_review'])
     .order('created_at');
   if (error) throw error;
   return (data ?? []) as LedgerEntry[];
