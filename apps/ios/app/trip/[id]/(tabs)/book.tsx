@@ -42,7 +42,7 @@ import {
   type Place,
   type Trip,
 } from '@moajoa/core';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useGlobalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -106,7 +106,11 @@ async function reconcileTripChecklist(
 }
 
 export default function TripBookScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // Tab screens are reached via tab-press, not the initial URL match — the
+  // parent [id] segment does NOT surface in useLocalSearchParams there (returns
+  // undefined), which stalls load() on `if (!id) return` before the spinner can
+  // clear. useGlobalSearchParams reads the full URL so id is always present.
+  const { id } = useGlobalSearchParams<{ id: string }>();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
   const [plan, setPlan] = useState<PlanWithItems | null>(null);

@@ -15,7 +15,7 @@ import {
   type Link,
   type Place,
 } from '@moajoa/core';
-import { useLocalSearchParams } from 'expo-router';
+import { useGlobalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,7 +38,10 @@ import { PlaceList } from '@/components/boards/place-list';
 import { shareCurrentTrip } from '@/lib/share-board';
 
 export default function TripMapScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // useGlobalSearchParams (not Local): tab screens reached via tab-press don't
+  // get the parent [id] segment in local params — reads the full URL instead so
+  // the trip loads whether this tab is the initial route or a later tab-switch.
+  const { id } = useGlobalSearchParams<{ id: string }>();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [links, setLinks] = useState<Link[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);

@@ -61,6 +61,7 @@ jest.mock('@/lib/supabase', () => ({
 jest.mock('@/lib/toast', () => ({ showToast: jest.fn() }));
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'trip-1' }),
+  useGlobalSearchParams: () => ({ id: 'trip-1' }),
   router: { push: jest.fn() },
 }));
 
