@@ -5,10 +5,10 @@ milestone_name: — 전면 개편
 current_phase: 21
 current_phase_name: Travel Ledger (메일 전달 가계부)
 status: planned
-stopped_at: Phase 21 planned — 5 plans / 4 waves, RESEARCH·PATTERNS·UI-SPEC·VALIDATION 완료; Phase 19 UAT 2건 + Phase 20 UAT 6건 human 대기 유지
-last_updated: "2026-07-05T03:14:10.000Z"
+stopped_at: Phase 19·20 UAT 전 항목 완료(sim + 웹 2브라우저 Playwright) — 19 2/2 pass · 20 5 pass +1 skip(TP 대시보드 외부). findings 경미(F-20-2 Agoda 프리필·F-20-3 stale supabase-js·C-19-2 web 캐시). ship 준비. Phase 21 planned 유지.
+last_updated: "2026-07-05T06:25:00.000Z"
 last_activity: 2026-07-05
-last_activity_desc: Phase 21 plan 완료 (5 plans, CF Email Routing 파이프라인)
+last_activity_desc: Phase 19·20 human UAT 완료 (sim 셋업 A/B + 웹 2브라우저 presence 2.110.0 수렴)
 progress:
   total_phases: 6
   completed_phases: 4
@@ -40,7 +40,9 @@ Phase: 21 (Travel Ledger (메일 전달 가계부)) — PLANNED
 Plan: 0 of 5 (execution 대기)
 Status: 5 plans / 4 waves 작성 완료 — ready for execution
 Last activity: 2026-07-05 — Phase 21 plan 완료
-Next: `/gsd-execute-phase 21` Wave 1(21-01 0022_ledger.sql, autonomous:false — DB 적용 게이트)부터. ⚠️ 외부 준비물(사용자 측, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화 + Worker 배포(21-04 Task 5 게이트). 병행 대기: Phase 19 UAT 2건(19-HUMAN-UAT.md) + Phase 20 UAT 6건(20-HUMAN-UAT.md) → `/gsd-verify-work` sign-off 후 19·20 동시 ship.
+Next: `/gsd-execute-phase 21` Wave 1(21-01 0022_ledger.sql, autonomous:false — DB 적용 게이트)부터. ⚠️ 외부 준비물(사용자 측, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화 + Worker 배포(21-04 Task 5 게이트). **Phase 19·20 UAT 완료(2026-07-05)** — 19 2/2 pass · 20 5 pass +1 skip(TP 대시보드 외부 로그인만 사용자 직접 확인) → `/gsd-verify-work` sign-off 후 19·20 동시 ship 가능. UAT 발견 경미 3건 후속(F-20-2 Agoda 딥링크 프리필·C-19-2 폴 닫기 시 web SSR 캐시 무효화 경로·F-20-3 로컬 supabase-js 2.110.0 install 정렬 완료).
+
+**Phase 19·20 human UAT 완료 (2026-07-05, sim idb + 웹 2브라우저 Playwright):** 병렬 대기였던 human UAT를 자동화로 마저 검증. **셋업**: (A) 오사카 trip에 유튜브(도톤보리 `j-EilTC4cbQ`) 추출→장소5→generate-plan 초안(여행준비 예약클러스터+Day1–3); (B) iOS dateless 온보딩으로 후쿠오카 open poll(범위형, 후보 7/11–13·7/25–27)→초대링크 `/poll/lv7bbwzfbqoc`. **Phase 20:** 20-1 PASS(전 [보기]→시스템 Safari; Klook c137.travelpayouts, KKday/Airalo tp.media, 한글 인코딩 무파손; Booking 프리필 완벽, F-20-2 Agoda 홈리다이렉트 경미) · 20-3 PASS(D-03 plan→book 확인함·book [보기]복귀 조용히 확인함·D-13 완료액티비티 미배치→플랜에없음 보존·auto+완료 삭제숨김) · 20-4 PASS(직접추가·빈/81자 차단·수동+완료 삭제·재생성 후 유지) · 20-5 PASS(기존) · 20-6 PASS(웹 presence 양쪽 "지금 2명 보는 중" 수렴 — **F-20-3: 로컬 node_modules stale 2.45.4였음, `pnpm install`로 선언된 2.110.0 realize 후 수렴; GAP-19D fix 실효 확인**; iOS 호스트 카드 "참여 2명" realtime 반영) · 20-2 skip(TP 대시보드 외부). **Phase 19:** 19-1 PASS(기존) · 19-2 PASS(닉네임 게이트+빈값 차단·익명 range 투표 0→1→2·realtime 투표/집계/닉네임/채팅 fan-out·presence 2명·closed→"확정: 7/11–7/13"+가입 CTA+투표/댓글 거부; C-19-2: web SSR 캐시 1h TTL이 iOS 폴닫기에 자동 무효화 안 됨—dev 재시작으로 반영, 프로덕션 revalidate 경로 검토 권장). 상세: `19-HUMAN-UAT.md`·`20-HUMAN-UAT.md`.
 
 **Phase 21 플래닝 완료 (2026-07-05):** 5 플랜 / 4 웨이브. 산출물: 21-RESEARCH(MEDIUM-HIGH conf) + 21-PATTERNS(25파일→analog) + 21-UI-SPEC(신규토큰 0, 환율 3색 규칙) + 21-VALIDATION(signed, nyquist_compliant) + 21-01~05-PLAN. **웨이브:** W1=21-01 `0022_ledger.sql`(forwarding_addresses opaque 토큰[ensure_share_slug idiom] + ledger_entries[5요소 환율 원자저장 + nullable trip_id] + RLS[**trip_id NULL 분기**: 미분류 owner_user_id=auth.uid() / 배정 can_read_trip, 행소유자 write] + 라이브 적용 + RLS 매트릭스 A~H, autonomous:false). W2 병렬=21-02 @moajoa/core(schemas/ledger.ts: LedgerEntrySchema + LedgerParseOutputSchema[LLM 계약] + deriveAmountKrw/needsReview) ∥ 21-03 @moajoa/api(ledger.ts/forwarding.ts: list/assign/update/delete + getOrCreateForwardingAddress, TDD, house 계약). W3=21-04 CF Email Worker(얇은 raw→EF) + `inbound-email` EF(x-ingest-secret + To토큰 매칭 + 미매칭 drop + fire-forget 트리거) + `parse-email` EF(postal-mime + generate-plan claude.ts verbatim[프롬프트 교체] + Frankfurter 환율 fallback + validateTripId 환각방어 + raw 폐기) + config.toml verify_jwt=false, autonomous:false(CF 배포·DNS). W4=21-05 ledger.tsx(book 상태머신 미러 + 미분류/needs_review 1탭 흐름) + LedgerRow(환율 출처 3색) + LedgerEntrySheet + me.tsx 전달주소 카드 + expo-clipboard 복사. **결정:** 메일 인프라=Cloudflare Email Routing(SPF/DKIM은 CF 수신거부[2025-07-03~]에 위임, To 토큰 식별); 환율=메일 명시값 우선(fx_source='email') + Frankfurter(무료·키없음·historical, 주말=직전영업일→fx_as_of=응답date) fallback; trip=AI 매칭+미분류 인박스(확신시만 배정, else NULL 본인-only); LLM=claude-sonnet-4-6 재활용(신규 0); 마이그레이션 0022부터; postal-mime 파싱은 EF(얇은 Worker 원칙); 신규설치=postal-mime·wrangler·expo-clipboard. **연구 미해결(plan 실측/UAT):** CF catch-all vs 서브도메인 토큰 라우팅(DNS 이전 후 대시보드), 한국 카드사 메일 실포맷(claude 프롬프트 튜닝, RESEARCH A3). 상세: `.planning/phases/21-travel-ledger/`.
 

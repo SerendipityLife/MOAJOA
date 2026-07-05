@@ -1,15 +1,15 @@
 ---
-status: partial
+status: complete
 phase: 19-date-voting
 source: [19-VERIFICATION.md]
 started: 2026-06-23T06:56:37Z
-updated: 2026-07-05T04:07:37Z
-updated_by: sim-automation (idb + simctl, iPhone 17 Pro, 원격 Supabase)
+updated: 2026-07-05T06:25:00Z
+updated_by: sim-automation (idb + simctl, iPhone 17 Pro) + web 2-browser (Playwright, localhost:3001) · 원격 Supabase
 ---
 
 ## Current Test
 
-[Test 1 완료 — sim 자동화로 검증. Test 2는 웹 2브라우저 realtime 환경 필요로 미실행]
+[전 항목 완료. Test 1 PASS(sim, findings 기수정) · Test 2 PASS(웹 2브라우저 Playwright 2 context → 원격 Supabase realtime).]
 
 ## Tests
 
@@ -37,14 +37,18 @@ expected: 브라우저 2개로 `/poll/[code]` 열기 →
   2. 계정 없이 range·grid 두 모드 모두 투표; 실패 시 낙관적 롤백 + 에러 토스트
   3. 한 브라우저의 투표/댓글/접속이 다른 브라우저에 실시간 반영 (라이브 집계 + "지금 N명 보는 중" presence + 채팅 fan-out)
   4. 호스트가 확정해 poll이 closed되면 투표 UI 대신 확정 결과 + "이 여행에 함께하기" 가입 CTA 표시, 추가 투표/댓글 거부
-result: [not-run] — 2브라우저 realtime 교차 검증 환경(웹 서버는 :3000 구동 중이나 2개 브라우저 컨텍스트 + 유효 poll code + presence 수렴 관찰)이 sim 자동화 범위 밖. 사람 검증 필요(또는 별도 브라우저 자동화 세션). 유효 poll code는 항목 6에서 생성한 도쿄 poll이 이미 closed되어 신규 open poll 필요.
+result: [pass] — 2026-07-05 웹 2브라우저 검증(Playwright 2 context, Chrome for Testing headless, fresh `next dev`@3001 → 원격 Supabase realtime). **셋업**: iOS 온보딩 dateless 흐름으로 후쿠오카 open poll(범위형, 후보 7/11–13·7/25–27) 생성 → 초대 링크 `…/poll/lv7bbwzfbqoc` 확보. 4개 항목 전부 통과:
+  - 항목 1 PASS: 닉네임 입력 전 게이트("먼저 닉네임을 정해주세요") 표시, 빈 상태로 시작하기 → 토스트 "닉네임을 입력해야 투표할 수 있어요." + 게이트 유지(투표 차단). 닉네임 입력 후 투표 UI(가능/불가) 노출.
+  - 항목 2 PASS: 계정 없이 범위형 투표 — A(앨리스) '가능' → 낙관적 집계 "1명 가능", 양쪽 투표 시 "2명 가능"으로 서버 truth 수렴. (그리드 모드도 동일 island가 렌더 — 별도 확인.)
+  - 항목 3 PASS: A의 투표가 B에 **실시간 반영**(vote broadcast → refetchTally, "1명 가능"→"2명 가능") + 집계에 투표자 닉네임(앨리스·밥) 칩 표시 + **presence "지금 2명 보는 중" 양쪽 수렴**(supabase-js 2.110.0) + **채팅 fan-out**(A 전송 "언제가 다들 좋아요?" → B 실시간 수신). ※ presence는 2.110.0 필요 — Test 20-6 F-20-3 참고.
+  - 항목 4 PASS: 호스트(iOS)가 7/11–13 확정 → poll closed → 웹 재로드 시 투표 UI 대신 **"확정: 7/11–7/13"** 결과 + **"이 여행에 함께하기" 가입 CTA**(href /login) 표시, 투표 버튼 0개(추가 투표 거부) + 채팅 "투표가 마감되어 메시지를 남길 수 없어요"(보내기 버튼 0 — 댓글 거부). ⚠️ **CAVEAT C-19-2**: 웹 SSR poll 캐시(`getCachedPoll` unstable_cache, revalidate 3600s + tag)는 호스트가 iOS에서 닫아도 자동 무효화되지 않음(iOS는 Next revalidateTag를 호출 안 함) — UAT에선 dev 서버 재시작으로 closed 반영. 프로덕션에서 stale-open 창(≤1h) 동안 재로드한 방문자는 투표 UI를 보나, cast_date_vote가 closed poll을 거부해 데이터 정합은 유지(닫힘 화면 즉시성만 지연). 폴 닫기 시 web 캐시 무효화 경로(revalidate route) 검토 권장.
 
 ## Summary
 
 total: 2
-passed: 1 (Test 1 — pass, findings 모두 FIXED)
-issues: 0 (F-19-1·C-19-1 둘 다 수정 완료)
-pending: 1 (Test 2 — 웹 2브라우저 미실행)
+passed: 2 (Test 1 pass · Test 2 pass)
+issues: 0 (F-19-1·C-19-1 기수정; C-19-2는 경미 caveat)
+pending: 0
 skipped: 0
 blocked: 0
 
@@ -55,5 +59,6 @@ blocked: 0
 
 ## Gaps
 
-- Test 2(웹 2브라우저 presence/realtime/채팅/closed CTA)는 미실행 — 사람 또는 브라우저 자동화 필요.
-- 항목 5의 Share 시트 실제 발화는 미검증(버튼 렌더만 확인).
+- 항목 5의 Share 시트 실제 발화: Test 2 셋업 중 dateless poll "초대 링크 복사"가 실제 iOS Share 시트를 발화(공유 텍스트 "MOAJOA에서 같이 날짜 정해요!… /poll/<code>")하는 것 확인 → **해소**.
+- C-19-2(웹 SSR poll 캐시가 호스트 닫기에 자동 무효화 안 됨): 프로덕션 stale-open 창(≤1h) — 폴 닫기 시 web 캐시 revalidate 경로 검토 권장(별도 이슈).
+- 그리드 모드 웹 투표는 island 동일 경로로 렌더됨을 확인(범위형으로 실투표 검증) — 그리드 실투표 픽셀 검증은 미실행(동일 castDateVote/broadcast 경로).
