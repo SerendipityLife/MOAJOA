@@ -65,6 +65,15 @@ secret = "env(GOOGLE_OAUTH_CLIENT_SECRET)"
 [functions.extract-youtube]
 verify_jwt = true
 
+# Phase 21 ledger inbound pipeline. Both are called machine-to-machine (CF Email
+# Worker → inbound-email → parse-email), not by signed-in users, so JWT verify is
+# off; the compensating control is a shared x-ingest-secret header (Pitfall 7).
+[functions.inbound-email]
+verify_jwt = false
+
+[functions.parse-email]
+verify_jwt = false
+
 # Vector log aggregator bind-mounts the host Docker socket, which colima cannot
 # mount from ~/.colima/default/docker.sock (non-shared VM path) — it crashes the
 # stack on `supabase start`. Analytics/log shipping is not needed for local dev,
