@@ -3,6 +3,8 @@
 > **목적:** Phase 21의 코드는 전부 완성·커밋·테스트 green 상태다. 남은 건 **CF 인프라 배포(선행) + 디바이스 UAT** 뿐이며, 둘 다 라이브 인프라가 필요해 human verification으로 defer됨. 이 문서만 따라 하면 마무리된다.
 >
 > **관련 아티팩트:** [`21-UAT.md`](21-UAT.md) (blocked 2건) · [`21-VERIFICATION.md`](21-VERIFICATION.md) (status: human_needed) · [`21-05-SUMMARY.md`](21-05-SUMMARY.md)
+>
+> **담당:** moajoa.app 도메인 + Cloudflare 계정 소유자가 **§1 ~ §5 전 과정을 end-to-end로** 진행한다. (기존 개발자에겐 도메인/CF 계정 접근권이 없음 — 넘겨받는 지점 없이 처음부터 담당.)
 
 ---
 
