@@ -37,9 +37,9 @@ progress:
 ## Current Position
 
 Phase: 21 (Travel Ledger (메일 전달 가계부)) — EXECUTING
-Plan: 2 of 5 완료 (21-01·21-02 done) — Wave 2 진행 중 (다음 21-03)
-Status: Executing Phase 21 — Wave 2 진행 (21-02 @moajoa/core 계약 락 완료)
-Last activity: 2026-07-05 — 21-02 실행 완료 (@moajoa/core ledger.ts 스키마+파싱출력+순수함수, enum 0022 CHECK 문자 일치, core 143 tests green + typecheck 0)
+Plan: 3 of 5 완료 (21-01·21-02·21-03 done) — Wave 2 진행 중 (다음 21-04/21-05)
+Status: Executing Phase 21 — Wave 2 진행 (21-03 @moajoa/api ledger/forwarding 쿼리 계층 완료)
+Last activity: 2026-07-05 — 21-03 실행 완료 (@moajoa/api ledger.ts 6쿼리 + forwarding.ts getOrCreateForwardingAddress, bookings.ts house 계약 미러, RLS-only·파생 로직 0, TDD RED→GREEN, api 74 tests green + typecheck 0)
 Next: `/gsd-execute-phase 21` Wave 1(21-01 0022_ledger.sql, autonomous:false — DB 적용 게이트)부터. ⚠️ 외부 준비물(사용자 측, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화 + Worker 배포(21-04 Task 5 게이트). **Phase 19·20 UAT 완료(2026-07-05)** — 19 2/2 pass · 20 5 pass +1 skip(TP 대시보드 외부 로그인만 사용자 직접 확인) → `/gsd-verify-work` sign-off 후 19·20 동시 ship 가능. UAT 발견 경미 3건 후속(F-20-2 Agoda 딥링크 프리필·C-19-2 폴 닫기 시 web SSR 캐시 무효화 경로·F-20-3 로컬 supabase-js 2.110.0 install 정렬 완료).
 
 **Phase 19·20 human UAT 완료 (2026-07-05, sim idb + 웹 2브라우저 Playwright):** 병렬 대기였던 human UAT를 자동화로 마저 검증. **셋업**: (A) 오사카 trip에 유튜브(도톤보리 `j-EilTC4cbQ`) 추출→장소5→generate-plan 초안(여행준비 예약클러스터+Day1–3); (B) iOS dateless 온보딩으로 후쿠오카 open poll(범위형, 후보 7/11–13·7/25–27)→초대링크 `/poll/lv7bbwzfbqoc`. **Phase 20:** 20-1 PASS(전 [보기]→시스템 Safari; Klook c137.travelpayouts, KKday/Airalo tp.media, 한글 인코딩 무파손; Booking 프리필 완벽, F-20-2 Agoda 홈리다이렉트 경미) · 20-3 PASS(D-03 plan→book 확인함·book [보기]복귀 조용히 확인함·D-13 완료액티비티 미배치→플랜에없음 보존·auto+완료 삭제숨김) · 20-4 PASS(직접추가·빈/81자 차단·수동+완료 삭제·재생성 후 유지) · 20-5 PASS(기존) · 20-6 PASS(웹 presence 양쪽 "지금 2명 보는 중" 수렴 — **F-20-3: 로컬 node_modules stale 2.45.4였음, `pnpm install`로 선언된 2.110.0 realize 후 수렴; GAP-19D fix 실효 확인**; iOS 호스트 카드 "참여 2명" realtime 반영) · 20-2 skip(TP 대시보드 외부). **Phase 19:** 19-1 PASS(기존) · 19-2 PASS(닉네임 게이트+빈값 차단·익명 range 투표 0→1→2·realtime 투표/집계/닉네임/채팅 fan-out·presence 2명·closed→"확정: 7/11–7/13"+가입 CTA+투표/댓글 거부; C-19-2: web SSR 캐시 1h TTL이 iOS 폴닫기에 자동 무효화 안 됨—dev 재시작으로 반영, 프로덕션 revalidate 경로 검토 권장). 상세: `19-HUMAN-UAT.md`·`20-HUMAN-UAT.md`.

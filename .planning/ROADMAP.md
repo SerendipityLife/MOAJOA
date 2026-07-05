@@ -156,7 +156,7 @@ Plans:
 
 - [x] 21-01-PLAN.md — `0022_ledger.sql` (forwarding_addresses opaque 토큰 + ledger_entries[5요소 환율 원자저장 + nullable trip_id] + RLS[trip_id NULL 분기: 미분류 본인·배정 멤버] + 행소유자 write) + 라이브 적용·typegen·RLS 매트릭스 A~H (Wave 1, autonomous:false) — ✅ 2026-07-05 (local apply, 42P17=0, RLS A~H PASS)
 - [x] 21-02-PLAN.md — @moajoa/core `schemas/ledger.ts` (LedgerEntrySchema + LedgerParseOutputSchema[LLM 계약] + deriveAmountKrw/needsReview 순수함수) (Wave 2, ∥ 21-03)
-- [ ] 21-03-PLAN.md — @moajoa/api `ledger.ts`/`forwarding.ts` (list/assign/update/delete + getOrCreateForwardingAddress, house 계약, TDD) (Wave 2, ∥ 21-02)
+- [x] 21-03-PLAN.md — @moajoa/api `ledger.ts`/`forwarding.ts` (list/assign/update/delete + getOrCreateForwardingAddress, house 계약, TDD) (Wave 2, ∥ 21-02)
 - [ ] 21-04-PLAN.md — CF Email Worker(얇은 raw→EF) + `inbound-email` EF(시크릿+To토큰 게이트+저장+fire-forget) + `parse-email` EF(postal-mime + claude 재활용 + Frankfurter 환율 fallback + trip 매칭) + config.toml verify_jwt=false (Wave 3, autonomous:false — CF 배포·DNS 이전)
 - [ ] 21-05-PLAN.md — ledger.tsx(book 상태머신 미러 + 미분류/needs_review 1탭 흐름) + LedgerRow(환율 출처 3색) + LedgerEntrySheet + me.tsx 전달주소 카드 + expo-clipboard 복사 (Wave 4)
 
@@ -174,7 +174,7 @@ Plans:
   1. Android 실기기에서 앱이 빌드·실행되고 핵심 흐름(여행·플랜·예약·가계부)이 동작한다
   2. Android 공유시트(ACTION_SEND)로 링크를 MOAJOA에 보낼 수 있다
 
-**Plans**: 2/5 plans executed
+**Plans**: 3/5 plans executed
 
 ### Progress
 
@@ -184,5 +184,5 @@ Plans:
 | 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
 | 19. Date Voting | 4/4 | UAT Pending |  |
 | 20. Affiliate Booking | 7/7 | Complete   | 2026-07-04 |
-| 21. Travel Ledger | 2/5 | In Progress|  |
+| 21. Travel Ledger | 3/5 | In Progress|  |
 | 22. Android Parity | 0/~2 | Not started | - |
