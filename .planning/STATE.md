@@ -5,10 +5,10 @@ milestone_name: — 전면 개편
 current_phase: 21
 current_phase_name: Travel Ledger (메일 전달 가계부)
 status: executing
-stopped_at: Phase 21 코드 완료 (5/5 플랜) — 21-05 가계부 iOS 표면(jest 127 green·typecheck 0). 21-04·21-05 device UAT는 CF 배포 전제로 phase-verify 이관.
-last_updated: "2026-07-05T12:30:00.000Z"
+stopped_at: Phase 21 코드 완료 (5/5 플랜) + post-wave 게이트 완료. 회귀 365 green(core143·api74·ios127·deno21). code-review=1 Critical(CR-01)+4warn+5info → CR-01 수정(마이그레이션 0023: ledger UPDATE WITH CHECK에 trip_id 멤버십 제약, RLS 매트릭스 4케이스 PASS, REVIEW critical 1→0). verify=human_needed(3/6 정적 VERIFIED; LEDGER-02/04/05는 라이브 파이프라인 필요). 21-04 CF배포·21-05 device UAT는 사용자 '코드만 커밋' 결정으로 phase-verify 이관(21-UAT.md 2항목).
+last_updated: "2026-07-05T13:40:00.000Z"
 last_activity: 2026-07-05
-last_activity_desc: 21-05 executed — 가계부 iOS 표면 코드 완료 (Task 5 device UAT deferred)
+last_activity_desc: Phase 21 execute 완료 — 5 plan 코드 + 회귀 + code-review(CR-01 fix 0023) + verify(human_needed). CF배포·device UAT 이연
 progress:
   total_phases: 6
   completed_phases: 4
