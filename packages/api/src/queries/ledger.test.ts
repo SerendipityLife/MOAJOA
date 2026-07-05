@@ -126,7 +126,7 @@ describe('assignTripToEntry — 1-tap trip assignment (D-05)', () => {
 
 describe('updateLedgerEntry — needs_review fix (amount/currency/paid_at/status)', () => {
   it("applies the caller patch scoped by entry id and returns the single row", async () => {
-    const patch = { amount_foreign: 42.5, currency: 'JPY', status: 'ready' };
+    const patch = { amount_foreign: 42.5, currency: 'JPY', status: 'ready' as const };
     const { client, from, chain } = makeClient({
       result: { data: { id: ENTRY, ...patch }, error: null },
     });
