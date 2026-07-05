@@ -157,7 +157,7 @@ Plans:
 - [x] 21-01-PLAN.md — `0022_ledger.sql` (forwarding_addresses opaque 토큰 + ledger_entries[5요소 환율 원자저장 + nullable trip_id] + RLS[trip_id NULL 분기: 미분류 본인·배정 멤버] + 행소유자 write) + 라이브 적용·typegen·RLS 매트릭스 A~H (Wave 1, autonomous:false) — ✅ 2026-07-05 (local apply, 42P17=0, RLS A~H PASS)
 - [x] 21-02-PLAN.md — @moajoa/core `schemas/ledger.ts` (LedgerEntrySchema + LedgerParseOutputSchema[LLM 계약] + deriveAmountKrw/needsReview 순수함수) (Wave 2, ∥ 21-03)
 - [x] 21-03-PLAN.md — @moajoa/api `ledger.ts`/`forwarding.ts` (list/assign/update/delete + getOrCreateForwardingAddress, house 계약, TDD) (Wave 2, ∥ 21-02)
-- [ ] 21-04-PLAN.md — CF Email Worker(얇은 raw→EF) + `inbound-email` EF(시크릿+To토큰 게이트+저장+fire-forget) + `parse-email` EF(postal-mime + claude 재활용 + Frankfurter 환율 fallback + trip 매칭) + config.toml verify_jwt=false (Wave 3, autonomous:false — CF 배포·DNS 이전)
+- [~] 21-04-PLAN.md — CF Email Worker(얇은 raw→EF) + `inbound-email` EF(시크릿+To토큰 게이트+저장+fire-forget) + `parse-email` EF(postal-mime + claude 재활용 + Frankfurter 환율 fallback + trip 매칭) + config.toml verify_jwt=false (Wave 3, autonomous:false) — 🟡 CODE-COMPLETE 2026-07-05 (Task 1–4 done, deno test 21 green·양 EF check clean; commits a07f118·ef91f2b·17e8054·519b1b1). **Task 5 PENDING**(human-action): CF 인프라 배포·DNS 이전·INGEST_SECRET
 - [ ] 21-05-PLAN.md — ledger.tsx(book 상태머신 미러 + 미분류/needs_review 1탭 흐름) + LedgerRow(환율 출처 3색) + LedgerEntrySheet + me.tsx 전달주소 카드 + expo-clipboard 복사 (Wave 4)
 
 **메일 인프라 결정** (discuss 2026-07-05): Cloudflare Email Routing + Email Worker (SendGrid/Mailgun 기각). SPF/DKIM은 CF 수신 거부(2025-07-03~)에 위임, To 토큰 매칭 + 미매칭 drop. 환율 = 메일 명시값 우선 + Frankfurter(무료·키없음·historical) fallback. trip = AI 매칭 + 미분류 인박스. 가계부 = 멤버 공유 열람.
@@ -184,5 +184,5 @@ Plans:
 | 18. Auto Plan | 5/5 | Complete    | 2026-06-22 |
 | 19. Date Voting | 4/4 | UAT Pending |  |
 | 20. Affiliate Booking | 7/7 | Complete   | 2026-07-04 |
-| 21. Travel Ledger | 3/5 | In Progress|  |
+| 21. Travel Ledger | 3/5 (+21-04 code) | In Progress|  |
 | 22. Android Parity | 0/~2 | Not started | - |
