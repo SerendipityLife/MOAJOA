@@ -4,15 +4,15 @@ milestone: v2.0
 milestone_name: — 전면 개편
 current_phase: 21
 current_phase_name: Travel Ledger (메일 전달 가계부)
-status: discussed
-stopped_at: Phase 21 discussed — CONTEXT locked (4 user decisions); Phase 19 UAT 2건 + Phase 20 UAT 6건 human 대기 유지
+status: planned
+stopped_at: Phase 21 planned — 5 plans / 4 waves, RESEARCH·PATTERNS·UI-SPEC·VALIDATION 완료; Phase 19 UAT 2건 + Phase 20 UAT 6건 human 대기 유지
 last_updated: "2026-07-05T03:14:10.000Z"
 last_activity: 2026-07-05
-last_activity_desc: Phase 21 discuss 완료 (메일 인프라 = Cloudflare Email Routing)
+last_activity_desc: Phase 21 plan 완료 (5 plans, CF Email Routing 파이프라인)
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 21
+  total_plans: 26
   completed_plans: 21
   percent: 67
 ---
@@ -36,11 +36,15 @@ progress:
 
 ## Current Position
 
-Phase: 21 (Travel Ledger (메일 전달 가계부)) — DISCUSSED
-Plan: 0 of ~4 (planning 대기)
-Status: Context locked — ready for planning
-Last activity: 2026-07-05 — Phase 21 discuss 완료
-Next: `/gsd-plan-phase 21` (연구 플래그: 메일 전달 포맷 + CF Email Routing catch-all/서브도메인 범위 실측 + 환율 API 선택). ⚠️ 외부 준비물(사용자 측, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화. 병행 대기: Phase 19 UAT 2건(19-HUMAN-UAT.md) + Phase 20 UAT 6건(20-HUMAN-UAT.md) → `/gsd-verify-work` sign-off 후 19·20 동시 ship.
+Phase: 21 (Travel Ledger (메일 전달 가계부)) — PLANNED
+Plan: 0 of 5 (execution 대기)
+Status: 5 plans / 4 waves 작성 완료 — ready for execution
+Last activity: 2026-07-05 — Phase 21 plan 완료
+Next: `/gsd-execute-phase 21` Wave 1(21-01 0022_ledger.sql, autonomous:false — DB 적용 게이트)부터. ⚠️ 외부 준비물(사용자 측, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화 + Worker 배포(21-04 Task 5 게이트). 병행 대기: Phase 19 UAT 2건(19-HUMAN-UAT.md) + Phase 20 UAT 6건(20-HUMAN-UAT.md) → `/gsd-verify-work` sign-off 후 19·20 동시 ship.
+
+**Phase 21 플래닝 완료 (2026-07-05):** 5 플랜 / 4 웨이브. 산출물: 21-RESEARCH(MEDIUM-HIGH conf) + 21-PATTERNS(25파일→analog) + 21-UI-SPEC(신규토큰 0, 환율 3색 규칙) + 21-VALIDATION(signed, nyquist_compliant) + 21-01~05-PLAN. **웨이브:** W1=21-01 `0022_ledger.sql`(forwarding_addresses opaque 토큰[ensure_share_slug idiom] + ledger_entries[5요소 환율 원자저장 + nullable trip_id] + RLS[**trip_id NULL 분기**: 미분류 owner_user_id=auth.uid() / 배정 can_read_trip, 행소유자 write] + 라이브 적용 + RLS 매트릭스 A~H, autonomous:false). W2 병렬=21-02 @moajoa/core(schemas/ledger.ts: LedgerEntrySchema + LedgerParseOutputSchema[LLM 계약] + deriveAmountKrw/needsReview) ∥ 21-03 @moajoa/api(ledger.ts/forwarding.ts: list/assign/update/delete + getOrCreateForwardingAddress, TDD, house 계약). W3=21-04 CF Email Worker(얇은 raw→EF) + `inbound-email` EF(x-ingest-secret + To토큰 매칭 + 미매칭 drop + fire-forget 트리거) + `parse-email` EF(postal-mime + generate-plan claude.ts verbatim[프롬프트 교체] + Frankfurter 환율 fallback + validateTripId 환각방어 + raw 폐기) + config.toml verify_jwt=false, autonomous:false(CF 배포·DNS). W4=21-05 ledger.tsx(book 상태머신 미러 + 미분류/needs_review 1탭 흐름) + LedgerRow(환율 출처 3색) + LedgerEntrySheet + me.tsx 전달주소 카드 + expo-clipboard 복사. **결정:** 메일 인프라=Cloudflare Email Routing(SPF/DKIM은 CF 수신거부[2025-07-03~]에 위임, To 토큰 식별); 환율=메일 명시값 우선(fx_source='email') + Frankfurter(무료·키없음·historical, 주말=직전영업일→fx_as_of=응답date) fallback; trip=AI 매칭+미분류 인박스(확신시만 배정, else NULL 본인-only); LLM=claude-sonnet-4-6 재활용(신규 0); 마이그레이션 0022부터; postal-mime 파싱은 EF(얇은 Worker 원칙); 신규설치=postal-mime·wrangler·expo-clipboard. **연구 미해결(plan 실측/UAT):** CF catch-all vs 서브도메인 토큰 라우팅(DNS 이전 후 대시보드), 한국 카드사 메일 실포맷(claude 프롬프트 튜닝, RESEARCH A3). 상세: `.planning/phases/21-travel-ledger/`.
+
+**Phase 21 discuss 완료 (2026-07-05):** 회색지대 4개 사용자 결정 — (1) **메일 인프라 = Cloudflare Email Routing + Email Worker** (2) **가계부 = trip 멤버 공유 열람** (3) **trip 매칭 = AI 추정 + 미분류 인박스** (4) **환율 = 메일 명시값 우선 + 결제일 기준 무료 API fallback**. 산출물: `21-CONTEXT.md` + `21-DISCUSSION-LOG.md`.
 
 **Phase 21 discuss 완료 (2026-07-05):** 회색지대 4개 사용자 결정 — (1) **메일 인프라 = Cloudflare Email Routing + Email Worker**(무료·DNS 이전 = 사용자 측 외부 준비물; Worker가 raw MIME을 `inbound-email` EF로 POST, 공유 시크릿 + `verify_jwt=false`; 리서치 STACK안 채택, SendGrid/Mailgun 기각 — catch-all→To 토큰 패턴 동일해 스왑 비용 낮음) (2) **가계부 = trip 멤버 공유 열람**(수정·삭제·확정은 전달한 본인만, can_read_trip 헬퍼 재사용; 미분류 행은 본인-only) (3) **trip 매칭 = AI 추정 + 미분류 인박스**(확신 시만 자동 배정, 애매하면 trip_id NULL → 가계부 탭 1탭 배정, LEDGER-06 수정 UX와 단일 흐름) (4) **환율 = 메일 명시값 우선(fx_source='email') + 결제일 기준 무료 API fallback**(API 선택 plan 실측). 리서치 선잠금 유지: To 토큰 식별(From 안티피처)·SPF/DKIM 게이트·환율 5요소 원자 저장·claude-sonnet-4-6 + extract-youtube 파이프라인 미러·본문 최소저장/TTL·영수증 사진 안티피처. 마이그레이션은 0022부터. 산출물: `.planning/phases/21-travel-ledger/21-CONTEXT.md` + `21-DISCUSSION-LOG.md`.
 

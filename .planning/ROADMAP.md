@@ -152,7 +152,16 @@ Plans:
   5. 등록된 주소(To 토큰 매칭 + SPF/DKIM 검증)에서 온 메일만 수신·처리한다
   6. 파싱이 애매하면 사용자가 1탭으로 확인·수정한다
 
-**Plans**: TBD (~4 plans 추정: 전용주소 발급 + ledger 마이그레이션 + RLS / inbound-email EF[To 토큰 매칭 + SPF/DKIM + raw MIME] / parse-email EF[claude 재활용 + 환율 원자 저장] / ledger.tsx + 수동 fallback UI). 메일 프로바이더 충돌은 Phase 21 discuss에서 결정 (Cloudflare Email Routing vs SendGrid/Mailgun)
+**Plans** (planned 2026-07-05, 4 waves):
+
+- [ ] 21-01-PLAN.md — `0022_ledger.sql` (forwarding_addresses opaque 토큰 + ledger_entries[5요소 환율 원자저장 + nullable trip_id] + RLS[trip_id NULL 분기: 미분류 본인·배정 멤버] + 행소유자 write) + 라이브 적용·typegen·RLS 매트릭스 A~H (Wave 1, autonomous:false)
+- [ ] 21-02-PLAN.md — @moajoa/core `schemas/ledger.ts` (LedgerEntrySchema + LedgerParseOutputSchema[LLM 계약] + deriveAmountKrw/needsReview 순수함수) (Wave 2, ∥ 21-03)
+- [ ] 21-03-PLAN.md — @moajoa/api `ledger.ts`/`forwarding.ts` (list/assign/update/delete + getOrCreateForwardingAddress, house 계약, TDD) (Wave 2, ∥ 21-02)
+- [ ] 21-04-PLAN.md — CF Email Worker(얇은 raw→EF) + `inbound-email` EF(시크릿+To토큰 게이트+저장+fire-forget) + `parse-email` EF(postal-mime + claude 재활용 + Frankfurter 환율 fallback + trip 매칭) + config.toml verify_jwt=false (Wave 3, autonomous:false — CF 배포·DNS 이전)
+- [ ] 21-05-PLAN.md — ledger.tsx(book 상태머신 미러 + 미분류/needs_review 1탭 흐름) + LedgerRow(환율 출처 3색) + LedgerEntrySheet + me.tsx 전달주소 카드 + expo-clipboard 복사 (Wave 4)
+
+**메일 인프라 결정** (discuss 2026-07-05): Cloudflare Email Routing + Email Worker (SendGrid/Mailgun 기각). SPF/DKIM은 CF 수신 거부(2025-07-03~)에 위임, To 토큰 매칭 + 미매칭 drop. 환율 = 메일 명시값 우선 + Frankfurter(무료·키없음·historical) fallback. trip = AI 매칭 + 미분류 인박스. 가계부 = 멤버 공유 열람.
+**⚠️ 외부 준비물** (사용자, 리드타임): moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화 + Worker 배포.
 **UI hint**: yes
 
 ### Phase 22: Android Parity
