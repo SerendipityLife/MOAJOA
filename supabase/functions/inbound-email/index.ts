@@ -105,16 +105,22 @@ Deno.serve(async (req) => {
 
   // ---- Fire-and-forget parse trigger (Pitfall 5 — NO await) ------------------
   // PARSE_EMAIL_URL unset (local dev) → skip silently.
+  // WR-03: register the un-awaited fetch with EdgeRuntime.waitUntil so the Supabase
+  // Deno runtime keeps the isolate alive until the request is delivered — a bare
+  // background fetch can be reclaimed before it flushes, stranding the row 'pending'.
   const parseUrl = Deno.env.get('PARSE_EMAIL_URL');
   if (parseUrl) {
-    fetch(parseUrl, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-ingest-secret': ingestSecret,
-      },
-      body: JSON.stringify({ entry_id: entry.id }),
-    }).catch(() => {});
+    // @ts-ignore Supabase edge runtime global
+    EdgeRuntime.waitUntil(
+      fetch(parseUrl, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-ingest-secret': ingestSecret,
+        },
+        body: JSON.stringify({ entry_id: entry.id }),
+      }).catch(() => {}),
+    );
   }
 
   return jsonOk({ status: 'accepted', entry_id: entry.id });
