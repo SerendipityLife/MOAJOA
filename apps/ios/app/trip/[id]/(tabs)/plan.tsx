@@ -34,6 +34,7 @@ import {
   setCollaborative,
   setPollMode,
   setTravelMode,
+  updateTrip,
   type PlanWithItems,
 } from '@moajoa/api';
 import {
@@ -78,7 +79,7 @@ import { DaySection, type DayItem } from '@/components/plan/day-section';
 import { UnplacedPool } from '@/components/plan/unplaced-pool';
 import { TravelModeToggle } from '@/components/plan/travel-mode-toggle';
 import { DatePickerSheet } from '@/components/boards/date-picker-sheet';
-import { toYMD } from '@/lib/trip-format';
+import { autoBoardTitle, toYMD } from '@/lib/trip-format';
 
 type ProgressStep = keyof typeof PLAN_STEP_KO; // loading | clustering | routing
 const PROGRESS_ORDER: ProgressStep[] = ['loading', 'clustering', 'routing'];
@@ -525,6 +526,10 @@ export default function TripPlanScreen() {
           await addPollOption(supabase, poll.id, { startDate: startYMD, endDate: endYMD });
         }
         setOptions(await getPollOptions(supabase, poll.id));
+        // F-19-1: the confirm sheet lists candidates from `tally` (per-option
+        // counts), not `options` — refetch it so a just-added candidate shows up
+        // in 확정 without an app restart.
+        if (poll.poll_code) setTally((await getPollTally(supabase, poll.poll_code)) as PollTally);
       } catch (err) {
         Alert.alert('후보 날짜 추가 실패', err instanceof Error ? err.message : String(err));
       }
@@ -538,6 +543,8 @@ export default function TripPlanScreen() {
       try {
         await removePollOption(supabase, optionId);
         setOptions(await getPollOptions(supabase, poll.id));
+        // F-19-1: keep the tally-based confirm sheet in sync with the options.
+        if (poll.poll_code) setTally((await getPollTally(supabase, poll.poll_code)) as PollTally);
       } catch (err) {
         Alert.alert('후보 날짜 삭제 실패', err instanceof Error ? err.message : String(err));
       }
@@ -591,6 +598,21 @@ export default function TripPlanScreen() {
             onPress: async () => {
               try {
                 await confirmPollDate(supabase, { pollId: poll.id, startDate, endDate });
+                // C-19-1: a dateless-created trip baked a date-less title
+                // (autoBoardTitle(city, null, null)). Now that the dates are
+                // confirmed, refresh the title so the header shows the range —
+                // matching a directly dated-created trip. (T00:00:00 forces local
+                // midnight so the KO month/day don't shift under UTC parsing.)
+                if (trip?.city_code) {
+                  const cityKoName = CITY_KO_MAP[trip.city_code] ?? trip.city_code;
+                  await updateTrip(supabase, id, {
+                    title: autoBoardTitle(
+                      cityKoName,
+                      new Date(`${startDate}T00:00:00`),
+                      new Date(`${endDate}T00:00:00`),
+                    ),
+                  });
+                }
                 closeConfirm();
                 await load(); // trip.start_date now set → card unmounts
               } catch (err) {
@@ -601,7 +623,7 @@ export default function TripPlanScreen() {
         ],
       );
     },
-    [poll, closeConfirm, load],
+    [poll, trip, id, closeConfirm, load],
   );
 
   // --- Render ----------------------------------------------------------------

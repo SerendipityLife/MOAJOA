@@ -42,16 +42,16 @@ result: [not-run] — 2브라우저 realtime 교차 검증 환경(웹 서버는 
 ## Summary
 
 total: 2
-passed: 1 (pass-with-findings)
-issues: 2 (F-19-1 버그, C-19-1 확인필요)
-pending: 1 (Test 2 — 미실행)
+passed: 1 (Test 1 — pass, findings 모두 FIXED)
+issues: 0 (F-19-1·C-19-1 둘 다 수정 완료)
+pending: 1 (Test 2 — 웹 2브라우저 미실행)
 skipped: 0
 blocked: 0
 
 ## Findings
 
-- **F-19-1** (버그, 중, plan.tsx 범위형 확정 시트): 세션 내 새로 추가한 후보 날짜가 확정 시트에 "후보 날짜가 아직 없어요"로 표시됨. 재시작 후 정상. RangeConfirmList가 최신 poll 옵션 미재조회.
-- **C-19-1** (경미, 헤더 렌더): 확정 후 여행 날짜 범위가 헤더에 미표시. **데이터는 정상**(REST로 trip start/end_date 기록 확인) — 헤더가 확정 후 재조회를 안 하는 렌더 갱신 문제.
+- **F-19-1** (버그, 중 → **FIXED** 2026-07-05, plan.tsx): 세션 내 새로 추가한 후보 날짜가 확정 시트("날짜 확정")에 "후보 날짜가 아직 없어요"로 표시. **원인:** 확정 시트(RangeConfirmList/GridConfirmBlock)는 후보를 `options`가 아니라 `tally`(투표 집계)에서 뽑는데, `onAddOption`/`onRemoveOption`이 `options`만 갱신하고 `tally`는 refetch 안 함 → 세션 내 stale(재시작 시 loadPoll이 tally도 받아 정상). **수정:** 두 핸들러에서 옵션 변경 후 `getPollTally` refetch 추가. **검증(sim):** 후보 추가 → 재시작 없이 확정 시트에 "2026-07-18 – 2026-07-20 · 0명 가능" 즉시 표시. commit(아래).
+- **C-19-1** (경미 → **FIXED** 2026-07-05, plan.tsx): 확정 후 여행 날짜 범위가 헤더에 미표시. **원인:** title은 생성 시 `autoBoardTitle(city,start,end)`로 구워짐(dateless="도쿄", 날짜형="도쿄 · MM월 DD일"). confirmPollDate는 날짜만 set하고 title은 그대로 → 헤더(title 표시)가 도시만. **수정:** `onConfirmPick`에서 confirmPollDate 후 `updateTrip`으로 title을 `autoBoardTitle(city, 확정 날짜)`로 재생성(날짜형 생성 trip과 동일 포맷). **검증(sim+REST):** 확정 후 DB title="오사카 · 7월 18일 – 20일"(날짜 반영), 재시작 후 헤더도 "오사카 · 7월 18일 – 20일" 표시. ⚠️ 헤더는 마운트-1회 fetch라 확정 **직후 즉시** 반영은 아니고 다음 remount(트립전환/재시작/네비)에 반영 — 데이터 정합은 확보, 즉시 갱신은 헤더의 기존 일반 제약(범위 밖).
 
 ## Gaps
 
