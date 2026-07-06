@@ -57,16 +57,36 @@ xcodebuild \
   build
 
 APP="$IOS_DIR/build/Build/Products/Debug-iphonesimulator/$SCHEME.app"
-echo "▶ 설치 + 실행…"
+echo "▶ 설치…"
 xcrun simctl install "$UDID" "$APP"
+
+# why: 앱을 먼저 launch하면 Metro가 아직 :8081에 없어 번들 URL이 null이 되고
+# "No script URL provided" 레드스크린이 뜬다(Reload 눌러야 복구). 그래서 launch
+# 전에 Metro를 띄우고 /status가 running이 될 때까지 기다린 뒤 앱을 실행한다.
+if lsof -iTCP:8081 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "ℹ Metro가 이미 :8081에서 실행 중 — 재사용."
+  METRO_PID=""
+else
+  echo "▶ Metro 시작…"
+  ( cd "$APP_DIR" && exec pnpm exec expo start ) &
+  METRO_PID=$!
+fi
+
+echo "▶ Metro 번들러 준비 대기…"
+for _ in $(seq 1 60); do
+  if curl -fsS "http://localhost:8081/status" 2>/dev/null | grep -q "packager-status:running"; then
+    echo "✅ Metro 준비됨"
+    break
+  fi
+  sleep 1
+done
+
+echo "▶ 앱 실행…"
 xcrun simctl launch "$UDID" "$BUNDLE_ID"
 echo "✅ 실행됨: $BUNDLE_ID"
 
-# Debug 빌드는 Metro에서 JS를 받아온다. 안 떠 있으면 포그라운드로 시작(Ctrl+C 종료).
-if lsof -iTCP:8081 -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "ℹ Metro가 이미 :8081에서 실행 중 — 앱이 거기에 연결됩니다."
-else
-  echo "▶ Metro 시작 (Ctrl+C로 종료)…"
-  cd "$APP_DIR"
-  exec pnpm exec expo start
+# Metro를 이 스크립트가 띄웠으면 포그라운드로 유지(Ctrl+C로 종료).
+if [ -n "$METRO_PID" ]; then
+  trap 'kill "$METRO_PID" 2>/dev/null || true' INT TERM
+  wait "$METRO_PID"
 fi
