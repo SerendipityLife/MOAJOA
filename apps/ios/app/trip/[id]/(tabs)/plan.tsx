@@ -57,7 +57,7 @@ import {
   type Trip,
 } from '@moajoa/core';
 import Constants from 'expo-constants';
-import { useLocalSearchParams } from 'expo-router';
+import { useGlobalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -217,7 +217,12 @@ function tallyLeaderLabel(tally: PollTally | null): string | null {
 }
 
 export default function TripPlanScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // useGlobalSearchParams (not Local): reads the parent [id] from the full URL so
+  // the trip stays in sync with the sibling tabs (map/book/ledger). Local params
+  // are sticky to the route this screen first mounted on, so on a trip switch the
+  // plan tab would keep the OLD trip while the others moved on (F-20-1 fixed the
+  // siblings but left plan on Local — this completes it).
+  const { id } = useGlobalSearchParams<{ id: string }>();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
   const [plan, setPlan] = useState<PlanWithItems | null>(null);
