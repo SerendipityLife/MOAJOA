@@ -223,12 +223,12 @@ Plans:
   4. 카카오 provider가 config.toml·대시보드에 설정되어 OAuth 플로우 시작이 가능하다 (버튼 UI·e2e 검증은 Phase 24)
   5. CLAUDE.md §5 D26 불릿이 반전되어 이후 세션이 웹 생성·편집 UI 작업을 거부하지 않는다
 
-**Plans**: 1/7 plans complete
+**Plans**: 2/7 plans complete
 
 Plans:
 
 - [x] 23-01-PLAN.md — 0024 순번 채번(seq_no+last_place_seq+backfill+advisory-lock DEFINER 트리거) + MOA-01 동시성 하네스 (Wave 1)
-- [ ] 23-02-PLAN.md — 0025 share_mode·companion·trip_messages(RLS 헬퍼-only)·join_moa(editor/voter 분기) + 익명/join/kakao smoke (Wave 1)
+- [x] 23-02-PLAN.md — 0025 share_mode·companion·trip_messages(RLS 헬퍼-only)·join_moa(editor/voter 분기) + 익명/join/kakao smoke (Wave 1)
 - [ ] 23-03-PLAN.md — config.toml 익명 sign-in ON+[auth.external.kakao] + KAKAO placeholder + CLAUDE.md §5 D26 반전 (Wave 1)
 - [ ] 23-04-PLAN.md — [BLOCKING] 스택 재시작(config 로딩)+supabase db reset(42P17=0)+타입 재생성 + 하네스·smoke 실행 (Wave 2)
 - [ ] 23-05-PLAN.md — core 계약: ShareMode·moaChannelName·TripCreateDraft·chat.ts·PlaceSchema.seq_no (TDD, Wave 3)
