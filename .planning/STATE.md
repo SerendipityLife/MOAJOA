@@ -2,24 +2,24 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 웹 퍼스트 지도탭 테스트
-current_phase: null
-current_phase_name: null
-status: defining-requirements
+current_phase: 23
+current_phase_name: Web-First Foundation
+status: ready-to-execute
 stopped_at: null
-last_updated: "2026-07-07T00:00:00.000Z"
-last_activity: 2026-07-07
-last_activity_desc: Milestone v2.1 시작 — 웹 퍼스트 피봇 (웹 입력·저장·편집 개방, 지도탭 발견+결정만). v2.0 잔여(19 UAT·21 CF배포·22)는 보존, 추후 마감
+last_updated: "2026-07-08T00:00:00.000Z"
+last_activity: 2026-07-08
+last_activity_desc: Phase 23 플래닝 완료 — 7 플랜/5 웨이브, 플랜체커 12차원 PASS(revision 1회). 리서치·패턴맵·VALIDATION signed
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
+  total_plans: 7
   completed_plans: 0
   percent: 0
 ---
 
 # STATE: MOAJOA v2.1
 
-**Last updated:** 2026-07-07
+**Last updated:** 2026-07-08
 **Milestone:** v2.1 (웹 퍼스트 지도탭 테스트 — 발견+결정을 웹 풀 서피스로)
 
 ---
@@ -36,11 +36,11 @@ progress:
 
 ## Current Position
 
-Phase: 23 (Web-First Foundation) — not started
-Plan: —
-Status: Ready to plan Phase 23 — v2.1 roadmap 생성 완료 (Phase 23~27, 20/20 reqs 매핑)
-Last activity: 2026-07-07 — v2.1 로드맵 생성: 23 기반(0024/0025·익명·카카오 스위치·계약·D26 반전) → 24 호스트 플로우(온보딩·지도탭) → 25 게스트 통합 공유화면 → 26 채팅 → 27 마감(추출 게이트·카피·2인극 UAT). 승인된 구현 설계(온보딩 4단계, /moa, /t/[slug] 통합, 익명 게스트, 카카오 OAuth) 기반
-Next: /gsd-plan-phase 23
+Phase: 23 (Web-First Foundation) — planned, ready to execute
+Plan: 7 플랜 / 5 웨이브 (0/7 완료)
+Status: Ready to execute Phase 23 — 플랜체커 12차원 PASS (revision 1회: RESEARCH RESOLVED 마킹 + trip_messages RLS 런타임 프로브 보강)
+Last activity: 2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)
+Next: /gsd-execute-phase 23
 
 ### v2.0 잔여 (보존 — v2.1과 무관하게 추후 마감)
 
