@@ -66,6 +66,14 @@ export const PlaceSchema = z.object({
    */
   confidence: z.number().min(0).max(1).nullable(),
 
+  /**
+   * Trip-scoped permanent ordinal (#1, #2…) — MOA-01.
+   * Source of truth: places.seq_no column (migration 0024) — advisory-lock
+   * trigger assigns it; client-supplied values are ignored (forge-proof).
+   * Never reassigned: survives soft-delete/restore and hard deletes.
+   */
+  seq_no: z.number().int().positive(),
+
   created_at: z.string().datetime(),
 });
 
