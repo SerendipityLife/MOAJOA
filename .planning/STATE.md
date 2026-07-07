@@ -4,17 +4,17 @@ milestone: v2.1
 milestone_name: 웹 퍼스트 지도탭 테스트
 current_phase: 23
 current_phase_name: Web-First Foundation
-status: ready-to-execute
+status: executing
 stopped_at: null
-last_updated: "2026-07-08T00:00:00.000Z"
+last_updated: "2026-07-07T17:03:44.000Z"
 last_activity: 2026-07-08
-last_activity_desc: Phase 23 플래닝 완료 — 7 플랜/5 웨이브, 플랜체커 12차원 PASS(revision 1회). 리서치·패턴맵·VALIDATION signed
+last_activity_desc: 23-01 실행 완료 — 0024 place_seq 마이그레이션(카운터+advisory-lock DEFINER 트리거) + MOA-01 동시성 하네스. 적용은 23-04
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 14
 ---
 
 # STATE: MOAJOA v2.1
@@ -36,11 +36,13 @@ progress:
 
 ## Current Position
 
-Phase: 23 (Web-First Foundation) — planned, ready to execute
-Plan: 7 플랜 / 5 웨이브 (0/7 완료)
-Status: Ready to execute Phase 23 — 플랜체커 12차원 PASS (revision 1회: RESEARCH RESOLVED 마킹 + trip_messages RLS 런타임 프로브 보강)
+Phase: 23 (Web-First Foundation) — executing (Wave 1 진행 중)
+Plan: 7 플랜 / 5 웨이브 (1/7 완료 — 23-01 done)
+Status: Executing Phase 23 — 23-01 완료(0024+하네스, 미적용). Wave 1 잔여: 23-02·23-03
 Last activity: 2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)
-Next: /gsd-execute-phase 23
+Next: /gsd-execute-phase 23 (계속 — Wave 1 잔여 23-02·23-03)
+
+**23-01 실행 완료 (2026-07-08, commits d0f937a·7b91755):** Phase 23 Wave 1 — MOA-01 DB 기반. **0024_place_seq.sql**(append-only, 0016~0023 무수정): trips.last_place_seq 단조증가 카운터 + places.seq_no(backfill: created_at 순·tiebreak=id·hidden 포함 → not null 승격 → `places_trip_seq_key` unique) + `assign_place_seq()` BEFORE INSERT 트리거(`pg_advisory_xact_lock(hashtextextended('place_seq:'||trip_id))` + SECURITY DEFINER search_path=public — editor/익명 멤버는 trips UPDATE RLS 없어 invoker 불가, Pitfall 2; 클라이언트 seq_no 무시=forge 차단 T-23-01). max+1 금지 근거: places hard DELETE 정책 실존(0016)→번호 재사용 위험(Pitfall 1). **하네스** `supabase/tests/place_seq_concurrency.sh`(레포 최초 bash SQL 하네스, 실행권한+`bash -n` 클린): (1) 동시 40건 8-way `xargs -P 8` 무중복·무결번(40|40|40) (2) soft-delete 복원 순번 유지(3|t) (3) 최고번호 hard-delete 후 무재사용(→41) (4) forge 999→42 — 전부 exit code 단언. **미적용**: 로컬 DB는 0023 상태 유지 — reset·typegen·하네스 실행은 23-04 [BLOCKING]. deviation 0. 상세: `23-01-SUMMARY.md`.
 
 ### v2.0 잔여 (보존 — v2.1과 무관하게 추후 마감)
 

@@ -376,7 +376,7 @@ Roadmap (2026-07-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOA-01 | Phase 23 | Pending |
+| MOA-01 | Phase 23 | In Progress (23-01 0024+하네스 작성 완료 — 적용·런타임 검증은 23-04) |
 | AUTH-07 | Phase 24 | Pending |
 | ONBOARD-03 | Phase 24 | Pending |
 | ONBOARD-04 | Phase 24 | Pending |
