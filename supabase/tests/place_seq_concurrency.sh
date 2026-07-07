@@ -17,7 +17,8 @@ curl -s -X POST "$API/auth/v1/signup" \
 USER_ID=$(psql "$DB" -tAc "select id from auth.users where email='$EMAIL' limit 1")
 [ -n "$USER_ID" ] || { echo "FAIL: test user missing"; exit 1; }
 
-TRIP=$(psql "$DB" -tAc "insert into trips (owner_id, title) values ('$USER_ID','seq-test-$(date +%s)') returning id")
+# -q 필수: INSERT...RETURNING은 -t만으론 커맨드 태그("INSERT 0 1")가 섞여 나옴
+TRIP=$(psql "$DB" -qtAc "insert into trips (owner_id, title) values ('$USER_ID','seq-test-$(date +%s)') returning id")
 
 # (1) 동시 40건 삽입, 8-way 병렬
 seq 1 40 | xargs -P 8 -I{} psql "$DB" -qc \
@@ -35,11 +36,12 @@ psql "$DB" -qc "update places set hidden_at = null where trip_id='$TRIP' and seq
 
 NEWSEQ=$(psql "$DB" -tAc "select seq_no from places where trip_id='$TRIP' and name_local='after-delete'")
 [ "$NEWSEQ" = "41" ] || { echo "FAIL: hard-delete reuse — got seq $NEWSEQ (want 41, 40 재사용 금지)"; exit 1; }
+# boolean은 ||로 text 캐스트되면 'true'/'false' (psql 표시형 t/f 아님)
 KEPT=$(psql "$DB" -tAc "select seq_no||'|'||(hidden_at is null) from places where trip_id='$TRIP' and seq_no=3")
-[ "$KEPT" = "3|t" ] || { echo "FAIL: soft-delete restore — got $KEPT (want 3|t)"; exit 1; }
+[ "$KEPT" = "3|true" ] || { echo "FAIL: soft-delete restore — got $KEPT (want 3|true)"; exit 1; }
 
 # (4) forge 차단: 클라이언트가 seq_no=999를 보내도 트리거가 덮어씀
-FORGE=$(psql "$DB" -tAc "insert into places (trip_id, added_by, name_local, lat, lng, seq_no) values ('$TRIP','$USER_ID','forge',35,139,999) returning seq_no")
+FORGE=$(psql "$DB" -qtAc "insert into places (trip_id, added_by, name_local, lat, lng, seq_no) values ('$TRIP','$USER_ID','forge',35,139,999) returning seq_no")
 [ "$FORGE" = "42" ] || { echo "FAIL: forge guard — got seq $FORGE (want 42)"; exit 1; }
 
-echo "PASS: place_seq concurrency (40|40|40, hard-delete→41, soft-restore 3|t, forge→42)"
+echo "PASS: place_seq concurrency (40|40|40, hard-delete→41, soft-restore 3|true, forge→42)"
