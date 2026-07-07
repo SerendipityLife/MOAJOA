@@ -223,7 +223,7 @@ Plans:
   4. 카카오 provider가 config.toml·대시보드에 설정되어 OAuth 플로우 시작이 가능하다 (버튼 UI·e2e 검증은 Phase 24)
   5. CLAUDE.md §5 D26 불릿이 반전되어 이후 세션이 웹 생성·편집 UI 작업을 거부하지 않는다
 
-**Plans**: 5/7 plans complete
+**Plans**: 6/7 plans complete
 
 Plans:
 
@@ -232,7 +232,7 @@ Plans:
 - [x] 23-03-PLAN.md — config.toml 익명 sign-in ON+[auth.external.kakao] + KAKAO placeholder + CLAUDE.md §5 D26 반전 (Wave 1)
 - [x] 23-04-PLAN.md — [BLOCKING] 스택 재시작(config 로딩)+supabase db reset(42P17=0)+타입 재생성 + 하네스·smoke 실행 (Wave 2)
 - [x] 23-05-PLAN.md — core 계약: ShareMode·moaChannelName·TripCreateDraft·chat.ts·PlaceSchema.seq_no (TDD, Wave 3) — RED→GREEN 2사이클 완료(core 169 tests 그린·api 무회귀, commits c307512·bf392b7·5b2c69d·3c24130)
-- [ ] 23-06-PLAN.md — api 계약: joinMoa(join_moa 래퍼)·shareMoa(visibility+share_mode 단일 UPDATE) (TDD, Wave 4)
+- [x] 23-06-PLAN.md — api 계약: joinMoa(join_moa 래퍼)·shareMoa(visibility+share_mode 단일 UPDATE) (TDD, Wave 4) — RED→GREEN 2사이클 완료(api 81 tests 그린·기존 joinSharedTrip/shareTrip 무수정, commits e7d457f·fc0971a·20428e7·a599ea5)
 - [ ] 23-07-PLAN.md — 원격 마이그레이션 상태 확인(push는 범위 외) + Supabase 대시보드·Kakao console human-action (Wave 5, autonomous:false)
 
 ### Phase 24: Host Flow (온보딩·지도탭)

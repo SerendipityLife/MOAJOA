@@ -6,15 +6,15 @@ current_phase: 23
 current_phase_name: Web-First Foundation
 status: executing
 stopped_at: null
-last_updated: "2026-07-07T17:40:00.000Z"
+last_updated: "2026-07-07T17:45:00.000Z"
 last_activity: 2026-07-08
-last_activity_desc: 23-05 실행 완료 — core 계약 seam TDD 잠금(ShareMode·moaChannelName·chat.ts·TripCreateDraft·TripSchema 미러·seq_no). core 169 tests 그린 + api 무회귀. Wave 3 완료, 다음 Wave 4 = 23-06 api 계약(TDD)
+last_activity_desc: 23-06 실행 완료 — api 계약 seam TDD 잠금(joinMoa·shareMoa). api 81 tests 그린 + 기존 joinSharedTrip/shareTrip 무수정. Wave 4 완료, 다음 Wave 5 = 23-07 human-action
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # STATE: MOAJOA v2.1
@@ -36,11 +36,13 @@ progress:
 
 ## Current Position
 
-Phase: 23 (Web-First Foundation) — executing (Wave 3 완료)
-Plan: 7 플랜 / 5 웨이브 (5/7 완료 — 23-01·23-02·23-03·23-04·23-05 done)
-Status: Executing Phase 23 — Wave 3 완료(23-05 core 계약 seam TDD 잠금 — core 169 그린·api 무회귀). 다음: Wave 4 = 23-06 api 계약(TDD)
+Phase: 23 (Web-First Foundation) — executing (Wave 4 완료)
+Plan: 7 플랜 / 5 웨이브 (6/7 완료 — 23-01·23-02·23-03·23-04·23-05·23-06 done)
+Status: Executing Phase 23 — Wave 4 완료(23-06 api 계약 seam TDD 잠금 — api 81 그린·기존 joinSharedTrip/shareTrip 무수정). 다음: Wave 5 = 23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console)
 Last activity: 2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)
-Next: /gsd-execute-phase 23 (계속 — Wave 4 = 23-06 api 계약 TDD)
+Next: /gsd-execute-phase 23 (계속 — Wave 5 = 23-07 human-action, autonomous:false)
+
+**23-06 실행 완료 (2026-07-08, commits e7d457f·fc0971a·20428e7·a599ea5):** Phase 23 Wave 4 — api 계약 seam 2종 TDD(RED→GREEN 2사이클) 잠금, Phase 24/25 소비 typed query 완비. **joinMoa**(memberships.ts): joinSharedTrip house 계약 미러(client 첫 인자·`{error}` throw·`data as string`)에서 RPC만 `join_moa`로 교체 — role은 0025 RPC가 share_mode로 서버 결정(places/both→editor, dates/null→voter D-A1), 클라이언트 role 인자 자체가 없음(T-23-16), 멱등·no role promotion(D-A4)·익명 세션 동작 doc 주석 명시. **shareMoa**(trips.ts): `{visibility:'shared', share_mode}` 단일 UPDATE→`.select('share_slug').single()`, slug null이면 throw — **Open Q3 시맨틱 기록: shareTrip의 early-return 의도적 제거로 이미 공유된 모아 재호출 시 share_mode 갱신 허용**(visibility 재설정 no-op·ensure_share_slug는 기존 slug 보존, 'dates' 숨김은 Phase 24 클라이언트 몫), owner-only는 trips UPDATE RLS 게이트(T-23-17), ShareModeType 3값 union 시그니처(T-23-18). **테스트**: memberships.test.ts(rpc-only mock 변형 3케이스)+trips.test.ts(ledger.test.ts makeChain 미러 4케이스) 신규 — api 74→81 그린·typecheck 0·`.js` 확장자 0. **기존 joinSharedTrip·shareTrip 완전 무수정**(두 커밋 삭제 라인 0, iOS 동결). deviation 0. SHARE-01/03 e2e 마킹은 traceability대로 Phase 24/25 몫(23-02 선례). 상세: `23-06-SUMMARY.md`.
 
 **23-05 실행 완료 (2026-07-08, commits c307512·bf392b7·5b2c69d·3c24130):** Phase 23 Wave 3 — core 계약 seam 5종 TDD(RED→GREEN 2사이클) 잠금, Phase 24~26 import 단일 출처 완비. **constants.ts**: `ShareMode = ['dates','places','both']`(0025 CHECK 문자 단위 잠금, `.toEqual` 회귀 가드 T-23-14) + `MOA_CHANNEL_PREFIX`/`moaChannelName`(planChannelName 미러, "ONE channel per screen" 규약 주석 — Phase 26). **schemas/chat.ts 신규**: TripMessageSchema(0025 trip_messages 1:1, body 1~140 CHECK 이중화 T-23-15) + TripMessageCreateSchema(id/user_id/created_at 서버 몫) + D-A2 nickname 비정규화 + **Phase 25 `signInAnonymously({options:{data:{name}}})` 호출 계약 주석**(미주입 시 display_name='user'), barrel 등록. **trip.ts**: TripCreateDraftSchema(온보딩 dates-optional — refine 2개 "both set or both null"+"end>=start", companion ≤20, ONBOARD-03/04) — 기존 TripCreateSchema(iOS) diff 0 공존 + TripSchema에 share_mode/companion required-nullable 미러(기존 fullTrip 픽스처 2키 수반 갱신). **place.ts**: seq_no int positive(0024 트리거 채번·forge 불가 주석 T-23-01 transfer, board_id 드리프트 무접촉). **검증**: core 169 tests 그린(기존 143 무회귀+신규 26) + core·api typecheck 0 + api 74 무회귀 + `.js` 확장자 0. deviation 0. 상세: `23-05-SUMMARY.md`.
 
@@ -237,6 +239,7 @@ Plan: 1 of 1
 - Phase 16 Plan 16-01 완료: 2026-06-17 (~10분 실작업/~43분 wall[jest watchman 행 디버깅 포함], 2 tasks TDD RED→GREEN; commits d2b782e test + 38a2739 feat[share-routing] + 30773de test + 5f62820 feat[+native-intent]; share-routing 7/7 + native-intent 4/4 = 11 신규, iOS 풀스위트 54/54 PASS, tsc clean; lib/share-routing.ts 순수 decideShareRoute[zero imports, D-01/D-02] + app/+native-intent.tsx redirectSystemPath[getShareExtensionKey 파생·앱컨텍스트 호출 0·throw→'/']; Rule 3 인프라: 이 환경에서 jest가 watchman 크롤로 0%CPU 무한 행 → `--watchman=false`로 우회[설정/소스 변경 0, 호출만]; RED 각 커밋 `Could not locate module`로 실패 확인 후 GREEN; T-16-01/02/03 코드로 완화)
 - Phase 23 Plan 23-04 완료: 2026-07-08 (~7분, 3 tasks; commits 05c109a types + 948032f 하네스 fix·PASS + 280d728 smoke fix·PASS; 3 files; reset 클린 42P17=0 + database.ts +66 + core 143/api 74 그린 + MOA-01 하네스·smoke 라이브 PASS; deviation 3건 전부 Rule 1 psql 사용법 — 0024·0025 SQL 무수정)
 - Phase 23 Plan 23-05 완료: 2026-07-08 (~7분, 2 tasks TDD RED→GREEN×2; commits c307512 test + bf392b7 feat[ShareMode·moaChannelName·chat.ts] + 5b2c69d test + 3c24130 feat[TripCreateDraft·TripSchema 미러·seq_no]; 8 files 신규3+수정5; core 169 tests 그린[143 무회귀+26 신규] + core·api typecheck 0 + api 74 무회귀; deviation 0)
+- Phase 23 Plan 23-06 완료: 2026-07-08 (~4분, 2 tasks TDD RED→GREEN×2; commits e7d457f test + fc0971a feat[joinMoa] + 20428e7 test + a599ea5 feat[shareMoa]; 4 files 신규2+수정2; api 81 tests 그린[74 무회귀+7 신규] + typecheck 0 + 기존 joinSharedTrip/shareTrip 무수정; deviation 0)
 - Phase 15 Plan 15-03 완료: 2026-06-14 (~4분, 2 tasks; commits e688bd9 iOS + 3408431 web; apps/ios/lib/category.ts vibeOf→placeVibe 위임 + VIBE_STYLE 6 canonical(cafe 추가/wellness 제거, color+labelKo는 core VIBE_META, Ionicons icon+tint/textOn은 클라이언트 유지) + apps/web/lib/category-icon.ts categoryVisual→placeVibe 위임 + VIBE_VISUAL 6 vibes lucide(Beer/Building2 orphan import 제거, bar→food/lodging→other collapse); iOS+web `pnpm typecheck` 둘 다 clean (web vitest 프로젝트 전역 깨짐 → typecheck 의존); 호출처 boards.tsx/place-list.tsx/vote-island.tsx diff 외 — source-compatible 유지; 편차 0; depends 15-01 DONE)
 
 ---
@@ -349,8 +352,8 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-07T17:40:00.000Z
-**Stopped at:** Completed 23-05-PLAN.md (Phase 23 Wave 3 완료 — 다음 Wave 4 = 23-06 api 계약 TDD)
+**Last session:** 2026-07-07T17:45:00.000Z
+**Stopped at:** Completed 23-06-PLAN.md (Phase 23 Wave 4 완료 — 다음 Wave 5 = 23-07 human-action)
 **Resume file:** None
 
 다음 세션에서 이어할 때:
@@ -425,3 +428,6 @@ Plan: 1 of 1
 - [Phase ?]: 20-07: kind 서브라인 라벨은 ChecklistRow 로컬 상수 (UI-SPEC 미잠금, provider 카피는 core만)
 - [Phase ?]: 20-07: 조용한 refetch 실패는 error 화면 미전환 — D-15 조용함을 에러 경로에도 적용, 초기/재시도 로드만 State F
 - [Phase ?]: 20-07: done 해제 착지는 listClickedChecklistItemIds 클릭 기록 원천 판정 (clicked/todo), 조회 실패는 ∅ soft-fail
+- [Phase 23]: 23-06: shareMoa는 shareTrip early-return 제거한 단일 UPDATE — 재호출 시 share_mode 갱신 허용 (Open Q3, 'dates' 숨김은 Phase 24 클라이언트 몫)
+- [Phase 23]: 23-06: joinMoa에 클라이언트 role 인자 없음 — role은 0025 join_moa RPC가 share_mode로 서버 결정 (T-23-16)
+- [Phase 23]: 23-06: rpc-only mock 패턴 — chain 불필요한 RPC 래퍼 테스트는 { rpc: vi.fn() }만으로 client mock
