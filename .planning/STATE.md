@@ -1,26 +1,26 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: — 전면 개편
-current_phase: 21
-current_phase_name: Travel Ledger (메일 전달 가계부)
-status: executing
-stopped_at: Phase 21 코드 완료 (5/5 플랜) + post-wave 게이트 완료. 회귀 365 green(core143·api74·ios127·deno21). code-review=1 Critical(CR-01)+4warn+5info → CR-01 수정(마이그레이션 0023: ledger UPDATE WITH CHECK에 trip_id 멤버십 제약, RLS 매트릭스 4케이스 PASS) + WR-01(email 행 저장 amount_krw 사용)·WR-03(EdgeRuntime.waitUntil)·WR-04(unassigned 인박스 status 필터) 수정 → REVIEW critical 0/warning 1(WR-02만 open)+info 5 잔여(비blocking). verify=human_needed(3/6 정적 VERIFIED; LEDGER-02/04/05는 라이브 파이프라인 필요). 21-04 CF배포·21-05 device UAT는 사용자 '코드만 커밋' 결정으로 phase-verify 이관(21-UAT.md 2항목). 잔여 next 세션: (ship 전) /gsd-secure-phase 21 · (CF배포 후) /gsd-verify-work 21.
-last_updated: "2026-07-05T14:05:00.000Z"
-last_activity: 2026-07-05
-last_activity_desc: Phase 21 execute 완료 — 5 plan 코드 + 회귀 + code-review(CR-01 fix 0023) + verify(human_needed). CF배포·device UAT 이연
+milestone: v2.1
+milestone_name: 웹 퍼스트 지도탭 테스트
+current_phase: null
+current_phase_name: null
+status: defining-requirements
+stopped_at: null
+last_updated: "2026-07-07T00:00:00.000Z"
+last_activity: 2026-07-07
+last_activity_desc: Milestone v2.1 시작 — 웹 퍼스트 피봇 (웹 입력·저장·편집 개방, 지도탭 발견+결정만). v2.0 잔여(19 UAT·21 CF배포·22)는 보존, 추후 마감
 progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 26
-  completed_plans: 22
-  percent: 71
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
-# STATE: MOAJOA v2.0
+# STATE: MOAJOA v2.1
 
-**Last updated:** 2026-06-22
-**Milestone:** v2.0 (전면 개편 — 발견→예약→정산 풀 루프)
+**Last updated:** 2026-07-07
+**Milestone:** v2.1 (웹 퍼스트 지도탭 테스트 — 발견+결정을 웹 풀 서피스로)
 
 ---
 
@@ -36,11 +36,18 @@ progress:
 
 ## Current Position
 
-Phase: 21 (Travel Ledger (메일 전달 가계부)) — EXECUTING
-Plan: 21-05 CODE-COMPLETE (Task 1–4 done, Task 5 device UAT phase-verify 이관) — 5 of 5 플랜 코드 done
-Status: Executing Phase 21 — Wave 4 코드 완료 (21-05 가계부 iOS 표면 완성, jest 127 green·typecheck 0). 남은 것은 라이브 end-to-end device UAT(21-04 CF 배포 선행) 뿐.
-Last activity: 2026-07-05 — 21-05 Task 1–4 실행 완료 (LedgerRow 환율 3색 + LedgerEntrySheet 2모드 + ledger.tsx 상태머신 홈 + me 전달주소 카드 + forwarding lib + app.config 도메인 배선 + ledger.test.tsx 4케이스; iOS 풀스위트 127 green 무회귀, typecheck 0; commits 8924ce0·efc0e72·4284941·e34aa40). Task 5(디바이스 + 실메일 UAT)는 21-04 Task 5 CF 배포 전제로 phase-verify 이관.
-Next: **21-04 Task 5 CF 인프라 배포**(사용자 계정 작업: moajoa.app DNS → Cloudflare 이전 + Email Routing 활성화 + INGEST_SECRET 생성/배선 + `supabase functions deploy inbound-email parse-email` + `wrangler deploy`) → 완료 후 `/gsd-verify-work`로 phase 21 device UAT(21-04 스모크 + 21-05 가계부 흐름) 실행. **EXPO_PUBLIC_FORWARDING_DOMAIN** = CF 배포 시 확정 도메인을 apps/ios/.env.local에 배선. **Phase 19·20 UAT 완료(2026-07-05)** — `/gsd-verify-work` sign-off 후 19·20 동시 ship 가능(F-20-2·C-19-2·F-20-3 경미 후속).
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements — milestone v2.1 (웹 퍼스트 지도탭 테스트)
+Last activity: 2026-07-07 — Milestone v2.1 시작. 웹 퍼스트 피봇 결정 + 유저 시나리오·네이밍(모아/찜) 확정 + 상세 구현 설계 승인 (온보딩 4단계, /moa 지도탭, /t/[slug] 통합 공유화면, 익명 게스트 인증, 카카오 OAuth, 순번 채번 0024, share_mode/채팅 0025)
+Next: REQUIREMENTS.md 정의 → 로드맵 생성 (Phase 23~27 제안 기반)
+
+### v2.0 잔여 (보존 — v2.1과 무관하게 추후 마감)
+
+- **Phase 21 CF 인프라 배포** (동료 계정 작업: moajoa.app DNS → Cloudflare + Email Routing + INGEST_SECRET + `supabase functions deploy inbound-email parse-email` + `wrangler deploy`) — 런북 `phases/21-travel-ledger/21-HANDOFF.md` §1~§5. 완료 후 `/gsd-verify-work 21` (device UAT: 21-04 스모크 + 21-05 가계부 흐름). `EXPO_PUBLIC_FORWARDING_DOMAIN` 배선 포함
+- **Phase 19·20 UAT 완료(2026-07-05)** — `/gsd-verify-work` sign-off 후 19·20 ship 가능 (F-20-2·C-19-2·F-20-3 경미 후속)
+- **(ship 전) `/gsd-secure-phase 21`** 잔여
+- **Phase 22 안드로이드 패러티** — 미착수. 웹 테스트(v2.1) 결과 보고 재판단
 
 **Phase 19·20 human UAT 완료 (2026-07-05, sim idb + 웹 2브라우저 Playwright):** 병렬 대기였던 human UAT를 자동화로 마저 검증. **셋업**: (A) 오사카 trip에 유튜브(도톤보리 `j-EilTC4cbQ`) 추출→장소5→generate-plan 초안(여행준비 예약클러스터+Day1–3); (B) iOS dateless 온보딩으로 후쿠오카 open poll(범위형, 후보 7/11–13·7/25–27)→초대링크 `/poll/lv7bbwzfbqoc`. **Phase 20:** 20-1 PASS(전 [보기]→시스템 Safari; Klook c137.travelpayouts, KKday/Airalo tp.media, 한글 인코딩 무파손; Booking 프리필 완벽, F-20-2 Agoda 홈리다이렉트 경미) · 20-3 PASS(D-03 plan→book 확인함·book [보기]복귀 조용히 확인함·D-13 완료액티비티 미배치→플랜에없음 보존·auto+완료 삭제숨김) · 20-4 PASS(직접추가·빈/81자 차단·수동+완료 삭제·재생성 후 유지) · 20-5 PASS(기존) · 20-6 PASS(웹 presence 양쪽 "지금 2명 보는 중" 수렴 — **F-20-3: 로컬 node_modules stale 2.45.4였음, `pnpm install`로 선언된 2.110.0 realize 후 수렴; GAP-19D fix 실효 확인**; iOS 호스트 카드 "참여 2명" realtime 반영) · 20-2 skip(TP 대시보드 외부). **Phase 19:** 19-1 PASS(기존) · 19-2 PASS(닉네임 게이트+빈값 차단·익명 range 투표 0→1→2·realtime 투표/집계/닉네임/채팅 fan-out·presence 2명·closed→"확정: 7/11–7/13"+가입 CTA+투표/댓글 거부; C-19-2: web SSR 캐시 1h TTL이 iOS 폴닫기에 자동 무효화 안 됨—dev 재시작으로 반영, 프로덕션 revalidate 경로 검토 권장). 상세: `19-HUMAN-UAT.md`·`20-HUMAN-UAT.md`.
 

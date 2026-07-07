@@ -8,24 +8,28 @@
 
 **"링크 → 30초 안에 지도 위의 핀."** 사용자가 영상 URL을 던지면 손대지 않아도 그 안의 장소가 정확히 지도 위에 떠야 한다. 이게 안 되면 나머지(공유·투표·UI)는 의미 없음.
 
-## Current Milestone: v2.0 — 전면 개편 (발견→예약→정산 풀 루프)
+## Current Milestone: v2.1 — 웹 퍼스트 지도탭 테스트
 
-**Goal:** 추출+투표에 머물던 제품을 발견 → 결정 → 플랜 → 예약 → 정산의 풀 루프로 확장하고, 네비게이션을 여행 4단계(지도·플랜·예약·가계부)로 재편한다. 수익(제휴 수수료)을 MVP에 내장.
+**Goal:** 유저 반응을 빠르게 관찰하기 위해, 웹에서 입력·저장·편집이 모두 가능한 지도탭(발견+결정) 테스트 버전을 출시한다. iOS는 이번 마일스톤 불변.
 
 **Target features:**
-- **시작 일정 분기** — 정해짐→날짜·도시 입력 / 미정→일행과 날짜 투표(초대 링크)
-- **사용자 트리거 AI 플랜** — 추출로 장소를 모은 뒤 plan 탭 "플랜 만들기"로 AI 초안 생성(추출 직후 자동 아님). 투표는 같은 플랜 위에 얹는 옵션
-- **가격비교 + 딥링크 제휴 예약** — Travelpayouts·Stay22(숙소·액티비티·교통·유심). 수수료 Day1
-- **여행 가계부** — 개인 전용 주소로 예약 메일 전달 → AI 파싱(카드·통화·환율·결제시점)
-- **네비게이션/IA 재편** — `trip/[id]/(tabs)`: 지도·플랜·예약·가계부. 1개면 바로 진입, 새 여행=컨텍스트
-- **Android 앱(대표/결제자)** — 또는 임시 반응형 웹 예약
+- **온보딩 4단계** — 어디로(도시 칩 9+기타) → 날짜(확정/미정) → 누구랑 → 봐둔 곳(링크/장소검색/skip). 호스트 로그인 필수 + 카카오 OAuth 추가
+- **`/moa/[id]` 메인 지도탭** — 순번 불변 장소 리스트(찜순 정렬) + 사람별 핀 색 + 아코디언 상세
+- **웹 입력 개방** — 링크(유튜브·블로그) 자동 추출 + 구글 장소 검색 추가 (기존 "웹 생성 UI 금지" 룰 공식 반전)
+- **함께 정하기** — 날짜/장소/둘다 모드 선택 → 공유링크 → `/t/[slug]` 통합 공유화면 (기존 /t·/poll 분리 구조 통합)
+- **게스트 익명 인증** — 닉네임만으로 찜·날짜투표·장소추가·채팅, 재접속 식별
+- **실시간 채팅** — presence + 장소 멘션 답장(#N 순번 지칭)
+- **네이밍 개편** — 보드→"모아", 가고싶어→"찜" (유저 대면 카피)
 
 **범위 외 (이번 마일스톤):**
-- **여행 당일 실시간**(항공 게이트·공항 주차) — phase 2 프리미엄
-- **데이터 라이선싱 · 인앱 MOR 결제** — 장기
-- **방문 인증(GPS·영수증)** — 제거 (신뢰 근거는 실제 예약·결제 데이터로)
+- **플랜·예약·정산 탭 웹 이식** — 지도탭만. 나머지 루프는 반응 확인 후
+- **iOS 변경** — 전면 동결
+- **게스트 계정 승격 UI** — 익명→정식 전환은 다음 단계
+- **스와이프 답장 제스처** — 답장 버튼으로 대체
 
-*제품 단일 출처: [docs/PRODUCT.md](../docs/PRODUCT.md) · 재심사 지원서: [docs/MOAEUM-APPLICATION.md](../docs/MOAEUM-APPLICATION.md)*
+**v2.0 잔여 (보존, 추후 마감):** Phase 19 UAT sign-off · Phase 21 CF 배포(동료 런북 `phases/21-travel-ledger/21-HANDOFF.md`) + device UAT · Phase 22 안드로이드 패러티(웹 테스트 결과 보고 재판단)
+
+*제품 단일 출처: [docs/PRODUCT.md](../docs/PRODUCT.md) · 승인된 구현 설계: v2.1 approved plan (온보딩·스키마 0024/0025·통합 공유화면·채팅)*
 
 ## Requirements
 
@@ -79,7 +83,7 @@
 - **Backend**: Supabase only — Firebase/Firestore 재도입 금지 (피봇 결정)
 - **DB migrations**: append-only — 기존 SQL 수정 금지, 새 번호 파일만 추가
 - **Workspace imports**: `.js` extension 금지 (Turbopack 호환)
-- **Web 역할 분리**: web에 *새로운* "보드 생성·링크 추가" UI 추가 금지. 그건 iOS 전용
+- ~~**Web 역할 분리**: web에 *새로운* "보드 생성·링크 추가" UI 추가 금지. 그건 iOS 전용~~ → **v2.1에서 공식 반전 (2026-07-07)**: 웹이 입력·저장·편집 풀 서피스. iOS는 동결
 - **Service role 노출 금지**: 클라이언트 번들에 service key 절대 X. Edge Function만 사용
 - **Budget**: 추출 비용 영상당 < $0.005 (Places FieldMask 최소화). Anthropic + Places API 합산
 - **Performance**: 공개 보드 SSR < 800ms TTFB, iOS cold start < 2s, 추출 e2e < 30s p90
@@ -96,6 +100,9 @@
 | 성공 기준 = self dogfooding | 사용자 수·런칭 압박 없음. "내가 일본 여행 계획에 실제로 쓸 수 있는가" | — Pending |
 | 마이그레이션 append-only | 한 번 prod 적용되면 영구. 0002에서 RLS 사이클 해소한 패턴 유지 | ✓ Good (이미 적용됨) |
 | RLS 크로스 테이블 = SECURITY DEFINER 헬퍼 | 직접 EXISTS는 무한재귀. 0002·0005에서 학습 | ✓ Good |
+| 웹 퍼스트 피봇 (v2.1, 2026-07-07) | 유저 반응 검증이 최우선. iOS Share Extension 경로보다 웹 링크 유입이 빠른 실험. 웹 생성 UI 금지 룰(D26) 반전 | — Pending (이번 마일스톤) |
+| 게스트 = 익명 인증 + 닉네임 | 익명도 auth.uid 발급·재접속 식별·계정 승격 가능. 기존 RLS가 anonymous를 authenticated로 취급해 재작성 불필요 | — Pending |
+| 네이밍: 보드→모아, 가고싶어→찜 | 카톡 대화 발화 자연스러움("제주 모아 만들었어, 찜 해줘") = 바이럴 기준. 브랜드명(모아조아)과 직결 | — Pending |
 
 ## Evolution
 
@@ -115,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-21 — milestone v2.0 시작 (전면 개편: 발견→예약→정산). 이전: 2026-06-07 v1.1, 2026-05-25 brownfield init*
+*Last updated: 2026-07-07 — milestone v2.1 시작 (웹 퍼스트 지도탭 테스트). 이전: 2026-06-21 v2.0 (미완 잔여 보존: 19 UAT·21 배포·22), 2026-06-07 v1.1, 2026-05-25 brownfield init*
