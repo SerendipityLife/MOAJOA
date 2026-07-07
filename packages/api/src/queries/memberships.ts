@@ -15,6 +15,22 @@ export async function joinSharedTrip(
 }
 
 /**
+ * Self-join a moa by its share slug. Idempotent (already a member = no-op — no
+ * role promotion, D-A4). Backed by the SECURITY DEFINER join_moa RPC (0025):
+ * role is decided server-side by share_mode (places/both → editor, dates/null
+ * → voter) and user_id = auth.uid() — the caller can only join as themselves.
+ * Anonymous sessions work: they carry the authenticated role.
+ */
+export async function joinMoa(
+  client: MoajoaSupabaseClient,
+  shareSlug: string,
+): Promise<string> {
+  const { data, error } = await client.rpc('join_moa', { p_share_slug: shareSlug });
+  if (error) throw error;
+  return data as string;
+}
+
+/**
  * The caller's relationship to a trip: 'owner' (no memberships row by design),
  * 'member' (accepted memberships row), or null. Lets vote surfaces render the
  * member view on revisit instead of re-prompting 참여하기 (and prevents owners
