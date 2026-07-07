@@ -372,8 +372,45 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 ## v2.1 Traceability
 
-(roadmap 생성 후 채움)
+Roadmap (2026-07-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADMAP.md` "## Milestone v2.1". Phase 번호는 기존 마지막(Phase 22)에서 이어감 → Phase 23~27. v2.0 잔여(19 UAT·21 CF배포·22)는 v2.1 밖에 보존.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| MOA-01 | Phase 23 | Pending |
+| AUTH-07 | Phase 24 | Pending |
+| ONBOARD-03 | Phase 24 | Pending |
+| ONBOARD-04 | Phase 24 | Pending |
+| ONBOARD-05 | Phase 24 | Pending |
+| MOA-02 | Phase 24 | Pending |
+| MOA-03 | Phase 24 | Pending |
+| MOA-04 | Phase 24 | Pending |
+| MOA-05 | Phase 24 | Pending |
+| MOA-06 | Phase 24 | Pending |
+| SHARE-01 | Phase 24 | Pending |
+| AUTH-08 | Phase 25 | Pending |
+| SHARE-02 | Phase 25 | Pending |
+| SHARE-03 | Phase 25 | Pending |
+| SHARE-04 | Phase 25 | Pending |
+| CHAT-01 | Phase 26 | Pending |
+| CHAT-02 | Phase 26 | Pending |
+| CHAT-03 | Phase 26 | Pending |
+| SEC-01 | Phase 27 | Pending |
+| NAME-01 | Phase 27 | Pending |
+
+**Coverage:**
+
+- v2.1 requirements: 20 total → mapped to phases 23~27: 20 ✓
+- Unmapped: 0
+- Duplicate mappings: 0
+
+**Phase별 매핑 요약:**
+
+- Phase 23 (Web-First Foundation): MOA-01 — 1 (AUTH-07/08·SEC-01·SHARE의 백엔드 기반도 여기서 놓지만, 각 요구사항은 e2e 검증 가능한 phase에 단일 매핑)
+- Phase 24 (Host Flow): AUTH-07, ONBOARD-03..05, MOA-02..06, SHARE-01 — 10
+- Phase 25 (Guest Unified Share): AUTH-08, SHARE-02..04 — 4
+- Phase 26 (Realtime Chat): CHAT-01..03 — 3
+- Phase 27 (Hardening & 마감): SEC-01, NAME-01 — 2
 
 ---
 *Requirements defined: 2026-05-25*
-*Last updated: 2026-07-07 — v2.1 요구사항 정의 (웹 퍼스트 지도탭 테스트, 20개). 이전: 2026-06-21 — 17-04 완료로 NAV-02/03 Complete 마킹 + v2.0 roadmap 생성 (Phase 17~22)*
+*Last updated: 2026-07-07 — v2.1 roadmap 생성으로 traceability 매핑 (Phase 23~27, 20/20). 이전: 같은 날 v2.1 요구사항 정의, 2026-06-21 — 17-04 완료로 NAV-02/03 Complete 마킹 + v2.0 roadmap 생성 (Phase 17~22)*

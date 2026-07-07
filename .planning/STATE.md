@@ -10,7 +10,7 @@ last_updated: "2026-07-07T00:00:00.000Z"
 last_activity: 2026-07-07
 last_activity_desc: Milestone v2.1 시작 — 웹 퍼스트 피봇 (웹 입력·저장·편집 개방, 지도탭 발견+결정만). v2.0 잔여(19 UAT·21 CF배포·22)는 보존, 추후 마감
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -36,11 +36,11 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 23 (Web-First Foundation) — not started
 Plan: —
-Status: Defining requirements — milestone v2.1 (웹 퍼스트 지도탭 테스트)
-Last activity: 2026-07-07 — Milestone v2.1 시작. 웹 퍼스트 피봇 결정 + 유저 시나리오·네이밍(모아/찜) 확정 + 상세 구현 설계 승인 (온보딩 4단계, /moa 지도탭, /t/[slug] 통합 공유화면, 익명 게스트 인증, 카카오 OAuth, 순번 채번 0024, share_mode/채팅 0025)
-Next: REQUIREMENTS.md 정의 → 로드맵 생성 (Phase 23~27 제안 기반)
+Status: Ready to plan Phase 23 — v2.1 roadmap 생성 완료 (Phase 23~27, 20/20 reqs 매핑)
+Last activity: 2026-07-07 — v2.1 로드맵 생성: 23 기반(0024/0025·익명·카카오 스위치·계약·D26 반전) → 24 호스트 플로우(온보딩·지도탭) → 25 게스트 통합 공유화면 → 26 채팅 → 27 마감(추출 게이트·카피·2인극 UAT). 승인된 구현 설계(온보딩 4단계, /moa, /t/[slug] 통합, 익명 게스트, 카카오 OAuth) 기반
+Next: /gsd-plan-phase 23
 
 ### v2.0 잔여 (보존 — v2.1과 무관하게 추후 마감)
 

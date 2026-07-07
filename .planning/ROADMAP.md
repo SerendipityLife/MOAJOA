@@ -188,3 +188,107 @@ Plans:
 | 20. Affiliate Booking | 7/7 | Complete   | 2026-07-04 |
 | 21. Travel Ledger | 5/5 | Complete   | 2026-07-05 |
 | 22. Android Parity | 0/~2 | Not started | - |
+
+---
+
+## Milestone v2.1 — 웹 퍼스트 지도탭 테스트
+
+**Defined:** 2026-07-07 · 출처: 승인된 웹 퍼스트 구현 설계 (온보딩 4단계·스키마 0024/0025·통합 공유화면·채팅) + `docs/PRODUCT.md`
+**Goal:** 유저 반응을 빠르게 관찰하기 위해, 웹에서 입력·저장·편집이 모두 가능한 지도탭(발견+결정) 테스트 버전을 출시한다. 기존 "웹 생성 UI 금지"(D26) 룰 공식 반전. iOS는 전면 동결.
+**Granularity:** standard
+**Phase 번호:** 기존 마지막(Phase 22)에서 이어감 → Phase 23~27. v2.0 잔여(Phase 19 UAT sign-off · 21 CF 배포 · 22 미착수)는 이 마일스톤 **밖에** 보존 — 번호·내용 무변경.
+
+빌드 순서: 기반(23)이 비협상 첫 번째(스키마·인증 스위치·계약 seam) → 호스트 플로우(24) → 게스트 통합 공유화면(25, 24의 공유링크 필요) → 채팅(26, 25의 join·화면 필요) → 마감(27, 전 기능 위에서 게이트·카피·UAT).
+
+### Phases
+
+- [ ] **Phase 23: Web-First Foundation** — 0024 순번 채번 + 0025 share_mode/채팅/join_moa + 익명 sign-in·카카오 provider 스위치 + core/api 계약 + CLAUDE.md D26 반전
+- [ ] **Phase 24: Host Flow (온보딩·지도탭)** — 카카오 버튼 + `/onboarding` 4단계 + `/moa`·`/moa/[id]` 지도탭 + 링크·장소 추가 + 함께 정하기 시트
+- [ ] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가
+- [ ] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩
+- [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
+
+### Phase Details
+
+### Phase 23: Web-First Foundation
+
+**Goal**: 웹 퍼스트에 필요한 데이터·인증·계약 기반이 잠긴다 — 장소 순번 영구 채번(0024), share_mode·companion·trip_messages·join_moa RPC(0025), 익명 sign-in + 카카오 provider 스위치, packages/core+api 계약(TripCreateDraft·chat 스키마·moaChannelName·joinMoa/shareMoa 쿼리), CLAUDE.md D26 룰 공식 반전. 이후 모든 phase가 import할 seam.
+**Depends on**: Nothing within v2.1 (v2.0 산출물 — trips 스키마 0016~0022 · `/t/[slug]` OG/revalidate 인프라 · poll RPC — 위에서 시작)
+**Requirements**: MOA-01
+**Success Criteria** (what must be TRUE):
+
+  1. `supabase db reset`이 0024·0025 포함 클린 통과하고(42P17 recursion 0), 재생성된 타입 위에서 core/api 테스트가 그린이다
+  2. 동시에 여러 장소를 삽입해도 순번(#1, #2…)이 중복·결번 없이 채번되고, 소프트삭제·복원 후에도 원래 순번이 유지된다 (advisory-lock 트리거 SQL 동시성 테스트 — MOA-01)
+  3. 익명 sign-in이 활성화되어 curl/클라이언트로 익명 세션(auth.uid)이 발급되고, `join_moa(slug)`가 share_mode에 따라 editor/voter 멤버십을 부여한다 (AUTH-08·SHARE-03의 백엔드 기반)
+  4. 카카오 provider가 config.toml·대시보드에 설정되어 OAuth 플로우 시작이 가능하다 (버튼 UI·e2e 검증은 Phase 24)
+  5. CLAUDE.md §5 D26 불릿이 반전되어 이후 세션이 웹 생성·편집 UI 작업을 거부하지 않는다
+
+**Plans**: TBD
+
+### Phase 24: Host Flow (온보딩·지도탭)
+
+**Goal**: 호스트가 웹에서 전 흐름을 완주한다 — 로그인(카카오 포함) → 4단계 온보딩으로 모아 생성 → `/moa/[id]` 지도탭에서 링크 자동 추출·장소 검색 추가 → 순번·찜순·아코디언·사람별 색 리스트 → [함께 정하기] 공유링크 생성·복사.
+**Depends on**: Phase 23 (0024/0025 스키마 + core/api 계약 + provider 스위치)
+**Requirements**: AUTH-07, ONBOARD-03, ONBOARD-04, ONBOARD-05, MOA-02, MOA-03, MOA-04, MOA-05, MOA-06, SHARE-01
+**Success Criteria** (what must be TRUE):
+
+  1. 카카오 계정으로 로그인할 수 있다 (기존 이메일·구글·애플 유지; 카카오 e2e는 Vercel Preview에서 확인 — 로컬은 이메일 대체)
+  2. 로그인 직후 4단계 온보딩 — 어디로(도시 칩 9개+기타 직접입력) → 날짜(확정: 기간 입력 / 미정: 안내 한 줄 후 통과) → 누구랑 → 봐둔 곳(링크/장소검색/건너뛰기) — 을 거쳐 모아가 생성된다
+  3. `/moa/[id]` 지도탭에서 유튜브·블로그 링크를 추가하면 자동 추출되어 핀이 지도에 뜨고, 구글 장소 검색으로 직접 추가할 수 있다
+  4. 장소 리스트가 찜 수 내림차순(동률 시 순번 오름차순)으로 정렬되되 순번 표기는 불변이고, 행 탭 시 아코디언 상세(주소·구글맵·출처 타임스탬프·답장 버튼), 마커 탭 시 해당 행 스크롤+펼침, 추가자별 핀 색(호스트=브랜드색)과 "닉네임님이 담음"이 표시된다
+  5. [함께 정하기]에서 날짜/장소/둘다 모드를 선택해 공유링크를 생성·복사할 수 있다 (날짜 확정된 모아는 '날짜 정하기' 숨김)
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 25: Guest Unified Share (통합 공유화면)
+
+**Goal**: 게스트가 공유링크 하나로 무설치 참여를 완주한다 — `/t/[slug]`가 share_mode 인지 통합 화면으로 진화(기존 /t·/poll 분리 구조 통합), 닉네임만으로 익명 인증·join, 모드별 찜·장소/링크 추가·날짜투표, 호스트 화면 실시간 반영.
+**Depends on**: Phase 24 (공유링크 생성 + place-list·add-link 컴포넌트 승격분). Phase 23 계약(join_moa·익명 인증) 사용
+**Requirements**: AUTH-08, SHARE-02, SHARE-03, SHARE-04
+**Success Criteria** (what must be TRUE):
+
+  1. 공유링크(`/t/[slug]`)가 비로그인 상태에서 SSR로 즉시 렌더된다 (모아 이름·지도·장소 리스트; 첫 페인트만 캐시, 가변 데이터는 클라이언트 하이드레이션)
+  2. 게스트 첫 상호작용 시 닉네임 바텀시트 → 익명 인증 → join_moa가 이어지고, 같은 브라우저로 재접속하면 동일 신원(찜·추가 이력)으로 식별된다
+  3. 게스트가 share_mode에 따라 찜·장소/링크 추가·날짜 투표에 참여할 수 있다 (dates 모드 날짜투표는 기존 익명 poll RPC 임베드, device_token := auth.uid)
+  4. 게스트의 찜·장소 추가가 호스트 화면에 실시간 반영되고, 게스트가 추가한 장소는 이어지는 순번(#N+1)을 받는다
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 26: Realtime Chat
+
+**Goal**: 같은 모아에 모인 사람들이 실시간으로 대화하며 장소를 순번으로 지칭해 결정한다 — trip_messages 히스토리 + `moa:{tripId}` 화면당 단일 채널(presence·message·vote·place_added 통합, "한 토픽 채널 2개 금지" 교훈 유지) + #N 장소 멘션 답장.
+**Depends on**: Phase 25 (게스트 join 멤버십 — 채팅 히스토리 RLS SELECT 전제 — + 통합 공유화면 표면)
+**Requirements**: CHAT-01, CHAT-02, CHAT-03
+**Success Criteria** (what must be TRUE):
+
+  1. 같은 모아 공유화면에 접속한 사람들(호스트·게스트)이 실시간으로 채팅할 수 있고, 새로고침 후에도 히스토리가 유지된다
+  2. "지금 N명 보는 중" 접속자 수가 입장·퇴장에 따라 실시간 갱신된다 (두 브라우저에서 수렴)
+  3. 장소 행의 답장 버튼으로 메시지를 보내면 인용 칩(#N 장소명)이 붙고, 칩을 탭하면 해당 장소로 스크롤·하이라이트된다
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 27: Hardening & 마감
+
+**Goal**: 테스트 버전을 외부 노출 가능한 상태로 마감한다 — 추출 트리거 멤버십 게이트(익명 세션 비용 남용 차단), 모아/찜 카피 스윕 완성(테스트 단언 동기화), WORKSTREAMS·ARCHITECTURE 문서 역할 기술 수정, revalidate 확인, 2인극 UAT 전체 통과.
+**Depends on**: Phase 23~26 (전 기능이 존재해야 게이트·카피·UAT 검증 가능)
+**Requirements**: SEC-01, NAME-01
+**Success Criteria** (what must be TRUE):
+
+  1. 해당 모아의 멤버가 아닌 사용자(익명 세션 포함)의 추출 트리거(Edge Function) 호출이 거부된다 — 멤버만 추출 가능
+  2. 유저 대면 카피 전반(랜딩·로그인·공유화면·리스트·OG·poll 푸터)이 보드→"모아", 가고싶어→"찜"으로 표기되고, 관련 테스트 카피 단언이 같은 커밋에서 갱신된다 (코드 식별자는 유지)
+  3. 2인극 UAT가 전체 통과한다 — 브라우저 A(호스트): 로그인→온보딩(여행지+미정+함께)→유튜브 링크→#1..#N 핀→함께 정하기 '둘다'→복사 / 브라우저 B(시크릿): 링크 열기→즉시 렌더→찜 시 닉네임 게이트→날짜투표+장소추가(#N+1)→채팅 "#3 어때?" / A 복귀: 실시간 반영·찜순 정렬·순번 불변
+
+**Plans**: TBD
+
+### Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 23. Web-First Foundation | 0/TBD | Not started | - |
+| 24. Host Flow (온보딩·지도탭) | 0/TBD | Not started | - |
+| 25. Guest Unified Share | 0/TBD | Not started | - |
+| 26. Realtime Chat | 0/TBD | Not started | - |
+| 27. Hardening & 마감 | 0/TBD | Not started | - |
