@@ -6,15 +6,15 @@ current_phase: 23
 current_phase_name: Web-First Foundation
 status: executing
 stopped_at: null
-last_updated: "2026-07-07T17:14:07.000Z"
+last_updated: "2026-07-07T17:24:39.000Z"
 last_activity: 2026-07-08
-last_activity_desc: 23-03 실행 완료 — config.toml 익명 sign-in ON + [auth.external.kakao] env() 블록 + KAKAO placeholder + CLAUDE.md §5 D26 공식 반전. Wave 1 완료, 다음 Wave 2 = 23-04 [BLOCKING]
+last_activity_desc: 23-04 실행 완료 — [BLOCKING] 스키마 적용 게이트 통과. reset 클린(0016~0025, 42P17=0) + database.ts 재생성 + core/api 무회귀 + MOA-01 하네스·웹 공유 smoke 라이브 PASS. Wave 2 완료, 다음 Wave 3 = 23-05 core 계약(TDD)
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 3
-  percent: 43
+  completed_plans: 4
+  percent: 57
 ---
 
 # STATE: MOAJOA v2.1
@@ -36,11 +36,13 @@ progress:
 
 ## Current Position
 
-Phase: 23 (Web-First Foundation) — executing (Wave 1 완료)
-Plan: 7 플랜 / 5 웨이브 (3/7 완료 — 23-01·23-02·23-03 done)
-Status: Executing Phase 23 — Wave 1 완료(0024·0025+하네스·smoke 미적용 + config 스위치·D26 반전). 다음: Wave 2 = 23-04 [BLOCKING] 스키마 적용 게이트(colima 선행)
+Phase: 23 (Web-First Foundation) — executing (Wave 2 완료)
+Plan: 7 플랜 / 5 웨이브 (4/7 완료 — 23-01·23-02·23-03·23-04 done)
+Status: Executing Phase 23 — Wave 2 완료(23-04 [BLOCKING] 게이트 통과 — 0024·0025 실적용 + 하네스·smoke 라이브 PASS). 다음: Wave 3 = 23-05 core 계약(TDD)
 Last activity: 2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)
-Next: /gsd-execute-phase 23 (계속 — Wave 2 = 23-04 [BLOCKING], colima 선행)
+Next: /gsd-execute-phase 23 (계속 — Wave 3 = 23-05 core 계약 TDD)
+
+**23-04 실행 완료 (2026-07-08, commits 05c109a·948032f·280d728):** Phase 23 Wave 2 — [BLOCKING] 스키마 적용 게이트 통과, MOA-01 완료 마킹. **적용**: `supabase stop && start`(KAKAO 더미 env `dummy-local` 인라인+gitignored `supabase/.env.local` — config.toml 익명·kakao 스위치 로딩) → `supabase db reset` 클린(0016~0025 전체, `0024_place_seq`·`0025_web_share` 적용 라인, **42P17 0건** — 성공 기준 1 전반부) → `pnpm supabase:types`(database.ts +66줄 additive: trip_messages·seq_no·share_mode·companion·last_place_seq·join_moa) → core 143+api 74 tests 그린·양쪽 typecheck exit 0(무회귀). **MOA-01 실증(성공 기준 2)**: 하네스 PASS — `40|40|40`(동시 8-way 무중복·무결번)·hard-delete→41 무재사용·soft-restore 3|true·forge 999→42. **smoke PASS(성공 기준 3+4 로컬 절반)**: is_anonymous=true·role=authenticated + join_moa both→editor/dates→voter(D-A1) + **trip_messages RLS 익명 JWT GET 200**(런타임 42P17 무발화, T-23-09) + kakao authorize `kauth.kakao.com`. **deviation 3건(전부 Rule 1 — 테스트 스크립트 버그, 0024·0025 SQL 무수정)**: psql `INSERT...RETURNING` 캡처는 `-q` 필수(커맨드 태그 `INSERT 0 1` 누출 — 하네스 TRIP/FORGE + smoke T_BOTH/T_DATES) + boolean`||`text는 `'true'` 캐스트(psql 표시형 `t` 아님 — 단언 기대값 정정). **Wave 3+ 언블록** — T-23-13 false-positive 위험 해소, 원격 push는 범위 외(23-07에서 상태만 확인). 상세: `23-04-SUMMARY.md`.
 
 **23-03 실행 완료 (2026-07-08, commits 88efaa1·d1a33bb):** Phase 23 Wave 1 마감 — AUTH-07/AUTH-08 스위치·룰 기반(e2e 마킹은 Phase 24/25). **config.toml**: `enable_anonymous_sign_ins = true` + `[auth.external.kakao]`(enabled=true, `env(KAKAO_REST_API_KEY)`/`env(KAKAO_CLIENT_SECRET)` — apple/google idiom 미러, 실값 0, 기존 블록 무수정 T-23-10). **`.env.local.example`**: KAKAO 2키 `...` placeholder(§4.7, 실파일 무접촉). **CLAUDE.md**: §5 D26 "Web 생성·링크 추가 UI 금지" 불릿 **공식 반전** → "iOS 전면 동결(v2.1)" + 반전 이력 괄호 보존(dev-tool 폼 격리 NEXT_PUBLIC_ENABLE_DEV_TOOLS는 정식 UI 대체 시까지 유지), §4.1 web 역할 = 입력·저장·편집 풀 서피스 (ROADMAP 성공 기준 5 완결, 성공 기준 3·4는 로컬 절반 — 프로덕션 대시보드·Kakao console은 23-07 human-action). **실효 검증(스택 재시작+smoke)은 23-04** — 주의: `supabase start`가 KAKAO env 부재 시 env() 치환 경고/실패 가능, `supabase/.env.local`에 실값(또는 더미) 필요. deviation 0. 상세: `23-03-SUMMARY.md`.
 
@@ -231,6 +233,7 @@ Plan: 1 of 1
 - Phase 17 Plan 17-02 완료: 2026-06-21 (~4분, 1 TDD feature RED→GREEN, no REFACTOR; commits d014c2d test + 35520a8 feat; booking 15 신규 = 50/50 core vitest PASS, core typecheck exit 0, Pitfall 1 grep guard PASS; `packages/core/src/booking.ts` 신규[buildAffiliateUrl 단일 헬퍼 + ClickTokenSchema /^c_[0-9A-Za-z]{8,30}$/ + BookingClickContextSchema UUID+optional placeId + AffiliateProvider enum] + booking.test.ts 신규[8 토큰 + 3 컨텍스트 + 4 URL] + index.ts barrel `export * from './booking'`; subId를 ClickTokenSchema.parse로 재검증해 손조립 SubID 누락 구조적 불가[Pitfall 1, D-06], 토큰 charset = Travelpayouts ∩ Stay22 base62 교집합[Pitfall 5], 주입 사이트 travelpayouts→sub_id/stay22→campaign; Phase 17 contract-only — base URL/marker/aid PLACEHOLDER, booking_clicks INSERT·리다이렉트 EF는 Phase 20; 1 deviation R1: 테스트의 unused @ts-expect-error 제거[ClickToken은 unbranded string이라 가드는 런타임 parse throw — TS2578 픽스, .toThrow() 단언 유지]; ATTR-01 계약 락 완료)
 - Phase 16 Plan 16-02 완료: 2026-06-17 (~12분, 2 tasks TDD RED→GREEN; commits 5246913 test + eeb2123 feat[extractSharedUrl] + 39fc6d2 test + 8ef679b feat[share-handler + provider wrap]; share-payload 9/9 + share-handler 6/6 = 15 신규, iOS 풀스위트 69/69 PASS, tsc clean; lib/share-routing.ts에 `extractSharedUrl` Zod http(s) 가드[V5, zod import 추가 — decideShareRoute는 순수 유지] + app/share-handler.tsx 마운트 핸들러[`handleSharedUrl` 테스트 가능 seq seam: V5 가드→await getSession[Pitfall 4]→decideShareRoute→linger enqueuePendingLink AS-IS[D-02] / auto 직접 addLink+startExtraction+navigate[D-03 가시 핀, triggerExtraction 아님] / picker no-op 핸드오프[16-03]; resetShareIntent+handled ref dedup[Pitfall 2]] + _layout.tsx ShareIntentProvider 래핑[reader-only NOT B안, 드레인 미변경 surgical-verified]; 편차 0 — 계획대로; jest `--watchman=false` 호출만)
 - Phase 16 Plan 16-01 완료: 2026-06-17 (~10분 실작업/~43분 wall[jest watchman 행 디버깅 포함], 2 tasks TDD RED→GREEN; commits d2b782e test + 38a2739 feat[share-routing] + 30773de test + 5f62820 feat[+native-intent]; share-routing 7/7 + native-intent 4/4 = 11 신규, iOS 풀스위트 54/54 PASS, tsc clean; lib/share-routing.ts 순수 decideShareRoute[zero imports, D-01/D-02] + app/+native-intent.tsx redirectSystemPath[getShareExtensionKey 파생·앱컨텍스트 호출 0·throw→'/']; Rule 3 인프라: 이 환경에서 jest가 watchman 크롤로 0%CPU 무한 행 → `--watchman=false`로 우회[설정/소스 변경 0, 호출만]; RED 각 커밋 `Could not locate module`로 실패 확인 후 GREEN; T-16-01/02/03 코드로 완화)
+- Phase 23 Plan 23-04 완료: 2026-07-08 (~7분, 3 tasks; commits 05c109a types + 948032f 하네스 fix·PASS + 280d728 smoke fix·PASS; 3 files; reset 클린 42P17=0 + database.ts +66 + core 143/api 74 그린 + MOA-01 하네스·smoke 라이브 PASS; deviation 3건 전부 Rule 1 psql 사용법 — 0024·0025 SQL 무수정)
 - Phase 15 Plan 15-03 완료: 2026-06-14 (~4분, 2 tasks; commits e688bd9 iOS + 3408431 web; apps/ios/lib/category.ts vibeOf→placeVibe 위임 + VIBE_STYLE 6 canonical(cafe 추가/wellness 제거, color+labelKo는 core VIBE_META, Ionicons icon+tint/textOn은 클라이언트 유지) + apps/web/lib/category-icon.ts categoryVisual→placeVibe 위임 + VIBE_VISUAL 6 vibes lucide(Beer/Building2 orphan import 제거, bar→food/lodging→other collapse); iOS+web `pnpm typecheck` 둘 다 clean (web vitest 프로젝트 전역 깨짐 → typecheck 의존); 호출처 boards.tsx/place-list.tsx/vote-island.tsx diff 외 — source-compatible 유지; 편차 0; depends 15-01 DONE)
 
 ---
@@ -343,8 +346,8 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-07T17:14:07.000Z
-**Stopped at:** Completed 23-03-PLAN.md (Phase 23 Wave 1 완료 — 다음 23-04 [BLOCKING])
+**Last session:** 2026-07-07T17:24:39.000Z
+**Stopped at:** Completed 23-04-PLAN.md (Phase 23 Wave 2 완료 — 다음 Wave 3 = 23-05 core 계약 TDD)
 **Resume file:** None
 
 다음 세션에서 이어할 때:
