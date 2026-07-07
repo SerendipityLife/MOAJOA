@@ -557,6 +557,7 @@ export type Database = {
           name_ko: string | null
           name_local: string
           note: string | null
+          seq_no: number
           source_kind: string
           source_quote: string | null
           source_timestamp_sec: number | null
@@ -581,6 +582,7 @@ export type Database = {
           name_ko?: string | null
           name_local: string
           note?: string | null
+          seq_no: number
           source_kind?: string
           source_quote?: string | null
           source_timestamp_sec?: number | null
@@ -605,6 +607,7 @@ export type Database = {
           name_ko?: string | null
           name_local?: string
           note?: string | null
+          seq_no?: number
           source_kind?: string
           source_quote?: string | null
           source_timestamp_sec?: number | null
@@ -778,16 +781,71 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          nickname: string
+          reply_to_place_id: string | null
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          nickname: string
+          reply_to_place_id?: string | null
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          nickname?: string
+          reply_to_place_id?: string | null
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_messages_reply_to_place_id_fkey"
+            columns: ["reply_to_place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_messages_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           city_code: string | null
+          companion: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
           end_date: string | null
           id: string
+          last_place_seq: number
           owner_id: string
           representative_id: string | null
+          share_mode: string | null
           share_slug: string | null
           start_date: string | null
           title: string
@@ -796,13 +854,16 @@ export type Database = {
         }
         Insert: {
           city_code?: string | null
+          companion?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
+          last_place_seq?: number
           owner_id?: string
           representative_id?: string | null
+          share_mode?: string | null
           share_slug?: string | null
           start_date?: string | null
           title: string
@@ -811,13 +872,16 @@ export type Database = {
         }
         Update: {
           city_code?: string | null
+          companion?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
+          last_place_seq?: number
           owner_id?: string
           representative_id?: string | null
+          share_mode?: string | null
           share_slug?: string | null
           start_date?: string | null
           title?: string
@@ -1050,6 +1114,7 @@ export type Database = {
           name_ko: string | null
           name_local: string
           note: string | null
+          seq_no: number
           source_kind: string
           source_quote: string | null
           source_timestamp_sec: number | null
@@ -1261,6 +1326,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
+      join_moa: { Args: { p_share_slug: string }; Returns: string }
       join_shared_trip: { Args: { p_share_slug: string }; Returns: string }
       longtransactionsenabled: { Args: never; Returns: boolean }
       poll_view_by_code: { Args: { p_code: string }; Returns: Json }
