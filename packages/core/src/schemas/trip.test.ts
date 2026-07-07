@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { TripCreateSchema, TripSchema, type Trip, type TripId } from './trip';
+import {
+  TripCreateSchema,
+  TripCreateDraftSchema,
+  TripSchema,
+  type Trip,
+  type TripId,
+} from './trip';
 
 describe('TripCreateSchema — required dates + end >= start (SETUP-01, D-09)', () => {
   it('accepts a valid multi-day create', () => {
@@ -68,6 +74,8 @@ describe('TripSchema — full trip row (D-02, D-10)', () => {
     start_date: '2026-07-01',
     end_date: '2026-07-03',
     cover_image_url: null,
+    share_mode: null,
+    companion: null,
     created_at: '2026-06-21T10:00:00.000Z',
     updated_at: '2026-06-21T10:00:00.000Z',
   };
@@ -88,5 +96,95 @@ describe('TripSchema — full trip row (D-02, D-10)', () => {
     const id: TripId = fullTrip.id;
     const trip: Trip = fullTrip;
     expect(id).toBe(trip.id);
+  });
+
+  it('accepts share_mode both (0025 mirror) and preserves it', () => {
+    const shared = { ...fullTrip, share_mode: 'both' as const };
+    expect(TripSchema.parse(shared).share_mode).toBe('both');
+  });
+
+  it('allows a null share_mode (legacy trip, never moa-shared)', () => {
+    expect(TripSchema.parse(fullTrip).share_mode).toBeNull();
+  });
+
+  it('rejects a share_mode outside the 0025 CHECK', () => {
+    expect(() => TripSchema.parse({ ...fullTrip, share_mode: 'invalid' })).toThrow();
+  });
+
+  it('allows a null companion (0025 mirror)', () => {
+    expect(TripSchema.parse(fullTrip).companion).toBeNull();
+  });
+});
+
+describe('TripCreateDraftSchema — 온보딩 4단계 draft, dates optional (ONBOARD-03/04)', () => {
+  it('accepts 미정 dates (both null) with a null companion', () => {
+    const result = TripCreateDraftSchema.parse({
+      title: '오사카',
+      city_code: 'osaka',
+      start_date: null,
+      end_date: null,
+      companion: null,
+    });
+    expect(result.start_date).toBeNull();
+    expect(result.end_date).toBeNull();
+  });
+
+  it('accepts a fully dated draft', () => {
+    const result = TripCreateDraftSchema.parse({
+      title: '오사카',
+      city_code: 'osaka',
+      start_date: '2026-08-01',
+      end_date: '2026-08-03',
+      companion: '친구',
+    });
+    expect(result.end_date).toBe('2026-08-03');
+  });
+
+  it('rejects start_date null with end_date set (both set or both null)', () => {
+    expect(() =>
+      TripCreateDraftSchema.parse({
+        title: '오사카',
+        city_code: 'osaka',
+        start_date: null,
+        end_date: '2026-08-03',
+        companion: null,
+      }),
+    ).toThrow();
+  });
+
+  it('rejects end_date null with start_date set (both set or both null)', () => {
+    expect(() =>
+      TripCreateDraftSchema.parse({
+        title: '오사카',
+        city_code: 'osaka',
+        start_date: '2026-08-01',
+        end_date: null,
+        companion: null,
+      }),
+    ).toThrow();
+  });
+
+  it('rejects end_date < start_date', () => {
+    expect(() =>
+      TripCreateDraftSchema.parse({
+        title: '오사카',
+        city_code: 'osaka',
+        start_date: '2026-08-03',
+        end_date: '2026-08-01',
+        companion: null,
+      }),
+    ).toThrow();
+  });
+
+  it('rejects a 21-char companion (0025 CHECK: <= 20)', () => {
+    expect(() =>
+      TripCreateDraftSchema.parse({
+        title: '오사카',
+        city_code: 'osaka',
+        start_date: null,
+        end_date: null,
+        companion: 'ㅁ'.repeat(21),
+      }),
+    ).toThrow();
   });
 });
