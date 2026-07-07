@@ -246,3 +246,23 @@ export type DateAvailabilityType = (typeof DateAvailability)[number];
 export const POLL_RANGE_OPTIONS_MAX = 10;
 /** Max span of days a grid-mode poll window may cover. */
 export const POLL_GRID_WINDOW_MAX_DAYS = 60;
+
+/**
+ * Phase 23 — trips.share_mode: what the moa share link exposes (SHARE-03).
+ * - dates: date poll only → join_moa grants 'voter'
+ * - places: place board only → join_moa grants 'editor'
+ * - both: dates + places → join_moa grants 'editor' (D-A1)
+ * Locked CHARACTER-FOR-CHARACTER to the 0025 CHECK — any drift breaks share links at runtime.
+ */
+export const ShareMode = ['dates', 'places', 'both'] as const;
+export type ShareModeType = (typeof ShareMode)[number];
+
+/**
+ * Phase 23 — Realtime channel for the unified moa share screen (Phase 26 consumer).
+ * ONE channel per screen carries presence + message + vote + place_added —
+ * never open two channels for one topic (Phase 19/20 lesson). Mirrors pollChannelName.
+ */
+export const MOA_CHANNEL_PREFIX = 'moa:';
+export function moaChannelName(tripId: string): string {
+  return `moa:${tripId}`;
+}

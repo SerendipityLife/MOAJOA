@@ -8,3 +8,4 @@ export * from './extraction';
 export * from './plan';
 export * from './date-poll';
 export * from './ledger';
+export * from './chat';
