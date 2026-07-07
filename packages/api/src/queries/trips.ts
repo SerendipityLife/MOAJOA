@@ -1,4 +1,4 @@
-import type { Trip, TripCreate, TripUpdate, PublicBoardView } from '@moajoa/core';
+import type { ShareModeType, Trip, TripCreate, TripUpdate, PublicBoardView } from '@moajoa/core';
 import type { MoajoaSupabaseClient } from '../client';
 
 export async function listMyTrips(client: MoajoaSupabaseClient): Promise<Trip[]> {
@@ -143,6 +143,31 @@ export async function shareTrip(
   const { data, error } = await client
     .from('trips')
     .update({ visibility: 'shared' })
+    .eq('id', tripId)
+    .select('share_slug')
+    .single();
+  if (error) throw error;
+  const slug = (data as { share_slug: string | null } | null)?.share_slug;
+  if (!slug) throw new Error('share_slug not generated');
+  return slug;
+}
+
+/**
+ * Share a moa with an explicit share_mode ('dates' | 'places' | 'both') and
+ * return its share_slug for the /t/{slug} link. Single UPDATE — re-calling
+ * with a different mode UPDATES share_mode on an already-shared moa (Open Q3:
+ * mode change allowed; hiding 'dates' for date-confirmed moas is client-side).
+ * Slug minting stays with the 0016 ensure_share_slug trigger — no extra RPC.
+ * Owner-only by trips UPDATE RLS. Existing members keep their role (D-A4).
+ */
+export async function shareMoa(
+  client: MoajoaSupabaseClient,
+  tripId: string,
+  shareMode: ShareModeType,
+): Promise<string> {
+  const { data, error } = await client
+    .from('trips')
+    .update({ visibility: 'shared', share_mode: shareMode })
     .eq('id', tripId)
     .select('share_slug')
     .single();
