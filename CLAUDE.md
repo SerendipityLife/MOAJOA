@@ -141,7 +141,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ```
 moajoa/
 ├── apps/
-│   ├── web/           Next.js 15 (열람·공개 보드 + 투표 참여)
+│   ├── web/           Next.js 15 (입력·저장·편집 풀 서피스 — v2.1 웹 퍼스트. 공유 열람·투표 포함)
 │   └── ios/           Expo SDK 56 (저장·공유·캡처·편집) — 로컬 시뮬은 `pnpm sim`(expo run:ios는 Xcode26서 깨짐), 실기기는 EAS
 ├── packages/
 │   ├── core/          Zod 스키마 + 도메인 상수 (web/iOS/Edge 공유)
@@ -210,10 +210,10 @@ moajoa/
 - ❌ Firebase / Firestore 새로 도입 — Supabase로 통일
 - ❌ 기존 마이그레이션 SQL 수정 (한 번 prod 적용되면 영구)
 - ❌ 워크스페이스 패키지 import에 `.js` extension 추가
-- ❌ Web에 *새로운* "보드 생성"·"링크 추가" UI 추가 — 그건 iOS 전용
-  (현재 web에 있는 폼은 **dev tool**. `NEXT_PUBLIC_ENABLE_DEV_TOOLS=1`
-  로 local dev + Vercel Preview에선 열림, production main은 닫힘 —
-  Windows 동료가 iOS 없이 보드 관리 가능. 자세히는 `apps/web/.env.local.example`.)
+- ❌ iOS 코드 변경 — v2.1 웹 퍼스트 동안 iOS는 전면 동결
+  (구 룰 "Web 생성·링크 추가 UI 금지"는 v2.1 웹 퍼스트 피봇[Phase 23, 2026-07]으로
+  **공식 반전** — 이제 웹이 입력·저장·편집 풀 서피스다. 웹 생성·편집 UI 작업 허용.
+  기존 dev-tool 폼 격리 `NEXT_PUBLIC_ENABLE_DEV_TOOLS`는 정식 UI로 대체될 때까지 유지.)
 - ❌ RLS 정책에서 다른 테이블 직접 EXISTS — SECURITY DEFINER 헬퍼 경유
 - ❌ 서비스 롤 키를 클라이언트 번들에 노출
 - ❌ `.env.local` 커밋
