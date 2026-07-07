@@ -6,15 +6,15 @@ current_phase: 23
 current_phase_name: Web-First Foundation
 status: executing
 stopped_at: null
-last_updated: "2026-07-07T17:11:30.000Z"
+last_updated: "2026-07-07T17:14:07.000Z"
 last_activity: 2026-07-08
-last_activity_desc: 23-02 실행 완료 — 0025 web_share 마이그레이션(share_mode·companion·trip_messages RLS·join_moa 분기 RPC) + 익명/join/RLS프로브/kakao smoke. 적용은 23-04
+last_activity_desc: 23-03 실행 완료 — config.toml 익명 sign-in ON + [auth.external.kakao] env() 블록 + KAKAO placeholder + CLAUDE.md §5 D26 공식 반전. Wave 1 완료, 다음 Wave 2 = 23-04 [BLOCKING]
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 2
-  percent: 29
+  completed_plans: 3
+  percent: 43
 ---
 
 # STATE: MOAJOA v2.1
@@ -36,11 +36,13 @@ progress:
 
 ## Current Position
 
-Phase: 23 (Web-First Foundation) — executing (Wave 1 진행 중)
-Plan: 7 플랜 / 5 웨이브 (2/7 완료 — 23-01·23-02 done)
-Status: Executing Phase 23 — 23-01·23-02 완료(0024·0025+하네스·smoke, 미적용). Wave 1 잔여: 23-03
+Phase: 23 (Web-First Foundation) — executing (Wave 1 완료)
+Plan: 7 플랜 / 5 웨이브 (3/7 완료 — 23-01·23-02·23-03 done)
+Status: Executing Phase 23 — Wave 1 완료(0024·0025+하네스·smoke 미적용 + config 스위치·D26 반전). 다음: Wave 2 = 23-04 [BLOCKING] 스키마 적용 게이트(colima 선행)
 Last activity: 2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)
-Next: /gsd-execute-phase 23 (계속 — Wave 1 잔여 23-03)
+Next: /gsd-execute-phase 23 (계속 — Wave 2 = 23-04 [BLOCKING], colima 선행)
+
+**23-03 실행 완료 (2026-07-08, commits 88efaa1·d1a33bb):** Phase 23 Wave 1 마감 — AUTH-07/AUTH-08 스위치·룰 기반(e2e 마킹은 Phase 24/25). **config.toml**: `enable_anonymous_sign_ins = true` + `[auth.external.kakao]`(enabled=true, `env(KAKAO_REST_API_KEY)`/`env(KAKAO_CLIENT_SECRET)` — apple/google idiom 미러, 실값 0, 기존 블록 무수정 T-23-10). **`.env.local.example`**: KAKAO 2키 `...` placeholder(§4.7, 실파일 무접촉). **CLAUDE.md**: §5 D26 "Web 생성·링크 추가 UI 금지" 불릿 **공식 반전** → "iOS 전면 동결(v2.1)" + 반전 이력 괄호 보존(dev-tool 폼 격리 NEXT_PUBLIC_ENABLE_DEV_TOOLS는 정식 UI 대체 시까지 유지), §4.1 web 역할 = 입력·저장·편집 풀 서피스 (ROADMAP 성공 기준 5 완결, 성공 기준 3·4는 로컬 절반 — 프로덕션 대시보드·Kakao console은 23-07 human-action). **실효 검증(스택 재시작+smoke)은 23-04** — 주의: `supabase start`가 KAKAO env 부재 시 env() 치환 경고/실패 가능, `supabase/.env.local`에 실값(또는 더미) 필요. deviation 0. 상세: `23-03-SUMMARY.md`.
 
 **23-02 실행 완료 (2026-07-08, commits b17f7b3·05b3c3a):** Phase 23 Wave 1 — AUTH-08/SHARE-03/CHAT-01 DB 기반(e2e 마킹은 Phase 25/26). **0025_web_share.sql**(append-only, 0016~0024 무수정): trips.share_mode(`'dates'|'places'|'both'` CHECK, nullable 레거시)·companion(≤20자) + **trip_messages**(0018 date_comments shape 미러 — nickname 비정규화 D-A2·body 1~140·reply_to_place_id→places set null·(trip_id,created_at) 인덱스) + RLS 3정책 헬퍼-only(SELECT can_read_trip / INSERT `auth.uid()`+can_vote_trip T-23-06 / DELETE `auth.uid()` or am_trip_owner — 직접 EXISTS 0, 42P17 가드) + **join_moa RPC**(0016 join_shared_trip 미러: bearer slug+visibility 게이트·self-join only·owner 가드·`on conflict do nothing` 멱등 D-A4·DEFINER+search_path 핀 전부 유지, role만 `share_mode in ('places','both')→editor else voter` 분기 D-A1, grant authenticated만). **smoke** `supabase/tests/web_share_smoke.sh`(실행권한+`bash -n` 클린): 익명 signup `data.name` 주입→is_anonymous/role 클레임 단언 → join_moa both→editor·dates→voter 분기 → **trip_messages RLS 런타임 프로브(익명 JWT GET 200, 42P17 발화 시 5xx FAIL)** → kakao authorize `kauth.kakao.com` — 전부 exit code, 30/hr rate limit 주석. **미적용**: 실행은 23-04 [BLOCKING] (23-03 config 스위치 선행 필요 — 없으면 smoke 익명·kakao 단계 실패). deviation 0. 상세: `23-02-SUMMARY.md`.
 
@@ -341,9 +343,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-04T20:59:02.688Z
-**Stopped at:** Phase 20 executed 7/7 + verification passed (code) — 6 human UAT items pending
-**Resume file:** .planning/phases/20-affiliate-booking/20-HUMAN-UAT.md
+**Last session:** 2026-07-07T17:14:07.000Z
+**Stopped at:** Completed 23-03-PLAN.md (Phase 23 Wave 1 완료 — 다음 23-04 [BLOCKING])
+**Resume file:** None
 
 다음 세션에서 이어할 때:
 
