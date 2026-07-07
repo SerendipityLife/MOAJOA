@@ -429,18 +429,20 @@ export async function joinMoa(client: MoajoaSupabaseClient, shareSlug: string): 
 | A6 | pgbench/psql 14 클라이언트 ↔ PG17 서버 호환 (이 용도 한정) | Pitfall 8 | xargs -P psql 병렬 방식으로 대체 가능 — 하네스 선택지 2개 |
 | A7 | seq 컬럼/카운터 네이밍 (`seq_no`/`last_place_seq`) | 전반 | 순수 네이밍 — 플래너 재량 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **원격(linked prod) DB의 마이그레이션 적용 상태**
    - What we know: 로컬은 0016~0023 클린. 17-03에서 "remote reset deferred" 기록, 0022/0023의 원격 push 여부 미기록
    - What's unclear: `supabase db push` 시점에 원격이 어디까지 적용돼 있는지
    - Recommendation: plan에 `supabase migration list` 선행 확인 태스크 (원격 push가 이 phase 범위인지 자체도 결정 필요 — 성공 기준은 전부 로컬 검증 가능)
+   - **RESOLVED (23-07 T1):** 원격 push는 이 phase 범위 외 — `supabase migration list`로 상태 확인만 수행 (23-04 success_criteria에도 명시)
 2. **Kakao console 준비물 리드타임**
    - What we know: REST API key·Client Secret·Redirect URI·동의항목 설정 필요. account_email은 Biz App 전용
    - What's unclear: 사용자의 Kakao developers 앱 존재 여부, 동의항목 심사 소요
    - Recommendation: human-action 체크포인트로 분리 (21-04 Task 5 선례). 성공 기준 4는 "설정되어 플로우 시작 가능"까지만 — e2e는 Phase 24
-3. **shareMoa의 share_mode 변경 시맨틱** — 이미 공유된 모아의 모드 변경 허용? 날짜 확정 모아의 'dates' 숨김(SHARE-01)은 클라이언트 몫인가 DB CHECK인가 → 클라이언트 몫 권장(DB는 3값 CHECK만), plan에서 확정
-4. **PlaceSchema의 `board_id` 레거시 드리프트** — DB는 trip_id인데 PlaceSchema는 board_id `[VERIFIED: place.ts L15]`. seq_no 추가 시 같이 고칠지(소비처 캐스케이드 위험) 그대로 둘지 — Surgical Changes 원칙상 **그대로 두고 seq_no만 추가** 권장, 드리프트는 별도 기록
+   - **RESOLVED (23-07 T2):** Kakao console 준비물은 human-action 체크포인트로 분리 — 로컬 검증(23-04)은 더미값으로 차단 없이 진행
+3. **shareMoa의 share_mode 변경 시맨틱** — 이미 공유된 모아의 모드 변경 허용? 날짜 확정 모아의 'dates' 숨김(SHARE-01)은 클라이언트 몫인가 DB CHECK인가 → 클라이언트 몫 권장(DB는 3값 CHECK만), plan에서 확정 — **RESOLVED (23-06 objective):** share_mode 변경 허용, 'dates' 숨김은 클라이언트 몫 (DB는 3값 CHECK만)
+4. **PlaceSchema의 `board_id` 레거시 드리프트** — DB는 trip_id인데 PlaceSchema는 board_id `[VERIFIED: place.ts L15]`. seq_no 추가 시 같이 고칠지(소비처 캐스케이드 위험) 그대로 둘지 — Surgical Changes 원칙상 **그대로 두고 seq_no만 추가** 권장, 드리프트는 별도 기록 — **RESOLVED (23-05 Task 2):** board_id 무수정, seq_no만 추가 (드리프트는 별도 기록)
 
 ## Environment Availability
 
