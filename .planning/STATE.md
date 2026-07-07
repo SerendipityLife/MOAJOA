@@ -6,15 +6,15 @@ current_phase: 23
 current_phase_name: Web-First Foundation
 status: executing
 stopped_at: null
-last_updated: "2026-07-07T17:45:00.000Z"
+last_updated: "2026-07-07T23:30:00.000Z"
 last_activity: 2026-07-08
-last_activity_desc: 23-06 실행 완료 — api 계약 seam TDD 잠금(joinMoa·shareMoa). api 81 tests 그린 + 기존 joinSharedTrip/shareTrip 무수정. Wave 4 완료, 다음 Wave 5 = 23-07 human-action
+last_activity_desc: 23-07 실행 완료(human-action approved) — 프로덕션 익명 sign-in·Kakao provider 설정 실증 + 원격 마이그레이션 0016~0023 정합·0024/0025 미적용 실측. Phase 23 플랜 7/7 완료, 다음 /gsd-verify-work 23
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # STATE: MOAJOA v2.1
@@ -36,11 +36,13 @@ progress:
 
 ## Current Position
 
-Phase: 23 (Web-First Foundation) — executing (Wave 4 완료)
-Plan: 7 플랜 / 5 웨이브 (6/7 완료 — 23-01·23-02·23-03·23-04·23-05·23-06 done)
-Status: Executing Phase 23 — Wave 4 완료(23-06 api 계약 seam TDD 잠금 — api 81 그린·기존 joinSharedTrip/shareTrip 무수정). 다음: Wave 5 = 23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console)
+Phase: 23 (Web-First Foundation) — 플랜 실행 완료 (7/7, Wave 5 마감)
+Plan: 7 플랜 / 5 웨이브 (7/7 완료 — 23-01~23-07 done)
+Status: Phase 23 전 플랜 실행 완료 — Wave 5(23-07 human-action) approved 마감: 프로덕션 익명·Kakao provider 실증 + 원격 마이그레이션 상태 실측. 성공 기준 1~5 충족(1·2·3 로컬 실증=23-04, 4 프로덕션 절반=23-07, 5 D26 반전=23-03). 다음: /gsd-verify-work 23
 Last activity: 2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)
-Next: /gsd-execute-phase 23 (계속 — Wave 5 = 23-07 human-action, autonomous:false)
+Next: /gsd-verify-work 23 (phase verify) → 이후 Phase 24 discuss/plan. **주의: Phase 24 Vercel Preview e2e 전 `supabase db push`(0024·0025) 필수** (23-07 실측 — 원격은 0023까지만)
+
+**23-07 실행 완료 (2026-07-08, commit 6cfc0ce, human-action approved):** Phase 23 Wave 5 마감 — 프로덕션 인증 설정 + 원격 상태 실측, 코드·DB 변경 0. **Task 1(Open Q1 확정)**: `supabase migration list` 실측 — 원격(`xfoauhsraguyrifingct`)은 **0016~0023 정합, 0024(place_seq)·0025(web_share) 미적용**, `db push` 미실행(범위 외). 후속 잠금: Phase 24 Preview e2e 전 push 필수(원격에 join_moa·trip_messages·share_mode·seq_no 부재 — push 전 프로덕션 웹 공유·join·채팅 미동작). **Task 2(human-action approved)**: 사용자가 Kakao Developers(REST API key·Client Secret·Redirect URI·동의항목) + Supabase 대시보드(익명 토글 ON·Kakao provider) 설정 — 원격 실증: authorize 302→kauth.kakao.com(KOE 마커 0) + `/auth/v1/signup` `is_anonymous:true·role:authenticated` 토큰 발급. **KOE205 학습(Phase 24 e2e 참고)**: GoTrue kakao는 `account_email profile_image profile_nickname` 3 scope 하드코딩(제거 불가, scopes는 append만) → **개인 개발자 비즈 앱 전환(사업자등록증 불필요)+3 동의항목 전부 선택 동의**로 해결; email 미제공 시에도 GoTrue graceful 유저 생성 — MOAJOA는 닉네임 기반(D-A2)이라 무의존. 플랜 원안 "nickname·image만"은 불충분했음. AUTH-07/08 e2e 마킹은 Phase 24/25 몫(traceability, 23-06 선례). deviation 0. 상세: `23-07-SUMMARY.md`.
 
 **23-06 실행 완료 (2026-07-08, commits e7d457f·fc0971a·20428e7·a599ea5):** Phase 23 Wave 4 — api 계약 seam 2종 TDD(RED→GREEN 2사이클) 잠금, Phase 24/25 소비 typed query 완비. **joinMoa**(memberships.ts): joinSharedTrip house 계약 미러(client 첫 인자·`{error}` throw·`data as string`)에서 RPC만 `join_moa`로 교체 — role은 0025 RPC가 share_mode로 서버 결정(places/both→editor, dates/null→voter D-A1), 클라이언트 role 인자 자체가 없음(T-23-16), 멱등·no role promotion(D-A4)·익명 세션 동작 doc 주석 명시. **shareMoa**(trips.ts): `{visibility:'shared', share_mode}` 단일 UPDATE→`.select('share_slug').single()`, slug null이면 throw — **Open Q3 시맨틱 기록: shareTrip의 early-return 의도적 제거로 이미 공유된 모아 재호출 시 share_mode 갱신 허용**(visibility 재설정 no-op·ensure_share_slug는 기존 slug 보존, 'dates' 숨김은 Phase 24 클라이언트 몫), owner-only는 trips UPDATE RLS 게이트(T-23-17), ShareModeType 3값 union 시그니처(T-23-18). **테스트**: memberships.test.ts(rpc-only mock 변형 3케이스)+trips.test.ts(ledger.test.ts makeChain 미러 4케이스) 신규 — api 74→81 그린·typecheck 0·`.js` 확장자 0. **기존 joinSharedTrip·shareTrip 완전 무수정**(두 커밋 삭제 라인 0, iOS 동결). deviation 0. SHARE-01/03 e2e 마킹은 traceability대로 Phase 24/25 몫(23-02 선례). 상세: `23-06-SUMMARY.md`.
 
