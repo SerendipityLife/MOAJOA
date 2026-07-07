@@ -30,8 +30,9 @@ curl -s -X POST "$API/auth/v1/signup" -H "apikey: $ANON_KEY" -H "Content-Type: a
   -d "{\"email\":\"$EMAIL\",\"password\":\"password-share-1\"}" > /dev/null || true
 HOST=$(psql "$DB" -tAc "select id from auth.users where email='$EMAIL' limit 1")
 [ -n "$HOST" ] || { echo "FAIL: host user missing"; exit 1; }
-T_BOTH=$(psql "$DB" -tAc "insert into trips (owner_id, title) values ('$HOST','smoke-both-$(date +%s)') returning id")
-T_DATES=$(psql "$DB" -tAc "insert into trips (owner_id, title) values ('$HOST','smoke-dates-$(date +%s)') returning id")
+# -q 필수: INSERT...RETURNING은 -t만으론 커맨드 태그("INSERT 0 1")가 섞여 나옴
+T_BOTH=$(psql "$DB" -qtAc "insert into trips (owner_id, title) values ('$HOST','smoke-both-$(date +%s)') returning id")
+T_DATES=$(psql "$DB" -qtAc "insert into trips (owner_id, title) values ('$HOST','smoke-dates-$(date +%s)') returning id")
 psql "$DB" -qc "update trips set visibility='shared', share_mode='both' where id='$T_BOTH'"
 psql "$DB" -qc "update trips set visibility='shared', share_mode='dates' where id='$T_DATES'"
 SLUG_BOTH=$(psql "$DB" -tAc "select share_slug from trips where id='$T_BOTH'")
