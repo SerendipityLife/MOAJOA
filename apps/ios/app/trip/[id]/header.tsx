@@ -10,7 +10,7 @@
 import { deleteTrip, getTrip, listMyTrips } from '@moajoa/api';
 import { type Trip } from '@moajoa/core';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useSegments } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +20,10 @@ export default function TripHeader({ tripId }: { tripId: string }) {
   const [title, setTitle] = useState<string | null>(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]);
+  // Current tab segment (map | plan | book | ledger). The header persists across
+  // tab switches; this hook keeps it in sync so a trip switch stays on the tab
+  // the user is actually viewing.
+  const segments = useSegments();
 
   // Current trip title for the switcher label.
   useEffect(() => {
@@ -52,7 +56,22 @@ export default function TripHeader({ tripId }: { tripId: string }) {
 
   function switchTo(id: string) {
     setSwitcherOpen(false);
-    if (id !== tripId) router.replace(`/trip/${id}/plan`);
+    if (id === tripId) return;
+    // Preserve the current tab on switch — switching from 지도 stays on 지도
+    // (previously this hardcoded /plan, so a switch from the map tab bounced
+    // the user to 플랜 and never showed the new trip's places on the map).
+    // Ternary stays inline so typed-routes contextual typing keeps each branch
+    // a valid Href literal (an intermediate const widens to string).
+    const tab = segments[segments.length - 1];
+    router.replace(
+      tab === 'map'
+        ? `/trip/${id}/map`
+        : tab === 'book'
+          ? `/trip/${id}/book`
+          : tab === 'ledger'
+            ? `/trip/${id}/ledger`
+            : `/trip/${id}/plan`,
+    );
   }
 
   const onDelete = useCallback(

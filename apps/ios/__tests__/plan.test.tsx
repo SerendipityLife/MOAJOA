@@ -123,6 +123,7 @@ jest.mock('@/lib/toast', () => ({ showToast: jest.fn() }));
 jest.mock('@/lib/share-board', () => ({ shareCurrentTrip: jest.fn() }));
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'trip-1' }),
+  useGlobalSearchParams: () => ({ id: 'trip-1' }),
 }));
 
 import TripPlanScreen from '@/app/trip/[id]/(tabs)/plan';
