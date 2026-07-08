@@ -9,8 +9,9 @@ import { getSupabaseBrowser } from '@/lib/supabase/browser';
  *
  * BottomSheet + AddContentTabs(24-04 재사용 — 자체 탭 재구현 금지) 조합. 링크 탭은
  * addLink 후 비-manual이면 triggerExtraction을 fire-and-forget(D-13 — reconcile이
- * '분석 중…' 행을 즉시 띄운다). 검색 탭은 addManualPlace만 — 장소 등장·토스트는
- * island의 places INSERT realtime 경로가 담당한다(D-16 중복 토스트 금지).
+ * '분석 중…' 행을 즉시 띄운다). 검색 탭은 addManualPlace 후 onAdded()로 즉시 reconcile —
+ * places INSERT realtime 경로에만 의존하지 않는다(realtime 지연/누락 시 방금 담은 장소가
+ * 안 보이는 버그 방지). realtime이 함께 발화해도 M-02 reconcile 가드가 중복 토스트를 막는다.
  */
 export interface AddSheetProps {
   tripId: string;
@@ -50,6 +51,7 @@ export function AddSheet({ tripId, open, onClose, onAdded }: AddSheetProps) {
         lng: place.location?.lng,
         address: place.address,
       });
+      onAdded();
       onClose();
     } catch (err) {
       console.error(err);

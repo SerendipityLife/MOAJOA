@@ -106,7 +106,7 @@ describe('AddSheet', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('MOA-04: 검색 결과 탭 → addManualPlace + 닫힘 (onAdded 미호출 — realtime 경로)', async () => {
+  it('MOA-04: 검색 결과 탭 → addManualPlace + onAdded(즉시 reconcile) + 닫힘', async () => {
     const onClose = vi.fn();
     const onAdded = vi.fn();
     render(<AddSheet tripId="trip-1" open onClose={onClose} onAdded={onAdded} />);
@@ -126,8 +126,26 @@ describe('AddSheet', () => {
         },
       ),
     );
+    // 방금 담은 장소가 realtime 지연/누락과 무관하게 즉시 보이도록 onAdded 호출.
+    expect(onAdded).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('addManualPlace reject → 에러 토스트 + 시트 유지(onAdded·onClose 미호출)', async () => {
+    addManualPlace.mockRejectedValueOnce(new Error('boom'));
+    const onClose = vi.fn();
+    const onAdded = vi.fn();
+    render(<AddSheet tripId="trip-1" open onClose={onClose} onAdded={onAdded} />);
+
+    fireEvent.click(screen.getByText('pick-place'));
+
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith('추가하지 못했어요. 다시 시도해 주세요', {
+        variant: 'error',
+      }),
+    );
     expect(onAdded).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('addLink reject → 에러 토스트 + 시트 유지(onClose 미호출)', async () => {
