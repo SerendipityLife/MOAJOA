@@ -325,7 +325,7 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 ### Auth (AUTH)
 
-- [ ] **AUTH-07**: 웹에서 카카오 계정으로 로그인할 수 있다 (기존 이메일/구글/애플 유지)
+- [x] **AUTH-07**: 웹에서 카카오 계정으로 로그인할 수 있다 (기존 이메일/구글/애플 유지) — 24-03 (카카오 버튼 + signInWithOAuth 단위 검증; 실로그인 e2e는 Preview UAT)
 - [ ] **AUTH-08**: 게스트가 닉네임만 입력하면 익명 인증으로 참여할 수 있고, 같은 브라우저로 재접속하면 동일 신원(투표·추가 이력)으로 식별된다
 
 ### Web Onboarding (ONBOARD) — 03부터 이어감
@@ -377,7 +377,7 @@ Roadmap (2026-07-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | MOA-01 | Phase 23 | Complete (23-04 라이브 실증 — 동시 40건 무중복·무결번 + hard-delete 무재사용 + forge 차단, 하네스 PASS) |
-| AUTH-07 | Phase 24 | Pending |
+| AUTH-07 | Phase 24 | Complete (24-03 — 카카오 버튼 + signInWithOAuth 단위 검증; 실로그인 e2e는 Preview UAT) |
 | ONBOARD-03 | Phase 24 | Pending |
 | ONBOARD-04 | Phase 24 | Pending |
 | ONBOARD-05 | Phase 24 | Pending |
