@@ -20,10 +20,16 @@ import { colors } from '@moajoa/ui-tokens';
  *
  * Pure function: no SVG injection surface — only static color/opacity
  * literals interpolated. Never include user-supplied strings (T-05-05-01).
+ *
+ * `fill` (optional, Phase 24 D-20) overrides the source_kind fill so member
+ * pins can carry their memberColor. It MUST be a ui-tokens literal (e.g. a
+ * colors.member[…] value) — never a user string, preserving the no-injection
+ * contract (T-24-04). When omitted, output is identical to before.
  */
 export function buildMarkerIconUrl(input: {
   source_kind: 'ai' | 'manual';
   confidence: number | null | undefined;
+  fill?: string;
 }): string {
   const isAi = input.source_kind === 'ai';
   const conf = input.confidence;
@@ -31,7 +37,8 @@ export function buildMarkerIconUrl(input: {
     isAi && typeof conf === 'number' && conf < LOW_CONFIDENCE_THRESHOLD;
 
   // Single source: ui-tokens — palette changes propagate without touching this file.
-  const fill = isAi ? colors.brand[500] : colors.neutral[900]; // brand-500 (AI) · neutral-900 (manual)
+  // Explicit fill (ui-tokens literal only) wins over the source_kind default.
+  const fill = input.fill ?? (isAi ? colors.brand[500] : colors.neutral[900]); // brand-500 (AI) · neutral-900 (manual)
   const fillOpacity = isLowConf ? 0.45 : 1.0;
   const showQ = isLowConf;
 
