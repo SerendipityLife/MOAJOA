@@ -1,10 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
-import { Button } from '@/components';
+import type { DateRange } from 'react-day-picker';
+import { addLink, addManualPlace, createMoaDraft, triggerExtraction } from '@moajoa/api';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { Button, useToast, type PickedPlace } from '@/components';
 import { StepWhere } from './_components/step-where';
+import { StepDates } from './_components/step-dates';
 import { StepWho } from './_components/step-who';
+import { StepSeed } from './_components/step-seed';
+import { buildDraft } from './_lib/build-draft';
 
 /**
  * /onboarding — 단일 라우트 클라이언트 위저드 (D-02). 4단계(어디로→날짜→누구랑→봐둔 곳)를
@@ -22,12 +29,19 @@ const HEADINGS: Record<Step, string> = {
 };
 
 export default function OnboardingPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [step, setStep] = useState<Step>(1);
   const [city, setCity] = useState<string | null>(null);
   const [cityCustom, setCityCustom] = useState(false);
   const [dateMode, setDateMode] = useState<'fixed' | 'unset' | null>(null);
+  const [range, setRange] = useState<DateRange | undefined>(undefined);
   const [companion, setCompanion] = useState<string | null>(null);
   const [companionCustom, setCompanionCustom] = useState(false);
+  const [seedLinks, setSeedLinks] = useState<string[]>([]);
+  const [seedPlaces, setSeedPlaces] = useState<PickedPlace[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   // 브라우저 뒤로가기 (Pitfall 6 최소 구현): step 전진 시 history에 push, popstate로 후퇴.
   // step 1에서의 back은 이탈 허용(D-04 — 초안 미보존).
@@ -59,6 +73,30 @@ export default function OnboardingPage() {
         : step === 3
           ? companion !== null && companion.trim().length > 0
           : true;
+
+  async function handleSubmit() {
+    if (submitting || dateMode === null || city === null) return;
+    setSubmitting(true);
+    try {
+      const draft = buildDraft({ city, cityCustom, dateMode, range, companion });
+      const client = getSupabaseBrowser();
+      const trip = await createMoaDraft(client, draft);
+      for (const url of seedLinks) {
+        const link = await addLink(client, { board_id: trip.id, url });
+        if (link.source_kind !== 'manual') {
+          triggerExtraction(client, link.id).catch(console.error); // fire-and-forget
+        }
+      }
+      for (const place of seedPlaces) {
+        await addManualPlace(client, { board_id: trip.id, google_place_id: place.id });
+      }
+      router.replace(`/moa/${trip.id}`);
+    } catch (err) {
+      console.error(err);
+      toast('모아를 만들지 못했어요. 다시 시도해 주세요', { variant: 'error' });
+      setSubmitting(false);
+    }
+  }
 
   return (
     <main className="flex min-h-screen flex-col bg-surface-background">
@@ -106,31 +144,12 @@ export default function OnboardingPage() {
         )}
 
         {step === 2 && (
-          // Task 2가 <StepDates>로 교체 — 임시 모드 토글(dateMode 배선 유지).
-          <div className="flex flex-col gap-3" data-testid="step-dates-placeholder">
-            <button
-              type="button"
-              onClick={() => setDateMode('fixed')}
-              className={
-                dateMode === 'fixed'
-                  ? 'rounded-xl border border-brand-500 bg-surface-raised p-4 text-left'
-                  : 'rounded-xl border border-neutral-200 bg-surface-raised p-4 text-left'
-              }
-            >
-              날짜 정했어요
-            </button>
-            <button
-              type="button"
-              onClick={() => setDateMode('unset')}
-              className={
-                dateMode === 'unset'
-                  ? 'rounded-xl border border-brand-500 bg-surface-raised p-4 text-left'
-                  : 'rounded-xl border border-neutral-200 bg-surface-raised p-4 text-left'
-              }
-            >
-              아직 미정이에요
-            </button>
-          </div>
+          <StepDates
+            mode={dateMode}
+            range={range}
+            onModeChange={setDateMode}
+            onRangeChange={setRange}
+          />
         )}
 
         {step === 3 && (
@@ -145,8 +164,14 @@ export default function OnboardingPage() {
         )}
 
         {step === 4 && (
-          // Task 2가 <StepSeed>로, Task 3가 제출 핸들러를 배선.
-          <div data-testid="step-seed-placeholder" />
+          <StepSeed
+            seedLinks={seedLinks}
+            seedPlaces={seedPlaces}
+            onAddLink={(url) => setSeedLinks((l) => [...l, url])}
+            onPickPlace={(place) => setSeedPlaces((p) => [...p, place])}
+            onRemoveLink={(i) => setSeedLinks((l) => l.filter((_, idx) => idx !== i))}
+            onRemovePlace={(i) => setSeedPlaces((p) => p.filter((_, idx) => idx !== i))}
+          />
         )}
       </div>
 
@@ -157,7 +182,19 @@ export default function OnboardingPage() {
             다음
           </Button>
         ) : (
-          <Button className="w-full">모아 만들기</Button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="text-sm text-neutral-500 disabled:opacity-50"
+            >
+              건너뛰기
+            </button>
+            <Button className="w-full" disabled={submitting} onClick={handleSubmit}>
+              모아 만들기
+            </Button>
+          </div>
         )}
       </div>
     </main>
