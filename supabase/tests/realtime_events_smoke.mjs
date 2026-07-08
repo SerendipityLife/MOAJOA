@@ -105,25 +105,34 @@ async function main() {
   await Promise.all([waitSubscribed(ownerCh), waitSubscribed(strangerCh)]);
   await sleep(700); // WALRUS 구독 정착 여유
 
-  // 5) service_role로 place INSERT.
-  //    seq_no는 0024 assign_place_seq 트리거가 서버 채번 — payload에 절대 전송 금지.
+  // service_role place INSERT 헬퍼.
+  //   seq_no는 0024 assign_place_seq 트리거가 서버 채번 — payload에 절대 전송 금지.
   const svc = makeClient(SERVICE);
-  const { error: pErr } = await svc.from('places').insert({
-    trip_id: tripId,
-    added_by: ownerUserId,
-    name_local: 'rt smoke place',
-    lat: 35.0,
-    lng: 139.0,
-    source_kind: 'manual',
-  });
-  if (pErr) throw new Error('place insert 실패: ' + pErr.message);
+  const insertPlace = async (label) => {
+    const { error } = await svc.from('places').insert({
+      trip_id: tripId,
+      added_by: ownerUserId,
+      name_local: `rt smoke place ${label}`,
+      lat: 35.0,
+      lng: 139.0,
+      source_kind: 'manual',
+    });
+    if (error) throw new Error('place insert 실패: ' + error.message);
+  };
 
-  // 6) owner 수신 대기 + 비멤버 누출 여부 최종 확인.
-  const start = Date.now();
-  while (Date.now() - start < TIMEOUT_MS && ownerCount === 0) {
-    await sleep(200);
+  // 5·6) INSERT → owner 수신 대기.
+  //   `supabase db reset`가 realtime 컨테이너를 재시작한 직후엔 WAL 디코딩이
+  //   콜드스타트라 첫 이벤트 창(10s)을 놓칠 수 있음 — 최대 2회 재시도로 게이트를
+  //   결정론적으로 만든다. 비멤버(strangerCount)는 전 시도에 걸쳐 0이어야 통과.
+  const MAX_ATTEMPTS = 2;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS && ownerCount === 0; attempt++) {
+    await insertPlace(attempt);
+    const start = Date.now();
+    while (Date.now() - start < TIMEOUT_MS && ownerCount === 0) {
+      await sleep(200);
+    }
   }
-  await sleep(500);
+  await sleep(500); // 비멤버 누출 여부 마지막 확인 여유
 
   await owner.removeChannel(ownerCh);
   await stranger.removeChannel(strangerCh);
