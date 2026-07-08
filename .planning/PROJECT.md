@@ -27,6 +27,8 @@
 - **게스트 계정 승격 UI** — 익명→정식 전환은 다음 단계
 - **스와이프 답장 제스처** — 답장 버튼으로 대체
 
+**진행 상태:** Phase 23 완료 (2026-07-08) — 웹 퍼스트 기반 잠김: 0024 순번 채번(advisory-lock)·0025 share_mode/trip_messages/join_moa·익명 sign-in+카카오 provider(로컬·프로덕션 실증)·core/api 계약 seam·D26 반전. 원격 push(0024·0025)는 Phase 24 Preview e2e 전 필수.
+
 **v2.0 잔여 (보존, 추후 마감):** Phase 19 UAT sign-off · Phase 21 CF 배포(동료 런북 `phases/21-travel-ledger/21-HANDOFF.md`) + device UAT · Phase 22 안드로이드 패러티(웹 테스트 결과 보고 재판단)
 
 *제품 단일 출처: [docs/PRODUCT.md](../docs/PRODUCT.md) · 승인된 구현 설계: v2.1 approved plan (온보딩·스키마 0024/0025·통합 공유화면·채팅)*
@@ -122,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-07 — milestone v2.1 시작 (웹 퍼스트 지도탭 테스트). 이전: 2026-06-21 v2.0 (미완 잔여 보존: 19 UAT·21 배포·22), 2026-06-07 v1.1, 2026-05-25 brownfield init*
+*Last updated: 2026-07-08 — Phase 23 (Web-First Foundation) 완료. 이전: 2026-07-07 milestone v2.1 시작, 2026-06-21 v2.0 (미완 잔여 보존: 19 UAT·21 배포·22), 2026-06-07 v1.1, 2026-05-25 brownfield init*

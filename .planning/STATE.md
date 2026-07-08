@@ -4,17 +4,17 @@ milestone: v2.1
 milestone_name: 웹 퍼스트 지도탭 테스트
 current_phase: 23
 current_phase_name: Web-First Foundation
-status: executing
+status: phase-complete
 stopped_at: null
-last_updated: "2026-07-07T23:30:00.000Z"
+last_updated: "2026-07-08T00:30:00.000Z"
 last_activity: 2026-07-08
-last_activity_desc: 23-07 실행 완료(human-action approved) — 프로덕션 익명 sign-in·Kakao provider 설정 실증 + 원격 마이그레이션 0016~0023 정합·0024/0025 미적용 실측. Phase 23 플랜 7/7 완료, 다음 /gsd-verify-work 23
+last_activity_desc: Phase 23 완료 — verifier PASSED 12/12, 회귀 443 그린(core169·api81·web65·ios128), 코드리뷰 C0/W2/I3. 다음 Phase 24 discuss
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
   completed_plans: 7
-  percent: 100
+  percent: 20
 ---
 
 # STATE: MOAJOA v2.1
@@ -36,11 +36,11 @@ progress:
 
 ## Current Position
 
-Phase: 23 (Web-First Foundation) — 플랜 실행 완료 (7/7, Wave 5 마감)
-Plan: 7 플랜 / 5 웨이브 (7/7 완료 — 23-01~23-07 done)
-Status: Phase 23 전 플랜 실행 완료 — Wave 5(23-07 human-action) approved 마감: 프로덕션 익명·Kakao provider 실증 + 원격 마이그레이션 상태 실측. 성공 기준 1~5 충족(1·2·3 로컬 실증=23-04, 4 프로덕션 절반=23-07, 5 D26 반전=23-03). 다음: /gsd-verify-work 23
+Phase: 23 (Web-First Foundation) — ✅ COMPLETE (2026-07-08, verifier passed 12/12)
+Plan: 7/7 완료 (5 웨이브)
+Status: Phase 23 완료 — verifier PASSED(12/12 must-haves, 23-VERIFICATION.md) + 회귀 게이트 443 그린(core 169·api 81·web 65·ios 128) + 코드리뷰 Critical 0/Warning 2(WR-01 shareMoa public→shared 조용한 강등·WR-02 trip_messages.nickname DB CHECK 부재 — Phase 26 전 0026 보강 권장, 23-REVIEW.md). 성공 기준 1~5 전부 충족
 Last activity: 2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)
-Next: /gsd-verify-work 23 (phase verify) → 이후 Phase 24 discuss/plan. **주의: Phase 24 Vercel Preview e2e 전 `supabase db push`(0024·0025) 필수** (23-07 실측 — 원격은 0023까지만)
+Next: /gsd-discuss-phase 24 (Host Flow — 온보딩·지도탭). 선택: /gsd-verify-work 23(대화형 UAT — verifier는 이미 passed) · /gsd-secure-phase 23(SECURITY.md 미생성) · /gsd-code-review-fix 23(WR-01·WR-02). **주의: Phase 24 Vercel Preview e2e 전 `supabase db push`(0024·0025) 필수** (23-07 실측 — 원격은 0023까지만)
 
 **23-07 실행 완료 (2026-07-08, commit 6cfc0ce, human-action approved):** Phase 23 Wave 5 마감 — 프로덕션 인증 설정 + 원격 상태 실측, 코드·DB 변경 0. **Task 1(Open Q1 확정)**: `supabase migration list` 실측 — 원격(`xfoauhsraguyrifingct`)은 **0016~0023 정합, 0024(place_seq)·0025(web_share) 미적용**, `db push` 미실행(범위 외). 후속 잠금: Phase 24 Preview e2e 전 push 필수(원격에 join_moa·trip_messages·share_mode·seq_no 부재 — push 전 프로덕션 웹 공유·join·채팅 미동작). **Task 2(human-action approved)**: 사용자가 Kakao Developers(REST API key·Client Secret·Redirect URI·동의항목) + Supabase 대시보드(익명 토글 ON·Kakao provider) 설정 — 원격 실증: authorize 302→kauth.kakao.com(KOE 마커 0) + `/auth/v1/signup` `is_anonymous:true·role:authenticated` 토큰 발급. **KOE205 학습(Phase 24 e2e 참고)**: GoTrue kakao는 `account_email profile_image profile_nickname` 3 scope 하드코딩(제거 불가, scopes는 append만) → **개인 개발자 비즈 앱 전환(사업자등록증 불필요)+3 동의항목 전부 선택 동의**로 해결; email 미제공 시에도 GoTrue graceful 유저 생성 — MOAJOA는 닉네임 기반(D-A2)이라 무의존. 플랜 원안 "nickname·image만"은 불충분했음. AUTH-07/08 e2e 마킹은 Phase 24/25 몫(traceability, 23-06 선례). deviation 0. 상세: `23-07-SUMMARY.md`.
 

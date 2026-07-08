@@ -202,7 +202,7 @@ Plans:
 
 ### Phases
 
-- [ ] **Phase 23: Web-First Foundation** — 0024 순번 채번 + 0025 share_mode/채팅/join_moa + 익명 sign-in·카카오 provider 스위치 + core/api 계약 + CLAUDE.md D26 반전
+- [x] **Phase 23: Web-First Foundation** (2026-07-08 완료) — 0024 순번 채번 + 0025 share_mode/채팅/join_moa + 익명 sign-in·카카오 provider 스위치 + core/api 계약 + CLAUDE.md D26 반전
 - [ ] **Phase 24: Host Flow (온보딩·지도탭)** — 카카오 버튼 + `/onboarding` 4단계 + `/moa`·`/moa/[id]` 지도탭 + 링크·장소 추가 + 함께 정하기 시트
 - [ ] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가
 - [ ] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩
@@ -297,7 +297,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 23. Web-First Foundation | 7/7 | Plans complete — verify 대기 | - |
+| 23. Web-First Foundation | 7/7 | ✅ Complete (verifier passed 12/12) | 2026-07-08 |
 | 24. Host Flow (온보딩·지도탭) | 0/TBD | Not started | - |
 | 25. Guest Unified Share | 0/TBD | Not started | - |
 | 26. Realtime Chat | 0/TBD | Not started | - |
