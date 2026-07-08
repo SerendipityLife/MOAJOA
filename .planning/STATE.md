@@ -1,20 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: 웹 퍼스트 지도탭 테스트
-current_phase: 23
-current_phase_name: Web-First Foundation
-status: phase-complete
-stopped_at: null
-last_updated: "2026-07-08T00:30:00.000Z"
-last_activity: 2026-07-08
-last_activity_desc: Phase 23 완료 — verifier PASSED 12/12, 회귀 443 그린(core169·api81·web65·ios128), 코드리뷰 C0/W2/I3. 다음 Phase 24 discuss
+milestone: v2.0
+milestone_name: — 전면 개편
+status: verifying
+stopped_at: Phase 24 context gathered
+last_updated: "2026-07-08T02:21:42.079Z"
+last_activity: "2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)"
 progress:
-  total_phases: 5
-  completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
-  percent: 20
+  total_phases: 12
+  completed_phases: 7
+  total_plans: 36
+  completed_plans: 36
+  percent: 100
 ---
 
 # STATE: MOAJOA v2.1
@@ -354,9 +351,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-07T17:45:00.000Z
-**Stopped at:** Completed 23-06-PLAN.md (Phase 23 Wave 4 완료 — 다음 Wave 5 = 23-07 human-action)
-**Resume file:** None
+**Last session:** 2026-07-08T02:21:42.072Z
+**Stopped at:** Phase 24 context gathered
+**Resume file:** .planning/phases/24-host-flow/24-CONTEXT.md
 
 다음 세션에서 이어할 때:
 
