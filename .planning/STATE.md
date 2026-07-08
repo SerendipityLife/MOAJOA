@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-status: executing
-stopped_at: 24-03 완료 (/moa 진입 리스트 — D-01 분기·D-12 카드·카카오 버튼 AUTH-07·목적지 /moa, web 80 그린·build ƒ/moa) — 원격 db push는 여전히 human-action 게이트 open
-last_updated: "2026-07-08T18:45:00.000Z"
-last_activity: "2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)"
+status: 24-01 [BLOCKING] 로컬 완료 — 0026 realtime publication(places·links) 로컬 적용(42P17=0) + postgres_changes 이벤트 실수신·비멤버 0건(WALRUS RLS) 스모크 exit 0 + supabase-js 2.110.0 전역 실체화(F-20-3 root node_modules 오염 정화) + react-day-picker 9.14.0. **원격 db push(0024·0025·0026)는 auto-mode classifier 거부로 미실행 — human-action 게이트(사용자 터미널 `supabase db push`).** downstream local 개발은 언블록.
+stopped_at: 24-04 완료 (/onboarding 4단계 위저드 — 칩·react-day-picker range·시드 스테이징·AddContentTabs 공유(D-11)·buildDraft·제출 흐름 ONBOARD-03/04/05, web 88 그린·build ○/onboarding) — 원격 db push는 여전히 human-action 게이트 open
+last_updated: "2026-07-08T10:04:38.928Z"
+last_activity: "2026-07-08 — 24-01 실행: pnpm install 후에도 root `node -e require`가 2.45.4였던 근본원인=npm-flat 오염 실디렉토리(root node_modules/@supabase/*)가 pnpm 스토어를 가림 → 제거+supabase-js root dep 선언으로 root·web·api 전부 2.110.0. 0026 publication 신규(votes는 Phase 25 몫) + 스모크 2종(psql 카운트 2 + owner≥1·비멤버 0 exit code) 작성·실행. reset 직후 realtime WAL 콜드스타트 플래키 → 2회 재시도 하드닝. core 169·api 81·web 65 그린·api typecheck 0."
 progress:
-  total_phases: 12
-  completed_phases: 7
-  total_plans: 36
-  completed_plans: 36
+  total_phases: 7
+  completed_phases: 6
+  total_plans: 29
+  completed_plans: 29
   percent: 100
 ---
 
@@ -33,11 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 24 (Host Flow — 온보딩·지도탭) — 🔧 EXECUTING (Wave 1, 24-01 로컬 완료 · 24-02 완료 · 24-03 완료)
-Plan: 3/7 실행 (24-03 진입 경로 완료 — /moa·카카오 버튼 · 원격 push 게이트 open — Wave 2[24-04·24-05] 대기)
+Phase: 24 (Host Flow — 온보딩·지도탭) — 🔧 EXECUTING (Wave 1 완료 · Wave 2 24-04 완료 · 24-05 대기)
+Plan: 4/7 실행 (24-04 온보딩 위저드 완료 — /onboarding 4단계·AddContentTabs 공유·buildDraft — 원격 push 게이트 여전히 open · 24-05[place-sheet·place-list] 대기)
 Status: 24-01 [BLOCKING] 로컬 완료 — 0026 realtime publication(places·links) 로컬 적용(42P17=0) + postgres_changes 이벤트 실수신·비멤버 0건(WALRUS RLS) 스모크 exit 0 + supabase-js 2.110.0 전역 실체화(F-20-3 root node_modules 오염 정화) + react-day-picker 9.14.0. **원격 db push(0024·0025·0026)는 auto-mode classifier 거부로 미실행 — human-action 게이트(사용자 터미널 `supabase db push`).** downstream local 개발은 언블록.
 Last activity: 2026-07-08 — 24-01 실행: pnpm install 후에도 root `node -e require`가 2.45.4였던 근본원인=npm-flat 오염 실디렉토리(root node_modules/@supabase/*)가 pnpm 스토어를 가림 → 제거+supabase-js root dep 선언으로 root·web·api 전부 2.110.0. 0026 publication 신규(votes는 Phase 25 몫) + 스모크 2종(psql 카운트 2 + owner≥1·비멤버 0 exit code) 작성·실행. reset 직후 realtime WAL 콜드스타트 플래키 → 2회 재시도 하드닝. core 169·api 81·web 65 그린·api typecheck 0.
 Next: **[사용자] 터미널에서 `supabase db push` 실행 (0024·0025·0026 — Vercel Preview e2e 선행)** — CLI 인증 keychain OK·원격 접근 비대화형 동작 확인, migration list 실측 원격 0016~0023. push 후 24-02·24-03(Wave 1 병렬) 진행. 카카오 실로그인·realtime 반영·드래그 물리는 manual-only(verify-work 몫)
+
+**24-04 실행 완료 (2026-07-08, commits 7e74a4d·f24410d·e2138e3·3693405·75f7539·dab3e9d):** Phase 24 Wave 2 — /onboarding 4단계 위저드 + AddContentTabs 공유(D-11). **Task 1(7e74a4d):** `app/onboarding/page.tsx` 단일 라우트 클라이언트 위저드(D-02) — step 1|2|3|4 상태, 4-dot 인디케이터(A-6, 현재 brand-600 w-6 pill), 뒤로 chevron(aria-label="뒤로"), 브라우저 뒤로가기 `history.pushState`/`popstate` 최소 구현(Pitfall 6), localStorage 0(D-04) + `step-where`(CITY_KO_MAP 9칩+기타, maxLength 20) + `step-who`(혼자/연인/친구/가족/동료+기타, companion ≤20 D-07). step 2/4는 typecheck 통과 placeholder(noUnusedLocals 때문에 태스크별 상태만 선언). **Task 2(f24410d):** `step-dates`(D-06 — react-day-picker 9.14 `mode="range"`+ko locale, classNames Tailwind 매핑 A-8[style.css 미사용], 2택 카드+"날짜는 나중에 친구들과 함께 정할 수 있어요") + **`components/add-content-tabs.tsx` AddContentTabs(D-11)** — 링크/장소검색 2탭, `new URL()` 검증, `resolve-place` EF 검색(max 5, ResolvedPlace→{id,name,address}), DB 미접촉·barrel 등록[24-07 add-sheet 재사용] + `step-seed`(D-08 — 로컬 스테이징만, DB 접촉 0 D-03). **Task 3(tdd 2사이클):** `_lib/build-draft.ts` 순수 매퍼 — title 파생(도쿄 모아/custom 모아)·로컬 YYYY-MM-DD(UTC 시프트 회피)·`TripCreateDraftSchema.parse` 제출 게이트 T-24-10 [RED e2138e3→GREEN 3693405, 5케이스] + page.tsx 제출 흐름 — StepDates/StepSeed 배선·range/seed/submitting 상태·`handleSubmit`(buildDraft→createMoaDraft 1회→일괄 addLink+triggerExtraction[fire-and-forget]+addManualPlace→router.replace(/moa/{id}))·건너뛰기=시드 0 제출 [RED 75f7539→GREEN dab3e9d, 3케이스]. **검증:** web 85→**88 그린**(build-draft 5+onboarding 3)·typecheck exit 0·**build ○/onboarding(26.7kB, noUncheckedIndexedAccess 블로커 없음)**·`.js` 워크스페이스 import 0·iOS 무접촉·seq_no/style.css/isDevToolsEnabled/localStorage 스윕 0. **deviation 1(Rule 1 — grep 게이트 주석 리터럴 정정: 금지 대상을 문서화한 주석의 `localStorage`·`toISOString` 리터럴이 grep 0 게이트 오탐 → 의미 보존 재서술).** ONBOARD-03/04/05 전 경로 자동 검증(미정/확정/시드/건너뛰기). 상세: `24-04-SUMMARY.md`.
 
 **24-03 실행 완료 (2026-07-08, commits 576504c·8ee3eab·556993f·a0b3d0e):** Phase 24 Wave 1 — 진입 경로. **fix(576504c):** 24-02 잔여 noUncheckedIndexedAccess 2건(member-color.ts tuple 인덱스·place-sort.test.ts out[1])이 `next build` 타입체크 차단 → 각 1줄 non-null 단언(Rule 3 blocking, 로직 무변경). 24-02가 web typecheck/build 미실행이라 잔존. **Task 1(feat 8ee3eab):** `apps/web/app/moa/page.tsx` 신규 RSC — auth 게이트→`redirect('/login?next=/moa')`, D-01 분기 정확순(0→`/onboarding`·1→`/moa/[id]`·2+→리스트), D-12 미니멀 카드(title 16/600·`CITY_KO_MAP[city_code]`+날짜/`날짜 미정`·`장소 N개`, `listMyTripsWithPreview` RSC, animate-fade-up stagger, `isDevToolsEnabled` 게이트 없음) + 하단 고정 새 모아 CTA→`/onboarding`(primary Link). city_code nullable 가드 `'도시 미정'`(Rule 1 — plan 원문 null 인덱스 타입 에러). build ƒ/moa. **Task 2(feat 556993f):** `login/page.tsx` surgical — oauth() union += `'kakao'`(본문 무변경) + 카카오 버튼(#FEE500/검정, UI-SPEC A-9 버튼 1개 한정) + `postLoginDestination` fallback `/`→`/moa`; `auth/callback/route.ts` next 기본 fallback `/`→`/moa`. PKCE exchange·open-redirect 가드(login 2·callback 1)·이메일/구글/애플 전부 무수정(exchange 삭제 라인 0). **Task 3(test a0b3d0e, tdd):** `__tests__/login.test.tsx` 3케이스(카카오 버튼 렌더·정확 `{provider:'kakao', options:{redirectTo:/auth/callback}}` 1회·error→toast error variant+no redirect). 구현이 Task 2 선행이라 GREEN-only(회귀 커버리지). **검증:** web 77→80 그린(무회귀)·typecheck exit 0·build ƒ/moa·`.js` 워크스페이스 import 0·iOS 무접촉. **deviations 2(1 Rule 3 blocking build gate + 1 Rule 1 null 가드) — 신규 기능 0, 24-02 잔여 픽스는 별도 커밋 격리.** 실카카오 로그인 e2e는 Vercel Preview UAT 몫(원격 db push 게이트 선행). 상세: `24-03-SUMMARY.md`.
 

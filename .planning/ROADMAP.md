@@ -255,7 +255,7 @@ Plans:
 - [~] 24-01-PLAN.md — [BLOCKING] 환경 게이트(supabase-js 2.110·react-day-picker 9.14.0) + 0026 realtime publication + 로컬 적용·스모크 exit 0 ✅ · **원격 push는 human-action 게이트 open** (Wave 1) — `24-01-SUMMARY.md`
 - [x] 24-02-PLAN.md — 계약 레이어: ui-tokens member 팔레트 + memberColor·sortByLove·marker fill + api createMoaDraft·listTripMembers·getProfileNames (Wave 1) — `24-02-SUMMARY.md`
 - [x] 24-03-PLAN.md — /moa 리스트 + D-01 진입 분기 + 카카오 버튼·로그인 목적지 /moa + login 테스트 (Wave 1) — `24-03-SUMMARY.md` (web 80 그린·build ƒ/moa)
-- [ ] 24-04-PLAN.md — /onboarding 4단계 위저드(칩·캘린더·시드 스테이징) + AddContentTabs 공유 컴포넌트 + buildDraft·제출 흐름 (Wave 2)
+- [x] 24-04-PLAN.md — /onboarding 4단계 위저드(칩·캘린더·시드 스테이징) + AddContentTabs 공유 컴포넌트 + buildDraft·제출 흐름 (Wave 2) — `24-04-SUMMARY.md` (web 88 그린·build ○/onboarding)
 - [ ] 24-05-PLAN.md — place-sheet 드래그 시트(D-09) + place-list(정렬·아코디언·하트·분석중/실패 행) + 테스트 (Wave 2)
 - [ ] 24-06-PLAN.md — /moa/[id] RSC + moa-map(persistent·마커 diff·색) + moa-island(realtime postgres_changes·optimistic 찜·마커↔행 연동) (Wave 3)
 - [ ] 24-07-PLAN.md — add-sheet(FAB)·share-sheet(함께 정하기) + island 배선 + phase 전체 게이트 (Wave 4)

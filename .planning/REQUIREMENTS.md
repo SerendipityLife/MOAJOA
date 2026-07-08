@@ -330,9 +330,9 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 ### Web Onboarding (ONBOARD) — 03부터 이어감
 
-- [ ] **ONBOARD-03**: 로그인 직후 4단계 온보딩(어디로→날짜→누구랑→봐둔 곳)을 거쳐 모아가 생성된다. 여행지는 도시 칩 9개(`CITY_KO_MAP`)+기타 직접입력
-- [ ] **ONBOARD-04**: 날짜 "미정" 선택 시 안내 한 줄 후 통과되어 날짜 없는 모아가 만들어지고, "확정" 선택 시 기간을 입력한다
-- [ ] **ONBOARD-05**: 온보딩 마지막 단계에서 유튜브·블로그 링크 붙여넣기 또는 구글 장소 검색으로 첫 장소를 추가하거나 건너뛸 수 있다
+- [x] **ONBOARD-03**: 로그인 직후 4단계 온보딩(어디로→날짜→누구랑→봐둔 곳)을 거쳐 모아가 생성된다. 여행지는 도시 칩 9개(`CITY_KO_MAP`)+기타 직접입력
+- [x] **ONBOARD-04**: 날짜 "미정" 선택 시 안내 한 줄 후 통과되어 날짜 없는 모아가 만들어지고, "확정" 선택 시 기간을 입력한다
+- [x] **ONBOARD-05**: 온보딩 마지막 단계에서 유튜브·블로그 링크 붙여넣기 또는 구글 장소 검색으로 첫 장소를 추가하거나 건너뛸 수 있다
 
 ### 지도탭 메인 (MOA)
 
@@ -378,9 +378,9 @@ Roadmap (2026-07-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 |-------------|-------|--------|
 | MOA-01 | Phase 23 | Complete (23-04 라이브 실증 — 동시 40건 무중복·무결번 + hard-delete 무재사용 + forge 차단, 하네스 PASS) |
 | AUTH-07 | Phase 24 | Complete (24-03 — 카카오 버튼 + signInWithOAuth 단위 검증; 실로그인 e2e는 Preview UAT) |
-| ONBOARD-03 | Phase 24 | Pending |
-| ONBOARD-04 | Phase 24 | Pending |
-| ONBOARD-05 | Phase 24 | Pending |
+| ONBOARD-03 | Phase 24 | Done (24-04) |
+| ONBOARD-04 | Phase 24 | Done (24-04) |
+| ONBOARD-05 | Phase 24 | Done (24-04) |
 | MOA-02 | Phase 24 | Pending |
 | MOA-03 | Phase 24 | Pending |
 | MOA-04 | Phase 24 | Pending |
