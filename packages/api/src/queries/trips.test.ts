@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { shareMoa } from './trips';
+import { shareMoa, createMoaDraft } from './trips';
 import type { MoajoaSupabaseClient } from '../client';
+import type { TripCreateDraft } from '@moajoa/core';
 
 // uuid v4 fixtures (mirror ledger.test.ts idiom).
 const TRIP = '11111111-1111-4111-8111-111111111111';
@@ -56,5 +57,37 @@ describe("shareMoa — single UPDATE sets visibility 'shared' + share_mode, retu
   it('throws when the mock returns { error }', async () => {
     const { client } = makeClient({ data: null, error: { message: 'boom' } });
     await expect(shareMoa(client, TRIP, 'both')).rejects.toBeTruthy();
+  });
+});
+
+describe('createMoaDraft — onboarding draft INSERT with companion (ONBOARD-03)', () => {
+  const draft: TripCreateDraft = {
+    title: '오사카 여행',
+    city_code: 'osaka',
+    start_date: '2026-08-01',
+    end_date: '2026-08-03',
+    companion: 'friends',
+  };
+
+  it('inserts the 5 draft fields (incl. companion) into trips, selects *, single', async () => {
+    const row = { id: TRIP, ...draft };
+    const { client, from, chain } = makeClient({ data: row, error: null });
+    const out = await createMoaDraft(client, draft);
+    expect(from).toHaveBeenCalledWith('trips');
+    expect(chain.insert).toHaveBeenCalledWith({
+      title: draft.title,
+      city_code: draft.city_code,
+      start_date: draft.start_date,
+      end_date: draft.end_date,
+      companion: draft.companion,
+    });
+    expect(chain.select).toHaveBeenCalledWith('*');
+    expect(chain.single).toHaveBeenCalled();
+    expect(out).toEqual(row);
+  });
+
+  it('throws when the mock returns { error } (house contract)', async () => {
+    const { client } = makeClient({ data: null, error: { message: 'boom' } });
+    await expect(createMoaDraft(client, draft)).rejects.toBeTruthy();
   });
 });
