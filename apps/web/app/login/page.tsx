@@ -17,7 +17,7 @@ type Mode = 'password' | 'magic';
 function postLoginDestination(): string {
   const next = new URLSearchParams(window.location.search).get('next');
   if (next && next.startsWith('/') && !next.startsWith('//')) return next;
-  return process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === '1' ? '/boards' : '/';
+  return process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === '1' ? '/boards' : '/moa';
 }
 
 /** /auth/callback target carrying ?next= through the e-mail/OAuth round-trip. */
@@ -103,7 +103,7 @@ export default function LoginPage() {
     setMagicSent(true);
   }
 
-  async function oauth(provider: 'google' | 'apple') {
+  async function oauth(provider: 'google' | 'apple' | 'kakao') {
     setError(null);
     const { error } = await getSupabaseBrowser().auth.signInWithOAuth({
       provider,
@@ -236,6 +236,12 @@ export default function LoginPage() {
             className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition-colors hover:bg-neutral-800"
           >
             Apple로 계속
+          </button>
+          <button
+            onClick={() => oauth('kakao')}
+            className="w-full rounded-lg bg-[#FEE500] py-3 font-medium text-neutral-900 transition-colors hover:bg-[#FDD800]"
+          >
+            카카오로 시작하기
           </button>
         </div>
       </div>

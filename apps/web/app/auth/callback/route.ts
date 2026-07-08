@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       ? rawNext
       : process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === '1'
         ? '/boards'
-        : '/';
+        : '/moa';
   const errorDescription = searchParams.get('error_description') ?? searchParams.get('error');
 
   const base = process.env.NEXT_PUBLIC_APP_URL ?? origin;
