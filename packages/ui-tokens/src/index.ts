@@ -68,6 +68,9 @@ export const colors = {
     wellness: '#26A69A',
     shopping: '#8D6E63',
   },
+  /** Phase 24 D-20 — 참여자 핀 팔레트. 호스트는 brand[500] 고정(팔레트 밖).
+   *  join순(created_at asc) 인덱스 % 6 순환 배정 — apps/web/lib/member-color.ts가 소비. */
+  member: ['#FF7043', '#AB47BC', '#26A69A', '#FFB300', '#EC407A', '#7CB342'],
   // Leaderboard / ranking medals
   medal: {
     gold: '#FFD700',
