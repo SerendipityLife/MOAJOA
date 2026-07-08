@@ -1,4 +1,11 @@
-import type { ShareModeType, Trip, TripCreate, TripUpdate, PublicBoardView } from '@moajoa/core';
+import type {
+  ShareModeType,
+  Trip,
+  TripCreate,
+  TripCreateDraft,
+  TripUpdate,
+  PublicBoardView,
+} from '@moajoa/core';
 import type { MoajoaSupabaseClient } from '../client';
 
 export async function listMyTrips(client: MoajoaSupabaseClient): Promise<Trip[]> {
@@ -86,6 +93,30 @@ export async function createTrip(
       city_code: input.city_code,
       start_date: input.start_date,
       end_date: input.end_date,
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as Trip;
+}
+
+/**
+ * Phase 24 온보딩 draft 생성 (ONBOARD-03, D-03). createTrip과 별도 —
+ * TripCreateDraft는 dates nullable + companion(0025)을 나른다. 기존 createTrip(iOS) 무수정.
+ * seq_no·visibility·representative_id·share_slug는 전부 서버 몫(트리거) — 클라이언트 미전송.
+ */
+export async function createMoaDraft(
+  client: MoajoaSupabaseClient,
+  input: TripCreateDraft,
+): Promise<Trip> {
+  const { data, error } = await client
+    .from('trips')
+    .insert({
+      title: input.title,
+      city_code: input.city_code,
+      start_date: input.start_date,
+      end_date: input.end_date,
+      companion: input.companion,
     })
     .select('*')
     .single();

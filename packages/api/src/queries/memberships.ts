@@ -58,6 +58,29 @@ export async function getMyTripRole(
   return null;
 }
 
+export interface TripMember {
+  user_id: string;
+  created_at: string;
+}
+
+/**
+ * Phase 24 D-20 — 핀 색 join순 배정의 데이터 소스. accepted 멤버만,
+ * created_at asc (join order). owner는 memberships 행이 없다(설계상).
+ */
+export async function listTripMembers(
+  client: MoajoaSupabaseClient,
+  tripId: string,
+): Promise<TripMember[]> {
+  const { data, error } = await client
+    .from('memberships')
+    .select('user_id, created_at')
+    .eq('trip_id', tripId)
+    .not('accepted_at', 'is', null)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as TripMember[];
+}
+
 /**
  * Count of accepted members — the 확정 denominator. Coalesces null → 0 for legacy/empty trips.
  */
