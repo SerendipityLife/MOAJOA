@@ -114,6 +114,16 @@ describe('OnboardingPage', () => {
     await waitFor(() => expect(triggerExtraction).toHaveBeenCalledWith(expect.anything(), 'link-1'));
   });
 
+  it('gates step 2: "날짜 정했어요" with no range picked keeps 다음 disabled (M-01)', () => {
+    render(<OnboardingPage />);
+    fireEvent.click(screen.getByText('도쿄'));
+    fireEvent.click(screen.getByText('다음'));
+    // fixed 모드만 고르고 range 미선택 → 다음 비활성.
+    fireEvent.click(screen.getByText('날짜 정했어요'));
+    const next = screen.getByText('다음') as HTMLButtonElement;
+    expect(next.disabled).toBe(true);
+  });
+
   it('skip (건너뛰기) → no addLink/addManualPlace, createMoaDraft still called (ONBOARD-05)', async () => {
     render(<OnboardingPage />);
     advanceToSeedStep();

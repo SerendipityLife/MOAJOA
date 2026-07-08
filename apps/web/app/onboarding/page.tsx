@@ -69,7 +69,7 @@ export default function OnboardingPage() {
     step === 1
       ? city !== null && city.trim().length > 0
       : step === 2
-        ? dateMode !== null
+        ? dateMode === 'unset' || (dateMode === 'fixed' && range?.from != null)
         : step === 3
           ? companion !== null && companion.trim().length > 0
           : true;
