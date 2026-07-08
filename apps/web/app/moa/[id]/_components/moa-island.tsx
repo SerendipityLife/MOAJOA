@@ -13,13 +13,14 @@ import {
   retractVote,
   triggerExtraction,
 } from '@moajoa/api';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Plus } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { memberColor } from '@/lib/member-color';
 import { useToast } from '@/components';
 import { MoaMap } from './moa-map';
 import { PlaceSheet, type SheetAnchor } from './place-sheet';
 import { PlaceList } from './place-list';
+import { AddSheet } from './add-sheet';
 
 export interface MoaIslandProps {
   trip: Trip;
@@ -68,6 +69,7 @@ export function MoaIsland({
     useState<Record<string, string>>(initialProfileNames);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
   const [sheetAnchor, setSheetAnchor] = useState<SheetAnchor>('collapsed');
+  const [addOpen, setAddOpen] = useState(false);
 
   // 채널 콜백(마운트당 1회 바인딩)이 최신 값을 읽도록 ref 동기화.
   const profileNamesRef = useRef(profileNames);
@@ -203,6 +205,23 @@ export function MoaIsland({
             onRetry={onRetry}
           />
         </PlaceSheet>
+
+        {/* FAB [+] — collapsed 시트 상단에서 16px 위, z-order 시트보다 위(UI-SPEC §FAB). */}
+        <button
+          type="button"
+          aria-label="장소 추가"
+          onClick={() => setAddOpen(true)}
+          className="absolute bottom-[136px] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
+        >
+          <Plus className="size-6" aria-hidden />
+        </button>
+
+        <AddSheet
+          tripId={trip.id}
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          onAdded={() => void reconcile()}
+        />
       </div>
     </div>
   );

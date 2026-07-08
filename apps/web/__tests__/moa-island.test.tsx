@@ -62,6 +62,15 @@ vi.mock('@/app/moa/[id]/_components/moa-map', () => ({
   ),
 }));
 
+// AddSheet / ShareSheet 스텁 — 자체 테스트가 별도로 검증(add-sheet.test·share-sheet.test).
+// island 테스트는 배선(open 상태)만 관심.
+vi.mock('@/app/moa/[id]/_components/add-sheet', () => ({
+  AddSheet: ({ open }: { open: boolean }) => (open ? <div data-testid="add-sheet" /> : null),
+}));
+vi.mock('@/app/moa/[id]/_components/share-sheet', () => ({
+  ShareSheet: ({ open }: { open: boolean }) => (open ? <div data-testid="share-sheet" /> : null),
+}));
+
 // Import AFTER mocks.
 import { MoaIsland, type MoaIslandProps } from '@/app/moa/[id]/_components/moa-island';
 
