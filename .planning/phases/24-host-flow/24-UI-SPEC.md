@@ -1,7 +1,8 @@
 ---
 phase: 24
 slug: 24-host-flow
-status: draft
+status: approved
+reviewed_at: 2026-07-08
 shadcn_initialized: false
 preset: none
 created: 2026-07-08
@@ -267,14 +268,14 @@ member: [
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking — "추가하기" → "링크 추가하기" 권고)
+- [x] Dimension 2 Visuals: FLAG (non-blocking — icon-only FAB/뒤로/찜에 aria-label 선언 권고)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-07-08 (gsd-ui-checker — 6/6, FLAG 2건 비차단)
 
 ---
 
