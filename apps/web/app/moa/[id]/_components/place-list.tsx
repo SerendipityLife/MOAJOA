@@ -25,6 +25,7 @@ export interface PlaceListProps {
   onOpenPlace: (id: string | null) => void;
   onToggleVote: (placeId: string) => void;
   onRetry: (linkId: string) => void;
+  onDelete: (placeId: string) => void;
 }
 
 /** `4:00` 스타일 라벨 (vote-island tsLabel 미러 — m:ss zero-pad). */
@@ -54,6 +55,7 @@ export function PlaceList({
   onOpenPlace,
   onToggleVote,
   onRetry,
+  onDelete,
 }: PlaceListProps) {
   const { toast } = useToast();
 
@@ -224,6 +226,17 @@ export function PlaceList({
                   className="self-start text-sm font-medium text-neutral-700 opacity-50"
                 >
                   답장
+                </button>
+                {/* 삭제 (soft-delete via hidden_at) — island이 optimistic 제거 + hidePlace. */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(p.id);
+                  }}
+                  className="self-start text-sm font-medium text-[#EF4444]"
+                >
+                  삭제
                 </button>
               </div>
             )}

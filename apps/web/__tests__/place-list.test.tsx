@@ -67,6 +67,7 @@ function makeLink(overrides: Partial<Link>): Link {
 const onOpenPlace = vi.fn();
 const onToggleVote = vi.fn();
 const onRetry = vi.fn();
+const onDelete = vi.fn();
 
 function renderList(overrides: Partial<PlaceListProps> = {}) {
   const props: PlaceListProps = {
@@ -81,6 +82,7 @@ function renderList(overrides: Partial<PlaceListProps> = {}) {
     onOpenPlace,
     onToggleVote,
     onRetry,
+    onDelete,
     ...overrides,
   };
   return render(<PlaceList {...props} />);
@@ -90,6 +92,7 @@ beforeEach(() => {
   onOpenPlace.mockClear();
   onToggleVote.mockClear();
   onRetry.mockClear();
+  onDelete.mockClear();
 });
 
 describe('PlaceList', () => {
@@ -200,5 +203,28 @@ describe('PlaceList', () => {
     expect(screen.queryByText('분석 중…')).toBeNull();
     expect(screen.getByText('지원하지 않는 링크예요')).toBeTruthy();
     expect(screen.queryByText('재시도')).toBeNull();
+  });
+
+  it('Test 10 (삭제): 열린 행의 삭제 버튼 → onDelete(placeId), 행 토글 미발화', () => {
+    renderList({ places: [makePlace({ id: 'p1' })], openPlaceId: 'p1' });
+    fireEvent.click(screen.getByText('삭제'));
+    expect(onDelete).toHaveBeenCalledWith('p1');
+    expect(onOpenPlace).not.toHaveBeenCalled();
+  });
+
+  it('Test 11 (삭제): 닫힌 행에는 삭제 버튼 없음 (아코디언 확장 시에만)', () => {
+    renderList({ places: [makePlace({ id: 'p1' })], openPlaceId: null });
+    expect(screen.queryByText('삭제')).toBeNull();
+  });
+
+  it('Test 12 (삭제): 분석중·실패 행에는 삭제 버튼 없음 (실 장소 행만)', () => {
+    renderList({
+      places: [],
+      links: [
+        makeLink({ id: 'l1', extraction_status: 'processing' }),
+        makeLink({ id: 'l2', extraction_status: 'failed' }),
+      ],
+    });
+    expect(screen.queryByText('삭제')).toBeNull();
   });
 });

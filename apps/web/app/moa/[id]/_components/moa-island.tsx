@@ -8,6 +8,7 @@ import {
   castVote,
   getProfileNames,
   getVoteCounts,
+  hidePlace,
   listLinksByTrip,
   listPlacesByTrip,
   retractVote,
@@ -179,6 +180,19 @@ export function MoaIsland({
     setSheetAnchor('expanded');
   };
 
+  // 삭제 (soft-delete): optimistic 제거 후 hidePlace. 실패 시 reconcile로 복원 + 에러 토스트.
+  async function handleDelete(placeId: string) {
+    setPlaces((prev) => prev.filter((p) => p.id !== placeId));
+    try {
+      await hidePlace(getSupabaseBrowser(), placeId);
+      toast('삭제했어요');
+    } catch (err) {
+      console.error(err);
+      await reconcile();
+      toast('삭제하지 못했어요', { variant: 'error' });
+    }
+  }
+
   // 재시도 (D-15): 재추출 트리거 후 reconcile(router.refresh 대신).
   const onRetry = (linkId: string) => {
     const client = getSupabaseBrowser();
@@ -232,6 +246,7 @@ export function MoaIsland({
             onOpenPlace={setOpenPlaceId}
             onToggleVote={onToggleVote}
             onRetry={onRetry}
+            onDelete={handleDelete}
           />
         </PlaceSheet>
 

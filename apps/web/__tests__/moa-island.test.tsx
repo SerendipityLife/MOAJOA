@@ -37,6 +37,7 @@ const getProfileNames = vi.fn(
 const castVote = vi.fn(async (_c: unknown, _in: unknown) => ({}));
 const retractVote = vi.fn(async (_c: unknown, _id: string) => undefined);
 const triggerExtraction = vi.fn(async (_c: unknown, _id: string) => ({}));
+const hidePlace = vi.fn(async (_c: unknown, _id: string) => undefined);
 vi.mock('@moajoa/api', () => ({
   listPlacesByTrip: (c: unknown, t: string) => listPlacesByTrip(c, t),
   listLinksByTrip: (c: unknown, t: string) => listLinksByTrip(c, t),
@@ -45,6 +46,7 @@ vi.mock('@moajoa/api', () => ({
   castVote: (c: unknown, i: unknown) => castVote(c, i),
   retractVote: (c: unknown, id: string) => retractVote(c, id),
   triggerExtraction: (c: unknown, id: string) => triggerExtraction(c, id),
+  hidePlace: (c: unknown, id: string) => hidePlace(c, id),
 }));
 
 const toast = vi.fn();
@@ -160,6 +162,7 @@ beforeEach(() => {
   castVote.mockResolvedValue({});
   retractVote.mockResolvedValue(undefined);
   triggerExtraction.mockResolvedValue({});
+  hidePlace.mockResolvedValue(undefined);
 });
 
 describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)', () => {
@@ -232,5 +235,29 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
     fireEvent.click(screen.getByText('함께 정하기'));
     expect(screen.getByTestId('share-sheet')).toBeInTheDocument();
     expect(screen.queryByLabelText('장소 추가')).toBeNull();
+  });
+
+  it('Test 8: 삭제 → optimistic 제거 + hidePlace(placeId) + 성공 토스트', async () => {
+    render(<MoaIsland {...baseProps} />);
+    // 마커 탭으로 p1 행 아코디언 확장 → 삭제 버튼 노출.
+    fireEvent.click(screen.getByTestId('marker-p1'));
+    const del = await screen.findByText('삭제');
+    fireEvent.click(del);
+    // optimistic: 행 즉시 제거.
+    await waitFor(() => expect(screen.queryByText('스시집')).toBeNull());
+    expect(hidePlace).toHaveBeenCalledWith(expect.anything(), 'p1');
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('삭제했어요'));
+  });
+
+  it('Test 9: 삭제 실패 → reconcile 복원 + 에러 토스트', async () => {
+    hidePlace.mockRejectedValueOnce(new Error('fail'));
+    listPlacesByTrip.mockResolvedValue([basePlace]); // reconcile이 되돌림.
+    render(<MoaIsland {...baseProps} />);
+    fireEvent.click(screen.getByTestId('marker-p1'));
+    fireEvent.click(await screen.findByText('삭제'));
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith('삭제하지 못했어요', { variant: 'error' }),
+    );
+    await waitFor(() => expect(screen.getByText('스시집')).toBeInTheDocument());
   });
 });
