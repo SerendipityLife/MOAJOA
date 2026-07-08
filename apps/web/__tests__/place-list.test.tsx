@@ -191,4 +191,14 @@ describe('PlaceList', () => {
     renderList({ places: [], links: [] });
     expect(screen.getByText('아직 담은 장소가 없어요')).toBeTruthy();
   });
+
+  it('Test 9 (H-01): manual 링크(pending)는 "분석 중…" 아닌 미지원 실패 행 + 재시도 없음', () => {
+    renderList({
+      places: [],
+      links: [makeLink({ id: 'l1', source_kind: 'manual', extraction_status: 'pending' })],
+    });
+    expect(screen.queryByText('분석 중…')).toBeNull();
+    expect(screen.getByText('지원하지 않는 링크예요')).toBeTruthy();
+    expect(screen.queryByText('재시도')).toBeNull();
+  });
 });

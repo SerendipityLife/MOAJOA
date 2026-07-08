@@ -68,14 +68,18 @@ export function PlaceList({
   // 정렬(MOA-02): 찜 desc·동률 seq_no asc — 렌더 순서만. 배지는 항상 place.seq_no.
   const sorted = sortByLove(places, counts);
 
-  // D-13 분석 중 행 — 추출 진행 링크.
+  // D-13 분석 중 행 — 추출 진행 링크. manual 링크는 추출 대상이 아니므로 제외
+  // (H-01: manual은 pending에서 벗어날 트리거가 없어 영구 스피너가 됨 → 실패 행으로 취급).
   const analyzing = links.filter(
-    (l) => l.extraction_status === 'pending' || l.extraction_status === 'processing',
+    (l) =>
+      l.source_kind !== 'manual' &&
+      (l.extraction_status === 'pending' || l.extraction_status === 'processing'),
   );
 
-  // D-15 실패 행 (Pitfall 8): 실패·수동검토 + '완료인데 장소 0개'도 실패로 취급.
+  // D-15 실패 행 (Pitfall 8): 실패·수동검토 + '완료인데 장소 0개' + 미지원(manual) 링크.
   const failed = links.filter(
     (l) =>
+      l.source_kind === 'manual' ||
       l.extraction_status === 'failed' ||
       l.extraction_status === 'manual_review' ||
       (l.extraction_status === 'ready' && places.every((p) => p.link_id !== l.id)),
@@ -235,15 +239,18 @@ export function PlaceList({
         >
           <AlertCircle className="size-5 shrink-0 text-[#EF4444]" aria-hidden />
           <span className="min-w-0 flex-1 text-sm font-normal text-neutral-700">
-            장소를 찾지 못했어요
+            {l.source_kind === 'manual' ? '지원하지 않는 링크예요' : '장소를 찾지 못했어요'}
           </span>
-          <button
-            type="button"
-            onClick={() => onRetry(l.id)}
-            className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand-300 hover:bg-brand-50"
-          >
-            재시도
-          </button>
+          {/* manual 링크는 재추출 불가 — 재시도 버튼 생략(H-01). */}
+          {l.source_kind !== 'manual' && (
+            <button
+              type="button"
+              onClick={() => onRetry(l.id)}
+              className="shrink-0 rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand-300 hover:bg-brand-50"
+            >
+              재시도
+            </button>
+          )}
         </li>
       ))}
     </ul>
