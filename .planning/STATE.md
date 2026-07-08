@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-status: ready_to_execute
-stopped_at: Phase 24 planned — 7 plans / 4 waves, checker PASSED (iteration 2)
-last_updated: "2026-07-08T04:30:00.000Z"
+status: executing
+stopped_at: 24-01 로컬 완료 (0026 realtime publication + 스모크 2종 + supabase-js 2.110·react-day-picker 9.14.0) — 원격 db push는 human-action 게이트 open
+last_updated: "2026-07-08T09:23:00.000Z"
 last_activity: "2026-07-08 — Phase 23 플래닝: W1=23-01 0024 채번(advisory-lock+last_place_seq DEFINER 트리거+동시성 하네스) ∥ 23-02 0025(share_mode·companion·trip_messages·join_moa+smoke) ∥ 23-03 config 스위치(익명·카카오)+CLAUDE.md D26 반전 → W2=23-04 [BLOCKING] 스키마 적용 게이트(reset+types+하네스·smoke 실행, colima 선행) → W3=23-05 core 계약(TDD) → W4=23-06 api 계약(TDD) → W5=23-07 human-action(원격 마이그레이션 상태 확인·대시보드·Kakao console). Open Questions 4건 연구 기본값으로 잠금(D-A1 places/both→editor·D-A2 nickname 비정규화·D-A4 재join role 유지·원격 push 범위 외)"
 progress:
   total_phases: 12
@@ -33,11 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 24 (Host Flow — 온보딩·지도탭) — 📋 PLANNED (2026-07-08, checker PASSED iteration 2)
-Plan: 0/7 실행 (4 웨이브 — 실행 대기)
-Status: Phase 24 플래닝 완료 — 7 plans / 4 waves, plan-checker VERIFICATION PASSED(iteration 2, B-1 research_resolution + W-1 scope + W-2 roadmap dedup 문서수정으로 해소). 산출물: 24-RESEARCH(HIGH conf, Open Q1~4 RESOLVED) + 24-UI-SPEC(approved 6/6, member 팔레트 6색 ui-tokens) + 24-VALIDATION(signed, nyquist_compliant) + 24-PATTERNS(20파일→analog) + 24-01~07-PLAN. 10개 requirement ID 전부 커버
-Last activity: 2026-07-08 — Phase 24 플래닝: 리서치(react-day-picker 9.14.0 단일 신규 dep·vaul unmaintained→핸드롤 시트·0026 realtime publication 신규·stale supabase-js 재설치 게이트) → UI-SPEC auto-gen(shadcn 미도입·member 팔레트 6색·답장 disabled 스텁·호스트 하트) → PATTERNS(vote-island 최대 재사용원) → planner 7 plans/4 waves → checker iteration 2 PASS. **웨이브:** W1=24-01 [BLOCKING] 0026 publication+원격 push ∥ 24-02 계약(팔레트·memberColor·sortByLove·api 3종) ∥ 24-03 /moa 리스트+카카오 버튼 → W2=24-04 온보딩 4단계 위저드 ∥ 24-05 place-sheet·place-list → W3=24-06 /moa/[id] RSC+moa-map+moa-island(realtime) → W4=24-07 add-sheet·share-sheet+phase 게이트
-Next: /gsd-execute-phase 24 (fresh context 권장 — /clear 후). **주의: Vercel Preview e2e 전 `supabase db push`(0024·0025·0026) 필수** (23-07 실측 — 원격은 0023까지만, 0026은 24-01 신규). 카카오 실로그인·realtime 반영·드래그 물리는 manual-only(verify-work 몫)
+Phase: 24 (Host Flow — 온보딩·지도탭) — 🔧 EXECUTING (Wave 1, 24-01 로컬 완료)
+Plan: 1/7 실행 (24-01 로컬 완료 · 원격 push 게이트 open — 24-02·24-03 병렬 대기)
+Status: 24-01 [BLOCKING] 로컬 완료 — 0026 realtime publication(places·links) 로컬 적용(42P17=0) + postgres_changes 이벤트 실수신·비멤버 0건(WALRUS RLS) 스모크 exit 0 + supabase-js 2.110.0 전역 실체화(F-20-3 root node_modules 오염 정화) + react-day-picker 9.14.0. **원격 db push(0024·0025·0026)는 auto-mode classifier 거부로 미실행 — human-action 게이트(사용자 터미널 `supabase db push`).** downstream local 개발은 언블록.
+Last activity: 2026-07-08 — 24-01 실행: pnpm install 후에도 root `node -e require`가 2.45.4였던 근본원인=npm-flat 오염 실디렉토리(root node_modules/@supabase/*)가 pnpm 스토어를 가림 → 제거+supabase-js root dep 선언으로 root·web·api 전부 2.110.0. 0026 publication 신규(votes는 Phase 25 몫) + 스모크 2종(psql 카운트 2 + owner≥1·비멤버 0 exit code) 작성·실행. reset 직후 realtime WAL 콜드스타트 플래키 → 2회 재시도 하드닝. core 169·api 81·web 65 그린·api typecheck 0.
+Next: **[사용자] 터미널에서 `supabase db push` 실행 (0024·0025·0026 — Vercel Preview e2e 선행)** — CLI 인증 keychain OK·원격 접근 비대화형 동작 확인, migration list 실측 원격 0016~0023. push 후 24-02·24-03(Wave 1 병렬) 진행. 카카오 실로그인·realtime 반영·드래그 물리는 manual-only(verify-work 몫)
+
+**24-01 실행 (2026-07-08, commits e9858cf·a1e8db0·9cd0cf8 — 로컬 완료·원격 push 게이트 open):** Phase 24 Wave 1 [BLOCKING] — realtime 기반 잠금. **Task 1(e9858cf):** `pnpm install`만으론 root `node -e require('@supabase/supabase-js')`가 2.45.4 유지 — 근본원인은 root `node_modules/@supabase/*`가 이전 npm-flat 오염 실디렉토리(2.45.4·realtime-js 2.10.2)로 pnpm 스토어(2.110.0)를 shadow(F-20-3 근본). apps/web·packages/api는 자체 심링크로 이미 2.110.0 정상. 오염 8개 제거 + supabase-js를 root `dependencies`로 선언(레포-루트 스모크가 유일 소비자) → root·web·api 전부 2.110.0·번들 realtime-js 2.110.0. react-day-picker 9.14.0(web) 설치. 무회귀 core 169·api 81·web 65 그린. **Task 2(a1e8db0):** `0026_realtime_publication.sql`(append-only, 0016~0025 무수정) — `alter publication supabase_realtime add table places/links` 2문(votes는 주석만·Phase 25 몫). 레포 최초 publication 등록 — 없으면 postgres_changes가 SUBSCRIBED 무음 no-op(Pitfall 2). 스모크 2종: `realtime_publication_smoke.sh`(pg_publication_tables 카운트=2 psql 단언 → node 위임) + `realtime_events_smoke.mjs`(owner setAuth→places INSERT postgres_changes 수신 ≥1 AND 비멤버 익명 0건=WALRUS RLS 실증, exit code). seq_no 주석만·전송 0. **Task 3(9cd0cf8):** `supabase db reset` 0016~0026 클린(0026 적용 라인·42P17=0) → `pnpm supabase:types`(0026 스키마-중립 diff 0) → 스모크 실행. **1 issue(진단):** reset 직후 realtime 컨테이너 재시작 WAL 콜드스타트로 첫 창 이벤트 0건(owner=0·nonmember=0) → filter/event-type 아닌 콜드스타트로 격리 확인(워밍 후 즉시 owner=1) → **2회 insert 재시도 하드닝**(Rule 2, owner≥1·비멤버 0 불변)으로 결정론화, 재실행 exit 0(owner=1·nonmember=0). core 169·api 81 그린·api typecheck 0. **원격 push 미완(human-action 게이트):** `supabase migration list` 실측 원격(xfoauhsraguyrifingct, LINKED) 0016~0023 정합·0024/0025/0026 미적용. `supabase db push` 시도 → auto-mode classifier가 프로덕션 배포로 거부(체크포인트 경계, Claude 미강제). CLI 인증 keychain OK·원격 DB 접근 비대화형 동작(비번 프롬프트 없음). **사용자 터미널서 `supabase db push` 1회 실행 필요** — Vercel Preview e2e 선행조건. **deviations 3(2 blocking dep/스크립트명 + 1 reliability 하드닝) — 신규 기능 0.** 상세: `24-01-SUMMARY.md`.
 
 **23-07 실행 완료 (2026-07-08, commit 6cfc0ce, human-action approved):** Phase 23 Wave 5 마감 — 프로덕션 인증 설정 + 원격 상태 실측, 코드·DB 변경 0. **Task 1(Open Q1 확정)**: `supabase migration list` 실측 — 원격(`xfoauhsraguyrifingct`)은 **0016~0023 정합, 0024(place_seq)·0025(web_share) 미적용**, `db push` 미실행(범위 외). 후속 잠금: Phase 24 Preview e2e 전 push 필수(원격에 join_moa·trip_messages·share_mode·seq_no 부재 — push 전 프로덕션 웹 공유·join·채팅 미동작). **Task 2(human-action approved)**: 사용자가 Kakao Developers(REST API key·Client Secret·Redirect URI·동의항목) + Supabase 대시보드(익명 토글 ON·Kakao provider) 설정 — 원격 실증: authorize 302→kauth.kakao.com(KOE 마커 0) + `/auth/v1/signup` `is_anonymous:true·role:authenticated` 토큰 발급. **KOE205 학습(Phase 24 e2e 참고)**: GoTrue kakao는 `account_email profile_image profile_nickname` 3 scope 하드코딩(제거 불가, scopes는 append만) → **개인 개발자 비즈 앱 전환(사업자등록증 불필요)+3 동의항목 전부 선택 동의**로 해결; email 미제공 시에도 GoTrue graceful 유저 생성 — MOAJOA는 닉네임 기반(D-A2)이라 무의존. 플랜 원안 "nickname·image만"은 불충분했음. AUTH-07/08 e2e 마킹은 Phase 24/25 몫(traceability, 23-06 선례). deviation 0. 상세: `23-07-SUMMARY.md`.
 

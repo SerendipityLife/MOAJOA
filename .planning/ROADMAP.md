@@ -252,7 +252,7 @@ Plans:
 
 Plans:
 
-- [ ] 24-01-PLAN.md — [BLOCKING] 환경 게이트(pnpm install·react-day-picker) + 0026 realtime publication + 로컬 적용·스모크 + 원격 push (Wave 1)
+- [~] 24-01-PLAN.md — [BLOCKING] 환경 게이트(supabase-js 2.110·react-day-picker 9.14.0) + 0026 realtime publication + 로컬 적용·스모크 exit 0 ✅ · **원격 push는 human-action 게이트 open** (Wave 1) — `24-01-SUMMARY.md`
 - [ ] 24-02-PLAN.md — 계약 레이어: ui-tokens member 팔레트 + memberColor·sortByLove·marker fill + api createMoaDraft·listTripMembers·getProfileNames (Wave 1)
 - [ ] 24-03-PLAN.md — /moa 리스트 + D-01 진입 분기 + 카카오 버튼·로그인 목적지 /moa + login 테스트 (Wave 1)
 - [ ] 24-04-PLAN.md — /onboarding 4단계 위저드(칩·캘린더·시드 스테이징) + AddContentTabs 공유 컴포넌트 + buildDraft·제출 흐름 (Wave 2)
