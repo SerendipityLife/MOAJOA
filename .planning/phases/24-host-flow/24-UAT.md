@@ -81,3 +81,11 @@ Browser console noise `config is not valid` / `emrldco.com 403` is from a **Chro
 4. **[미구현·버그아님] 채팅** — "답장"은 `채팅은 곧 열려요` 스텁. trip_messages(0025) 테이블만 존재, 채팅 UI 미구현(Phase 25/26 몫). 의도한 비동기·영속(메시지 남기면 후속 참여자 열람) = 계획된 설계이며 현재는 단순 미구현(동시접속 의존 아님).
 
 **주의:** 수정은 신규 담기부터 적용. 수정 전 저장된 manual place(name_local=place_id·0,0)는 잔존 — 재담기 필요(데이터 백필 별건). 프로덕션 재배포 dpl_BjsaGd… READY(b835097).
+
+### 프로덕션 실기기 UAT 2차 (2026-07-09)
+
+5. **[FIXED] 장소 검색 후 선택 시 저장 안 된 것처럼 보임** (commit 0d6534a) — add-sheet `handlePickPlace`가 `addManualPlace` 후 `onClose`만 호출하고 `onAdded`(reconcile) 미호출 → 저장은 됐지만 island가 refetch 안 해 화면 미반영(realtime에만 의존). link 경로처럼 `onAdded()` 추가. M-02 가드로 중복 토스트 방지.
+6. **[FIXED] 재-담기 시 데이터 미갱신** (0027, commit 6f5a4c1, 원격 반영됨) — `add_manual_place`의 on conflict가 note/hidden_at만 갱신 → 재-담기로 name/좌표 복구 불가·soft-delete 후 재-담기 시 stale 부활. `coalesce(new, existing)`로 서술 필드 갱신하도록 확장. 깨진 기존 장소 = 삭제 후 재-담기로 복구 가능.
+7. **[ADDED] 장소 삭제 기능** (commit 7fde664) — place-list 아코디언에 "삭제"(destructive) 버튼 → island `handleDelete` optimistic 제거 + `hidePlace`(soft-delete via hidden_at, 기존 api·RLS 활용) + 실패 시 reconcile 복원. `listPlacesByTrip`이 이미 hidden 제외.
+
+검증: core 173·api 91·web 120 그린·build PASS. 원격 migration 0027 정합(GitHub 연동 자동 적용). 프로덕션 재배포 dpl_GAF9U… READY(7fde664).
