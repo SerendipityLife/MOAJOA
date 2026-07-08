@@ -257,7 +257,7 @@ Plans:
 - [x] 24-03-PLAN.md — /moa 리스트 + D-01 진입 분기 + 카카오 버튼·로그인 목적지 /moa + login 테스트 (Wave 1) — `24-03-SUMMARY.md` (web 80 그린·build ƒ/moa)
 - [x] 24-04-PLAN.md — /onboarding 4단계 위저드(칩·캘린더·시드 스테이징) + AddContentTabs 공유 컴포넌트 + buildDraft·제출 흐름 (Wave 2) — `24-04-SUMMARY.md` (web 88 그린·build ○/onboarding)
 - [x] 24-05-PLAN.md — place-sheet 드래그 시트(D-09) + place-list(정렬·아코디언·하트·분석중/실패 행) + 테스트 (Wave 2) — `24-05-SUMMARY.md` (web 96 그린·typecheck 0·build PASS)
-- [ ] 24-06-PLAN.md — /moa/[id] RSC + moa-map(persistent·마커 diff·색) + moa-island(realtime postgres_changes·optimistic 찜·마커↔행 연동) (Wave 3)
+- [x] 24-06-PLAN.md — /moa/[id] RSC + moa-map(persistent·마커 diff·색) + moa-island(realtime postgres_changes·optimistic 찜·마커↔행 연동) (Wave 3) — `24-06-SUMMARY.md` (web 101 그린·typecheck 0·build PASS·`ƒ /moa/[id]`)
 - [ ] 24-07-PLAN.md — add-sheet(FAB)·share-sheet(함께 정하기) + island 배선 + phase 전체 게이트 (Wave 4)
 
 **UI hint**: yes
