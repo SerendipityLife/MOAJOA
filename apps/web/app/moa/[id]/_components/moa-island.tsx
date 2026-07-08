@@ -79,34 +79,53 @@ export function MoaIsland({
   const placeCountRef = useRef(initialPlaces.length);
   profileNamesRef.current = profileNames;
 
+  // M-02: reconcile 동시 실행 가드. 한 추출이 여러 places INSERT를 쏘면 콜백이 겹쳐
+  // 호출돼 stale placeCountRef를 함께 읽고 토스트가 중복/과다 발화됨 → 직렬화 + trailing 재실행.
+  const reconcilingRef = useRef(false);
+  const reconcileQueuedRef = useRef(false);
+
   const colorFor = (uid: string) => memberColor(uid, trip.owner_id, memberIdsInJoinOrder);
 
   // reconcile — payload 패치 금지, 전체 refetch(RLS 재평가). 장소 증가 시 토스트(D-16).
+  // in-flight 가드로 직렬화 — 겹친 호출은 trailing 1회로 합쳐 stale-read 중복 토스트 차단(M-02).
   async function reconcile() {
-    const client = getSupabaseBrowser();
-    const [nextPlaces, nextLinks] = await Promise.all([
-      listPlacesByTrip(client, trip.id),
-      listLinksByTrip(client, trip.id),
-    ]);
-    const nextCounts = await getVoteCounts(
-      client,
-      nextPlaces.map((p) => p.id),
-    );
-    // 새 added_by 중 이름 미보유분만 추가 fetch.
-    const missing = [...new Set(nextPlaces.map((p) => p.added_by))].filter(
-      (id) => !(id in profileNamesRef.current),
-    );
-    if (missing.length > 0) {
-      const fetched = await getProfileNames(client, missing);
-      setProfileNames((prev) => ({ ...prev, ...fetched }));
+    if (reconcilingRef.current) {
+      reconcileQueuedRef.current = true;
+      return;
     }
+    reconcilingRef.current = true;
+    try {
+      const client = getSupabaseBrowser();
+      const [nextPlaces, nextLinks] = await Promise.all([
+        listPlacesByTrip(client, trip.id),
+        listLinksByTrip(client, trip.id),
+      ]);
+      const nextCounts = await getVoteCounts(
+        client,
+        nextPlaces.map((p) => p.id),
+      );
+      // 새 added_by 중 이름 미보유분만 추가 fetch.
+      const missing = [...new Set(nextPlaces.map((p) => p.added_by))].filter(
+        (id) => !(id in profileNamesRef.current),
+      );
+      if (missing.length > 0) {
+        const fetched = await getProfileNames(client, missing);
+        setProfileNames((prev) => ({ ...prev, ...fetched }));
+      }
 
-    const delta = nextPlaces.length - placeCountRef.current;
-    setPlaces(nextPlaces);
-    setLinks(nextLinks);
-    setCounts(nextCounts);
-    placeCountRef.current = nextPlaces.length;
-    if (delta > 0) toast(`장소 ${delta}개 추가됨`);
+      const delta = nextPlaces.length - placeCountRef.current;
+      setPlaces(nextPlaces);
+      setLinks(nextLinks);
+      setCounts(nextCounts);
+      placeCountRef.current = nextPlaces.length;
+      if (delta > 0) toast(`장소 ${delta}개 추가됨`);
+    } finally {
+      reconcilingRef.current = false;
+      if (reconcileQueuedRef.current) {
+        reconcileQueuedRef.current = false;
+        void reconcile();
+      }
+    }
   }
 
   // realtime: moa:{tripId} 단일 채널 · places INSERT + links UPDATE · cleanup removeChannel.
