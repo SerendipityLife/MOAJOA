@@ -77,4 +77,18 @@ describe('buildMarkerIconUrl', () => {
     expect(svg).toContain('height="40"');
     expect(svg).toContain('viewBox="0 0 32 40"');
   });
+
+  it('explicit fill (ui-tokens member color) overrides the source_kind fill', () => {
+    const svg = decode(
+      buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9, fill: colors.member[0] }),
+    );
+    expect(svg).toContain(`fill="${colors.member[0]}"`); // '#FF7043'
+    expect(svg).not.toContain(`fill="${colors.brand[500]}"`);
+  });
+
+  it('omitting fill keeps the existing source_kind output byte-for-byte', () => {
+    const withUndef = buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9, fill: undefined });
+    const without = buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9 });
+    expect(withUndef).toBe(without);
+  });
 });
