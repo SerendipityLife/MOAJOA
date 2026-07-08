@@ -70,3 +70,14 @@ Auto-verification found **no Phase-24 defects**. Observations (not blocking):
 3. **[known low] Share URL uses `window.location.origin`** (L-03 from 24-REVIEW) — copied link was `localhost:3100/...`; on Preview it'd be the transient host, not the canonical domain. Deferred fast-follow.
 
 Browser console noise `config is not valid` / `emrldco.com 403` is from a **Chrome extension in the preview browser, not MOAJOA** — ignore.
+
+### 프로덕션 실기기 UAT (2026-07-09, moajoa-web.vercel.app)
+
+사용자가 실 카카오 로그인 후 폰에서 발견 → 4건 진단·처리:
+
+1. **[FIXED] 지도 안 보임 + 장소 이름 = place_id** (동일 근본원인, commit 6ce17fc) — 장소 검색 담기 경로가 resolve-place EF가 준 `displayName`·`location{lat,lng}`을 저장 단계에서 버림(`PickedPlace`→`PlaceAddManualSchema`→`addManualPlace`→RPC 전 구간). RPC `add_manual_place`의 `coalesce(p_name_local,p_google_place_id)`·`coalesce(p_lat,0)`로 name_local=place_id·좌표=(0,0) 저장 → 핀이 Null Island(대서양) → 지도가 빈 바다. 마이그레이션 불필요(RPC가 이미 optional 파라미터 수용) — name/좌표/주소를 끝까지 스레드. core 173·api 91·web 114 그린.
+2. (위 1과 통합)
+3. **[FIXED] FAB [+] 시트 위에 잔존** (commit b835097) — `z-[60]` 상시 렌더 → `{!addOpen && !shareOpen && …}` 조건부.
+4. **[미구현·버그아님] 채팅** — "답장"은 `채팅은 곧 열려요` 스텁. trip_messages(0025) 테이블만 존재, 채팅 UI 미구현(Phase 25/26 몫). 의도한 비동기·영속(메시지 남기면 후속 참여자 열람) = 계획된 설계이며 현재는 단순 미구현(동시접속 의존 아님).
+
+**주의:** 수정은 신규 담기부터 적용. 수정 전 저장된 manual place(name_local=place_id·0,0)는 잔존 — 재담기 필요(데이터 백필 별건). 프로덕션 재배포 dpl_BjsaGd… READY(b835097).
