@@ -24,6 +24,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\""
   },
+  "dependencies": {
+    "@supabase/supabase-js": "2.110.0"
+  },
   "devDependencies": {
     "@types/node": "^22.7.4",
     "prettier": "^3.3.3",
