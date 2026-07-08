@@ -459,17 +459,24 @@ channel.on('broadcast', { event: 'vote' }, () => void refetchTally()).subscribe(
 | A3 | SECURITY DEFINER 헬퍼를 호출하는 RLS 정책(can_read_trip 등)이 Realtime WALRUS 평가에서도 정상 동작 | Pattern 1 | 중간 — WALRUS는 구독자 역할로 정책을 평가하며 DEFINER 함수 호출은 일반 SQL과 동일하게 실행될 것으로 추정. 0026 적용 후 로컬 2-클라이언트 스모크로 실증 필요 (Wave 0/1 검증 항목) |
 | A4 | 호스트 화면에도 찜(하트) 토글을 두는 것이 MOA-02 e2e 검증에 필요 | Open Q2 | 낮음 — castVote/retractVote가 canonical refs에 있어 의도로 추정되나 명시 결정은 아님 |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> 네 항목 모두 플래닝 단계에서 확정됨 (2026-07-08). 아래 RESOLVED 라인이 채택 근거·산출물이다.
 
 1. **아코디언 '답장 버튼'(MOA-05 필수 요소)의 Phase 24 동작** — 채팅은 Phase 26.
    - What we know: MOA-05가 버튼 존재를 요구, CHAT-03이 실제 동작(인용 칩) 정의. PRODUCT.md·CONTEXT에 Phase 24 시점 동작 정의 없음.
    - What's unclear: disabled 스텁 vs 탭 시 "곧 제공" 안내 vs 미표시.
-   - Recommendation: 버튼은 렌더하되 disabled+안내(예: "채팅은 곧 열려요") — MOA-05 요소 충족 + Phase 26이 핸들러만 교체. 플래너가 UI-SPEC에서 확정.
+   - Recommendation: 버튼은 렌더하되 disabled+안내(예: "채팅은 곧 열려요") — MOA-05 요소 충족 + Phase 26이 핸들러만 교체.
+   - **RESOLVED:** UI-SPEC A-4 채택 → 답장 버튼 disabled 렌더 + "채팅은 곧 열려요" 안내. 구현은 24-05 Task 2 (place-list 아코디언). Phase 26이 핸들러만 교체.
 2. **호스트 찜 토글 UI 포함 여부** — MOA-02는 정렬만 요구하지만 게스트 찜은 Phase 25에나 발생. 호스트가 찜할 수 없으면 Phase 24 e2e에서 정렬 검증 불가.
    - Recommendation: 행에 하트 토글 포함 (`castVote`/`retractVote` — canonical refs에 이미 등재). 기존 `/t/[slug]` vote-island의 optimistic+reconcile idiom 재사용.
+   - **RESOLVED:** UI-SPEC A-5 채택 → 호스트 하트 토글 포함(filled=brand-500). 구현은 24-05(렌더)·24-06(optimistic+reconcile 배선). MOA-02 정렬 e2e 검증 가능.
 3. **votes 테이블도 0026 publication에 포함?** — Phase 25(게스트 찜 실시간 반영, SHARE-04)가 필요로 함.
-   - Recommendation: D-14는 places/links만 잠갔으므로 0026은 places+links로 최소화. votes는 Phase 25 마이그레이션(0027)으로 — 단, 플래너가 "한 번에 넣어 push 횟수 절약"을 선호하면 0026에 포함해도 무해(추가 구독이 없으면 no-op). 어느 쪽이든 append-only 준수.
-4. **`/moa/[id]` 접근 권한** — 호스트 전용? 멤버(editor/voter)도 접근? Phase 25가 `/t/[slug]`를 게스트 표면으로 쓰므로 Phase 24는 로그인+can_read(RLS가 자연 게이트) 기준으로 렌더하면 충분. 명시 결정 없음 — 플래너 확인.
+   - Recommendation: D-14는 places/links만 잠갔으므로 0026은 places+links로 최소화. votes는 Phase 25 마이그레이션(0027)으로.
+   - **RESOLVED:** 0026은 places+links만(D-14 잠금 범위 준수). votes publication은 Phase 25 마이그레이션 0027로 이월. 근거·주석은 24-01 Task 2 (0026_realtime_publication.sql).
+4. **`/moa/[id]` 접근 권한** — 호스트 전용? 멤버(editor/voter)도 접근?
+   - Recommendation: Phase 25가 `/t/[slug]`를 게스트 표면으로 쓰므로 Phase 24는 로그인+can_read(RLS가 자연 게이트) 기준으로 렌더하면 충분.
+   - **RESOLVED:** 로그인 + `can_read` RLS를 자연 게이트로 채택(별도 애플리케이션 레벨 권한 체크 없음). 구현은 24-06 Task 2 (RSC page + moa-island 구독은 RLS가 걸러냄).
 
 ## Environment Availability
 

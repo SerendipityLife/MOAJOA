@@ -274,17 +274,7 @@ Plans:
   3. 게스트가 share_mode에 따라 찜·장소/링크 추가·날짜 투표에 참여할 수 있다 (dates 모드 날짜투표는 기존 익명 poll RPC 임베드, device_token := auth.uid)
   4. 게스트의 찜·장소 추가가 호스트 화면에 실시간 반영되고, 게스트가 추가한 장소는 이어지는 순번(#N+1)을 받는다
 
-**Plans**: 7 plans (4 waves)
-
-Plans:
-
-- [ ] 24-01-PLAN.md — [BLOCKING] 환경 게이트(pnpm install·react-day-picker) + 0026 realtime publication + 로컬 적용·스모크 + 원격 push (Wave 1)
-- [ ] 24-02-PLAN.md — 계약 레이어: ui-tokens member 팔레트 + memberColor·sortByLove·marker fill + api createMoaDraft·listTripMembers·getProfileNames (Wave 1)
-- [ ] 24-03-PLAN.md — /moa 리스트 + D-01 진입 분기 + 카카오 버튼·로그인 목적지 /moa + login 테스트 (Wave 1)
-- [ ] 24-04-PLAN.md — /onboarding 4단계 위저드(칩·캘린더·시드 스테이징) + AddContentTabs 공유 컴포넌트 + buildDraft·제출 흐름 (Wave 2)
-- [ ] 24-05-PLAN.md — place-sheet 드래그 시트(D-09) + place-list(정렬·아코디언·하트·분석중/실패 행) + 테스트 (Wave 2)
-- [ ] 24-06-PLAN.md — /moa/[id] RSC + moa-map(persistent·마커 diff·색) + moa-island(realtime postgres_changes·optimistic 찜·마커↔행 연동) (Wave 3)
-- [ ] 24-07-PLAN.md — add-sheet(FAB)·share-sheet(함께 정하기) + island 배선 + phase 전체 게이트 (Wave 4)
+**Plans**: TBD
 
 **UI hint**: yes
 
@@ -299,17 +289,7 @@ Plans:
   2. "지금 N명 보는 중" 접속자 수가 입장·퇴장에 따라 실시간 갱신된다 (두 브라우저에서 수렴)
   3. 장소 행의 답장 버튼으로 메시지를 보내면 인용 칩(#N 장소명)이 붙고, 칩을 탭하면 해당 장소로 스크롤·하이라이트된다
 
-**Plans**: 7 plans (4 waves)
-
-Plans:
-
-- [ ] 24-01-PLAN.md — [BLOCKING] 환경 게이트(pnpm install·react-day-picker) + 0026 realtime publication + 로컬 적용·스모크 + 원격 push (Wave 1)
-- [ ] 24-02-PLAN.md — 계약 레이어: ui-tokens member 팔레트 + memberColor·sortByLove·marker fill + api createMoaDraft·listTripMembers·getProfileNames (Wave 1)
-- [ ] 24-03-PLAN.md — /moa 리스트 + D-01 진입 분기 + 카카오 버튼·로그인 목적지 /moa + login 테스트 (Wave 1)
-- [ ] 24-04-PLAN.md — /onboarding 4단계 위저드(칩·캘린더·시드 스테이징) + AddContentTabs 공유 컴포넌트 + buildDraft·제출 흐름 (Wave 2)
-- [ ] 24-05-PLAN.md — place-sheet 드래그 시트(D-09) + place-list(정렬·아코디언·하트·분석중/실패 행) + 테스트 (Wave 2)
-- [ ] 24-06-PLAN.md — /moa/[id] RSC + moa-map(persistent·마커 diff·색) + moa-island(realtime postgres_changes·optimistic 찜·마커↔행 연동) (Wave 3)
-- [ ] 24-07-PLAN.md — add-sheet(FAB)·share-sheet(함께 정하기) + island 배선 + phase 전체 게이트 (Wave 4)
+**Plans**: TBD
 
 **UI hint**: yes
 
