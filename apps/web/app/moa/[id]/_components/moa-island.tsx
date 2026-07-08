@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Link, Place, Trip } from '@moajoa/core';
+import type { Link, Place, ShareModeType, Trip } from '@moajoa/core';
 import { moaChannelName } from '@moajoa/core';
 import {
   castVote,
@@ -16,11 +16,12 @@ import {
 import { ChevronLeft, Plus } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { memberColor } from '@/lib/member-color';
-import { useToast } from '@/components';
+import { Button, useToast } from '@/components';
 import { MoaMap } from './moa-map';
 import { PlaceSheet, type SheetAnchor } from './place-sheet';
 import { PlaceList } from './place-list';
 import { AddSheet } from './add-sheet';
+import { ShareSheet } from './share-sheet';
 
 export interface MoaIslandProps {
   trip: Trip;
@@ -70,6 +71,8 @@ export function MoaIsland({
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
   const [sheetAnchor, setSheetAnchor] = useState<SheetAnchor>('collapsed');
   const [addOpen, setAddOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [localShareMode, setLocalShareMode] = useState<ShareModeType | null>(trip.share_mode);
 
   // 채널 콜백(마운트당 1회 바인딩)이 최신 값을 읽도록 ref 동기화.
   const profileNamesRef = useRef(profileNames);
@@ -181,6 +184,13 @@ export function MoaIsland({
           <ChevronLeft className="size-5 text-neutral-700" aria-hidden />
         </button>
 
+        {/* 상단 바 우측 — [함께 정하기] primary sm 오버레이(UI-SPEC §상단 바). */}
+        <div className="absolute right-4 top-4 z-50">
+          <Button size="sm" onClick={() => setShareOpen(true)}>
+            함께 정하기
+          </Button>
+        </div>
+
         <PlaceSheet
           anchor={sheetAnchor}
           onAnchorChange={setSheetAnchor}
@@ -221,6 +231,13 @@ export function MoaIsland({
           open={addOpen}
           onClose={() => setAddOpen(false)}
           onAdded={() => void reconcile()}
+        />
+
+        <ShareSheet
+          trip={{ ...trip, share_mode: localShareMode }}
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          onShared={setLocalShareMode}
         />
       </div>
     </div>

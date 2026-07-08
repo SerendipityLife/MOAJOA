@@ -48,7 +48,16 @@ vi.mock('@moajoa/api', () => ({
 }));
 
 const toast = vi.fn();
-vi.mock('@/components', () => ({ useToast: () => ({ toast }) }));
+vi.mock('@/components', () => ({
+  useToast: () => ({ toast }),
+  Button: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => {
+    const { variant: _v, size: _s, ...rest } = props as Record<string, unknown>;
+    return <button {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>;
+  },
+}));
 
 const push = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
