@@ -182,19 +182,9 @@ export default function OnboardingPage() {
             다음
           </Button>
         ) : (
-          <div className="flex flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="text-sm text-neutral-500 disabled:opacity-50"
-            >
-              건너뛰기
-            </button>
-            <Button className="w-full" disabled={submitting} onClick={handleSubmit}>
-              모아 만들기
-            </Button>
-          </div>
+          <Button className="w-full" disabled={submitting} onClick={handleSubmit}>
+            모아 만들기
+          </Button>
         )}
       </div>
     </main>

@@ -6,7 +6,7 @@ import { AddContentTabs, type PickedPlace } from '@/components';
 /**
  * Step 4 — "봐둔 곳이 있나요?" (D-08, ONBOARD-05). AddContentTabs(D-11)로 링크/장소를
  * 로컬 스테이징 리스트에 담아둔다. DB 접촉 0 — 실제 생성/시드는 모아 완료 시 일괄(D-03).
- * 건너뛰기 허용(CTA는 page.tsx). 상태는 page.tsx 소유.
+ * 봐둔 곳이 없어도 '모아 만들기'로 시드 0개 생성 가능(CTA는 page.tsx). 상태는 page.tsx 소유.
  */
 
 interface StepSeedProps {

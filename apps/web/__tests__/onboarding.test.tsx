@@ -124,10 +124,10 @@ describe('OnboardingPage', () => {
     expect(next.disabled).toBe(true);
   });
 
-  it('skip (건너뛰기) → no addLink/addManualPlace, createMoaDraft still called (ONBOARD-05)', async () => {
+  it('creates with no seeds → no addLink/addManualPlace, createMoaDraft still called (ONBOARD-05)', async () => {
     render(<OnboardingPage />);
     advanceToSeedStep();
-    fireEvent.click(screen.getByText('건너뛰기'));
+    fireEvent.click(screen.getByText('모아 만들기'));
 
     await waitFor(() => expect(createMoaDraft).toHaveBeenCalledTimes(1));
     expect(addLink).not.toHaveBeenCalled();
