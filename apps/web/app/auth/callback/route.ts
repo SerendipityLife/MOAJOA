@@ -19,7 +19,7 @@ interface CookieToSet {
  *
  * Cookie writes are bound to the redirect `response` object directly: a returned
  * NextResponse.redirect() does NOT inherit cookies set via next/headers, so the
- * session would never reach the browser and the next /boards request would bounce
+ * session would never reach the browser and the next /moa request would bounce
  * back to /login. Writing onto this response guarantees the Set-Cookie headers.
  *
  * flowType defaults to 'pkce', so OAuth, magic link, and email confirmation all
@@ -29,15 +29,10 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   // Validated relative path only (no //host open redirect). Default mirrors
-  // postLoginDestination(): /boards is a dev-tool surface — prod users land
-  // on / instead of bouncing off the /boards gate back to /login (P1 #4).
+  // postLoginDestination(): everyone lands on /moa, the web app's home surface.
   const rawNext = searchParams.get('next');
   const next =
-    rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
-      ? rawNext
-      : process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === '1'
-        ? '/boards'
-        : '/moa';
+    rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/moa';
   const errorDescription = searchParams.get('error_description') ?? searchParams.get('error');
 
   const base = process.env.NEXT_PUBLIC_APP_URL ?? origin;

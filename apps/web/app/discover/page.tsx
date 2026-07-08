@@ -14,7 +14,7 @@ export default function DiscoverPage() {
           둘러보기
         </h1>
         <p className="mt-2 max-w-xs text-sm leading-relaxed text-neutral-500">
-          공개된 보드를 찾아보는 기능이 곧 여기에 들어옵니다.
+          공개된 모아를 찾아보는 기능이 곧 여기에 들어옵니다.
         </p>
       </div>
     </main>

@@ -8,10 +8,10 @@ export default function NotFound() {
           <MapPinOff className="size-7" strokeWidth={1.8} />
         </div>
         <h1 className="text-lg font-semibold text-neutral-900">
-          보드를 찾을 수 없어요
+          모아를 찾을 수 없어요
         </h1>
         <p className="mt-2 max-w-xs text-sm text-neutral-500">
-          링크가 잘못되었거나 보드가 비공개로 변경되었어요.
+          링크가 잘못되었거나 모아가 비공개로 변경되었어요.
         </p>
         <a
           href="/"

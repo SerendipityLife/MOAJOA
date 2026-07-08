@@ -5,13 +5,13 @@ import { usePathname } from 'next/navigation';
 import { isDevToolsEnabled } from '@/lib/env';
 
 /**
- * Bottom tab bar mirroring the iOS app's (tabs) group: 보드 / 둘러보기 / 내 정보.
- * Shows only on those three top-level screens (so a pushed /boards/[id] has none,
+ * Bottom tab bar mirroring the iOS app's (tabs) group: 모아 / 둘러보기 / 내 정보.
+ * Shows only on those three top-level screens (so a pushed /moa/[id] has none,
  * matching iOS) and only when dev tools are on (the web app shell is a dev tool —
  * the public production viewer stays chrome-free).
  */
 const TABS = [
-  { href: '/boards', label: '보드', Icon: BookmarkIcon },
+  { href: '/moa', label: '모아', Icon: BookmarkIcon },
   { href: '/discover', label: '둘러보기', Icon: CompassIcon },
   { href: '/me', label: '내 정보', Icon: PersonIcon },
 ] as const;

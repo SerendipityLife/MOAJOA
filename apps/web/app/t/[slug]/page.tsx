@@ -13,13 +13,13 @@ interface Props {
 /**
  * Description template per CONTEXT D-09 §specifics:
  * - city 있음: "{owner}님의 {city_ko} 여행 · 핀 {N}개 · MOAJOA"
- * - city 없음: "{owner}님의 여행 보드 · 핀 {N}개 · MOAJOA"
+ * - city 없음: "{owner}님의 여행 모아 · 핀 {N}개 · MOAJOA"
  */
 function buildDescription(owner: string, cityCode: string | null, pinCount: number): string {
   const cityKo = cityCode ? CITY_KO_MAP[cityCode] : null;
   return cityKo
     ? `${owner}님의 ${cityKo} 여행 · 핀 ${pinCount}개 · MOAJOA`
-    : `${owner}님의 여행 보드 · 핀 ${pinCount}개 · MOAJOA`;
+    : `${owner}님의 여행 모아 · 핀 ${pinCount}개 · MOAJOA`;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -134,7 +134,7 @@ export default async function PublicBoardPage({ params }: Props) {
           <details className="mt-8 group">
             <summary className="cursor-pointer list-none mb-3 flex items-center gap-1.5 text-base font-semibold text-neutral-700 hover:text-brand-600 transition-colors">
               <span className="text-neutral-400 transition-transform group-open:rotate-90">▸</span>
-              이 보드의 출처 {view.links.length}개
+              이 모아의 출처 {view.links.length}개
             </summary>
             <ul className="space-y-2">
               {view.links.map((link, i) => (
@@ -186,7 +186,7 @@ export default async function PublicBoardPage({ params }: Props) {
           >
             MOAJOA
           </a>
-          <p className="mt-2 text-sm text-neutral-500">이 보드는 MOAJOA로 만들었어요</p>
+          <p className="mt-2 text-sm text-neutral-500">이 모아는 MOAJOA로 만들었어요</p>
         </footer>
       </div>
     </main>

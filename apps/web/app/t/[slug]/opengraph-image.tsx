@@ -5,7 +5,7 @@ import { loadPretendardFonts } from '@/lib/og/pretendard';
 import { buildStaticMapsUrl, OG_GRAYSCALE_STYLE } from '@/lib/og/static-maps';
 import { getGoogleMapsKey } from '@/lib/env';
 
-export const alt = 'MOAJOA 공유 보드';
+export const alt = 'MOAJOA 공유 모아';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 // Node runtime (Default since Next.js 15 for file conventions; D-06 'Edge' is a stale label

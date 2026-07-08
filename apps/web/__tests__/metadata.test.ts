@@ -68,7 +68,7 @@ describe('generateMetadata', () => {
     });
     const { generateMetadata } = await import('@/app/t/[slug]/page');
     const meta = await generateMetadata({ params: Promise.resolve({ slug: 'def45678' }) });
-    expect(meta.description).toBe('지님의 여행 보드 · 핀 1개 · MOAJOA');
+    expect(meta.description).toBe('지님의 여행 모아 · 핀 1개 · MOAJOA');
   });
 
   it('sets twitter card to summary_large_image', async () => {

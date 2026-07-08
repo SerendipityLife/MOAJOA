@@ -77,7 +77,7 @@ describe('opengraph-image route', () => {
   it('exports size, alt, contentType, runtime', async () => {
     const mod = await import('@/app/t/[slug]/opengraph-image');
     expect(mod.size).toEqual({ width: 1200, height: 630 });
-    expect(mod.alt).toBe('MOAJOA 공유 보드');
+    expect(mod.alt).toBe('MOAJOA 공유 모아');
     expect(mod.contentType).toBe('image/png');
     expect(mod.runtime).toBe('nodejs');
   });

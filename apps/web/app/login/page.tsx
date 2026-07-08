@@ -10,14 +10,13 @@ type Mode = 'password' | 'magic';
 
 /**
  * Where to land after auth. Honors a validated ?next= (vote flow passes
- * /login?next=/b/<slug>); otherwise dev-tool users go to /boards and everyone
- * else to / — never bounce a prod user into the /boards dev gate (P1 #4:
- * the silent /login → /boards → /login loop).
+ * /login?next=/b/<slug>); otherwise everyone lands on /moa, the web app's
+ * home surface.
  */
 function postLoginDestination(): string {
   const next = new URLSearchParams(window.location.search).get('next');
   if (next && next.startsWith('/') && !next.startsWith('//')) return next;
-  return process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === '1' ? '/boards' : '/moa';
+  return '/moa';
 }
 
 /** /auth/callback target carrying ?next= through the e-mail/OAuth round-trip. */
