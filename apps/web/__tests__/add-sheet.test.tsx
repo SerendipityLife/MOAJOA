@@ -35,7 +35,12 @@ vi.mock('@/components', () => ({
     onPickPlace,
   }: {
     onAddLink: (url: string) => void | Promise<void>;
-    onPickPlace: (p: { id: string; name: string; address: string | null }) => void | Promise<void>;
+    onPickPlace: (p: {
+      id: string;
+      name: string;
+      address: string | null;
+      location: { lat: number; lng: number } | null;
+    }) => void | Promise<void>;
   }) => (
     <div>
       <button type="button" onClick={() => void onAddLink('https://youtu.be/abc123')}>
@@ -43,7 +48,14 @@ vi.mock('@/components', () => ({
       </button>
       <button
         type="button"
-        onClick={() => void onPickPlace({ id: 'gp1', name: '스시집', address: '도쿄' })}
+        onClick={() =>
+          void onPickPlace({
+            id: 'gp1',
+            name: '스시집',
+            address: '도쿄',
+            location: { lat: 35.66, lng: 139.7 },
+          })
+        }
       >
         pick-place
       </button>
@@ -104,7 +116,14 @@ describe('AddSheet', () => {
     await waitFor(() =>
       expect(addManualPlace).toHaveBeenCalledWith(
         {},
-        { board_id: 'trip-1', google_place_id: 'gp1' },
+        {
+          board_id: 'trip-1',
+          google_place_id: 'gp1',
+          name_local: '스시집',
+          lat: 35.66,
+          lng: 139.7,
+          address: '도쿄',
+        },
       ),
     );
     expect(onClose).toHaveBeenCalledTimes(1);

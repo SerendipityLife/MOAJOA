@@ -88,7 +88,14 @@ export default function OnboardingPage() {
         }
       }
       for (const place of seedPlaces) {
-        await addManualPlace(client, { board_id: trip.id, google_place_id: place.id });
+        await addManualPlace(client, {
+          board_id: trip.id,
+          google_place_id: place.id,
+          name_local: place.name,
+          lat: place.location?.lat,
+          lng: place.location?.lng,
+          address: place.address,
+        });
       }
       router.replace(`/moa/${trip.id}`);
     } catch (err) {

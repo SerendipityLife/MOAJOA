@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PlaceSchema } from './place';
+import { PlaceSchema, PlaceAddManualSchema } from './place';
 
 // Reuse the plan.test.ts uuid v4 fixture.
 const UUID = '11111111-1111-4111-8111-111111111111';
@@ -43,5 +43,41 @@ describe('PlaceSchema.seq_no — trip-scoped permanent ordinal (0024 mirror, MOA
 
   it('rejects a fractional seq_no', () => {
     expect(() => PlaceSchema.parse({ ...validPlace, seq_no: 1.5 })).toThrow();
+  });
+});
+
+describe('PlaceAddManualSchema — resolved name/coords threaded from EF (manual add fix)', () => {
+  it('accepts the minimal shape (board_id + google_place_id) without resolved fields', () => {
+    const parsed = PlaceAddManualSchema.parse({ board_id: UUID, google_place_id: 'gp1' });
+    expect(parsed.name_local).toBeUndefined();
+    expect(parsed.lat).toBeUndefined();
+    expect(parsed.lng).toBeUndefined();
+  });
+
+  it('accepts and preserves resolved name_local/lat/lng/address', () => {
+    const parsed = PlaceAddManualSchema.parse({
+      board_id: UUID,
+      google_place_id: 'gp1',
+      name_local: '一蘭 道頓堀',
+      lat: 34.668,
+      lng: 135.501,
+      address: '大阪府大阪市',
+    });
+    expect(parsed.name_local).toBe('一蘭 道頓堀');
+    expect(parsed.lat).toBe(34.668);
+    expect(parsed.lng).toBe(135.501);
+    expect(parsed.address).toBe('大阪府大阪市');
+  });
+
+  it('accepts a null address', () => {
+    expect(
+      PlaceAddManualSchema.parse({ board_id: UUID, google_place_id: 'gp1', address: null }).address,
+    ).toBeNull();
+  });
+
+  it('rejects an out-of-range lat', () => {
+    expect(() =>
+      PlaceAddManualSchema.parse({ board_id: UUID, google_place_id: 'gp1', lat: 200 }),
+    ).toThrow();
   });
 });

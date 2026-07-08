@@ -84,6 +84,14 @@ export const PlaceAddManualSchema = z.object({
   board_id: z.string().uuid(),
   google_place_id: z.string().min(1),
   note: z.string().max(500).optional(),
+  /** Resolved display name (EF displayName) — relayed so the RPC stores it instead of the place_id. */
+  name_local: z.string().max(200).optional(),
+  /** Resolved WGS84 latitude (EF location.lat) — relayed so the pin isn't dropped at 0,0. */
+  lat: z.number().min(-90).max(90).optional(),
+  /** Resolved WGS84 longitude (EF location.lng). */
+  lng: z.number().min(-180).max(180).optional(),
+  /** Resolved formatted address (EF formattedAddress). */
+  address: z.string().max(500).nullable().optional(),
 });
 
 export type PlaceAddManual = z.infer<typeof PlaceAddManualSchema>;

@@ -31,8 +31,10 @@ export async function listPlacesByLink(
 
 /**
  * Add a place manually via Google Places API selection. The SQL function
- * `add_manual_place` accepts the place_id and pulls coordinates/names server-side
- * to avoid trusting client-side coordinates.
+ * `add_manual_place` takes the resolved name/coordinates/address from the caller
+ * (EF-resolved values relayed through the client) — it does NOT fetch them
+ * server-side. Omitting them makes the RPC coalesce name_local to the place_id
+ * and lat/lng to 0,0, so we forward the resolved fields.
  */
 export async function addManualPlace(
   client: MoajoaSupabaseClient,
@@ -44,6 +46,10 @@ export async function addManualPlace(
     p_trip_id: input.board_id,
     p_google_place_id: input.google_place_id,
     p_note: input.note ?? null,
+    p_name_local: input.name_local ?? null,
+    p_lat: input.lat ?? null,
+    p_lng: input.lng ?? null,
+    p_address: input.address ?? null,
   });
   if (error) throw error;
   return data as Place;

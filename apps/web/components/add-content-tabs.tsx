@@ -19,6 +19,7 @@ export interface PickedPlace {
   id: string;
   name: string;
   address: string | null;
+  location: { lat: number; lng: number } | null;
 }
 
 export interface AddContentTabsProps {
@@ -129,6 +130,7 @@ export function AddContentTabs({ onAddLink, onPickPlace, busy }: AddContentTabsP
                       id: p.google_place_id,
                       name: p.displayName,
                       address: p.formattedAddress,
+                      location: p.location ?? null,
                     })
                   }
                   className="flex min-h-[44px] w-full flex-col justify-center py-2 text-left disabled:opacity-50"
