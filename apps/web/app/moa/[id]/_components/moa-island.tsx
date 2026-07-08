@@ -235,15 +235,18 @@ export function MoaIsland({
           />
         </PlaceSheet>
 
-        {/* FAB [+] — collapsed 시트 상단에서 16px 위, z-order 시트보다 위(UI-SPEC §FAB). */}
-        <button
-          type="button"
-          aria-label="장소 추가"
-          onClick={() => setAddOpen(true)}
-          className="absolute bottom-[136px] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
-        >
-          <Plus className="size-6" aria-hidden />
-        </button>
+        {/* FAB [+] — collapsed 시트 상단에서 16px 위, z-order 시트보다 위(UI-SPEC §FAB).
+            add/share 시트가 열리면 시트 위로 뜨지 않게 숨긴다. */}
+        {!addOpen && !shareOpen && (
+          <button
+            type="button"
+            aria-label="장소 추가"
+            onClick={() => setAddOpen(true)}
+            className="absolute bottom-[136px] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
+          >
+            <Plus className="size-6" aria-hidden />
+          </button>
+        )}
 
         <AddSheet
           tripId={trip.id}

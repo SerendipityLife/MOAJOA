@@ -217,4 +217,20 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
       expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument(),
     );
   });
+
+  it('Test 6: FAB는 기본 노출, add 시트가 열리면 숨겨짐 (시트 위 부유 방지)', () => {
+    render(<MoaIsland {...baseProps} />);
+    const fab = screen.getByLabelText('장소 추가');
+    expect(fab).toBeInTheDocument();
+    fireEvent.click(fab);
+    expect(screen.getByTestId('add-sheet')).toBeInTheDocument();
+    expect(screen.queryByLabelText('장소 추가')).toBeNull();
+  });
+
+  it('Test 7: 함께 정하기(share) 시트가 열리면 FAB 숨겨짐', () => {
+    render(<MoaIsland {...baseProps} />);
+    fireEvent.click(screen.getByText('함께 정하기'));
+    expect(screen.getByTestId('share-sheet')).toBeInTheDocument();
+    expect(screen.queryByLabelText('장소 추가')).toBeNull();
+  });
 });
