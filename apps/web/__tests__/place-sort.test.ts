@@ -38,6 +38,6 @@ describe('sortByLove', () => {
     const out = sortByLove(places, { a: 2, b: 5 });
     expect(out[0]).toBe(places[1]); // b
     expect(out[1]).toBe(places[0]); // a
-    expect(out[1].seq_no).toBe(7);
+    expect(out[1]!.seq_no).toBe(7);
   });
 });

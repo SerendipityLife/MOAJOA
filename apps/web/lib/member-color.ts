@@ -12,5 +12,5 @@ export function memberColor(
 ): string {
   if (userId === ownerId) return colors.brand[500];
   const i = memberIdsInJoinOrder.indexOf(userId);
-  return colors.member[(i < 0 ? 0 : i) % colors.member.length];
+  return colors.member[(i < 0 ? 0 : i) % colors.member.length]!;
 }
