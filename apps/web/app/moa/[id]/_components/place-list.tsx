@@ -6,7 +6,6 @@ import { AlertCircle, ExternalLink, Heart, Loader2 } from 'lucide-react';
 import { sortByLove } from '@/lib/place-sort';
 import { buildGoogleMapsPlaceUrl } from '@/lib/maps-url';
 import { buildYouTubeWatchUrl } from '@/lib/youtube';
-import { useToast } from '@/components';
 
 export interface PlaceListProps {
   /** hidden 제외 상태로 전달됨. */
@@ -26,6 +25,8 @@ export interface PlaceListProps {
   onToggleVote: (placeId: string) => void;
   onRetry: (linkId: string) => void;
   onDelete: (placeId: string) => void;
+  /** D-10 답장 — 채팅 탭 전환 + reply_to_place_id 프리필(island이 배선). */
+  onReply: (placeId: string) => void;
 }
 
 /** `4:00` 스타일 라벨 (vote-island tsLabel 미러 — m:ss zero-pad). */
@@ -56,9 +57,8 @@ export function PlaceList({
   onToggleVote,
   onRetry,
   onDelete,
+  onReply,
 }: PlaceListProps) {
-  const { toast } = useToast();
-
   // MOA-05 마커 탭: openPlaceId 외부 변경 시 해당 행으로 스크롤.
   useEffect(() => {
     if (!openPlaceId) return;
@@ -215,15 +215,14 @@ export function PlaceList({
                     <ExternalLink className="size-3.5" aria-hidden />
                   </a>
                 )}
-                {/* A-4 답장 — Phase 26이 핸들러만 교체(현재 stub). */}
+                {/* A-4 답장 (D-10) — 채팅 탭 전환 + reply_to_place_id 프리필. */}
                 <button
                   type="button"
-                  aria-disabled
                   onClick={(e) => {
                     e.stopPropagation();
-                    toast('채팅은 곧 열려요');
+                    onReply(p.id);
                   }}
-                  className="self-start text-sm font-medium text-neutral-700 opacity-50"
+                  className="self-start text-sm font-medium text-neutral-700"
                 >
                   답장
                 </button>

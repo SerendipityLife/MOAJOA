@@ -68,6 +68,7 @@ const onOpenPlace = vi.fn();
 const onToggleVote = vi.fn();
 const onRetry = vi.fn();
 const onDelete = vi.fn();
+const onReply = vi.fn();
 
 function renderList(overrides: Partial<PlaceListProps> = {}) {
   const props: PlaceListProps = {
@@ -83,6 +84,7 @@ function renderList(overrides: Partial<PlaceListProps> = {}) {
     onToggleVote,
     onRetry,
     onDelete,
+    onReply,
     ...overrides,
   };
   return render(<PlaceList {...props} />);
@@ -93,6 +95,7 @@ beforeEach(() => {
   onToggleVote.mockClear();
   onRetry.mockClear();
   onDelete.mockClear();
+  onReply.mockClear();
 });
 
 describe('PlaceList', () => {
@@ -226,5 +229,12 @@ describe('PlaceList', () => {
       ],
     });
     expect(screen.queryByText('삭제')).toBeNull();
+  });
+
+  it('Test 13 (D-10 답장): 열린 행의 답장 버튼 → onReply(placeId), 행 토글 미발화', () => {
+    renderList({ places: [makePlace({ id: 'p1' })], openPlaceId: 'p1' });
+    fireEvent.click(screen.getByText('답장'));
+    expect(onReply).toHaveBeenCalledWith('p1');
+    expect(onOpenPlace).not.toHaveBeenCalled();
   });
 });
