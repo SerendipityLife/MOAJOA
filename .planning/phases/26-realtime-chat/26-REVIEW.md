@@ -19,9 +19,9 @@ files_reviewed_list:
 findings:
   critical: 0
   warning: 0
-  info: 2
-  total: 2
-  resolved: [WR-01]
+  info: 1
+  total: 1
+  resolved: [WR-01, IN-01]
 status: issues_found
 ---
 
@@ -80,7 +80,11 @@ onKeyDown={(e) => {
 
 ## Info
 
-### IN-01: 장소를 1.5s 내에 닫으면 하이라이트 링이 남는 엣지 케이스
+### IN-01: 장소를 1.5s 내에 닫으면 하이라이트 링이 남는 엣지 케이스 ✅ RESOLVED
+
+> **해결됨:** highlight effect가 `openPlaceId → null`일 때 `setHighlightId(null)`로 즉시
+> 링을 끄도록 수정 + 회귀 테스트(`place-list.test.tsx` Test 14 — 타이머 전 닫으면
+> `data-highlighted` 소멸). web 14/14 그린·tsc 0.
 
 **File:** `apps/web/app/moa/[id]/_components/place-list.tsx:73-78`
 **Issue:** 하이라이트 effect는 `if (!openPlaceId) return;`으로 시작합니다. 사용자가
