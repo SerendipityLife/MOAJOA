@@ -14,9 +14,9 @@
 | New/Modified file | Role | Data Flow | Closest Analog | Match Quality |
 |-------------------|------|-----------|----------------|---------------|
 | `apps/web/app/moa/[id]/_components/moa-chat.tsx` (NEW) | component | event-driven (realtime fan-out) | `apps/web/app/poll/[code]/_components/poll-chat.tsx` | exact (role+flow) |
-| `apps/web/app/moa/[id]/_components/moa-tabs.tsx` (NEW, `[모으기][채팅]` bottom tab bar) | component | request-response (client state) | `apps/web/components/bottom-nav.tsx` (fixed bottom bar shell) + `apps/web/components/tabs.tsx` (Radix state) | role-match (compose two) |
+| `apps/web/app/moa/[id]/_components/moa-tab-bar.tsx` (NEW, `[모으기][채팅]` bottom tab bar) | component | request-response (client state) | `apps/web/components/bottom-nav.tsx` (fixed bottom bar shell) + `apps/web/components/tabs.tsx` (Radix state) | role-match (compose two) |
 | `apps/web/app/moa/[id]/_components/moa-island.tsx` (MODIFY — tab state + chat + presence) | component | event-driven (realtime hub) | itself (current) + `poll-vote-island.tsx` (presence + shared-channel chat wiring) | exact |
-| `packages/api/src/queries/trip-messages.ts` (NEW — `sendTripMessage`/`listTripMessages`) | service (typed query) | CRUD (insert + list-by-parent) | `votes.ts` `castVote` (direct insert) + `places.ts` `listPlacesByTrip` (list-by-trip) | exact (idiom), see NOTE on RPC-vs-table |
+| `packages/api/src/queries/chat.ts` (NEW — `sendTripMessage`/`listTripMessages`) | service (typed query) | CRUD (insert + list-by-parent) | `votes.ts` `castVote` (direct insert) + `places.ts` `listPlacesByTrip` (list-by-trip) | exact (idiom), see NOTE on RPC-vs-table |
 | `supabase/migrations/0028_trip_messages_realtime.sql` (NEW) | migration | config (realtime publication) | `supabase/migrations/0026_realtime_publication.sql` | exact |
 | Place-mention `#N` chip render + tap→scroll (in `moa-chat.tsx` + `moa-island.tsx` + `place-list.tsx`) | component | event-driven (cross-tab nav) | `place-list.tsx` `openPlaceId` scrollIntoView effect + `moa-island.tsx` `onMarkerTap` | exact |
 | Presence "N명 보는 중" strip (in `moa-island.tsx` or `moa-chat.tsx`) | component | pub-sub (presence sync) | `poll-vote-island.tsx` viewers presence strip | exact |
@@ -47,7 +47,7 @@
 
 ---
 
-### 2. `moa-tabs.tsx` (component, request-response) — NEW `[모으기] [채팅]` bottom tab bar
+### 2. `moa-tab-bar.tsx` (component, request-response) — NEW `[모으기] [채팅]` bottom tab bar
 
 **Analogs (compose two):**
 - **Fixed-bottom-bar shell** — `apps/web/components/bottom-nav.tsx` L24-46: `nav.fixed inset-x-0 bottom-0 z-40 border-t bg-white/95 backdrop-blur` → `ul.flex items-stretch` → per-tab `flex-1` with `active ? text-brand-500 : text-neutral-500`. Copy the visual shell.
@@ -83,7 +83,7 @@
 
 ---
 
-### 4. `packages/api/src/queries/trip-messages.ts` (service, CRUD) — NEW
+### 4. `packages/api/src/queries/chat.ts` (service, CRUD) — NEW
 
 **Analogs:** `votes.ts` `castVote` (L8-23, direct table insert) + `places.ts` `listPlacesByTrip` (L4-16, list-by-trip ordered).
 
@@ -206,7 +206,7 @@ Optimistic append/flip → await query → dedupe on server row → on catch res
 
 ### Direct-table query house contract
 **Source:** `votes.ts`, `places.ts` (`client`-first arg, `{error} throw`, `select('*').single()` on insert, RLS-only, no service role).
-**Apply to:** `trip-messages.ts` — NOT the RPC form used by `date-polls.ts` (that's anon-only).
+**Apply to:** `chat.ts` — NOT the RPC form used by `date-polls.ts` (that's anon-only).
 
 ### Denormalized nickname snapshot
 **Source:** `packages/core/src/schemas/chat.ts` L8-13, L31-36 + 0025 L10.
