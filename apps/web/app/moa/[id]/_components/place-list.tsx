@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Link, Place } from '@moajoa/core';
 import { AlertCircle, ExternalLink, Heart, Loader2 } from 'lucide-react';
 import { sortByLove } from '@/lib/place-sort';
@@ -65,6 +65,16 @@ export function PlaceList({
     document
       .querySelector(`[data-place-id="${openPlaceId}"]`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [openPlaceId]);
+
+  // CHAT-03 하이라이트 (D-10): openPlaceId가 바뀌면(칩·마커 탭) 해당 행에 짧은 링 큐를
+  // 켜고 ~1.5s 후 끈다. scroll만으론 "어디로 갔는지" 안 보여 요구된 시각 큐를 추가.
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openPlaceId) return;
+    setHighlightId(openPlaceId);
+    const t = setTimeout(() => setHighlightId(null), 1500);
+    return () => clearTimeout(t);
   }, [openPlaceId]);
 
   // 정렬(MOA-02): 찜 desc·동률 seq_no asc — 렌더 순서만. 배지는 항상 place.seq_no.
@@ -138,7 +148,14 @@ export function PlaceList({
         }
 
         return (
-          <li key={p.id} data-place-id={p.id} className="border-b border-neutral-100">
+          <li
+            key={p.id}
+            data-place-id={p.id}
+            data-highlighted={highlightId === p.id ? 'true' : undefined}
+            className={`border-b border-neutral-100${
+              highlightId === p.id ? ' rounded-lg ring-2 ring-brand-300' : ''
+            }`}
+          >
             {/* 행 헤더 — 탭 시 아코디언 토글. 하트는 stopPropagation sibling. */}
             <div
               role="button"

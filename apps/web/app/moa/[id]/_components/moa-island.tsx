@@ -223,6 +223,14 @@ export function MoaIsland({
     setSheetAnchor('expanded');
   };
 
+  // 칩 탭 (CHAT-03): #N 장소명 칩 → 모으기 탭 전환 + 해당 장소 열기 + 시트 expanded.
+  // openPlaceId 경로를 재사용해 place-list이 scrollIntoView + 하이라이트(D-10).
+  const openPlaceFromChat = (placeId: string) => {
+    setActiveTab('moa');
+    setOpenPlaceId(placeId);
+    setSheetAnchor('expanded');
+  };
+
   // 삭제 (soft-delete): optimistic 제거 후 hidePlace. 실패 시 reconcile로 복원 + 에러 토스트.
   async function handleDelete(placeId: string) {
     setPlaces((prev) => prev.filter((p) => p.id !== placeId));
@@ -313,6 +321,10 @@ export function MoaIsland({
             onToggleVote={onToggleVote}
             onRetry={onRetry}
             onDelete={handleDelete}
+            onReply={(placeId) => {
+              setReplyToPlaceId(placeId);
+              setActiveTab('chat');
+            }}
           />
         </PlaceSheet>
 
@@ -361,9 +373,7 @@ export function MoaIsland({
             replyToPlaceId={replyToPlaceId}
             onClearReply={() => setReplyToPlaceId(null)}
             placesById={placesById}
-            onChipTap={() => {
-              /* 칩 탭 → 모으기 탭 전환 + scrollIntoView는 Plan 04 */
-            }}
+            onChipTap={openPlaceFromChat}
           />
         </div>
       </div>
