@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: 24-01 [BLOCKING] 로컬 완료 — 0026 realtime publication(places·links) 로컬 적용(42P17=0) + postgres_changes 이벤트 실수신·비멤버 0건(WALRUS RLS) 스모크 exit 0 + supabase-js 2.110.0 전역 실체화(F-20-3 root node_modules 오염 정화) + react-day-picker 9.14.0. **원격 db push(0024·0025·0026)는 auto-mode classifier 거부로 미실행 — human-action 게이트(사용자 터미널 `supabase db push`).** downstream local 개발은 언블록.
-stopped_at: 24-07 완료 (add-sheet FAB[+]·share-sheet 함께 정하기 + island 배선 + Phase 24 마감 게이트) — **Phase 24 로컬 표면 전량 완료.** core 169·api 88·web 110·ios 128 그린·web build PASS(/onboarding·/moa·/moa/[id])·grep 6종 0·iOS diff 0 — 원격 db push(0024·0025·0026)는 여전히 human-action 게이트 open, verify-work 인계 대기
-last_updated: "2026-07-08T10:45:00Z"
+stopped_at: 26-01 완료 (Phase 26 Wave 1 백엔드 기반 — 0028 publication add + trip_messages.user_id auth.uid 트리거 + chat.ts listTripMessages/sendTripMessage 직접테이블 + barrel). 로컬 supabase db reset 0016→0028 클린(42P17=0)·publication/trigger/function 각 1 검증·api 97 그린·tsc 0·deviation 0. 다음: 26-02(Wave 1 sibling 표시 레이어). 라이브 CHAT-01은 26-03 배선+배포 후.
+last_updated: "2026-07-10T16:54:00Z"
 last_activity: "2026-07-08 — 24-07 실행: 지도탭 마지막 진입점 2종. add-sheet(BottomSheet+AddContentTabs 24-04 재사용 D-11 — 링크 addLink+fire-and-forget triggerExtraction 비-manual D-13, 검색 addManualPlace만 onAdded 미호출 D-16 중복토스트 방지) + moa-island FAB(brand-600 56px·aria-label 장소 추가·z-[60]·onAdded→reconcile). share-sheet(모드 3택 카드 verbatim 카피·shareMoa slug 발급→window.location.origin/t/{slug} 클립보드 우선 D-18→navigator.share AbortError만 무시 Pitfall5·D-17 start_date≠null이면 dates 카드 미렌더 2택·D-19 share_mode 프리셋 open 전환 재동기화) + moa-island 상단 바 [함께 정하기] primary sm·localShareMode onShared 갱신. add-sheet.test 4·share-sheet.test 5·moa-island.test 무회귀 5. 게이트: core 169·api 88·web 110·ios 128 그린·web typecheck 0·build PASS(/onboarding·/moa·/moa/[id])·안티패턴 grep 6종(isDevToolsEnabled·presence·seq_no·dangerouslySetInnerHTML·.js import·style.css) 0·iOS diff 0. deviation 0(정합 조정 3: core/api test 스크립트명·island mock 확장·add-sheet title a11y). Phase 24 전 자동 검증 그린 — verify-work 인계 준비."
 progress:
   total_phases: 7
@@ -33,9 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 26 (Realtime Chat) — 📋 PLANNED (2026-07-10, plan-checker PASS iteration 2) · 실행 대기
-Plan(26): 4 plans / 3 waves. **W1** = 26-01 [BLOCKING backend] 0028(publication+`trip_messages.user_id` auth.uid 트리거)·chat.ts 쿼리(sendTripMessage/listTripMessages 직접테이블) ∥ 26-02 표시(moa-chat·moa-tab-bar) → **W2** = 26-03 island 배선(3번째 postgres_changes 바인딩 `.subscribe()` 전·append+dedup·presence 동일채널·page seed에 user.id) → **W3** = 26-04 멘션 루프(답장↔#N 칩·하이라이트 필수). 산출물: 26-CONTEXT(모으기/채팅 2탭 IA·CHAT-01/02/03 풀·게스트는 Phase25 연동)·26-RESEARCH(HIGH)·26-PATTERNS(8/8 analog)·26-VALIDATION(signed)·01~04 PLAN. 커밋 586a473·309ce82·e181b45·d7e6de9. **주의:** 0028은 main push 시 Supabase↔GitHub 자동 적용(이번 세션 실측). 게스트 채팅 참여는 Phase 25 몫.
-Next(26): `/gsd-execute-phase 26` (fresh context 권장 — /clear 후). Wave1 병렬(26-01 colima 필요) → W2 → W3.
+Phase: 26 (Realtime Chat) — 🔨 IN PROGRESS (2026-07-10) · 1/4 plans (26-01 ✅ 백엔드 기반)
+Plan(26): 4 plans / 3 waves. **W1** = 26-01 ✅[backend] 0028(publication add + `trip_messages.user_id` auth.uid 트리거)·chat.ts(listTripMessages asc·sendTripMessage insert-without-user_id 직접테이블)+barrel — 로컬 reset 0016→0028 클린(42P17=0)·publication/trigger/function 각 1·api 97 그린·tsc 0(commits ff6e8b9·a453cea·2fd2006) ∥ 26-02 표시(moa-chat·moa-tab-bar) [대기] → **W2** = 26-03 island 배선(3번째 postgres_changes 바인딩 `.subscribe()` 전·append+dedup·presence 동일채널·page seed에 user.id) → **W3** = 26-04 멘션 루프(답장↔#N 칩·하이라이트 필수). 산출물: 26-CONTEXT·26-RESEARCH(HIGH)·26-PATTERNS(8/8 analog)·26-VALIDATION(signed)·01~04 PLAN + 26-01-SUMMARY.
+Next(26): 26-02 (Wave 1 병렬 sibling) → 26-03 → 26-04. **주의:** 0028은 main push 시 Supabase↔GitHub 자동 적용 — 라이브 CHAT-01(실시간 전달·send 성공)은 26-03 배선+배포 후 검증. 게스트 채팅 참여는 Phase 25 몫.
+
+---
+
+**26-01 실행 완료 (2026-07-10, commits ff6e8b9·a453cea·2fd2006):** Phase 26 Wave 1 — 실시간 채팅 백엔드 기반(CHAT-01). 코드에 안 보이는 런타임 갭 2종을 한 append-only 마이그레이션(0028)으로 동시 봉합 + island이 호출할 typed query 2종. **Task 1(feat ff6e8b9, auto):** `0028_chat_realtime_publication.sql` — (1) `alter publication supabase_realtime add table trip_messages`(0026은 places/links만 등록 → 없으면 postgres_changes INSERT 구독이 SUBSCRIBED-무음-0건, D-07/Pitfall 2) (2) `trip_messages_default_user_id()` BEFORE-INSERT 트리거(votes_default_user_id 0016 L512 미러, SECURITY DEFINER·search_path=public, `new.user_id := auth.uid()` when null) — 0025는 트리거 누락(INSERT RLS는 user_id=auth.uid() 검증만·채우지 않음)이라 TripMessageCreateSchema가 user_id 생략 → naive insert가 not-null 위반. **검증:** colima+docker 가동 상태라 `supabase db reset` 실행 → 0016→0028 클린 적용(42P17=0)·`pg_publication_tables` trip_messages=1·`trip_messages_user_id_default` 트리거=1·함수=1. **Task 2(TDD RED a453cea→GREEN 2fd2006):** `packages/api/src/queries/chat.ts` — `listTripMessages`(from('trip_messages').select('*').eq(trip_id).order(created_at asc)·data??[]) + `sendTripMessage`(insert {trip_id,nickname,body,reply_to_place_id??null} **user_id 키 없음** — 0028 트리거가 채움·votes/places 직접테이블 idiom, date-polls anon RPC 아님 D-09) + barrel `export * from './chat'`(no .js). RED: 클라이언트 미접촉 스텁으로 6케이스 중 5 실패(from/insert 미호출·미reject — import 에러 아님). GREEN: chat.test 6/6·api 스위트 97 그린·tsc 0. chat.ts의 `user_id`는 문서 주석에만(insert 객체는 4키만) — verify grep 통과. **deviation 0 — plan 원안 그대로.** 0016-0027·packages/core 무수정. **주의:** 0028 라이브 적용은 main push 시 Supabase↔GitHub 자동 반영 — 라이브 CHAT-01(실시간 전달·send 성공)은 26-03 island 배선+배포 후 검증(CHAT-01 REQUIREMENTS는 Pending 유지). 상세: `26-01-SUMMARY.md`.
 
 ---
 

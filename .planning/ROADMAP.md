@@ -289,9 +289,9 @@ Plans:
   2. "지금 N명 보는 중" 접속자 수가 입장·퇴장에 따라 실시간 갱신된다 (두 브라우저에서 수렴)
   3. 장소 행의 답장 버튼으로 메시지를 보내면 인용 칩(#N 장소명)이 붙고, 칩을 탭하면 해당 장소로 스크롤·하이라이트된다
 
-**Plans** (planned 2026-07-10, 3 waves):
+**Plans** (planned 2026-07-10, 3 waves): 1/4 complete
 
-- [ ] 26-01-PLAN.md — 백엔드 기반: `0028_chat_realtime_publication.sql`(publication add + user_id 기본 트리거) + api `chat.ts`(listTripMessages·sendTripMessage) + barrel (Wave 1)
+- [x] 26-01-PLAN.md — 백엔드 기반: `0028_chat_realtime_publication.sql`(publication add + user_id 기본 트리거) + api `chat.ts`(listTripMessages·sendTripMessage) + barrel (Wave 1) — ✅ 2026-07-10 (로컬 reset 0016→0028 클린 42P17=0·publication/trigger 검증·api 97 그린·tsc 0, commits ff6e8b9·a453cea·2fd2006)
 - [ ] 26-02-PLAN.md — 프레젠테이션: `moa-chat.tsx`(말풍선·입력바·presence 스트립·#N 칩/답장 배너) + `moa-tab-bar.tsx`([모으기][채팅] 하단 탭바) + moa-chat.test (Wave 1)
 - [ ] 26-03-PLAN.md — island 배선(CHAT-01/02): trip_messages INSERT 바인딩(pre-subscribe)+presence track + 메시지 append/dedup + handleSend + page.tsx 히스토리 seed + island test 확장 (Wave 2)
 - [ ] 26-04-PLAN.md — 멘션 루프(CHAT-03): place-list 답장→onReply + island reply 프리필·칩 탭 nav(openPlaceFromChat) + island test 확장 (Wave 3)
