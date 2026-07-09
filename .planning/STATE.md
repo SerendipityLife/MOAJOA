@@ -33,7 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 24 (Host Flow — 온보딩·지도탭) — ✅ 로컬 표면 완료 (Wave 1~4 전량 실행 · 7/7 plans) — verify-work + 원격 db push 게이트만 잔여
+Phase: 26 (Realtime Chat) — 📋 PLANNED (2026-07-10, plan-checker PASS iteration 2) · 실행 대기
+Plan(26): 4 plans / 3 waves. **W1** = 26-01 [BLOCKING backend] 0028(publication+`trip_messages.user_id` auth.uid 트리거)·chat.ts 쿼리(sendTripMessage/listTripMessages 직접테이블) ∥ 26-02 표시(moa-chat·moa-tab-bar) → **W2** = 26-03 island 배선(3번째 postgres_changes 바인딩 `.subscribe()` 전·append+dedup·presence 동일채널·page seed에 user.id) → **W3** = 26-04 멘션 루프(답장↔#N 칩·하이라이트 필수). 산출물: 26-CONTEXT(모으기/채팅 2탭 IA·CHAT-01/02/03 풀·게스트는 Phase25 연동)·26-RESEARCH(HIGH)·26-PATTERNS(8/8 analog)·26-VALIDATION(signed)·01~04 PLAN. 커밋 586a473·309ce82·e181b45·d7e6de9. **주의:** 0028은 main push 시 Supabase↔GitHub 자동 적용(이번 세션 실측). 게스트 채팅 참여는 Phase 25 몫.
+Next(26): `/gsd-execute-phase 26` (fresh context 권장 — /clear 후). Wave1 병렬(26-01 colima 필요) → W2 → W3.
+
+---
+
+Phase: 24 (Host Flow — 온보딩·지도탭) — ✅ 완료·프로덕션 배포됨 (7/7 plans, moajoa-web.vercel.app 라이브)
 검증(2026-07-08, commit f01a53b): 24-VERIFICATION `passed_with_gaps` — 10/10 requirement 코드 전달, not-delivered·구현 갭 0, verifier 스위트 재실행 그린. 24-REVIEW 6건(security clean, 0 critical).
 **후속 완료(2026-07-08):** (1) 코드 리뷰 픽스 H-01/M-01/M-02 적용·커밋(021f27e·27fe398·c1667de) — H-01 manual 링크 영구 "분석 중…"→"지원하지 않는 링크예요"(재시도 없음)·M-01 날짜 확정+range 미선택 시 다음 disabled·M-02 reconcile in-flight 가드(토스트 중복 해소); web 112 그린·typecheck·build PASS. Low 3건(L-01 중복 trip·L-02 단일점 fitBounds 과줌·L-03 share URL origin)은 미착수(fast-follow). (2) **원격 `supabase db push` 완료** — 0024·0025·0026 프로덕션 적용, `migration list` Local·Remote 0026까지 정합. Vercel Preview e2e·라이브 realtime·실 slug 게이트 해소.
 **프로덕션 배포 완료(2026-07-09):** 사용자 요청 2건 추가 반영 후 배포 — (a) `/boards` 서피스 전면 삭제, 전부 `/moa`로 통합(루트·로그인·콜백·bottom-nav·/t/[slug] 공유뷰 카피 board→moa; commit 07503cf), (b) 온보딩 `건너뛰기` 제거, `모아 만들기`만(기타로 대체; commit b05ecf3). web 112 그린·typecheck·build PASS. **origin/main push**: 로컬 91커밋 ∥ 원격 4커밋(동료 iOS 탭바, apps/ios 전용) 분기 → 파일셋 disjoint 무충돌 merge(7b94ad7) 후 push. **Vercel 프로덕션 배포 dpl_7VAtWtZ… READY**(~68초 빌드) — `https://moajoa-web.vercel.app` 라이브. 프로덕션 스모크: /login 200(카카오 버튼)·/moa 307→/login(D-01 게이트)·/boards 404(삭제 확인)·/onboarding 200. **주의:** 이전엔 origin/main이 Phase 21~24 전부 미반영(d465b7f iOS 커밋에 멈춤)이었음 — 이 push로 전 web 작업이 처음 프로덕션 반영됨.
