@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Link, Place, ShareModeType, Trip } from '@moajoa/core';
-import { moaChannelName } from '@moajoa/core';
+import type { Link, Place, ShareModeType, Trip, TripMessage } from '@moajoa/core';
+import { moaChannelName, TripMessageCreateSchema } from '@moajoa/core';
 import {
   castVote,
   getProfileNames,
@@ -12,6 +12,7 @@ import {
   listLinksByTrip,
   listPlacesByTrip,
   retractVote,
+  sendTripMessage,
   triggerExtraction,
 } from '@moajoa/api';
 import { ChevronLeft, Plus } from 'lucide-react';
@@ -23,6 +24,8 @@ import { PlaceSheet, type SheetAnchor } from './place-sheet';
 import { PlaceList } from './place-list';
 import { AddSheet } from './add-sheet';
 import { ShareSheet } from './share-sheet';
+import { MoaChat } from './moa-chat';
+import { MoaTabBar, type MoaTab } from './moa-tab-bar';
 
 export interface MoaIslandProps {
   trip: Trip;
@@ -33,6 +36,9 @@ export interface MoaIslandProps {
   initialMyVotedPlaceIds: string[];
   memberIdsInJoinOrder: string[];
   initialProfileNames: Record<string, string>;
+  initialMessages: TripMessage[];
+  /** 전송·presence track에 쓰는 로그인 사용자 display_name 스냅샷(D-08). */
+  currentUserNickname: string;
 }
 
 /**
@@ -49,13 +55,15 @@ export interface MoaIslandProps {
  */
 export function MoaIsland({
   trip,
-  currentUserId: _currentUserId,
+  currentUserId,
   initialPlaces,
   initialLinks,
   initialCounts,
   initialMyVotedPlaceIds,
   memberIdsInJoinOrder,
   initialProfileNames,
+  initialMessages,
+  currentUserNickname,
 }: MoaIslandProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -74,6 +82,19 @@ export function MoaIsland({
   const [addOpen, setAddOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [localShareMode, setLocalShareMode] = useState<ShareModeType | null>(trip.share_mode);
+
+  // 채팅(모아 내부 섹션 탭 — D-01/D-02). 탭 전환은 클라이언트 상태라 island이 한 번만
+  // 마운트되고 단일 moa:{tripId} 채널이 유지된다(뷰만 스위치, 언마운트 없음).
+  const [activeTab, setActiveTab] = useState<MoaTab>('moa');
+  const [messages, setMessages] = useState<TripMessage[]>(initialMessages);
+  const [viewers, setViewers] = useState(0);
+  const [replyToPlaceId, setReplyToPlaceId] = useState<string | null>(null); // 배선은 Plan 04
+
+  // 메시지 append — places/links와 달리 reconcile 안 함(WALRUS+RLS 신뢰, hidden_at 드리프트
+  // 없는 append-only INSERT). id로 dedup(전송자도 자기 postgres_changes echo를 받음).
+  function appendMessage(row: TripMessage) {
+    setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+  }
 
   // 채널 콜백(마운트당 1회 바인딩)이 최신 값을 읽도록 ref 동기화.
   const profileNamesRef = useRef(profileNames);
@@ -129,11 +150,17 @@ export function MoaIsland({
     }
   }
 
-  // realtime: moa:{tripId} 단일 채널 · places INSERT + links UPDATE · cleanup removeChannel.
+  // realtime: moa:{tripId} 단일 채널 (RESEARCH Q3 — ONE channel per screen).
+  // postgres_changes 3종(places INSERT + links UPDATE + trip_messages INSERT) + presence
+  // (track/sync). 모든 바인딩은 .subscribe() 이전에 체이닝 — postgres_changes는 subscribe
+  // 시점에 서버와 negotiate하므로 이후 추가 바인딩은 무음 no-op(#1917). 채널 생성을 별도 줄로
+  // 분리해 subscribe/presence 콜백이 channel을 안전하게 참조(poll-vote-island 선례).
   useEffect(() => {
     const client = getSupabaseBrowser();
-    const channel = client
-      .channel(moaChannelName(trip.id))
+    const channel = client.channel(moaChannelName(trip.id), {
+      config: { presence: { key: currentUserId } },
+    });
+    channel
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'places', filter: `trip_id=eq.${trip.id}` },
@@ -144,7 +171,23 @@ export function MoaIsland({
         { event: 'UPDATE', schema: 'public', table: 'links', filter: `trip_id=eq.${trip.id}` },
         () => void reconcile(),
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'trip_messages', filter: `trip_id=eq.${trip.id}` },
+        (payload) => appendMessage(payload.new as TripMessage),
+      )
+      .on('presence', { event: 'sync' }, () =>
+        setViewers(Object.keys(channel.presenceState()).length),
+      )
+      .subscribe(async (s) => {
+        if (s === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: currentUserId,
+            nickname: currentUserNickname,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
     return () => {
       void client.removeChannel(channel);
     };
@@ -201,11 +244,34 @@ export function MoaIsland({
       .catch(() => toast('장소를 찾지 못했어요', { variant: 'error' }));
   };
 
+  // 전송 (CHAT-01): UI 경계에서 Zod 검증(§4.5) → insert → optimistic append → 답장 해제.
+  // 에러는 그대로 전파 — MoaChat이 draft 복원 + 에러 토스트.
+  async function handleSend(body: string, replyToPlaceIdArg: string | null) {
+    const input = TripMessageCreateSchema.parse({
+      trip_id: trip.id,
+      nickname: currentUserNickname,
+      body,
+      reply_to_place_id: replyToPlaceIdArg,
+    });
+    const row = await sendTripMessage(getSupabaseBrowser(), input);
+    appendMessage(row); // postgres_changes echo는 id로 dedup됨
+    setReplyToPlaceId(null);
+  }
+
+  // 답장 칩 해석용 lookup (#N 장소명). 칩 탭 네비게이션 배선은 Plan 04.
+  const placesById = Object.fromEntries(
+    places.map((p) => [p.id, { seqNo: p.seq_no, name: p.name_local }]),
+  );
+
   return (
-    <div className="fixed inset-0 flex justify-center bg-neutral-100">
-      <div className="relative h-full w-full max-w-lg overflow-hidden">
-        {/* 지도 풀 채움 — 불투명 상단 바 없음(지도 감성, UI-SPEC). */}
-        <MoaMap places={places} colorFor={colorFor} onMarkerTap={onMarkerTap} />
+    <>
+      {/* 모으기 뷰 — 탭 전환 시 언마운트하지 않고 hidden으로 숨김(지도 인스턴스·채널 보존 D-02).
+          contents 래퍼라 자식 fixed inset-0 레이아웃은 그대로 유지된다. */}
+      <div className={activeTab === 'moa' ? 'contents' : 'hidden'}>
+        <div className="fixed inset-0 flex justify-center bg-neutral-100">
+          <div className="relative h-full w-full max-w-lg overflow-hidden">
+            {/* 지도 풀 채움 — 불투명 상단 바 없음(지도 감성, UI-SPEC). */}
+            <MoaMap places={places} colorFor={colorFor} onMarkerTap={onMarkerTap} />
 
         {/* 뒤로 chevron 오버레이(흰 원형 + shadow). */}
         <button
@@ -276,7 +342,33 @@ export function MoaIsland({
           onClose={() => setShareOpen(false)}
           onShared={setLocalShareMode}
         />
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* 채팅 뷰 — 탭바(fixed bottom ~56px) 위에 입력바가 걸치지 않게 하단 여백 확보. */}
+      <div
+        className={
+          activeTab === 'chat' ? 'fixed inset-0 flex justify-center bg-neutral-100' : 'hidden'
+        }
+      >
+        <div className="relative flex h-full w-full max-w-lg flex-col overflow-hidden px-4 pb-[64px] pt-4">
+          <MoaChat
+            messages={messages}
+            currentUserId={currentUserId}
+            viewers={viewers}
+            onSend={handleSend}
+            replyToPlaceId={replyToPlaceId}
+            onClearReply={() => setReplyToPlaceId(null)}
+            placesById={placesById}
+            onChipTap={() => {
+              /* 칩 탭 → 모으기 탭 전환 + scrollIntoView는 Plan 04 */
+            }}
+          />
+        </div>
+      </div>
+
+      <MoaTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+    </>
   );
 }
