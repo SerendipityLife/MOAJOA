@@ -237,4 +237,30 @@ describe('PlaceList', () => {
     expect(onReply).toHaveBeenCalledWith('p1');
     expect(onOpenPlace).not.toHaveBeenCalled();
   });
+
+  it('Test 14 (IN-01 잔상): 1.5s 타이머 전에 행을 닫으면 하이라이트 링이 즉시 사라진다', () => {
+    const base: PlaceListProps = {
+      places: [makePlace({ id: 'p1' })],
+      links: [makeLink({})],
+      counts: {},
+      myVotes: {},
+      votePending: {},
+      profileNames: {},
+      colorFor: () => 'rgb(255, 112, 67)',
+      openPlaceId: 'p1',
+      onOpenPlace,
+      onToggleVote,
+      onRetry,
+      onDelete,
+      onReply,
+    };
+    const { container, rerender } = render(<PlaceList {...base} />);
+    const row = () => container.querySelector('[data-place-id="p1"]');
+    // 열린 직후엔 하이라이트 링(data-highlighted='true')
+    expect(row()?.getAttribute('data-highlighted')).toBe('true');
+
+    // 타이머(1.5s) 종료 전에 닫으면 — 잔상 없이 즉시 해제되어야 함
+    rerender(<PlaceList {...base} openPlaceId={null} />);
+    expect(row()?.getAttribute('data-highlighted')).toBeNull();
+  });
 });

@@ -71,7 +71,11 @@ export function PlaceList({
   // 켜고 ~1.5s 후 끈다. scroll만으론 "어디로 갔는지" 안 보여 요구된 시각 큐를 추가.
   const [highlightId, setHighlightId] = useState<string | null>(null);
   useEffect(() => {
-    if (!openPlaceId) return;
+    // 행이 닫히면(openPlaceId→null) 링을 즉시 끈다 — 타이머 종료 전 닫아도 잔상이 남지 않게.
+    if (!openPlaceId) {
+      setHighlightId(null);
+      return;
+    }
     setHighlightId(openPlaceId);
     const t = setTimeout(() => setHighlightId(null), 1500);
     return () => clearTimeout(t);
