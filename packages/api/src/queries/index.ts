@@ -5,6 +5,7 @@ export * from './votes';
 export * from './memberships';
 export * from './plans';
 export * from './date-polls';
+export * from './chat';
 export * from './profiles';
 export * from './bookings';
 export * from './ledger';
