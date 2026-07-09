@@ -7,6 +7,7 @@ import {
   listLinksByTrip,
   listPlacesByTrip,
   listTripMembers,
+  listTripMessages,
 } from '@moajoa/api';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { MoaIsland } from './_components/moa-island';
@@ -32,10 +33,11 @@ export default async function MoaTripPage({
   const trip = await getTrip(supabase, id);
   if (!trip) notFound();
 
-  const [places, links, members] = await Promise.all([
+  const [places, links, members, initialMessages] = await Promise.all([
     listPlacesByTrip(supabase, id),
     listLinksByTrip(supabase, id),
     listTripMembers(supabase, id),
+    listTripMessages(supabase, id),
   ]);
 
   const placeIds = places.map((p) => p.id);
@@ -44,7 +46,9 @@ export default async function MoaTripPage({
     getMyVotedPlaceIds(supabase, placeIds, user.id),
   ]);
 
-  const nameIds = [...new Set([...places.map((p) => p.added_by), trip.owner_id])];
+  // Pitfall 8 — self(user.id)를 nameIds에 포함해야 island이 전송·presence track에 쓸
+  // 본인 display_name을 갖는다(profileNames는 owner + place added_by만 seed).
+  const nameIds = [...new Set([...places.map((p) => p.added_by), trip.owner_id, user.id])];
   const profileNames = await getProfileNames(supabase, nameIds);
   const memberIdsInJoinOrder = members.map((m) => m.user_id);
 
@@ -58,6 +62,8 @@ export default async function MoaTripPage({
       initialMyVotedPlaceIds={myVotedPlaceIds}
       memberIdsInJoinOrder={memberIdsInJoinOrder}
       initialProfileNames={profileNames}
+      initialMessages={initialMessages}
+      currentUserNickname={profileNames[user.id] ?? '나'}
     />
   );
 }
