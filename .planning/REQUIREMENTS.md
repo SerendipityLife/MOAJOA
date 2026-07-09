@@ -352,8 +352,8 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 ### 실시간 채팅 (CHAT)
 
-- [ ] **CHAT-01**: 같은 모아 공유화면에 접속한 사람들이 실시간 채팅할 수 있고, 히스토리가 새로고침 후에도 유지된다
-- [ ] **CHAT-02**: "지금 N명 보는 중" 접속자 수가 실시간으로 표시된다
+- [x] **CHAT-01**: 같은 모아 공유화면에 접속한 사람들이 실시간 채팅할 수 있고, 히스토리가 새로고침 후에도 유지된다 (26-03 코드완료 — 단일 채널 trip_messages INSERT 바인딩+append/dedup+page seed; 라이브 전달은 0028 main 배포 후)
+- [x] **CHAT-02**: "지금 N명 보는 중" 접속자 수가 실시간으로 표시된다 (26-03 코드완료 — presence key=user_id·sync 카운트·SUBSCRIBED track)
 - [ ] **CHAT-03**: 장소를 답장 대상으로 지정해 메시지를 보내면 인용 칩(#N 장소명)이 붙고, 칩을 탭하면 해당 장소로 스크롤·하이라이트된다
 
 ### 네이밍 & 보안 (NAME / SEC)
@@ -391,8 +391,8 @@ Roadmap (2026-07-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | SHARE-02 | Phase 25 | Pending |
 | SHARE-03 | Phase 25 | Pending |
 | SHARE-04 | Phase 25 | Pending |
-| CHAT-01 | Phase 26 | Pending |
-| CHAT-02 | Phase 26 | Pending |
+| CHAT-01 | Phase 26 (26-03) | ✅ 코드완료 (라이브 0028 배포 후) |
+| CHAT-02 | Phase 26 (26-03) | ✅ 코드완료 (라이브 0028 배포 후) |
 | CHAT-03 | Phase 26 | Pending |
 | SEC-01 | Phase 27 | Pending |
 | NAME-01 | Phase 27 | Pending |

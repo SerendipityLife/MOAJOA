@@ -293,7 +293,7 @@ Plans:
 
 - [x] 26-01-PLAN.md — 백엔드 기반: `0028_chat_realtime_publication.sql`(publication add + user_id 기본 트리거) + api `chat.ts`(listTripMessages·sendTripMessage) + barrel (Wave 1) — ✅ 2026-07-10 (로컬 reset 0016→0028 클린 42P17=0·publication/trigger 검증·api 97 그린·tsc 0, commits ff6e8b9·a453cea·2fd2006)
 - [x] 26-02-PLAN.md — 프레젠테이션: `moa-chat.tsx`(말풍선·입력바·presence 스트립·#N 칩/답장 배너) + `moa-tab-bar.tsx`([모으기][채팅] 하단 탭바·D-02 클라이언트 상태) + moa-chat.test 9케이스 (Wave 1) — ✅ 2026-07-10 (web 129 그린·moa-chat 9/9·tsc 0·forbidden grep 0, commits 3ef1e25·9abef8d)
-- [ ] 26-03-PLAN.md — island 배선(CHAT-01/02): trip_messages INSERT 바인딩(pre-subscribe)+presence track + 메시지 append/dedup + handleSend + page.tsx 히스토리 seed + island test 확장 (Wave 2)
+- [x] 26-03-PLAN.md — island 배선(CHAT-01/02): trip_messages INSERT 바인딩(pre-subscribe)+presence track + 메시지 append/dedup + handleSend + page.tsx 히스토리 seed + island test 확장 (Wave 2) — ✅ 2026-07-10 (단일 채널 3번째 postgres_changes 바인딩+presence sync+SUBSCRIBED track, 채널 생성 별도 줄 분리로 TDZ 회피[poll-vote-island 미러], hidden-toggle 탭 전환 언마운트 없음 D-02, web 133 그린·moa-island 13/13·tsc 0, commits 83bebc2·2eeb9b5·0dd6c0a)
 - [ ] 26-04-PLAN.md — 멘션 루프(CHAT-03): place-list 답장→onReply + island reply 프리필·칩 탭 nav(openPlaceFromChat) + island test 확장 (Wave 3)
 
 **UI hint**: yes
@@ -318,5 +318,5 @@ Plans:
 | 23. Web-First Foundation | 7/7 | ✅ Complete (verifier passed 12/12) | 2026-07-08 |
 | 24. Host Flow (온보딩·지도탭) | 5/7 | 🔧 Executing (Wave 2 완료) | - |
 | 25. Guest Unified Share | 0/TBD | Not started | - |
-| 26. Realtime Chat | 2/4 | 🔨 In Progress (Wave 1 완료) | - |
+| 26. Realtime Chat | 3/4 | 🔨 In Progress (Wave 2 완료) | - |
 | 27. Hardening & 마감 | 0/TBD | Not started | - |
