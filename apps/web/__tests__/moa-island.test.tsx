@@ -102,16 +102,28 @@ vi.mock('@/app/moa/[id]/_components/moa-chat', () => ({
     messages,
     viewers,
     onSend,
+    replyToPlaceId,
+    onChipTap,
   }: {
     messages: TripMessage[];
     viewers: number;
     onSend: (body: string, replyToPlaceId: string | null) => Promise<void>;
+    replyToPlaceId: string | null;
+    onChipTap: (placeId: string) => void;
   }) => (
     <div data-testid="moa-chat">
       <span data-testid="viewers">{viewers}</span>
+      <span data-testid="reply-target">{replyToPlaceId ?? ''}</span>
       <ul>
         {messages.map((m) => (
-          <li key={m.id}>{m.body}</li>
+          <li key={m.id}>
+            {m.body}
+            {m.reply_to_place_id && (
+              <button onClick={() => onChipTap(m.reply_to_place_id!)}>
+                chip-{m.reply_to_place_id}
+              </button>
+            )}
+          </li>
         ))}
       </ul>
       <button onClick={() => void onSend('hi', null)}>chat-send</button>
@@ -376,5 +388,33 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
     fireEvent.click(screen.getByText('chat-send'));
     await waitFor(() => expect(sendTripMessage).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByText('hi')).toBeInTheDocument());
+  });
+
+  it('Test 14: 답장 버튼(CHAT-03) → 채팅 탭 전환 + replyToPlaceId 프리필', async () => {
+    render(<MoaIsland {...baseProps} />);
+    // p1 행 아코디언 확장(마커 탭) → 답장 버튼 노출.
+    fireEvent.click(screen.getByTestId('marker-p1'));
+    fireEvent.click(await screen.findByText('답장'));
+    // island이 replyToPlaceId='p1' 프리필 + 채팅 뷰 활성화.
+    await waitFor(() => expect(screen.getByTestId('reply-target').textContent).toBe('p1'));
+    const chatWrapper = screen.getByTestId('moa-chat').parentElement!.parentElement!;
+    expect(chatWrapper.className).not.toContain('hidden');
+  });
+
+  it('Test 15: #N 칩 탭(CHAT-03) → 모으기 탭 전환 + openPlaceId + 하이라이트', async () => {
+    render(
+      <MoaIsland
+        {...baseProps}
+        initialMessages={[makeMessage({ id: 'm1', reply_to_place_id: 'p1', body: '여기 어때' })]}
+      />,
+    );
+    fireEvent.click(screen.getByText('tab-채팅'));
+    fireEvent.click(screen.getByText('chip-p1'));
+    // 모으기 뷰에서 p1 행이 열리고(aria-expanded) 짧은 하이라이트 큐가 켜진다.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument(),
+    );
+    const row = document.querySelector('[data-place-id="p1"]');
+    expect(row).toHaveAttribute('data-highlighted', 'true');
   });
 });
