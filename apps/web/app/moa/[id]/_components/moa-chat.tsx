@@ -152,7 +152,8 @@ export function MoaChat({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') void send();
+            // 한글 IME 조합 중 Enter는 조합 확정용이므로 전송하지 않는다 (오전송 방지)
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) void send();
           }}
           placeholder="메시지 남기기"
           maxLength={140}

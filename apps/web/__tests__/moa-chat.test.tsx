@@ -94,6 +94,18 @@ describe('MoaChat', () => {
     await waitFor(() => expect(onSend).toHaveBeenCalledWith('거기 좋아요', 'p9'));
   });
 
+  it('Enter during IME composition does NOT send (한글 조합 확정)', async () => {
+    const onSend = vi.fn(async () => {});
+    renderChat({ onSend, replyToPlaceId: null });
+
+    const input = screen.getByPlaceholderText('메시지 남기기') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '안녕' } });
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+
+    await Promise.resolve();
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
   it('onSend rejects → draft restored + error toast', async () => {
     const onSend = vi.fn(async () => {
       throw new Error('fail');
