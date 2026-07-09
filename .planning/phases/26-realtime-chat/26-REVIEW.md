@@ -18,9 +18,10 @@ files_reviewed_list:
   - apps/web/__tests__/place-list.test.tsx
 findings:
   critical: 0
-  warning: 1
+  warning: 0
   info: 2
-  total: 3
+  total: 2
+  resolved: [WR-01]
 status: issues_found
 ---
 
@@ -59,7 +60,10 @@ status: issues_found
 
 ## Warnings
 
-### WR-01: 한글 IME 조합 중 Enter가 조기 전송을 유발
+### WR-01: 한글 IME 조합 중 Enter가 조기 전송을 유발 ✅ RESOLVED (commit 197f5fc)
+
+> **해결됨:** `onKeyDown`에 `!e.nativeEvent.isComposing` 가드 추가 + 회귀 테스트
+> (`moa-chat.test.tsx` — Enter+isComposing:true → onSend 미호출). web 10/10 그린·tsc 0.
 
 **File:** `apps/web/app/moa/[id]/_components/moa-chat.tsx:154`
 **Issue:** compose 입력의 `onKeyDown`이 `e.key === 'Enter'`만 검사하고 IME 조합 상태를
