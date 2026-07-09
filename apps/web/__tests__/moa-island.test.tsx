@@ -1,21 +1,32 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { Link, Place, Trip } from '@moajoa/core';
+import type { Link, Place, Trip, TripMessage } from '@moajoa/core';
 
 // --- Realtime channel stub: .on(type, filter, cb) 콜백 캡처(poll-vote-island 선례). ---
-type OnCall = { type: string; filter: { event?: string; table?: string }; cb: () => void };
+// presence sync 바인딩도 onCalls에 type:'presence'로 잡힌다. subscribe는 콜백을
+// 동기로 'SUBSCRIBED' 호출해 track 경로를 검증한다.
+type OnCall = {
+  type: string;
+  filter: { event?: string; table?: string };
+  cb: (arg?: unknown) => void;
+};
 let onCalls: OnCall[] = [];
 let lastChannel: Record<string, unknown> | null = null;
 function makeChannel() {
   const ch: Record<string, unknown> = {};
-  ch.on = vi.fn((type: string, filter: OnCall['filter'], cb: () => void) => {
+  ch.on = vi.fn((type: string, filter: OnCall['filter'], cb: (arg?: unknown) => void) => {
     onCalls.push({ type, filter, cb });
     return ch;
   });
-  ch.subscribe = vi.fn(() => ch);
+  ch.track = vi.fn();
+  ch.presenceState = vi.fn(() => ({}));
+  ch.subscribe = vi.fn((cb?: (s: string) => void) => {
+    cb?.('SUBSCRIBED');
+    return ch;
+  });
   return ch;
 }
-const channel = vi.fn((_name: string) => {
+const channel = vi.fn((_name: string, _opts?: unknown) => {
   const ch = makeChannel();
   lastChannel = ch;
   return ch;
@@ -38,6 +49,7 @@ const castVote = vi.fn(async (_c: unknown, _in: unknown) => ({}));
 const retractVote = vi.fn(async (_c: unknown, _id: string) => undefined);
 const triggerExtraction = vi.fn(async (_c: unknown, _id: string) => ({}));
 const hidePlace = vi.fn(async (_c: unknown, _id: string) => undefined);
+const sendTripMessage = vi.fn(async (_c: unknown, _in: unknown): Promise<unknown> => ({}));
 vi.mock('@moajoa/api', () => ({
   listPlacesByTrip: (c: unknown, t: string) => listPlacesByTrip(c, t),
   listLinksByTrip: (c: unknown, t: string) => listLinksByTrip(c, t),
@@ -47,6 +59,7 @@ vi.mock('@moajoa/api', () => ({
   retractVote: (c: unknown, id: string) => retractVote(c, id),
   triggerExtraction: (c: unknown, id: string) => triggerExtraction(c, id),
   hidePlace: (c: unknown, id: string) => hidePlace(c, id),
+  sendTripMessage: (c: unknown, i: unknown) => sendTripMessage(c, i),
 }));
 
 const toast = vi.fn();
@@ -80,6 +93,38 @@ vi.mock('@/app/moa/[id]/_components/add-sheet', () => ({
 }));
 vi.mock('@/app/moa/[id]/_components/share-sheet', () => ({
   ShareSheet: ({ open }: { open: boolean }) => (open ? <div data-testid="share-sheet" /> : null),
+}));
+
+// MoaChat / MoaTabBar 스텁 — 자체 프레젠테이션 테스트가 별도(moa-chat.test).
+// island 테스트는 배선(message/viewers/onSend props + 탭 전환)만 관심.
+vi.mock('@/app/moa/[id]/_components/moa-chat', () => ({
+  MoaChat: ({
+    messages,
+    viewers,
+    onSend,
+  }: {
+    messages: TripMessage[];
+    viewers: number;
+    onSend: (body: string, replyToPlaceId: string | null) => Promise<void>;
+  }) => (
+    <div data-testid="moa-chat">
+      <span data-testid="viewers">{viewers}</span>
+      <ul>
+        {messages.map((m) => (
+          <li key={m.id}>{m.body}</li>
+        ))}
+      </ul>
+      <button onClick={() => void onSend('hi', null)}>chat-send</button>
+    </div>
+  ),
+}));
+vi.mock('@/app/moa/[id]/_components/moa-tab-bar', () => ({
+  MoaTabBar: ({ onTabChange }: { onTabChange: (tab: 'moa' | 'chat') => void }) => (
+    <div>
+      <button onClick={() => onTabChange('moa')}>tab-모으기</button>
+      <button onClick={() => onTabChange('chat')}>tab-채팅</button>
+    </div>
+  ),
 }));
 
 // Import AFTER mocks.
@@ -135,6 +180,22 @@ function makeTrip(overrides: Partial<Trip>): Trip {
 
 const basePlace = makePlace({});
 
+// TripMessageCreateSchema.parse(handleSend)가 trip_id uuid를 요구 — 전송 경로 테스트용.
+const UUID_TRIP = '11111111-1111-1111-1111-111111111111';
+
+function makeMessage(overrides: Partial<TripMessage>): TripMessage {
+  return {
+    id: 'm1',
+    trip_id: 'trip-1',
+    user_id: 'u2',
+    nickname: '친구',
+    body: '안녕',
+    reply_to_place_id: null,
+    created_at: '2026-07-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
 const baseProps: MoaIslandProps = {
   trip: makeTrip({}),
   currentUserId: 'u1',
@@ -144,6 +205,8 @@ const baseProps: MoaIslandProps = {
   initialMyVotedPlaceIds: [],
   memberIdsInJoinOrder: [],
   initialProfileNames: { u1: '나' },
+  initialMessages: [],
+  currentUserNickname: '나',
 };
 
 beforeAll(() => {
@@ -163,21 +226,32 @@ beforeEach(() => {
   retractVote.mockResolvedValue(undefined);
   triggerExtraction.mockResolvedValue({});
   hidePlace.mockResolvedValue(undefined);
+  sendTripMessage.mockResolvedValue({});
 });
 
 describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)', () => {
-  it('Test 1: 마운트 시 moa:{tripId} 단일 채널 + places INSERT·links UPDATE 2바인딩 + subscribe', () => {
+  it('Test 1: moa:{tripId} 단일 채널 + postgres_changes 3바인딩(places/links/trip_messages) + presence sync + SUBSCRIBED track', () => {
     render(<MoaIsland {...baseProps} />);
     expect(channel).toHaveBeenCalledTimes(1);
-    // moa: prefix를 정확 단언 (ONE channel per screen).
-    expect(channel).toHaveBeenCalledWith('moa:trip-1');
+    // moa: prefix + presence key(currentUserId) 정확 단언 (ONE channel per screen).
+    expect(channel).toHaveBeenCalledWith('moa:trip-1', {
+      config: { presence: { key: 'u1' } },
+    });
     const pg = onCalls.filter((o) => o.type === 'postgres_changes');
-    expect(pg).toHaveLength(2);
+    expect(pg).toHaveLength(3);
     const places = pg.find((o) => o.filter.table === 'places');
     const links = pg.find((o) => o.filter.table === 'links');
+    const msgs = pg.find((o) => o.filter.table === 'trip_messages');
     expect(places?.filter.event).toBe('INSERT');
     expect(links?.filter.event).toBe('UPDATE');
+    expect(msgs?.filter.event).toBe('INSERT');
+    // presence sync 바인딩 존재.
+    expect(onCalls.some((o) => o.type === 'presence' && o.filter.event === 'sync')).toBe(true);
     expect(lastChannel!.subscribe).toHaveBeenCalled();
+    // SUBSCRIBED 콜백에서 track({user_id, nickname}).
+    expect(lastChannel!.track).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'u1', nickname: '나' }),
+    );
   });
 
   it('Test 2: 언마운트 시 removeChannel이 동일 채널 인스턴스로 호출', () => {
@@ -259,5 +333,48 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
       expect(toast).toHaveBeenCalledWith('삭제하지 못했어요', { variant: 'error' }),
     );
     await waitFor(() => expect(screen.getByText('스시집')).toBeInTheDocument());
+  });
+
+  it('Test 10: trip_messages INSERT 콜백 → 메시지 append + 동일 id 재수신 시 dedup', async () => {
+    render(<MoaIsland {...baseProps} />);
+    const msgBinding = onCalls.find((o) => o.filter.table === 'trip_messages');
+    expect(msgBinding).toBeDefined();
+    // 채팅 탭으로 전환(뷰는 hidden 토글 — 언마운트 아님).
+    fireEvent.click(screen.getByText('tab-채팅'));
+    msgBinding!.cb({ new: makeMessage({ id: 'm1', body: '안녕' }) });
+    await waitFor(() => expect(screen.getByText('안녕')).toBeInTheDocument());
+    // 같은 id 재수신 → 중복 렌더 없음.
+    msgBinding!.cb({ new: makeMessage({ id: 'm1', body: '안녕' }) });
+    await waitFor(() => expect(screen.getAllByText('안녕')).toHaveLength(1));
+  });
+
+  it('Test 11: presence sync 콜백 → viewers 카운트(distinct key)', async () => {
+    render(<MoaIsland {...baseProps} />);
+    const presence = onCalls.find((o) => o.type === 'presence');
+    expect(presence).toBeDefined();
+    (lastChannel!.presenceState as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue(
+      { u1: [], u2: [] },
+    );
+    presence!.cb();
+    fireEvent.click(screen.getByText('tab-채팅'));
+    await waitFor(() => expect(screen.getByTestId('viewers').textContent).toBe('2'));
+  });
+
+  it('Test 12: 탭 전환은 채널을 재생성/제거하지 않음(단일 채널 유지 D-02)', () => {
+    render(<MoaIsland {...baseProps} />);
+    expect(channel).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText('tab-채팅'));
+    fireEvent.click(screen.getByText('tab-모으기'));
+    expect(channel).toHaveBeenCalledTimes(1);
+    expect(removeChannel).not.toHaveBeenCalled();
+  });
+
+  it('Test 13: 전송 → sendTripMessage 1회 + 반환 row optimistic append', async () => {
+    sendTripMessage.mockResolvedValue(makeMessage({ id: 'm-sent', body: 'hi', trip_id: UUID_TRIP }));
+    render(<MoaIsland {...baseProps} trip={makeTrip({ id: UUID_TRIP })} />);
+    fireEvent.click(screen.getByText('tab-채팅'));
+    fireEvent.click(screen.getByText('chat-send'));
+    await waitFor(() => expect(sendTripMessage).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText('hi')).toBeInTheDocument());
   });
 });
