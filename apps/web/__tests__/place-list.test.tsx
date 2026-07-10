@@ -238,6 +238,41 @@ describe('PlaceList', () => {
     expect(onOpenPlace).not.toHaveBeenCalled();
   });
 
+  it('Test 15 (D-12 own-only): 게스트는 남의 장소 행에 삭제 버튼 미렌더', () => {
+    renderList({
+      places: [makePlace({ id: 'p1', added_by: 'other' })],
+      openPlaceId: 'p1',
+      currentUserId: 'guest',
+      ownerId: 'host',
+    });
+    expect(screen.queryByText('삭제')).toBeNull();
+  });
+
+  it('Test 16 (D-12 own-only): 게스트는 자기 장소 행에 삭제 버튼 렌더', () => {
+    renderList({
+      places: [makePlace({ id: 'p1', added_by: 'guest' })],
+      openPlaceId: 'p1',
+      currentUserId: 'guest',
+      ownerId: 'host',
+    });
+    expect(screen.getByText('삭제')).toBeTruthy();
+  });
+
+  it('Test 17 (D-12 own-only): 호스트(currentUserId=ownerId)는 남의 장소도 삭제 버튼 렌더', () => {
+    renderList({
+      places: [makePlace({ id: 'p1', added_by: 'other' })],
+      openPlaceId: 'p1',
+      currentUserId: 'host',
+      ownerId: 'host',
+    });
+    expect(screen.getByText('삭제')).toBeTruthy();
+  });
+
+  it('Test 18 (D-12 backward-compat): currentUserId 부재 시 무조건 삭제 버튼 렌더', () => {
+    renderList({ places: [makePlace({ id: 'p1', added_by: 'other' })], openPlaceId: 'p1' });
+    expect(screen.getByText('삭제')).toBeTruthy();
+  });
+
   it('Test 14 (IN-01 잔상): 1.5s 타이머 전에 행을 닫으면 하이라이트 링이 즉시 사라진다', () => {
     const base: PlaceListProps = {
       places: [makePlace({ id: 'p1' })],
