@@ -4,8 +4,35 @@ import type { Trip } from '@moajoa/core';
 
 // --- @moajoa/api seam — shareMoa 재호출 mode 갱신·slug 보존 계약. ---
 const shareMoa = vi.fn(async (_c: unknown, _id: string, _mode: string) => 'slug123');
+// 25-07 Gap 1 — dates/both 공유 시 poll ensure + 후보 날짜 세팅 계약.
+const getPollByTrip = vi.fn(
+  async (_c: unknown, _tripId: string): Promise<Record<string, unknown> | null> => null,
+);
+const createDatePoll = vi.fn(async (_c: unknown, _tripId: string, _mode?: string) => ({
+  id: 'poll-1',
+  poll_code: 'CODE1',
+  mode: 'range',
+  status: 'open',
+}));
+const getPollOptions = vi.fn(
+  async (_c: unknown, _pollId: string): Promise<{ id: string; start_date: string; end_date: string }[]> => [],
+);
+const addPollOption = vi.fn(
+  async (_c: unknown, _pollId: string, _input: { startDate: string; endDate: string }) => ({
+    id: 'opt-1',
+    start_date: '2026-06-14',
+    end_date: '2026-06-16',
+  }),
+);
+const removePollOption = vi.fn(async (_c: unknown, _optionId: string) => undefined);
 vi.mock('@moajoa/api', () => ({
   shareMoa: (c: unknown, id: string, mode: string) => shareMoa(c, id, mode),
+  getPollByTrip: (c: unknown, tripId: string) => getPollByTrip(c, tripId),
+  createDatePoll: (c: unknown, tripId: string, mode?: string) => createDatePoll(c, tripId, mode),
+  getPollOptions: (c: unknown, pollId: string) => getPollOptions(c, pollId),
+  addPollOption: (c: unknown, pollId: string, input: { startDate: string; endDate: string }) =>
+    addPollOption(c, pollId, input),
+  removePollOption: (c: unknown, optionId: string) => removePollOption(c, optionId),
 }));
 
 vi.mock('@/lib/supabase/browser', () => ({
@@ -61,6 +88,25 @@ beforeEach(() => {
   shareMoa.mockClear();
   toast.mockClear();
   shareMoa.mockResolvedValue('slug123');
+  getPollByTrip.mockReset();
+  getPollByTrip.mockResolvedValue(null);
+  createDatePoll.mockReset();
+  createDatePoll.mockResolvedValue({
+    id: 'poll-1',
+    poll_code: 'CODE1',
+    mode: 'range',
+    status: 'open',
+  });
+  getPollOptions.mockReset();
+  getPollOptions.mockResolvedValue([]);
+  addPollOption.mockReset();
+  addPollOption.mockResolvedValue({
+    id: 'opt-1',
+    start_date: '2026-06-14',
+    end_date: '2026-06-16',
+  });
+  removePollOption.mockReset();
+  removePollOption.mockResolvedValue(undefined);
   Object.assign(navigator, {
     clipboard: { writeText: vi.fn(async () => undefined) },
   });
@@ -134,5 +180,75 @@ describe('ShareSheet', () => {
         variant: 'error',
       }),
     );
+  });
+});
+
+describe('ShareSheet — 후보 날짜 세팅 step (25-07 Gap 1)', () => {
+  it("Gap 1: '둘다 정하기' 공유 → poll 없으면 createDatePoll(range) 후 후보 날짜 step 렌더", async () => {
+    render(<ShareSheet trip={makeTrip()} open onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByText('둘다 정하기'));
+    fireEvent.click(screen.getByText('링크 복사하기'));
+
+    await waitFor(() => expect(screen.getByText('후보 날짜')).toBeTruthy());
+    expect(shareMoa).toHaveBeenCalledWith({}, 'trip-1', 'both');
+    expect(getPollByTrip).toHaveBeenCalledWith({}, 'trip-1');
+    expect(createDatePoll).toHaveBeenCalledWith({}, 'trip-1', 'range');
+  });
+
+  it('멱등: 기존 poll 존재 시 createDatePoll 미호출 + 기존 옵션 렌더', async () => {
+    getPollByTrip.mockResolvedValue({
+      id: 'poll-9',
+      poll_code: 'CODE9',
+      mode: 'range',
+      status: 'open',
+    });
+    getPollOptions.mockResolvedValue([
+      { id: 'opt-9', start_date: '2026-06-14', end_date: '2026-06-16' },
+    ]);
+    render(<ShareSheet trip={makeTrip({ share_mode: 'dates' })} open onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByText('링크 복사하기'));
+
+    await waitFor(() => expect(screen.getByText('후보 날짜')).toBeTruthy());
+    expect(createDatePoll).not.toHaveBeenCalled();
+    expect(getPollOptions).toHaveBeenCalledWith({}, 'poll-9');
+    expect(screen.getByText('6/14–16')).toBeTruthy();
+  });
+
+  it('후보 날짜 추가·삭제 — addPollOption/removePollOption 배선', async () => {
+    render(<ShareSheet trip={makeTrip({ share_mode: 'both' })} open onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByText('링크 복사하기'));
+    await waitFor(() => expect(screen.getByText('후보 날짜')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('시작일'), { target: { value: '2026-06-14' } });
+    fireEvent.change(screen.getByLabelText('종료일'), { target: { value: '2026-06-16' } });
+    fireEvent.click(screen.getByText('추가'));
+
+    await waitFor(() =>
+      expect(addPollOption).toHaveBeenCalledWith({}, 'poll-1', {
+        startDate: '2026-06-14',
+        endDate: '2026-06-16',
+      }),
+    );
+    await waitFor(() => expect(screen.getByText('6/14–16')).toBeTruthy());
+
+    fireEvent.click(screen.getByLabelText('후보 삭제'));
+    await waitFor(() => expect(removePollOption).toHaveBeenCalledWith({}, 'opt-1'));
+    await waitFor(() => expect(screen.queryByText('6/14–16')).toBeNull());
+  });
+
+  it("회귀: '장소 정하기' 공유는 poll 호출 0 + step 전환 없음", async () => {
+    render(<ShareSheet trip={makeTrip()} open onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByText('장소 정하기'));
+    fireEvent.click(screen.getByText('링크 복사하기'));
+
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('링크를 복사했어요'));
+    expect(getPollByTrip).not.toHaveBeenCalled();
+    expect(createDatePoll).not.toHaveBeenCalled();
+    expect(addPollOption).not.toHaveBeenCalled();
+    expect(screen.queryByText('후보 날짜')).toBeNull();
   });
 });
