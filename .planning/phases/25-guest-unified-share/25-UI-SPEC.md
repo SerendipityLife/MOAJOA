@@ -1,10 +1,11 @@
 ---
 phase: 25
 slug: guest-unified-share
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-10
+reviewed_at: 2026-07-10
 ---
 
 # Phase 25 — UI Design Contract
@@ -37,7 +38,7 @@ created: 2026-07-10
 |-------|-------|-------|
 | 1 | 4px | 아이콘-라벨 간격, presence 점 gap |
 | 2 | 8px | 버튼 그룹·칩 간격, 리스트 항목 간격(`space-y-2`) |
-| 3 | 12px | 카드 내부 패딩(`p-3`), 아바타-텍스트 gap |
+| 3 | 12px | 카드 내부 패딩(`p-3`), 아바타-텍스트 gap, 투표 버튼·닉네임 CTA 세로 패딩(`py-3`) |
 | 4 | 16px | 기본 컨테이너 패딩(`px-4`), 섹션 간격, FAB↔시트 오프셋 |
 | 5 | 20px | SSR 헤더 세로 패딩(`py-5`) |
 | 6 | 24px | 섹션 브레이크(`mt-6`), 집계 블록 상단 여백 |
@@ -45,7 +46,7 @@ created: 2026-07-10
 | 12 | 48px | 푸터 상단 여백 |
 
 Exceptions:
-- **터치 타깃 최소 40px** — 투표 버튼·그리드 셀·닉네임 CTA는 `py-2.5`(10px)+텍스트로 ≥40px 높이 확보(`min-h-10` 그리드 셀 선례). 아이콘-온리 버튼(뒤로·FAB·삭제)은 44px 이상.
+- **터치 타깃 최소 40px** — 투표 버튼·그리드 셀·닉네임 CTA는 `min-h-10`(40px, 그리드 셀 선례) 또는 `py-3`(12px, 4의 배수)+텍스트로 ≥40px 높이 확보. 아이콘-온리 버튼(뒤로·FAB·삭제)은 44px 이상.
 - **FAB 56px** — `moa-island` FAB 규격 그대로(brand-600, `shadow-fab`).
 - **바텀시트 상단 라운드 28px** (`rounded-t-3xl` = radii `3xl`) — BottomSheet/PlaceSheet 확립값.
 
@@ -53,18 +54,19 @@ Exceptions:
 
 ## Typography
 
-이 phase의 계약 폰트 세트 (토큰 `typography.sizes`/`weights`/`lineHeights` 참조):
+이 phase의 계약 폰트 세트 (토큰 `typography.sizes`/`weights`/`lineHeights` 참조) — 총 4개 사이즈:
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Caption / meta | 12px (`text-xs`) | 400 regular | 1.25 (tight) |
 | Body | 14px (`text-sm`) | 400 regular | 1.5 (normal) |
-| Label / emphasis | 15–16px (`text-[15px]`·`text-base`) | 600 semibold | 1.375 (snug) |
+| Label / emphasis | 16px (`text-base`) | 600 semibold | 1.375 (snug) |
 | Heading (모아 제목) | 20px (`text-xl`) | 600 semibold | 1.25 (tight) |
 
 **계약 weight = 2개: regular(400) + semibold(600).**
 
 Exceptions (확립된 자산 — 이 phase에서 변경 금지):
+- **초대 카드 한 줄(`/t` SSR `inviteLine`)은 `text-[15px]` semibold** — pre-existing 예외로만 문서화(신규 15px 도입 금지, 계약 세트 밖). 신규 라벨/강조 텍스트는 계약값 16px(`text-base`)를 쓸 것. 실제 장소 제목(place-list)은 이미 `text-base`(16px) — 계약값과 일치.
 - 기존 `/t` SSR `<h1>` 모아 제목은 `font-bold`(700). 게스트 통합 화면에서 SSR 헤더를 유지·재배치하되 **weight는 semibold(600)로 정렬 권장**(호스트 `/moa` 제목과 일치). 700 유지 시 pre-existing 예외로 기록.
 - `moa-tab-bar` 탭 라벨은 `font-medium`(500) — 확립된 하단탭 시각언어, 무변경.
 - 한글 가독성상 heading은 English 기본보다 tight(1.25) — 토큰 `lineHeights.tight` 사용.
@@ -126,6 +128,8 @@ Exceptions (확립된 자산 — 이 phase에서 변경 금지):
 ## Phase-Specific Interaction Contracts
 
 > 아래는 `<key_ui_surfaces_to_contract>` 6개 표면의 시각·인터랙션 계약. planner/executor의 구현 진실원본.
+
+**접근성 폴백(전 표면 공통):** 아이콘-온리 버튼(뒤로·FAB·삭제 아이콘·하트 토글)은 반드시 `aria-label` 텍스트를 가진다 — 기존 컴포넌트 선례(`aria-label="뒤로"`·`aria-label="장소 추가"`) 준수. 신규 아이콘 버튼도 동일 라벨 규약 적용.
 
 ### C1. 닉네임 게이트 바텀시트 (D-04/D-05/D-06)
 - **표현:** `@/components` BottomSheet (title `닉네임을 정해주세요`, white bg, `rounded-t-3xl`, 핸들 `h-1.5 w-10`). 내부는 poll 닉네임 게이트 입력+CTA 패턴 이식 — `input`(neutral-200 border, `rounded-lg`, `focus:border-brand-300`, maxLength 20) + `시작하기` 버튼(brand-600, `rounded-lg`, semibold, ≥40px).
