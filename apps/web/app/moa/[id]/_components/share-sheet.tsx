@@ -65,6 +65,8 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
   const [options, setOptions] = useState<PollOption[]>([]);
   const [draftStart, setDraftStart] = useState('');
   const [draftEnd, setDraftEnd] = useState('');
+  // WR-01: 더블탭이 createDatePoll을 레이스시키면 중복 poll → getPollByTrip 영구 에러.
+  const [sharing, setSharing] = useState(false);
 
   // 재열림 시 현재 share_mode로 프리셋 재동기화(D-19) + step 리셋.
   useEffect(() => {
@@ -78,6 +80,16 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
   const visibleModes = MODES.filter((m) => !(m.mode === 'dates' && trip.start_date !== null));
 
   async function handleShare() {
+    if (!selected || sharing) return;
+    setSharing(true);
+    try {
+      await doShare();
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  async function doShare() {
     if (!selected) return;
     const client = getSupabaseBrowser();
     try {
@@ -172,7 +184,7 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
             })}
           </div>
 
-          <Button className="w-full" disabled={!selected} onClick={() => void handleShare()}>
+          <Button className="w-full" disabled={!selected || sharing} onClick={() => void handleShare()}>
             링크 복사하기
           </Button>
         </div>
