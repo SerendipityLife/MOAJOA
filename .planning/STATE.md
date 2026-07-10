@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: 24-07 완료 — Phase 24 로컬 표면 전량 완료(7/7 plans). verify-work + 원격 db push 게이트만 잔여
-last_updated: "2026-07-10T07:50:49.589Z"
-last_activity: 2026-07-10 -- Phase 25 planning complete
+stopped_at: 25-01 로컬 완료 — 0029 backend seam(로컬 reset·typegen·smoke 그린). 원격 0029 push human-action 게이트 open
+last_updated: "2026-07-10T11:07:06Z"
+last_activity: 2026-07-10 -- Phase 25 executing (25-01 backend seam)
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 29
-  completed_plans: 29
-  percent: 100
+  total_plans: 34
+  completed_plans: 30
+  percent: 88
 ---
 
 # STATE: MOAJOA v2.1
@@ -32,6 +32,16 @@ progress:
 ---
 
 ## Current Position
+
+Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 1/5 plans (25-01 백엔드 seam ✅ 로컬 완료)
+Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6, 로컬 reset 42P17=0·smoke exit 0·api 103 그린) ∥ 25-02(컴포넌트 seam) → W2 = 25-03(guest-surface)·25-05(스모크 확장) → W3 = 25-04(linkIdentity).
+Next: **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 dates/both 게스트 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 후 동작. 그 다음 25-02 실행. 상세: `25-USER-SETUP.md`.
+
+---
+
+**25-01 실행 완료 (2026-07-10, commits e0d6567·0ccd10b·52cebb1·4aa01c6):** Phase 25 Wave 1 [BLOCKING] — 게스트 통합 공유화면 백엔드 전제 4종을 한 append-only 마이그레이션(0029)으로 봉합. **Task 1(feat e0d6567):** `0029_public_trip_poll.sql` — 4 `create or replace function`: (1) `public_trip_view` 0016 L689-756 본문 verbatim + `'share_mode', v_trip.share_mode` 한 줄(additive) (2) `public_trip_poll(p_slug)` anon-grant DEFINER RPC(slug→trip→date_polls, 0018 옵션 집계 idiom verbatim, `poll_code/mode/status/options`만 — voter PII 미노출 T-25-01, grant `authenticated, anon`) (3) `cast_date_vote_authed`(0018 cast_date_vote 미러하되 p_device_token 제거·insert에 `auth.uid()::text` — spoof 차단 T-25-02, grant `authenticated`만) (4) `hide_place_as_member(p_place_id)`(D-12 own-only 소프트삭제 — `am_trip_owner(trip_id) or added_by=auth.uid()` 아니면 raise, 0016 am_trip_owner DEFINER 재사용 §4.4, grant `authenticated`만). 0016~0028 무수정. **Task 2(TDD RED 0ccd10b→GREEN 52cebb1):** `date-polls.ts` `getPublicTripPoll`(rpc public_trip_poll)·`castDateVoteAuthed`(device_token 인자 없음) 래퍼 append + `places.ts` `hidePlace`를 raw `places UPDATE`에서 `rpc('hide_place_as_member')`로 전환(D-12 DB-airtight — `deletePlace`·`rejectAiPlace` 별칭 자동 승계) + `core/types/index.ts` `PublicBoardView.board` Pick += `share_mode`. RED 5 실패(미export·raw update)→GREEN api 103 그린·api+core tsc 0. **Task 3(autonomous 부분 chore 4aa01c6):** `supabase db reset` 0016→0029 클린(42P17=0) → `pnpm supabase:types`(public_trip_poll·cast_date_vote_authed·hide_place_as_member 반영) → `public_trip_poll_smoke.sh` 신규(anon poll read=poll_code/mode/options·share_mode=dates·hide own-only[남의 장소 HTTP 400 거부·자기 장소 HTTP 204 성공], exit 0). **deviation 0 — plan 원안 그대로.** **원격 push 미완(human-action 게이트):** 원격 0029 적용은 사용자 몫(`git push origin main` 자동 적용 또는 `supabase db push`). 라이브 게스트 참여·삭제·SSR 분기는 배포 후 동작 — SHARE-02/03·AUTH-08 REQUIREMENTS Pending 유지(26-01 선례). 상세: `25-01-SUMMARY.md`.
+
+---
 
 Phase: 26 (Realtime Chat) — ✅ COMPLETE (2026-07-09) · 4/4 plans (26-01 백엔드·26-02 프레젠테이션·26-03 island 배선 CHAT-01/02·26-04 멘션 루프 CHAT-03)
 Plan(26): 4 plans / 3 waves 전부 실행. **W1** = 26-01 ✅[backend] 0028+chat.ts(ff6e8b9·a453cea·2fd2006) ∥ 26-02 ✅[표시] moa-chat/moa-tab-bar(3ef1e25·9abef8d) → **W2** = 26-03 ✅ island 배선(단일 채널 3번째 postgres_changes+presence+append/dedup·page seed, 83bebc2·2eeb9b5·0dd6c0a) → **W3** = 26-04 ✅ 멘션 루프(place-list 답장→onReply·island reply 프리필·openPlaceFromChat 칩 nav[openPlaceId 재사용]·ring-2 하이라이트, 3422762·8945d3f·09eeb20). web 136 그린·tsc 0.
