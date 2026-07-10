@@ -5,6 +5,7 @@ import { CITY_KO_MAP } from '@moajoa/core';
 import { getCachedPublicTrip } from '@/lib/public-trip-cache';
 import { MapSection } from './_components/map-section';
 import { GuestSurface } from './_components/guest-surface';
+import { GuestPromote } from './_components/guest-promote';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -107,6 +108,11 @@ export default async function PublicBoardPage({ params }: Props) {
                 많이 모인 곳으로 같이 정해요.
               </p>
             </div>
+          </div>
+          {/* 계정 승격 최소 심 (C6/D-03, OQ-3 초대 카드 하단 채택) — 게스트가 카카오로
+              로그인하면 익명 uid를 정식 전환(linkIdentity), 이력 유지. */}
+          <div className="mt-3">
+            <GuestPromote />
           </div>
         </section>
 
