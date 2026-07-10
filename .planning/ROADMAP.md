@@ -204,7 +204,7 @@ Plans:
 
 - [x] **Phase 23: Web-First Foundation** (2026-07-08 완료) — 0024 순번 채번 + 0025 share_mode/채팅/join_moa + 익명 sign-in·카카오 provider 스위치 + core/api 계약 + CLAUDE.md D26 반전
 - [ ] **Phase 24: Host Flow (온보딩·지도탭)** — 카카오 버튼 + `/onboarding` 4단계 + `/moa`·`/moa/[id]` 지도탭 + 링크·장소 추가 + 함께 정하기 시트
-- [ ] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가
+- [x] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가 (5/5 plans, 코드+로컬DB 완료 — 라이브는 원격 0029 push + Manual linking 토글 후)
 - [x] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩 (4/4 plans, 라이브는 0028 main 배포 후)
 - [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
 
