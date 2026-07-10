@@ -417,4 +417,15 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
     const row = document.querySelector('[data-place-id="p1"]');
     expect(row).toHaveAttribute('data-highlighted', 'true');
   });
+
+  it('Test 16: FAB는 초기 렌더(collapsed 시트)에서 노출 (25-06 Gap 3 — Test A)', () => {
+    render(<MoaIsland {...baseProps} />);
+    expect(screen.getByLabelText('장소 추가')).toBeInTheDocument();
+  });
+
+  it('Test 17: 시트 expanded(마커 탭) → FAB 숨김 — 첫 행 하트 탭 타깃 겹침 방지 (25-06 Gap 3 — Test B)', async () => {
+    render(<MoaIsland {...baseProps} />);
+    fireEvent.click(screen.getByTestId('marker-p1'));
+    await waitFor(() => expect(screen.queryByLabelText('장소 추가')).toBeNull());
+  });
 });
