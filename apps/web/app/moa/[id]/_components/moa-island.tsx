@@ -39,6 +39,8 @@ export interface MoaIslandProps {
   initialMessages: TripMessage[];
   /** 전송·presence track에 쓰는 로그인 사용자 display_name 스냅샷(D-08). */
   currentUserNickname: string;
+  /** 게스트 마운트(/t)에서 호스트 전용 컨트롤([함께 정하기]) 숨김 (25-06 Gap 4). */
+  hideHostControls?: boolean;
 }
 
 /**
@@ -64,6 +66,7 @@ export function MoaIsland({
   initialProfileNames,
   initialMessages,
   currentUserNickname,
+  hideHostControls,
 }: MoaIslandProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -291,12 +294,16 @@ export function MoaIsland({
           <ChevronLeft className="size-5 text-neutral-700" aria-hidden />
         </button>
 
-        {/* 상단 바 우측 — [함께 정하기] primary sm 오버레이(UI-SPEC §상단 바). */}
-        <div className="absolute right-4 top-4 z-50">
-          <Button size="sm" onClick={() => setShareOpen(true)}>
-            함께 정하기
-          </Button>
-        </div>
+        {/* 상단 바 우측 — [함께 정하기] primary sm 오버레이(UI-SPEC §상단 바).
+            게스트 마운트에선 숨김 — ShareSheet 마운트는 shareOpen이 절대 true가
+            안 되므로 그대로 둔다(surgical, 25-06 Gap 4). */}
+        {!hideHostControls && (
+          <div className="absolute right-4 top-4 z-50">
+            <Button size="sm" onClick={() => setShareOpen(true)}>
+              함께 정하기
+            </Button>
+          </div>
+        )}
 
         <PlaceSheet
           anchor={sheetAnchor}

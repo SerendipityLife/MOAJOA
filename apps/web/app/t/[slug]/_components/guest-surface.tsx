@@ -333,7 +333,7 @@ export function GuestSurface({
             {pollSection}
           </section>
         )}
-        {joined && moaSeed ? <MoaIsland {...moaSeed} /> : readOnlyPlaces}
+        {joined && moaSeed ? <MoaIsland {...moaSeed} hideHostControls /> : readOnlyPlaces}
         {gate}
       </>
     );
@@ -342,7 +342,7 @@ export function GuestSurface({
   // places (기본) — join 후 호스트 MoaIsland 재사용, 그 전엔 read-only.
   return (
     <>
-      {joined && moaSeed ? <MoaIsland {...moaSeed} /> : readOnlyPlaces}
+      {joined && moaSeed ? <MoaIsland {...moaSeed} hideHostControls /> : readOnlyPlaces}
       {gate}
     </>
   );
