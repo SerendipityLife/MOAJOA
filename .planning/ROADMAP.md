@@ -204,7 +204,7 @@ Plans:
 
 - [x] **Phase 23: Web-First Foundation** (2026-07-08 완료) — 0024 순번 채번 + 0025 share_mode/채팅/join_moa + 익명 sign-in·카카오 provider 스위치 + core/api 계약 + CLAUDE.md D26 반전
 - [ ] **Phase 24: Host Flow (온보딩·지도탭)** — 카카오 버튼 + `/onboarding` 4단계 + `/moa`·`/moa/[id]` 지도탭 + 링크·장소 추가 + 함께 정하기 시트
-- [ ] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가 (6/7 plans — gap closure 25-06 완료, 25-07 잔여, 배포 게이트 2종은 통과)
+- [x] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가 (7/7 plans — gap closure 25-06·25-07 완료 2026-07-10, 라이브 UAT Test 3/4 재검증은 배포 후)
 - [x] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩 (4/4 plans, 라이브는 0028 main 배포 후)
 - [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
 
@@ -274,7 +274,7 @@ Plans:
   3. 게스트가 share_mode에 따라 찜·장소/링크 추가·날짜 투표에 참여할 수 있다 (dates 모드 날짜투표는 기존 익명 poll RPC 임베드, device_token := auth.uid)
   4. 게스트의 찜·장소 추가가 호스트 화면에 실시간 반영되고, 게스트가 추가한 장소는 이어지는 순번(#N+1)을 받는다
 
-**Plans**: 7 plans (5 complete + gap closure 2)
+**Plans**: 7 plans (7 complete — 코드 5 + gap closure 2, 2026-07-10)
 
 Plans:
 - [x] 25-01-PLAN.md — [BLOCKING] 백엔드: 0029(public_trip_poll anon RPC + public_trip_view share_mode + cast_date_vote_authed 서버파생 + hide_place_as_member own-only) + api 래퍼·core 타입 + 로컬 적용·typegen·스모크 (Wave 1, autonomous:false) ✅ 로컬 완료 — 원격 push 게이트 open
@@ -283,7 +283,7 @@ Plans:
 - [x] 25-05-PLAN.md — 익명-세션 스모크 확장(RLS/realtime fan-out/#N+1 순번 — SHARE-03/04 DB 실증) (Wave 2) — ✅ 2026-07-10 (web_share_smoke·realtime_events_smoke·place_seq_concurrency 익명 게스트 케이스 append, 전부 로컬 exit 0: join 전 0건→join 후 통과·fan-out host=1/nonmember=0·#43, commits fc52676·50afbfe)
 - [x] 25-04-PLAN.md — 계정 승격 최소 심(D-03): guest-promote linkIdentity 진입점 + config.toml manual_linking (Wave 3, autonomous:false) — ✅ 2026-07-10 (web 153 그린·tsc 0·build PASS `ƒ /t/[slug]` 219kB, commits d17905a·7533fdc·aaa20e3·9bb4b40 — 원격 Manual linking 토글 human-action 잔여)
 - [x] 25-06-PLAN.md — [gap] TP 제휴 스크립트 전면 제거(클릭 하이재킹) + FAB↔첫 행 하트 겹침 해소(calc(30vh+16px)·expanded 숨김) + hideHostControls(게스트 [함께 정하기] 숨김) (Wave 1) — ✅ 2026-07-10 (web 159 그린·tsc 0·emrldco 0건·guest-surface diff 2줄, commits 292e553·59ab35d·28babe1·ce08562·1b91c95)
-- [ ] 25-07-PLAN.md — [gap] 웹 호스트 날짜투표 FULL FLOW: createDatePoll 래퍼(마이그레이션 0) + share-sheet 후보 날짜 세팅 step + both 모드 join 후 pollSlot 임베드 (Wave 2, depends 25-06)
+- [x] 25-07-PLAN.md — [gap] 웹 호스트 날짜투표 FULL FLOW: createDatePoll 래퍼(마이그레이션 0) + share-sheet 후보 날짜 세팅 step + both 모드 join 후 pollSlot 임베드 (Wave 2, depends 25-06) — ✅ 2026-07-10 (web 165 그린·api 106·tsc 0·마이그레이션 0·iOS diff 0, commits 64298fd·f55f5b4·cd11963·ef1a26c·57cd4f9·e516f8f) — `25-07-SUMMARY.md`
 
 **UI hint**: yes
 

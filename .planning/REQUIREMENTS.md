@@ -347,7 +347,7 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 - [ ] **SHARE-01**: [함께 정하기]에서 날짜 정하기/장소 정하기/둘다 모드를 선택해 공유링크를 생성·복사할 수 있다 (날짜 확정된 모아는 '날짜 정하기' 숨김)
 - [ ] **SHARE-02**: 공유링크가 비로그인 상태에서 SSR로 즉시 렌더된다 (모아 이름·지도·장소 리스트 — 기존 /t/·/poll/ 분리 화면을 통합)
-- [ ] **SHARE-03**: 게스트가 공유 모드에 따라 찜·장소/링크 추가·날짜 투표에 참여할 수 있다 (첫 상호작용 시 닉네임 게이트)
+- [x] **SHARE-03**: 게스트가 공유 모드에 따라 찜·장소/링크 추가·날짜 투표에 참여할 수 있다 (첫 상호작용 시 닉네임 게이트) (25-07 코드완료 — 웹 호스트 dates/both 공유 시 date_poll 생성+후보 날짜 세팅+both join 후 pollSlot 임베드로 날짜투표 full flow 종결; 라이브 UAT Test 3 재검증은 배포 후)
 - [ ] **SHARE-04**: 게스트의 참여(찜·장소 추가)가 호스트 화면에 실시간 반영된다
 
 ### 실시간 채팅 (CHAT)
@@ -389,7 +389,7 @@ Roadmap (2026-07-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | SHARE-01 | Phase 24 | Pending |
 | AUTH-08 | Phase 25 | Pending |
 | SHARE-02 | Phase 25 | Pending |
-| SHARE-03 | Phase 25 | Pending |
+| SHARE-03 | Phase 25 (25-07) | ✅ 코드완료 (라이브 UAT Test 3 재검증은 배포 후) |
 | SHARE-04 | Phase 25 | Pending |
 | CHAT-01 | Phase 26 (26-03) | ✅ 코드완료 (라이브 0028 배포 후) |
 | CHAT-02 | Phase 26 (26-03) | ✅ 코드완료 (라이브 0028 배포 후) |

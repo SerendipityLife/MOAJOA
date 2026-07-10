@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: Completed 25-06-PLAN.md (UAT gap closure — TP 제거·FAB 겹침·hideHostControls)
-last_updated: "2026-07-10T16:01:42.289Z"
-last_activity: 2026-07-10 -- Phase 25 planning complete
+stopped_at: Completed 25-07-PLAN.md (웹 날짜투표 full flow — Phase 25 gap closure 완료, 7/7)
+last_updated: "2026-07-10T16:17:16.000Z"
+last_activity: 2026-07-10 -- Phase 25 gap closure complete (25-07)
 progress:
   total_phases: 7
   completed_phases: 6
@@ -33,9 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 25 (Guest Unified Share) — gap closure 진행 (6/7 plans: 코드 5/5 + **25-06 ✅[UAT gap]** TP 제거·FAB 겹침·hideHostControls — 잔여 25-07 웹 날짜투표 full flow. 배포 게이트 2종은 UAT Test 1/2 pass)
+Phase: 25 (Guest Unified Share) — ✅ gap closure 완료 (7/7 plans: 코드 5/5 + **25-06 ✅[UAT gap]** TP 제거·FAB 겹침·hideHostControls + **25-07 ✅[UAT gap]** 웹 날짜투표 full flow. 배포 게이트 2종은 UAT Test 1/2 pass)
 Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface + nickname-gate-sheet + page.tsx 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·build PASS 219kB) · **25-05 ✅[스모크]** 익명-세션 게스트 케이스 3종 append(fc52676·50afbfe, 전부 로컬 exit 0) → W3 = **25-04 ✅[linkIdentity 승격 심]** guest-promote linkIdentity 진입점 + 초대 카드 하단 마운트(C6) + config.toml manual_linking (d17905a·7533fdc·aaa20e3·9bb4b40, web 153 그린·build PASS 219kB).
-Next: **25-07 실행**(웹 날짜투표 full flow — 마지막 UAT blocker) → 배포 → UAT Test 3 재검증(TP 하이재킹 소멸·찜 하트 도달·게스트 [함께 정하기] 부재). 배포 게이트 2종(원격 0029 push·Manual linking 토글)은 UAT Test 1/2에서 pass 확인됨. 상세: `25-USER-SETUP.md`·`25-HUMAN-UAT.md`.
+Next: **배포(main push)** → **UAT Test 3 재검증**(TP 하이재킹 소멸·찜 하트 도달·게스트 [함께 정하기] 부재 + 신규: '둘다 정하기' 공유→후보 날짜 세팅→시크릿 /t 날짜투표 렌더·투표·both join 후 [모으기] 상단 유지) → UAT Test 4(D-12·linkIdentity). 배포 게이트 2종(원격 0029 push·Manual linking 토글)은 UAT Test 1/2에서 pass 확인됨. 상세: `25-USER-SETUP.md`·`25-HUMAN-UAT.md`.
+
+---
+
+**25-07 실행 완료 (2026-07-10, commits 64298fd·f55f5b4·cd11963·ef1a26c·57cd4f9·e516f8f):** Phase 25 마지막 UAT blocker(Gap 1 FULL FLOW) — "웹 '둘다/날짜 정하기' 공유가 share_mode만 UPDATE하고 date_poll 미생성 → 게스트 날짜투표 섹션 미렌더" 종결. 신규 백엔드 0(마이그레이션 0·RPC 0 — 0018 RLS+ensure_poll_code 트리거+기존 옵션 래퍼+0029 게스트 경로 재사용). **Task 1(TDD RED 64298fd→GREEN f55f5b4):** `createDatePoll(client, tripId, mode='range')` api 래퍼 — date_polls 직접 INSERT(`date_polls_write`=can_edit_trip 게이트, setPollMode 'no new RPC' idiom 미러)·shaped select 반환·poll_code는 트리거 자동 발급. api 33/33(전체 106) 그린. **Task 2(TDD RED cd11963→GREEN ef1a26c):** share-sheet 2-step — dates/both 공유 시 기존 순서(shareMoa→클립보드→toast→onShared) 유지 후 `getPollByTrip→(null이면) createDatePoll→getPollOptions→'options' step 전환`(멱등 — 기존 poll·옵션 재사용). options step: 후보 목록(rangeLabel 3줄 미러 `6/14–6/16`)+삭제(aria-label 후보 삭제·44px·danger)+date input 2개·추가(가드 둘다 입력+종료>=시작, 위반 '날짜를 확인해 주세요')+완료(0개 disabled — 빈 poll 방지). dates/both는 navigator.share 생략(링크 이미 클립보드 — 재량 결정 주석 기록), places 공유는 diff 0(회귀 테스트 앵커). 옵션 실패 토스트('저장하지 못했어요...')는 공유 실패와 분리. **Task 3(TDD RED 57cd4f9→GREEN e516f8f):** UAT 증상 "닉네임 입력 후엔 호스트형 화면만" 해소 — MoaIsland(fixed inset-0)가 sibling pollSection을 덮음 → `MoaIslandProps.pollSlot?: ReactNode` 추가(PlaceSheet PlaceList 직전 렌더, 호스트 /moa 미전달=diff 0), guest-surface both 분기 joined 시 sibling 헤딩+pollSection을 pollSlot으로 이동(중복 렌더 0·비join sibling·dates/places 분기·pollMeta fetch·게이트 무변경). PollVoteIsland 코드 무수정(D-10 /poll 무회귀). **검증:** web 159→**165 그린**(+6)·api 103→106·전 스위트(core 173·ios 128) exit 0·tsc 0·`! ls migrations | grep ^0030` PASS·iOS/core/migrations diff 0·라이브 검증 통과분(0029 투표 경로·찜·게이트·재접속·D-12·SSR) 무접촉. **deviation 1(Rule 1 — 테스트 기대값 정정: rangeLabel 실제 출력 `6/14–6/16`, doc 주석 `6/14–16`은 축약 표기. 구현은 poll-vote-island verbatim 미러 유지).** SHARE-03 코드완료 마킹(라이브 UAT Test 3 재검증은 배포 후). 상세: `25-07-SUMMARY.md`.
 
 ---
 
