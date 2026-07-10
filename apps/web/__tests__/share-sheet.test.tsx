@@ -213,7 +213,7 @@ describe('ShareSheet — 후보 날짜 세팅 step (25-07 Gap 1)', () => {
     await waitFor(() => expect(screen.getByText('후보 날짜')).toBeTruthy());
     expect(createDatePoll).not.toHaveBeenCalled();
     expect(getPollOptions).toHaveBeenCalledWith({}, 'poll-9');
-    expect(screen.getByText('6/14–16')).toBeTruthy();
+    expect(screen.getByText('6/14–6/16')).toBeTruthy();
   });
 
   it('후보 날짜 추가·삭제 — addPollOption/removePollOption 배선', async () => {
@@ -232,11 +232,11 @@ describe('ShareSheet — 후보 날짜 세팅 step (25-07 Gap 1)', () => {
         endDate: '2026-06-16',
       }),
     );
-    await waitFor(() => expect(screen.getByText('6/14–16')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('6/14–6/16')).toBeTruthy());
 
     fireEvent.click(screen.getByLabelText('후보 삭제'));
     await waitFor(() => expect(removePollOption).toHaveBeenCalledWith({}, 'opt-1'));
-    await waitFor(() => expect(screen.queryByText('6/14–16')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('6/14–6/16')).toBeNull());
   });
 
   it("회귀: '장소 정하기' 공유는 poll 호출 0 + step 전환 없음", async () => {
