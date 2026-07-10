@@ -325,15 +325,35 @@ export function GuestSurface({
   }
 
   if (shareMode === 'both') {
+    // join 후엔 MoaIsland(fixed inset-0)가 sibling을 덮으므로 날짜투표 섹션을 [모으기]
+    // 시트 상단 pollSlot으로 이동(D-09/C2, 25-07 — UAT '닉네임 입력 후 호스트형 화면만' 해소).
+    // 비join은 현행 sibling 렌더 유지(라이브 검증 통과 경로 무변경). 중복 렌더 금지.
     return (
       <>
-        {pollMeta != null && (
-          <section>
-            <h3 className="mt-6 text-sm font-semibold text-neutral-700">날짜 정하기</h3>
-            {pollSection}
-          </section>
+        {joined && moaSeed ? (
+          <MoaIsland
+            {...moaSeed}
+            hideHostControls
+            pollSlot={
+              pollMeta != null ? (
+                <section>
+                  <h3 className="text-sm font-semibold text-neutral-700">날짜 정하기</h3>
+                  {pollSection}
+                </section>
+              ) : undefined
+            }
+          />
+        ) : (
+          <>
+            {pollMeta != null && (
+              <section>
+                <h3 className="mt-6 text-sm font-semibold text-neutral-700">날짜 정하기</h3>
+                {pollSection}
+              </section>
+            )}
+            {readOnlyPlaces}
+          </>
         )}
-        {joined && moaSeed ? <MoaIsland {...moaSeed} hideHostControls /> : readOnlyPlaces}
         {gate}
       </>
     );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Link, Place, ShareModeType, Trip, TripMessage } from '@moajoa/core';
 import { moaChannelName, TripMessageCreateSchema } from '@moajoa/core';
@@ -41,6 +41,8 @@ export interface MoaIslandProps {
   currentUserNickname: string;
   /** 게스트 마운트(/t)에서 호스트 전용 컨트롤([함께 정하기]) 숨김 (25-06 Gap 4). */
   hideHostControls?: boolean;
+  /** both 모드 게스트: [모으기] 시트 상단 날짜투표 임베드(D-09/C2, 25-07). */
+  pollSlot?: ReactNode;
 }
 
 /**
@@ -67,6 +69,7 @@ export function MoaIsland({
   initialMessages,
   currentUserNickname,
   hideHostControls,
+  pollSlot,
 }: MoaIslandProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -315,6 +318,8 @@ export function MoaIsland({
             </div>
           }
         >
+          {/* both 모드 게스트 날짜투표 임베드(D-09/C2) — 호스트 /moa는 미전달=diff 0. */}
+          {pollSlot}
           <PlaceList
             places={places}
             links={links}
