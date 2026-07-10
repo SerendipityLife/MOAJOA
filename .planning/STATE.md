@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: 25-05 완료 — 익명-세션 스모크 확장(RLS/realtime fan-out/#N+1). web_share_smoke·realtime_events_smoke·place_seq_concurrency 게스트 익명 케이스 append, 전부 로컬 exit 0. 원격 0029 push human-action 게이트 여전 open
-last_updated: "2026-07-10T11:46:10Z"
-last_activity: 2026-07-10 -- Phase 25 executing (25-05 익명-세션 스모크 확장 SHARE-03/04 DB 실증)
+stopped_at: 25-04 완료 — 계정 승격 최소 심(D-03). guest-promote linkIdentity({provider:'kakao'}) 진입점 + 초대 카드 하단 마운트(C6) + config.toml enable_manual_linking=true(로컬). web 153 그린·tsc 0·build PASS. Phase 25 코드 5/5 완료 — 원격 0029 push + Manual linking 토글(human-action 게이트 2종) open
+last_updated: "2026-07-10T20:56:00Z"
+last_activity: 2026-07-10 -- Phase 25 코드 완료 (25-04 linkIdentity 승격 심 — AUTH-08)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 34
-  completed_plans: 33
-  percent: 97
+  completed_plans: 34
+  percent: 100
 ---
 
 # STATE: MOAJOA v2.1
@@ -33,9 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 4/5 plans (25-01 백엔드·25-02 컴포넌트 seam·25-03 뼈대·25-05 스모크 ✅ 로컬 완료 · 25-04 linkIdentity 잔여)
-Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface + nickname-gate-sheet + page.tsx 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·build PASS 219kB) · **25-05 ✅[스모크]** 익명-세션 게스트 케이스 3종 append(fc52676·50afbfe, 전부 로컬 exit 0) → W3 = 25-04(linkIdentity).
-Next: **25-04 실행**(linkIdentity 승격 최소 심 — D-03, autonomous:false) 또는 **`/gsd-verify-work 25`**(Phase 25 UAT, 원격 0029 push 선행). 병행 블로커(여전): **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 게스트 direct-read·realtime·dates/both 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 + verify-work 후 동작. 상세: `25-USER-SETUP.md`.
+Phase: 25 (Guest Unified Share) — ✅ 코드 5/5 완료 (25-01 백엔드·25-02 컴포넌트 seam·25-03 뼈대·25-04 linkIdentity·25-05 스모크 — 원격 human-action 게이트 2종 잔여)
+Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface + nickname-gate-sheet + page.tsx 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·build PASS 219kB) · **25-05 ✅[스모크]** 익명-세션 게스트 케이스 3종 append(fc52676·50afbfe, 전부 로컬 exit 0) → W3 = **25-04 ✅[linkIdentity 승격 심]** guest-promote linkIdentity 진입점 + 초대 카드 하단 마운트(C6) + config.toml manual_linking (d17905a·7533fdc·aaa20e3·9bb4b40, web 153 그린·build PASS 219kB).
+Next: **`/gsd-verify-work 25`**(Phase 25 UAT, 원격 게이트 선행). **잔여 human-action 게이트 2종:** (1) **원격 0029 push** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. (2) **원격 Manual linking 토글 ON** — Supabase Dashboard → Authentication → Settings(linkIdentity 승격 전제, 미활성 시 클릭 시점 런타임 에러·fail-closed). 라이브 게스트 direct-read·realtime·dates/both 투표·share_mode SSR 분기·D-12 own-only 삭제·카카오 승격은 위 2종 적용 + verify-work 후 동작. 상세: `25-USER-SETUP.md`.
+
+---
+
+**25-04 실행 완료 (2026-07-10, commits d17905a·7533fdc·aaa20e3·9bb4b40):** Phase 25 Wave 3 — 계정 승격 **최소 심**(D-03, AUTH-08). 게스트 익명 세션을 카카오 `linkIdentity`로 정식 계정 전환(익명 `auth.uid` 보존 → added_by/votes/memberships 자동 유지, 커스텀 재소유 로직 0). 별도 병합 화면 없음(deferred). **Task 1(TDD RED d17905a→GREEN 7533fdc):** `guest-promote.tsx`(신규) — `'use client'`, `getSupabaseBrowser().auth.linkIdentity({ provider: 'kakao' })` onClick(login.tsx oauth() L105-115 미러, signInWithOAuth→linkIdentity). 버튼 카피 `로그인하고 내 여행에 담기`(secondary=`Button variant=outline`, 토큰 클래스만·신규 hex 0, primary CTA 경합 방지 C6). 반환 `{error}` + try/catch 이중 처리 → `useToast` error variant(Manual linking 미활성 런타임 throw 대비, fail-closed T-25-13). options 없이 호출(plan `<interfaces>` 명세 — login의 redirectTo 미사용). 테스트 3케이스(렌더·`{provider:'kakao'}` 1회·에러 토스트, login.test mock 미러) — RED 2/3 실패(behavior, 임포트 아님)→GREEN 3/3. **Task 2(feat aaa20e3):** `page.tsx` 초대 카드(L98-111) 하단에 `<GuestPromote />` 마운트(C6, OQ-3 채택) + import(surgical, 다른 라인 diff 0). RSC 셸이 client island 렌더·page.tsx 쿠키 무접근 유지. **Task 3(chore 9bb4b40, human-action 자동화 부분):** `config.toml` `[auth] enable_manual_linking = true`(로컬 — linkIdentity 전제). **원격 대시보드 Manual linking 토글 ON은 human-action 잔여**(config만으론 원격 미반영, A1). **deviation 1(Rule 3 blocking — 테스트를 `apps/web/__tests__/`에 배치: plan 원 경로 `_components/__tests__/`는 vitest include `['__tests__/**']` 미매칭=미수집, 25-02/25-03 선례).** **검증:** full web **153 그린**(+3 무회귀)·tsc 0·**build PASS `ƒ /t/[slug]` 3.71kB/219kB**·acceptance grep 전종 통과(linkIdentity·카피·no-hex·<GuestPromote·no cookies)·`.js` 워크스페이스 import 0·iOS/core/migrations 무접촉·삭제 0. **Phase 25 코드 5/5 완료.** **AUTH-08 Pending 유지** — 라이브 카카오 승격(익명 이력 유지)은 원격 0029 push + Manual linking 토글 + verify-work 몫. 상세: `25-04-SUMMARY.md`.
 
 ---
 
