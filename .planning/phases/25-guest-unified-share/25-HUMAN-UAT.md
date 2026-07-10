@@ -51,12 +51,26 @@ blocked: 0
   missing: [웹 호스트 date_poll 생성 + 후보 날짜 세팅 플로우]
 
 - truth: "게스트가 장소에 찜(가고싶어)할 수 있다 (SC3)"
-  status: failed
-  reason: "join 후 재사용된 MoaIsland의 찜(onToggleVote)이 동작 안 함. RLS(can_vote_trip)는 accepted 멤버 전원 허용이라 게스트 editor도 통과 가능 — 즉 서버 권한 아님. 클라이언트 런타임 이슈 추정(브라우저 콘솔 에러 확인 필요). 코드상 onToggleVote는 정상 형태(optimistic+rollback)."
+  status: diagnosed
+  reason: "Claude 라이브 재현(2026-07-10): 찜 자체는 정상 — POST /votes 201·DELETE 204·하트 토글·콘솔 에러 0. 게스트 auth/RLS/API 경로 전부 동작. '안 눌러져'의 원인은 클릭 도달 실패 2종: (a) Travelpayouts emerald 스크립트(layout.tsx:49, 전 페이지 로드)의 link_switcher/popunder가 클릭을 하이재킹 — Claude 세션에선 add-sheet 탭 클릭이 Kiwi.com 제휴 딥링크로 납치됨(사용자 첫 탭도 동일 패턴 추정), (b) 모바일 폭에서 + FAB(z-60)가 첫 행 하트의 탭 타깃을 덮음(사용자 스크린샷 좌표상 하트가 FAB 원 내부)."
   severity: blocker
   test: 3
-  artifacts: [apps/web/app/moa/[id]/_components/moa-island.tsx:198 onToggleVote]
-  missing: [브라우저 콘솔 에러로 근본원인 확정]
+  artifacts: [apps/web/app/layout.tsx:49 TP script, apps/web/app/moa/[id]/_components/moa-island.tsx FAB bottom-[136px] z-[60]]
+  missing: [TP 스크립트 게스트 표면 제외(또는 전면 제거 — 주석상 Phase 20 딥링크 무의존), FAB/하트 레이아웃 겹침 해소]
+
+- truth: "게스트 클릭이 제휴 스크립트에 하이재킹되지 않는다 (신규 발견)"
+  status: failed
+  reason: "Travelpayouts Drive 스크립트(commit ae52afe, layout.tsx 루트 — 전 페이지)가 게스트 공유 화면에서 클릭을 가로채 Kiwi.com 제휴 페이지로 이동시킴(popunder: 원래 페이지는 새 탭으로 밀림). Claude가 add-sheet '장소 검색' 탭 클릭에서 직접 재현. 게스트 UX 파괴 + 신뢰 손상."
+  severity: blocker
+  test: 3
+  artifacts: [apps/web/app/layout.tsx:49]
+  missing: [게스트/호스트 인터랙티브 화면에서 TP 스크립트 제거 또는 스코프 제한 — layout 주석상 Phase 20 인앱 딥링크는 무의존]
+
+- truth: "라이브 검증 통과 항목 (Claude 재현, 2026-07-10)"
+  status: passed
+  reason: "SC1 SSR 즉시 렌더 ✓ · SC2 닉네임 게이트→익명인증→join→참여화면 ✓ · SC2 재접속 동일신원(새로고침 후 게이트 스킵) ✓ · 게스트 찜 API 왕복(201/204) ✓ · D-12 own-only 삭제 UI 게이트(호스트 장소에 삭제 버튼 없음) ✓"
+  severity: info
+  test: 3
 
 - truth: "게스트에게 호스트 전용 컨트롤이 노출되지 않는다 (polish)"
   status: failed
