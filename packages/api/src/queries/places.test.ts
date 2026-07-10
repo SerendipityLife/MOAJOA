@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { addManualPlace } from './places';
+import { addManualPlace, hidePlace } from './places';
 import type { MoajoaSupabaseClient } from '../client';
 import type { PlaceAddManual } from '@moajoa/core';
 
@@ -56,5 +56,18 @@ describe('addManualPlace — forwards resolved name/coords to add_manual_place R
     await expect(
       addManualPlace(client, { board_id: TRIP, google_place_id: 'gp1' }),
     ).rejects.toBeTruthy();
+  });
+});
+
+describe('hidePlace — rpc(hide_place_as_member), D-12 own-only soft-delete (T-25-08)', () => {
+  it('calls rpc with p_place_id (no raw places UPDATE)', async () => {
+    const { client, rpc } = makeClient({ data: null, error: null });
+    await hidePlace(client, 'place-1');
+    expect(rpc).toHaveBeenCalledWith('hide_place_as_member', { p_place_id: 'place-1' });
+  });
+
+  it('throws when the rpc returns { error } (non-owner hiding another place)', async () => {
+    const { client } = makeClient({ data: null, error: { message: 'not authorized' } });
+    await expect(hidePlace(client, 'place-1')).rejects.toBeTruthy();
   });
 });

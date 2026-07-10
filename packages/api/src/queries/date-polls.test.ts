@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   castDateVote,
+  castDateVoteAuthed,
+  getPublicTripPoll,
   pollByCode,
   getPollTally,
   postComment,
@@ -80,6 +82,49 @@ describe('castDateVote — rpc(cast_date_vote), DEFINER write (T-19-01: never a 
         nickname: '나',
         availability: 'available',
       }),
+    ).rejects.toBeTruthy();
+  });
+});
+
+describe('getPublicTripPoll — rpc(public_trip_poll), anon slug→poll read (SHARE-02)', () => {
+  it('calls rpc with p_slug and returns data', async () => {
+    const poll = { poll_code: CODE, mode: 'range', status: 'open', options: [] };
+    const { client, rpc } = makeClient({ rpcResult: { data: poll, error: null } });
+    const out = await getPublicTripPoll(client, 'my-slug');
+    expect(rpc).toHaveBeenCalledWith('public_trip_poll', { p_slug: 'my-slug' });
+    expect(out).toEqual(poll);
+  });
+
+  it('throws when rpc returns { error }', async () => {
+    const { client } = makeClient({ rpcResult: { data: null, error: { message: 'boom' } } });
+    await expect(getPublicTripPoll(client, 'my-slug')).rejects.toBeTruthy();
+  });
+});
+
+describe('castDateVoteAuthed — rpc(cast_date_vote_authed), server-derived device_token (T-25-02)', () => {
+  it('calls rpc WITHOUT p_device_token (auth.uid derived server-side)', async () => {
+    const { client, rpc, from } = makeClient({ rpcResult: { data: undefined, error: null } });
+    await castDateVoteAuthed(client, {
+      code: CODE,
+      nickname: '나',
+      optionId: OPTION,
+      availability: 'available',
+    });
+    expect(rpc).toHaveBeenCalledWith('cast_date_vote_authed', {
+      p_code: CODE,
+      p_nickname: '나',
+      p_option_id: OPTION,
+      p_vote_date: null,
+      p_availability: 'available',
+    });
+    // Regression: no direct table write, and no client-supplied device_token.
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('throws when rpc returns { error }', async () => {
+    const { client } = makeClient({ rpcResult: { data: null, error: { message: 'closed' } } });
+    await expect(
+      castDateVoteAuthed(client, { code: CODE, nickname: '나', availability: 'available' }),
     ).rejects.toBeTruthy();
   });
 });
