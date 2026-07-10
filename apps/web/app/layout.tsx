@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
-import Script from 'next/script';
 import { getBaseUrl } from '@/lib/env';
 import { ToastProvider } from '@/components/toast';
 import { BottomNav } from '@/components/bottom-nav';
@@ -43,10 +42,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <BottomNav />
         </ToastProvider>
-        {/* Travelpayouts Drive — website-channel auto-affiliation (Phase 20 in-app
-            deep links are separate and do NOT depend on this). Their snippet is a
-            head-injector for the same src; next/script achieves that directly. */}
-        <Script src="https://emrldco.com/NTQ1NTU1.js?t=545555" strategy="afterInteractive" />
       </body>
     </html>
   );
