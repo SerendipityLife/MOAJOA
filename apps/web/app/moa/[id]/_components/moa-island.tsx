@@ -325,6 +325,8 @@ export function MoaIsland({
               setReplyToPlaceId(placeId);
               setActiveTab('chat');
             }}
+            currentUserId={currentUserId}
+            ownerId={trip.owner_id}
           />
         </PlaceSheet>
 

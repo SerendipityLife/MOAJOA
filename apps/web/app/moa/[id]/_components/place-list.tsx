@@ -27,6 +27,13 @@ export interface PlaceListProps {
   onDelete: (placeId: string) => void;
   /** D-10 답장 — 채팅 탭 전환 + reply_to_place_id 프리필(island이 배선). */
   onReply: (placeId: string) => void;
+  /**
+   * D-12 own-only 삭제 게이트: 현재 사용자 id(익명 auth.uid 포함). 부재 시 레거시
+   * 무조건 렌더(backward-compat).
+   */
+  currentUserId?: string;
+  /** D-12: trip owner id. currentUserId===ownerId면 전 장소 삭제 가능(호스트). */
+  ownerId?: string;
 }
 
 /** `4:00` 스타일 라벨 (vote-island tsLabel 미러 — m:ss zero-pad). */
@@ -58,6 +65,8 @@ export function PlaceList({
   onRetry,
   onDelete,
   onReply,
+  currentUserId,
+  ownerId,
 }: PlaceListProps) {
   // MOA-05 마커 탭: openPlaceId 외부 변경 시 해당 행으로 스크롤.
   useEffect(() => {
@@ -247,17 +256,24 @@ export function PlaceList({
                 >
                   답장
                 </button>
-                {/* 삭제 (soft-delete via hidden_at) — island이 optimistic 제거 + hidePlace. */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(p.id);
-                  }}
-                  className="self-start text-sm font-medium text-[#EF4444]"
-                >
-                  삭제
-                </button>
+                {/* 삭제 (soft-delete via hidden_at) — island이 optimistic 제거 + hidePlace.
+                    D-12: own-only affordance (UI) — 게스트는 자기 장소(added_by===currentUserId)
+                    또는 호스트(currentUserId===ownerId)만 렌더. currentUserId 부재=레거시 무조건
+                    렌더. 실제 소프트삭제 권한은 hide_place_as_member RPC(0029)가 DB에서 강제. */}
+                {(currentUserId === undefined ||
+                  p.added_by === currentUserId ||
+                  currentUserId === ownerId) && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(p.id);
+                    }}
+                    className="self-start text-sm font-medium text-[#EF4444]"
+                  >
+                    삭제
+                  </button>
+                )}
               </div>
             )}
           </li>
