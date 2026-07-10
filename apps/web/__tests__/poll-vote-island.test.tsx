@@ -157,4 +157,38 @@ describe('PollVoteIsland', () => {
     expect(screen.getByText('이 여행에 함께하기')).toBeInTheDocument();
     expect(screen.queryByText('가능')).toBeNull();
   });
+
+  // ── /t 임베드 seam (25-02) ────────────────────────────────────────────────
+  it('embed seam: deviceToken+nickname props로 inline 게이트를 건너뛰고 그 deviceToken로 투표', async () => {
+    render(<PollVoteIsland {...baseProps} deviceToken="auth-uid-1" nickname="민지" />);
+
+    // 닉네임 prop 주입 → inline 닉네임 게이트 미렌더, 바로 투표 UI.
+    expect(screen.queryByText('먼저 닉네임을 정해주세요')).toBeNull();
+    const availButtons = await screen.findAllByText('가능');
+    fireEvent.click(availButtons[0]!);
+
+    await waitFor(() => expect(castDateVote).toHaveBeenCalledTimes(1));
+    // 주입된 deviceToken(=익명 auth.uid)로 castDateVote — getDeviceToken()('dev-token-1') 아님.
+    expect(castDateVote.mock.calls[0]?.[1]).toMatchObject({
+      deviceToken: 'auth-uid-1',
+      nickname: '민지',
+    });
+  });
+
+  it('embed seam: onRequireMember 주입 시 첫 투표가 외부 게이트를 1회 거친 뒤 그 uid로 진행', async () => {
+    const onRequireMember = vi.fn(async () => ({ uid: 'auth-uid-9', nickname: '게스트' }));
+    render(<PollVoteIsland {...baseProps} onRequireMember={onRequireMember} />);
+
+    // onRequireMember 주입 → nickname 미확정이어도 inline 게이트 대신 투표 UI 노출.
+    expect(screen.queryByText('먼저 닉네임을 정해주세요')).toBeNull();
+    const availButtons = await screen.findAllByText('가능');
+    fireEvent.click(availButtons[0]!);
+
+    await waitFor(() => expect(onRequireMember).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(castDateVote).toHaveBeenCalledTimes(1));
+    expect(castDateVote.mock.calls[0]?.[1]).toMatchObject({
+      deviceToken: 'auth-uid-9',
+      nickname: '게스트',
+    });
+  });
 });
