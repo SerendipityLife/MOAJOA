@@ -61,4 +61,70 @@ MSG_CODE=$(curl -s -o /dev/null -w '%{http_code}' \
 LOC=$(curl -s -o /dev/null -w '%{redirect_url}' "$API/auth/v1/authorize?provider=kakao")
 echo "$LOC" | grep -q "kauth.kakao.com" || { echo "FAIL: kakao authorize redirect ($LOC)"; exit 1; }
 
+# =============================================================================
+# (6) 게스트 익명-세션 RLS 통과 프로브 (Plan 25-05, SHARE-03 / T-25-17)
+#     step 1의 익명 JWT/ANON_UID 재사용(signInAnonymously 등가 — 비 device_token
+#     세션). join 전에는 places/votes/trip_messages direct-read가 RLS로 0건이고,
+#     join_moa(both→editor) 후에만 add_manual_place·votes·trip_messages·
+#     cast_date_vote_authed가 통과함을 실증한다.
+# =============================================================================
+count_json() { printf '%s' "$1" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d) if isinstance(d,list) else -1)"; }
+
+# 호스트가 게스트-미가입 shared trip(both) 셋업 + 장소·표 시드
+#   (join 전 direct-read 0건이 '빈 테이블'이 아니라 RLS 게이트임을 실증하기 위함)
+T_GUEST=$(psql "$DB" -qtAc "insert into trips (owner_id, title) values ('$HOST','smoke-guest-$(date +%s)') returning id")
+psql "$DB" -qc "update trips set visibility='shared', share_mode='both' where id='$T_GUEST'"
+SLUG_GUEST=$(psql "$DB" -tAc "select share_slug from trips where id='$T_GUEST'")
+[ -n "$SLUG_GUEST" ] || { echo "FAIL: guest trip slug 미생성"; exit 1; }
+SEED_PLACE=$(psql "$DB" -qtAc "insert into places (trip_id, added_by, name_local, lat, lng) values ('$T_GUEST','$HOST','host-seed',35,139) returning id")
+psql "$DB" -qc "insert into votes (place_id, user_id, kind) values ('$SEED_PLACE','$HOST','love')"
+
+# (a) join 전 direct-read = 0건 (Pitfall 1: 비멤버는 can_read_trip=false)
+P_BEFORE=$(curl -s "$API/rest/v1/places?trip_id=eq.$T_GUEST&select=id" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT")
+V_BEFORE=$(curl -s "$API/rest/v1/votes?select=id&place_id=eq.$SEED_PLACE" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT")
+M_BEFORE=$(curl -s "$API/rest/v1/trip_messages?trip_id=eq.$T_GUEST&select=id" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT")
+[ "$(count_json "$P_BEFORE")" = "0" ] || { echo "FAIL: join 전 places direct-read=$(count_json "$P_BEFORE") (want 0 — RLS 미차단)"; exit 1; }
+[ "$(count_json "$V_BEFORE")" = "0" ] || { echo "FAIL: join 전 votes direct-read=$(count_json "$V_BEFORE") (want 0)"; exit 1; }
+[ "$(count_json "$M_BEFORE")" = "0" ] || { echo "FAIL: join 전 trip_messages direct-read=$(count_json "$M_BEFORE") (want 0)"; exit 1; }
+
+# (b) join_moa(both → editor)
+curl -s -X POST "$API/rest/v1/rpc/join_moa" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" -d "{\"p_share_slug\":\"$SLUG_GUEST\"}" > /dev/null
+R_GUEST=$(psql "$DB" -tAc "select role from memberships where trip_id='$T_GUEST' and user_id='$ANON_UID'")
+[ "$R_GUEST" = "editor" ] || { echo "FAIL: guest join_moa role='$R_GUEST' (want editor)"; exit 1; }
+
+# (c) join 후 add_manual_place(editor) 통과 — 서버 채번 seq_no·added_by=auth.uid
+ADDED=$(curl -s -X POST "$API/rest/v1/rpc/add_manual_place" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d "{\"p_trip_id\":\"$T_GUEST\",\"p_google_place_id\":\"guest-$(date +%s)\",\"p_name_local\":\"게스트장소\",\"p_lat\":35.2,\"p_lng\":139.2}")
+GUEST_PLACE=$(printf '%s' "$ADDED" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || true)
+[ -n "$GUEST_PLACE" ] || { echo "FAIL: guest add_manual_place 거부 ($ADDED)"; exit 1; }
+G_ADDED_BY=$(psql "$DB" -tAc "select added_by from places where id='$GUEST_PLACE'")
+[ "$G_ADDED_BY" = "$ANON_UID" ] || { echo "FAIL: guest place added_by='$G_ADDED_BY' (want $ANON_UID)"; exit 1; }
+
+# votes upsert — user_id 트리거 파생(=auth.uid) + can_vote_trip 통과
+VCODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/votes" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+  -d "{\"place_id\":\"$GUEST_PLACE\",\"kind\":\"love\"}")
+[ "$VCODE" = "201" ] || { echo "FAIL: guest votes insert HTTP $VCODE (want 201)"; exit 1; }
+V_OWNER=$(psql "$DB" -tAc "select user_id from votes where place_id='$GUEST_PLACE' and user_id='$ANON_UID'")
+[ "$V_OWNER" = "$ANON_UID" ] || { echo "FAIL: vote user_id 파생 실패 (want $ANON_UID)"; exit 1; }
+
+# trip_messages insert — user_id 트리거 파생 + can_vote_trip 통과
+MCODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/trip_messages" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+  -d "{\"trip_id\":\"$T_GUEST\",\"nickname\":\"게스트닉네임\",\"body\":\"게스트 채팅\"}")
+[ "$MCODE" = "201" ] || { echo "FAIL: guest trip_messages insert HTTP $MCODE (want 201)"; exit 1; }
+
+# (d) cast_date_vote_authed — device_token := auth.uid()(서버파생, spoof 불가)
+POLL=$(psql "$DB" -qtAc "insert into date_polls (trip_id, mode, status) values ('$T_GUEST','range','open') returning id")
+POLL_CODE=$(psql "$DB" -tAc "select poll_code from date_polls where id='$POLL'")
+OPT=$(psql "$DB" -qtAc "insert into date_poll_options (poll_id, start_date, end_date) values ('$POLL','2026-08-01','2026-08-03') returning id")
+curl -s -X POST "$API/rest/v1/rpc/cast_date_vote_authed" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d "{\"p_code\":\"$POLL_CODE\",\"p_nickname\":\"게스트닉네임\",\"p_option_id\":\"$OPT\"}" > /dev/null
+DT=$(psql "$DB" -tAc "select device_token from date_votes where poll_id='$POLL' and option_id='$OPT'")
+[ "$DT" = "$ANON_UID" ] || { echo "FAIL: cast_date_vote_authed device_token='$DT' (want $ANON_UID=auth.uid)"; exit 1; }
+
 echo "PASS: anon(is_anonymous=true, role=authenticated) + join_moa(both→editor, dates→voter) + trip_messages RLS(200) + kakao authorize"
+echo "PASS: 게스트 익명 RLS — join 전 0건(places/votes/trip_messages) · join 후 add_manual_place(editor)·votes·trip_messages·cast_date_vote_authed(device_token=auth.uid) 통과"
