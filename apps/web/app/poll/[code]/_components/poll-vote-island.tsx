@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { castDateVote, getPollTally } from '@moajoa/api';
+import { castDateVote, castDateVoteAuthed, getPollTally } from '@moajoa/api';
 import { pollChannelName, type DateAvailabilityType } from '@moajoa/core';
 import { Check } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
@@ -255,14 +255,27 @@ export function PollVoteIsland({
     setMySelection((s) => ({ ...s, [key]: availability }));
     applyTallyDelta(key, prev, availability);
     try {
-      await castDateVote(client, {
-        code,
-        deviceToken: effectiveDeviceToken,
-        nickname: effectiveNickname,
-        optionId: voteArgs.optionId,
-        voteDate: voteArgs.voteDate,
-        availability,
-      });
+      if (onRequireMember) {
+        // 게스트(익명 멤버) 경로: device_token을 서버가 auth.uid로 파생 — 클라이언트 토큰
+        // 위조로 타 투표자 사칭·집계 조작을 차단한다 (T-25-02 / SC3·D-01 device_token:=auth.uid).
+        await castDateVoteAuthed(client, {
+          code,
+          nickname: effectiveNickname,
+          optionId: voteArgs.optionId,
+          voteDate: voteArgs.voteDate,
+          availability,
+        });
+      } else {
+        // 레거시 /poll: 기존 device_token anon RPC 유지 (D-10 무회귀).
+        await castDateVote(client, {
+          code,
+          deviceToken: effectiveDeviceToken,
+          nickname: effectiveNickname,
+          optionId: voteArgs.optionId,
+          voteDate: voteArgs.voteDate,
+          availability,
+        });
+      }
       channelRef.current?.send({
         type: 'broadcast',
         event: 'vote',

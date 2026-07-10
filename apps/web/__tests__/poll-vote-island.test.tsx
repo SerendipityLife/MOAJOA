@@ -40,6 +40,7 @@ type CastInput = {
   availability: string;
 };
 const castDateVote = vi.fn(async (_client: unknown, _input: CastInput) => undefined);
+const castDateVoteAuthed = vi.fn(async (_client: unknown, _input: Omit<CastInput, 'deviceToken'>) => undefined);
 const getPollTally = vi.fn(async (_client: unknown, _code: string) => ({
   mode: 'range',
   tally: [] as unknown[],
@@ -48,6 +49,8 @@ const postComment = vi.fn(async (_client: unknown, _input: unknown) => ({}));
 const deleteComment = vi.fn(async (_client: unknown, _input: unknown) => undefined);
 vi.mock('@moajoa/api', () => ({
   castDateVote: (client: unknown, input: CastInput) => castDateVote(client, input),
+  castDateVoteAuthed: (client: unknown, input: Omit<CastInput, 'deviceToken'>) =>
+    castDateVoteAuthed(client, input),
   getPollTally: (client: unknown, code: string) => getPollTally(client, code),
   postComment: (client: unknown, input: unknown) => postComment(client, input),
   deleteComment: (client: unknown, input: unknown) => deleteComment(client, input),
@@ -89,6 +92,8 @@ const baseProps = {
 beforeEach(() => {
   castDateVote.mockClear();
   castDateVote.mockResolvedValue(undefined);
+  castDateVoteAuthed.mockClear();
+  castDateVoteAuthed.mockResolvedValue(undefined);
   getPollTally.mockClear();
   toast.mockClear();
   sendBroadcast.mockClear();
@@ -185,10 +190,12 @@ describe('PollVoteIsland', () => {
     fireEvent.click(availButtons[0]!);
 
     await waitFor(() => expect(onRequireMember).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(castDateVote).toHaveBeenCalledTimes(1));
-    expect(castDateVote.mock.calls[0]?.[1]).toMatchObject({
-      deviceToken: 'auth-uid-9',
-      nickname: '게스트',
-    });
+    // 게스트 경로(onRequireMember)는 서버파생 device_token RPC로 투표한다 — 스푸핑 차단
+    // (WR-01 / T-25-02). 클라이언트 device_token을 신뢰하는 레거시 castDateVote는 호출 안 됨.
+    await waitFor(() => expect(castDateVoteAuthed).toHaveBeenCalledTimes(1));
+    expect(castDateVote).not.toHaveBeenCalled();
+    const authedPayload = castDateVoteAuthed.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(authedPayload).toMatchObject({ nickname: '게스트' });
+    expect(authedPayload).not.toHaveProperty('deviceToken');
   });
 });
