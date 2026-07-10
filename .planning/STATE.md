@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: 25-02 완료 — 컴포넌트 seam(poll-vote-island 임베드 props·place-list own-only 삭제 게이트). web 144 그린·tsc 0. 원격 0029 push human-action 게이트 여전 open
-last_updated: "2026-07-10T11:17:43Z"
-last_activity: 2026-07-10 -- Phase 25 executing (25-02 컴포넌트 seam)
+stopped_at: 25-03 완료 — 게스트 통합 화면 뼈대(guest-surface 세션 lifecycle·lazy 게이트·share_mode 분기 + nickname-gate-sheet + page.tsx 교체). web 150 그린·tsc 0·build PASS. 원격 0029 push human-action 게이트 여전 open
+last_updated: "2026-07-10T11:33:31Z"
+last_activity: 2026-07-10 -- Phase 25 executing (25-03 guest-surface 뼈대)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 34
-  completed_plans: 31
-  percent: 91
+  completed_plans: 32
+  percent: 94
 ---
 
 # STATE: MOAJOA v2.1
@@ -33,9 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 2/5 plans (25-01 백엔드 seam·25-02 컴포넌트 seam ✅ 로컬 완료)
-Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props(deviceToken/nickname/onRequireMember)·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab, web 144 그린·tsc 0·page.tsx diff 0) → W2 = 25-03(guest-surface)·25-05(스모크 확장) → W3 = 25-04(linkIdentity).
-Next: **25-03 실행**(guest-surface — nickname-gate-sheet + 세션 lifecycle + share_mode 분기 + MoaIsland/Poll 재사용 + page.tsx 교체). 병행 블로커: **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 dates/both 게스트 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 후 동작. 상세: `25-USER-SETUP.md`.
+Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 3/5 plans (25-01 백엔드·25-02 컴포넌트 seam·25-03 guest-surface 뼈대 ✅ 로컬 완료)
+Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface(클라 세션 lifecycle·lazy 게이트 signInAnonymously→joinMoa→setStoredNickname·share_mode 3분기·재접속 MoaIsland 즉시 마운트) + nickname-gate-sheet(C1 BottomSheet) + page.tsx VoteIsland→GuestSurface 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·tsc 0·build PASS `ƒ /t/[slug]` 219kB) · 25-05(스모크 확장 미착수) → W3 = 25-04(linkIdentity).
+Next: **25-05 실행**(익명-세션 스모크 확장 — RLS/realtime fan-out/#N+1 SHARE-03/04 DB 실증) 또는 25-04(linkIdentity 승격). 병행 블로커(여전): **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 게스트 direct-read·realtime·dates/both 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 + verify-work 후 동작. 상세: `25-USER-SETUP.md`.
+
+---
+
+**25-03 실행 완료 (2026-07-10, commits ababe25·8eca62c·dcdea3e·d34e7fd):** Phase 25 Wave 2 — 게스트 통합 화면 **뼈대**. 검증된 analog 3조각(vote-island 세션 lifecycle + poll-vote-island 게이트 + moa-island 마운트)을 조립, 신규 realtime/투표/색/채팅 로직 0. **RED(ababe25):** guest-surface.test 6케이스 + guest-mocks 빌더. **Task 1(feat 8eca62c):** `nickname-gate-sheet.tsx` — poll inline 게이트를 `@/components` BottomSheet로 승격(C1). trim·빈값 에러 토스트(`닉네임을 정해야 참여할 수 있어요.`)·Enter 확정·`onConfirm(trimmed)`만(확정 흐름은 GuestSurface 소유)·중복 검증 없음(D-06)·토큰 클래스만. **Task 2(feat dcdea3e, GREEN):** `guest-surface.tsx`(≈290줄) — (1) 클라이언트 전용 세션 해석(vote-island L106-137 미러, 서버 쿠키 API 무접근=SSR 캐시 무독성) — 멤버(`getMyTripRole≠null`)면 게이트 스킵·곧장 MoaIsland 마운트(D-05 재접속). (2) lazy 게이트 `ensureGuestMember` — 첫 참여 액션에서만 `signInAnonymously({options:{data:{name}}})`→`joinMoa(slug)`→`setStoredNickname` 순서 고정(Pitfall 4: join 후에만 island 마운트). (3) join 후 seed 로딩(moa/[id]/page.tsx L36-53 client 재현)으로 `MoaIslandProps` 전부 구성. share_mode 3분기(D-09): `places`→MoaIsland / `dates`→`getPublicTripPoll(slug)`→PollVoteIsland 임베드(deviceToken=uid·onRequireMember promise 브리지) / `both`→poll 섹션+장소. **Task 3(feat d34e7fd):** `page.tsx` VoteIsland→GuestSurface 교체(surgical) — `board`(share_mode 포함) seed 전달, SSR 셸·초대 카드·출처 섹션·generateMetadata·getCachedPublicTrip·쿠키 무접근 유지. **검증:** web 144→**150 그린**(guest-surface 6 신규 무회귀)·tsc 0·**build PASS `ƒ /t/[slug]` 3.53kB/219kB**·acceptance grep 전종 통과·`.js` 워크스페이스 import 0·iOS/core/migrations 무접촉·삭제 0. **deviation 1(Rule 1 — guest-surface 주석 `cookies()` 리터럴이 무독성 grep 오탐 → "쿠키 API" 재서술, 24-05/26-02 선례) + 경로 정렬(테스트 `apps/web/__tests__/`·spy는 테스트 파일 vi.hoisted, vitest include 제약, 25-02 선례).** **linkIdentity 승격(C6/D-03)은 25-04 스코프라 제외.** **AUTH-08/SHARE-02/03/04 Pending 유지** — 라이브 게스트 direct-read·realtime·dates/both 투표는 원격 0029 push + verify-work 후(25-01/25-02 선례). 상세: `25-03-SUMMARY.md`.
 
 ---
 
