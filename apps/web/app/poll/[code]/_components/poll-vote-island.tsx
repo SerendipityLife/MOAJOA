@@ -50,6 +50,21 @@ interface Props {
   initialGridTally?: GridTallyEntry[];
   /** Test seam: seed the stored nickname (skips the gate). */
   initialNickname?: string;
+  /**
+   * /t 임베드 seam (25-02): 익명 세션의 `auth.uid`를 device_token 자리에 주입한다.
+   * 부재 시 기존 `getDeviceToken()` 폴백 — /poll 레거시 무회귀(D-10).
+   */
+  deviceToken?: string;
+  /**
+   * /t 임베드 seam: 저장 닉네임 주입. 부재 시 `getStoredNickname()`/inline 게이트.
+   */
+  nickname?: string;
+  /**
+   * /t 임베드 seam: 첫 투표 전 외부 멤버 게이트(익명 인증·join). 확정된
+   * `{ uid, nickname }`을 반환하며 그 uid를 device_token으로 쓴다. 부재 시 내부
+   * inline 닉네임 게이트가 동작한다.
+   */
+  onRequireMember?: () => Promise<{ uid: string; nickname: string }>;
 }
 
 /** `6/14–16` style label for a candidate range (single-day → just the day). */
@@ -81,10 +96,13 @@ export function PollVoteIsland({
   initialRangeTally,
   initialGridTally,
   initialNickname,
+  deviceToken,
+  nickname: nicknameProp,
+  onRequireMember,
 }: Props) {
   const { toast } = useToast();
 
-  const [nickname, setNickname] = useState(initialNickname ?? '');
+  const [nickname, setNickname] = useState(nicknameProp ?? initialNickname ?? '');
   const [nicknameDraft, setNicknameDraft] = useState('');
 
   // My selections keyed by option_id (range) or vote_date (grid).
@@ -108,11 +126,12 @@ export function PollVoteIsland({
   >(null);
 
   // Hydrate the persisted nickname client-side (returning visitor skips the gate).
+  // 임베드가 nickname prop을 주입하면 stored 조회를 건너뛴다(주입값 우선).
   useEffect(() => {
-    if (initialNickname) return;
+    if (nicknameProp || initialNickname) return;
     const stored = getStoredNickname();
     if (stored) setNickname(stored);
-  }, [initialNickname]);
+  }, [nicknameProp, initialNickname]);
 
   // Hydrate the live tally client-side — NEVER from cached props (GOTCHA).
   useEffect(() => {
@@ -144,9 +163,10 @@ export function PollVoteIsland({
   useEffect(() => {
     if (initialRangeTally || initialGridTally) return; // test seam: skip realtime
     const client = getSupabaseBrowser();
-    const deviceToken = getDeviceToken();
+    // 임베드가 익명 auth.uid를 주입하면 presence key로 쓴다(부재 시 device token).
+    const presenceToken = deviceToken ?? getDeviceToken();
     const channel = client.channel(pollChannelName(tripId), {
-      config: { presence: { key: deviceToken } },
+      config: { presence: { key: presenceToken } },
     });
     channelRef.current = channel;
     setSharedChannel(channel);
@@ -210,9 +230,24 @@ export function PollVoteIsland({
     availability: DateAvailabilityType,
     voteArgs: { optionId?: string; voteDate?: string },
   ) {
-    if (!nickname) {
-      toast('닉네임을 입력해야 투표할 수 있어요.', { variant: 'error' });
-      return;
+    // 신원 확정: prop 폴백 체인. 임베드는 auth.uid를 device_token으로 쓴다.
+    let effectiveNickname = nickname;
+    let effectiveDeviceToken = deviceToken ?? getDeviceToken();
+    if (!effectiveNickname) {
+      if (onRequireMember) {
+        // 게스트 컨텍스트: 외부 게이트(익명 인증·join)로 신원을 먼저 확정한 뒤 진행.
+        try {
+          const m = await onRequireMember();
+          effectiveNickname = m.nickname;
+          effectiveDeviceToken = m.uid;
+          setNickname(m.nickname);
+        } catch {
+          return; // 게이트 취소/실패 시 조용히 중단(토스트는 게이트가 소유).
+        }
+      } else {
+        toast('닉네임을 입력해야 투표할 수 있어요.', { variant: 'error' });
+        return;
+      }
     }
     const client = getSupabaseBrowser();
     const prev = mySelection[key];
@@ -222,8 +257,8 @@ export function PollVoteIsland({
     try {
       await castDateVote(client, {
         code,
-        deviceToken: getDeviceToken(),
-        nickname,
+        deviceToken: effectiveDeviceToken,
+        nickname: effectiveNickname,
         optionId: voteArgs.optionId,
         voteDate: voteArgs.voteDate,
         availability,
@@ -319,7 +354,9 @@ export function PollVoteIsland({
   }
 
   // ── Nickname gate (Screen 4a) ─────────────────────────────────────────────
-  if (!nickname) {
+  // 임베드가 onRequireMember를 주입하면 외부 게이트가 신원을 소유하므로 inline 게이트를
+  // 건너뛰고 바로 투표 UI를 노출한다(첫 투표에서 castVote가 게이트를 호출).
+  if (!nickname && !onRequireMember) {
     return (
       <section className="mt-8">
         <div className="rounded-xl border border-neutral-200 bg-white p-4">
