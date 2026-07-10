@@ -46,6 +46,10 @@ enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
 enable_anonymous_sign_ins = true
+# 계정 승격(D-03) linkIdentity 전제. 로컬 config만으론 원격 미반영 —
+# 원격은 Dashboard → Authentication → Settings에서 Manual linking 토글 ON 필수(human-action).
+# 미활성 시 linkIdentity 클릭 시점 런타임 에러(진입점은 렌더).
+enable_manual_linking = true
 
 [auth.email]
 enable_signup = true
