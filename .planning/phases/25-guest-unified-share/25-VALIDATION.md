@@ -1,8 +1,8 @@
 ---
 phase: 25
 slug: guest-unified-share
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-07-10
 ---
@@ -84,4 +84,4 @@ created: 2026-07-10
 - [ ] Feedback latency < 15s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-07-10 (plan-checker Dim 8 PASS; wave_0 tests authored during execution)
