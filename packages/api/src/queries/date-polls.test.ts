@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   castDateVote,
   castDateVoteAuthed,
+  createDatePoll,
   getPublicTripPoll,
   pollByCode,
   getPollTally,
@@ -260,6 +261,31 @@ describe('getPollByTrip — by-trip poll read seam (no inline raw query downstre
   it('throws when the read returns { error }', async () => {
     const { client } = makeClient({ result: { data: null, error: { message: 'boom' } } });
     await expect(getPollByTrip(client, TRIP)).rejects.toBeTruthy();
+  });
+});
+
+describe('createDatePoll — poll for an EXISTING trip (25-07 Gap 1), RLS-gated direct insert', () => {
+  it("inserts {trip_id, mode} into date_polls, selects the shaped row, returns it", async () => {
+    const row = { id: POLL, poll_code: CODE, mode: 'range', status: 'open' };
+    const { client, from, chain } = makeClient({ result: { data: row, error: null } });
+    const out = await createDatePoll(client, TRIP, 'range');
+    expect(from).toHaveBeenCalledWith('date_polls');
+    expect(chain.insert).toHaveBeenCalledWith({ trip_id: TRIP, mode: 'range' });
+    expect(chain.select).toHaveBeenCalledWith('id, poll_code, mode, status');
+    expect(chain.single).toHaveBeenCalled();
+    expect(out).toEqual(row);
+  });
+
+  it('throws when the insert returns { error } (house contract)', async () => {
+    const { client } = makeClient({ result: { data: null, error: { message: 'denied' } } });
+    await expect(createDatePoll(client, TRIP, 'range')).rejects.toBeTruthy();
+  });
+
+  it("defaults mode to 'range' when omitted", async () => {
+    const row = { id: POLL, poll_code: CODE, mode: 'range', status: 'open' };
+    const { client, chain } = makeClient({ result: { data: row, error: null } });
+    await createDatePoll(client, TRIP);
+    expect(chain.insert).toHaveBeenCalledWith({ trip_id: TRIP, mode: 'range' });
   });
 });
 
