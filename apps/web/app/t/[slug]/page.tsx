@@ -4,7 +4,7 @@ import { MapPin } from 'lucide-react';
 import { CITY_KO_MAP } from '@moajoa/core';
 import { getCachedPublicTrip } from '@/lib/public-trip-cache';
 import { MapSection } from './_components/map-section';
-import { VoteIsland } from './_components/vote-island';
+import { GuestSurface } from './_components/guest-surface';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -119,12 +119,13 @@ export default async function PublicBoardPage({ params }: Props) {
           <MapSection places={view.places} links={view.links} />
         )}
 
-        {/* 장소 상세 UX: 단일 리스트(해설+펼침 상세+지도/영상 버튼+❤️) —
-            기존 VoteIsland(투표) + PlaceSummaryList(장소) 중복 리스트 통합. */}
+        {/* 게스트 통합 화면 (D-08) — 세션 lifecycle·lazy 게이트·share_mode 분기를
+            소유하는 클라이언트 island. SSR 셸(위 초대 카드)은 최상단 컨텍스트로 유지. */}
         {view.board.id && (
-          <VoteIsland
+          <GuestSurface
             slug={slug}
             tripId={view.board.id}
+            board={view.board}
             places={view.places}
             links={view.links}
           />
