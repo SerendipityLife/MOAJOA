@@ -278,7 +278,7 @@ Plans:
 
 Plans:
 - [x] 25-01-PLAN.md — [BLOCKING] 백엔드: 0029(public_trip_poll anon RPC + public_trip_view share_mode + cast_date_vote_authed 서버파생 + hide_place_as_member own-only) + api 래퍼·core 타입 + 로컬 적용·typegen·스모크 (Wave 1, autonomous:false) ✅ 로컬 완료 — 원격 push 게이트 open
-- [ ] 25-02-PLAN.md — 컴포넌트 seam 파라미터화: poll-vote-island(deviceToken/nickname/onRequireMember) + place-list own-only 삭제 게이트(D-12) (Wave 1)
+- [x] 25-02-PLAN.md — 컴포넌트 seam 파라미터화: poll-vote-island(deviceToken/nickname/onRequireMember) + place-list own-only 삭제 게이트(D-12) (Wave 1) — ✅ 2026-07-10 (web 144 그린·tsc 0·page.tsx diff 0, commits 5198d46·623aea7·af1d537·61788ab)
 - [ ] 25-03-PLAN.md — 게스트 통합 화면 뼈대: nickname-gate-sheet + guest-surface(세션 lifecycle·lazy 게이트·share_mode 분기·MoaIsland/Poll 재사용) + page.tsx 교체 (Wave 2)
 - [ ] 25-05-PLAN.md — 익명-세션 스모크 확장(RLS/realtime fan-out/#N+1 순번 — SHARE-03/04 DB 실증) (Wave 2)
 - [ ] 25-04-PLAN.md — 계정 승격 최소 심(D-03): guest-promote linkIdentity 진입점 + config.toml manual_linking (Wave 3, autonomous:false)
@@ -324,6 +324,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 23. Web-First Foundation | 7/7 | ✅ Complete (verifier passed 12/12) | 2026-07-08 |
 | 24. Host Flow (온보딩·지도탭) | 5/7 | 🔧 Executing (Wave 2 완료) | - |
-| 25. Guest Unified Share | 1/5 | 🔧 Executing (25-01 백엔드 seam — 원격 0029 push 게이트) | - |
+| 25. Guest Unified Share | 2/5 | 🔧 Executing (25-01 백엔드 seam·25-02 컴포넌트 seam — 원격 0029 push 게이트) | - |
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 0/TBD | Not started | - |

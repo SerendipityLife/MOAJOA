@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: 25-01 로컬 완료 — 0029 backend seam(로컬 reset·typegen·smoke 그린). 원격 0029 push human-action 게이트 open
-last_updated: "2026-07-10T11:07:06Z"
-last_activity: 2026-07-10 -- Phase 25 executing (25-01 backend seam)
+stopped_at: 25-02 완료 — 컴포넌트 seam(poll-vote-island 임베드 props·place-list own-only 삭제 게이트). web 144 그린·tsc 0. 원격 0029 push human-action 게이트 여전 open
+last_updated: "2026-07-10T11:17:43Z"
+last_activity: 2026-07-10 -- Phase 25 executing (25-02 컴포넌트 seam)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 34
-  completed_plans: 30
-  percent: 88
+  completed_plans: 31
+  percent: 91
 ---
 
 # STATE: MOAJOA v2.1
@@ -33,9 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 1/5 plans (25-01 백엔드 seam ✅ 로컬 완료)
-Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6, 로컬 reset 42P17=0·smoke exit 0·api 103 그린) ∥ 25-02(컴포넌트 seam) → W2 = 25-03(guest-surface)·25-05(스모크 확장) → W3 = 25-04(linkIdentity).
-Next: **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 dates/both 게스트 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 후 동작. 그 다음 25-02 실행. 상세: `25-USER-SETUP.md`.
+Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 2/5 plans (25-01 백엔드 seam·25-02 컴포넌트 seam ✅ 로컬 완료)
+Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props(deviceToken/nickname/onRequireMember)·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab, web 144 그린·tsc 0·page.tsx diff 0) → W2 = 25-03(guest-surface)·25-05(스모크 확장) → W3 = 25-04(linkIdentity).
+Next: **25-03 실행**(guest-surface — nickname-gate-sheet + 세션 lifecycle + share_mode 분기 + MoaIsland/Poll 재사용 + page.tsx 교체). 병행 블로커: **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 dates/both 게스트 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 후 동작. 상세: `25-USER-SETUP.md`.
+
+---
+
+**25-02 실행 완료 (2026-07-10, commits 5198d46·623aea7·af1d537·61788ab):** Phase 25 Wave 1 — 게스트가 재사용할 기존 컴포넌트 2종 파라미터화(신규 realtime/투표/색 로직 0). **Task 1(TDD RED 5198d46→GREEN 623aea7):** `poll-vote-island.tsx`에 3 optional embed props 추가 — `deviceToken`(presence key·castDateVote 인자에서 `deviceToken ?? getDeviceToken()` 폴백; presence effect 로컬 변수만 `presenceToken`으로 개명해 충돌 회피)·`nickname`(state seed + stored-hydrate 스킵; 상태명 충돌로 prop만 `nicknameProp` alias)·`onRequireMember`(첫 게스트 투표에서 외부 게이트 1회 호출→`{uid,nickname}`으로 진행; setNickname 비동기 회피 위해 `effectiveNickname`/`effectiveDeviceToken` 지역변수). inline 닉네임 게이트를 `if(!nickname && !onRequireMember)`로 축소. 세 prop 전부 부재=/poll 레거시 완전 동일(D-10 무회귀, `poll/[code]/page.tsx` diff 0). 테스트 2 신규(임베드 deviceToken/nickname·onRequireMember 게이트). **Task 2(TDD RED af1d537→GREEN 61788ab):** `place-list.tsx` own-only 삭제 게이트(D-12) — 무조건 렌더 삭제 버튼을 `currentUserId===undefined || added_by===currentUserId || currentUserId===ownerId`일 때만. 삭제 블록 주석에 hide_place_as_member RPC(0029) DB own-only 연계 명시. `moa-island.tsx`이 `currentUserId`+`trip.owner_id` 배선(host는 owner 분기로 전 장소 삭제 유지 무회귀). 테스트 4 신규(Test 15~18: 게스트 남의 장소 미렌더·자기 장소 렌더·호스트 전체·prop 부재 무조건). **검증:** web 144 그린(poll-vote-island 5·place-list 18·moa-island 15 무회귀)·tsc 0·acceptance grep 5종 통과·`.js` 워크스페이스 import 0·iOS/core/migrations 무접촉. **deviation 0 — plan 원안 그대로**(테스트 파일 실제 경로 `apps/web/__tests__/` 확장, 동작 동일이라 deviation 아님). **SHARE-03 Pending 유지** — 라이브 게스트 참여는 Plan 03 guest-surface + 원격 0029 push 몫(25-01 선례). 상세: `25-02-SUMMARY.md`.
 
 ---
 
