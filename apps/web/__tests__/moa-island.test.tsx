@@ -428,4 +428,14 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
     fireEvent.click(screen.getByTestId('marker-p1'));
     await waitFor(() => expect(screen.queryByLabelText('장소 추가')).toBeNull());
   });
+
+  it('Test 18: 기본 렌더(호스트, prop 미전달) → [함께 정하기] 노출 (25-06 Gap 4 — Test C 무회귀)', () => {
+    render(<MoaIsland {...baseProps} />);
+    expect(screen.getByText('함께 정하기')).toBeInTheDocument();
+  });
+
+  it('Test 19: hideHostControls 전달(게스트 마운트) → [함께 정하기] 부재 (25-06 Gap 4 — Test D)', () => {
+    render(<MoaIsland {...baseProps} hideHostControls />);
+    expect(screen.queryByText('함께 정하기')).toBeNull();
+  });
 });

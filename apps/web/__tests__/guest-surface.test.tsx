@@ -77,8 +77,17 @@ vi.mock('@/components', () => ({
 
 // Heavy child islands — stub to assert mount + props without their internals.
 vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
-  MoaIsland: (props: { currentUserId: string; currentUserNickname: string }) => (
-    <div data-testid="moa-island" data-uid={props.currentUserId} data-nick={props.currentUserNickname} />
+  MoaIsland: (props: {
+    currentUserId: string;
+    currentUserNickname: string;
+    hideHostControls?: boolean;
+  }) => (
+    <div
+      data-testid="moa-island"
+      data-uid={props.currentUserId}
+      data-nick={props.currentUserNickname}
+      data-hide-host={String(props.hideHostControls ?? false)}
+    />
   ),
 }));
 
@@ -236,5 +245,27 @@ describe('GuestSurface — 재접속 신원 식별 (AUTH-08)', () => {
     expect(screen.queryByTestId('gate-sheet')).not.toBeInTheDocument();
     expect(mocks.signInAnonymously).not.toHaveBeenCalled();
     expect(mocks.joinMoa).not.toHaveBeenCalled();
+  });
+});
+
+describe('GuestSurface — 호스트 전용 컨트롤 숨김 (25-06 Gap 4 — Test E)', () => {
+  it('joined 게스트의 MoaIsland는 hideHostControls로 마운트된다 (places)', async () => {
+    mocks.mockUser.current = { id: 'u9' };
+    mocks.getMyTripRole.mockResolvedValue('member');
+
+    renderSurface('places');
+
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-hide-host', 'true');
+  });
+
+  it('joined 게스트의 MoaIsland는 hideHostControls로 마운트된다 (both)', async () => {
+    mocks.mockUser.current = { id: 'u9' };
+    mocks.getMyTripRole.mockResolvedValue('member');
+
+    renderSurface('both');
+
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-hide-host', 'true');
   });
 });
