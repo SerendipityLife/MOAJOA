@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: 25-03 완료 — 게스트 통합 화면 뼈대(guest-surface 세션 lifecycle·lazy 게이트·share_mode 분기 + nickname-gate-sheet + page.tsx 교체). web 150 그린·tsc 0·build PASS. 원격 0029 push human-action 게이트 여전 open
-last_updated: "2026-07-10T11:33:31Z"
-last_activity: 2026-07-10 -- Phase 25 executing (25-03 guest-surface 뼈대)
+stopped_at: 25-05 완료 — 익명-세션 스모크 확장(RLS/realtime fan-out/#N+1). web_share_smoke·realtime_events_smoke·place_seq_concurrency 게스트 익명 케이스 append, 전부 로컬 exit 0. 원격 0029 push human-action 게이트 여전 open
+last_updated: "2026-07-10T11:46:10Z"
+last_activity: 2026-07-10 -- Phase 25 executing (25-05 익명-세션 스모크 확장 SHARE-03/04 DB 실증)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 34
-  completed_plans: 32
-  percent: 94
+  completed_plans: 33
+  percent: 97
 ---
 
 # STATE: MOAJOA v2.1
@@ -33,9 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 3/5 plans (25-01 백엔드·25-02 컴포넌트 seam·25-03 guest-surface 뼈대 ✅ 로컬 완료)
-Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface(클라 세션 lifecycle·lazy 게이트 signInAnonymously→joinMoa→setStoredNickname·share_mode 3분기·재접속 MoaIsland 즉시 마운트) + nickname-gate-sheet(C1 BottomSheet) + page.tsx VoteIsland→GuestSurface 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·tsc 0·build PASS `ƒ /t/[slug]` 219kB) · 25-05(스모크 확장 미착수) → W3 = 25-04(linkIdentity).
-Next: **25-05 실행**(익명-세션 스모크 확장 — RLS/realtime fan-out/#N+1 SHARE-03/04 DB 실증) 또는 25-04(linkIdentity 승격). 병행 블로커(여전): **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 게스트 direct-read·realtime·dates/both 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 + verify-work 후 동작. 상세: `25-USER-SETUP.md`.
+Phase: 25 (Guest Unified Share) — 🔧 EXECUTING · 4/5 plans (25-01 백엔드·25-02 컴포넌트 seam·25-03 뼈대·25-05 스모크 ✅ 로컬 완료 · 25-04 linkIdentity 잔여)
+Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface + nickname-gate-sheet + page.tsx 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·build PASS 219kB) · **25-05 ✅[스모크]** 익명-세션 게스트 케이스 3종 append(fc52676·50afbfe, 전부 로컬 exit 0) → W3 = 25-04(linkIdentity).
+Next: **25-04 실행**(linkIdentity 승격 최소 심 — D-03, autonomous:false) 또는 **`/gsd-verify-work 25`**(Phase 25 UAT, 원격 0029 push 선행). 병행 블로커(여전): **원격 0029 push (human-action 게이트)** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. 라이브 게스트 direct-read·realtime·dates/both 투표·share_mode SSR 분기·D-12 own-only 삭제는 이 적용 + verify-work 후 동작. 상세: `25-USER-SETUP.md`.
+
+---
+
+**25-05 실행 완료 (2026-07-10, commits fc52676·50afbfe):** Phase 25 Wave 2 — 익명-세션(auth.uid, 비 device_token)이 SHARE-03/04를 만족함을 웹 UI 없이 DB/realtime 레이어에서 직접 실증. 기존 하네스 3종에 게스트 익명 케이스 append-only 확장(신규 파일 0). **Task 1(test fc52676):** `web_share_smoke.sh` (6) 게스트 RLS 프로브 — 호스트가 게스트-미가입 shared trip(both)에 장소·표 시드 → 게스트 direct-read가 places/votes/trip_messages 전부 **0건(RLS 차단, T-25-17)** → `join_moa`(both→editor) 후에만 `add_manual_place`(added_by=auth.uid)·votes(user_id 트리거 파생 201)·trip_messages(201)·`cast_date_vote_authed`(device_token=auth.uid 서버파생) 통과. **Task 2(test 50afbfe):** `realtime_events_smoke.mjs` 게스트 fan-out append(기존 service-role 시나리오 PASS 1/2 무수정 보존) — 익명 세션 join_moa 후 `add_manual_place` INSERT → 호스트 구독 moa 채널 fan-out **host=1** AND 비멤버 익명 **nonmember=0**(WALRUS 구독자 JWT RLS 재평가, T-25-15), 24-01 콜드스타트 2회 재시도 하드닝 재사용. `place_seq_concurrency.sh` (5) 게스트 케이스 — 기존 42개 trip 공유(both) → 익명 join 후 add_manual_place(seq 999 forge) → 서버 채번 **#43**(결번/중복 0, T-25-16). **deviation 1(Rule 3 — realtime mjs에 `supabase status -o env` 자동 로드 폴백 추가: 플랜 acceptance가 래퍼 없이 `node ...mjs` 직접 실행하므로. 래퍼 env 주입 경로 무회귀).** **검증:** 세 스모크 전부 로컬 Supabase(0029 적용·colima+docker) exit 0 + 래퍼 realtime_publication_smoke.sh exit 0. **AUTH-08/SHARE-03/04 Pending 유지** — 라이브 e2e(두 브라우저·실 slug)는 원격 0029 push + verify-work 몫(25-01/25-02/25-03 선례). 상세: `25-05-SUMMARY.md`.
 
 ---
 
