@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: 25-04 완료 — 계정 승격 최소 심(D-03). guest-promote linkIdentity({provider:'kakao'}) 진입점 + 초대 카드 하단 마운트(C6) + config.toml enable_manual_linking=true(로컬). web 153 그린·tsc 0·build PASS. Phase 25 코드 5/5 완료 — 원격 0029 push + Manual linking 토글(human-action 게이트 2종) open
-last_updated: "2026-07-10T20:56:00Z"
-last_activity: 2026-07-10 -- Phase 25 코드 완료 (25-04 linkIdentity 승격 심 — AUTH-08)
+stopped_at: Completed 25-06-PLAN.md (UAT gap closure — TP 제거·FAB 겹침·hideHostControls)
+last_updated: "2026-07-10T16:01:42.289Z"
+last_activity: 2026-07-10 -- Phase 25 planning complete
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 34
-  completed_plans: 34
+  total_plans: 29
+  completed_plans: 29
   percent: 100
 ---
 
@@ -33,9 +33,13 @@ progress:
 
 ## Current Position
 
-Phase: 25 (Guest Unified Share) — ✅ 코드 5/5 완료 (25-01 백엔드·25-02 컴포넌트 seam·25-03 뼈대·25-04 linkIdentity·25-05 스모크 — 원격 human-action 게이트 2종 잔여)
+Phase: 25 (Guest Unified Share) — gap closure 진행 (6/7 plans: 코드 5/5 + **25-06 ✅[UAT gap]** TP 제거·FAB 겹침·hideHostControls — 잔여 25-07 웹 날짜투표 full flow. 배포 게이트 2종은 UAT Test 1/2 pass)
 Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface + nickname-gate-sheet + page.tsx 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·build PASS 219kB) · **25-05 ✅[스모크]** 익명-세션 게스트 케이스 3종 append(fc52676·50afbfe, 전부 로컬 exit 0) → W3 = **25-04 ✅[linkIdentity 승격 심]** guest-promote linkIdentity 진입점 + 초대 카드 하단 마운트(C6) + config.toml manual_linking (d17905a·7533fdc·aaa20e3·9bb4b40, web 153 그린·build PASS 219kB).
-Next: **`/gsd-verify-work 25`**(Phase 25 UAT, 원격 게이트 선행). **잔여 human-action 게이트 2종:** (1) **원격 0029 push** — `git push origin main`(Supabase↔GitHub 자동 적용, 0028 선례) 또는 `supabase db push`. (2) **원격 Manual linking 토글 ON** — Supabase Dashboard → Authentication → Settings(linkIdentity 승격 전제, 미활성 시 클릭 시점 런타임 에러·fail-closed). 라이브 게스트 direct-read·realtime·dates/both 투표·share_mode SSR 분기·D-12 own-only 삭제·카카오 승격은 위 2종 적용 + verify-work 후 동작. 상세: `25-USER-SETUP.md`.
+Next: **25-07 실행**(웹 날짜투표 full flow — 마지막 UAT blocker) → 배포 → UAT Test 3 재검증(TP 하이재킹 소멸·찜 하트 도달·게스트 [함께 정하기] 부재). 배포 게이트 2종(원격 0029 push·Manual linking 토글)은 UAT Test 1/2에서 pass 확인됨. 상세: `25-USER-SETUP.md`·`25-HUMAN-UAT.md`.
+
+---
+
+**25-06 실행 완료 (2026-07-10, commits 292e553·59ab35d·28babe1·ce08562·1b91c95):** Phase 25 UAT gap closure — 게스트 찜(SC3)의 실제 원인이었던 클릭 도달 실패 2종 + polish 1건. **Task 1(fix 292e553):** layout.tsx에서 Travelpayouts emrldco 스크립트 전면 제거(사용자 잠금 결정) — Script 라인 + TP 주석 + 고아 next/script import 삭제(5줄 삭제만). link_switcher/popunder 클릭 납치(Kiwi.com 리다이렉트) 로드 경로 소멸(T-25G-01). Phase 20 인앱 딥링크 무의존·무접촉. **Task 2(TDD RED 59ab35d→GREEN 28babe1):** moa-island FAB `bottom-[136px]`→`bottom-[calc(30vh+16px)]`(place-sheet collapsed peek 30vh + 16px) + 렌더 조건 `sheetAnchor !== 'expanded'` 추가 — expanded 풀스크린 리스트 첫 행 하트 탭 타깃 겹침 해소. **Task 3(TDD RED ce08562→GREEN 1b91c95):** `MoaIslandProps.hideHostControls?: boolean`(미전달=호스트 무변경) — [함께 정하기] 오버레이만 조건부(ShareSheet 마운트는 shareOpen 불가라 그대로, surgical). guest-surface MoaIsland render 2곳(both/places)에 전달 — D-08 재사용 유지·병렬 컴포넌트 0·게이트/hydrate/poll fetch diff 0(2줄만). UI 숨김 + trips UPDATE RLS(owner-only) = 심층방어 2겹(T-25G-02). **검증:** web 153→**159 그린**(+6)·tsc 0·emrldco 전체 grep 0건·라이브 검증 통과분(찜 API 201/204·닉네임 게이트·재접속·D-12·SSR) 코드 경로 무변경·iOS/core/migrations 무접촉. **deviation 0 — plan 원안 그대로.** 잔여 UAT blocker(둘다/날짜 date_poll 생성)는 25-07 몫. 상세: `25-06-SUMMARY.md`.
 
 ---
 
@@ -400,6 +404,7 @@ Plan: 1 of 1
 | Phase 20 P05 | ~15min | 3 tasks | 6 files |
 | Phase 20 P06 | 12min | 3 tasks | 3 files |
 | Phase 20 P07 | ~15min | 3 tasks | 5 files |
+| Phase 25 P06 | 6 min | 3 tasks | 5 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 
@@ -413,8 +418,8 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-08T10:45:00Z
-**Stopped at:** 24-07 완료 — Phase 24 로컬 표면 전량 완료(7/7 plans). verify-work + 원격 db push 게이트만 잔여
+**Last session:** 2026-07-10T16:01:42.247Z
+**Stopped at:** Completed 25-06-PLAN.md (UAT gap closure — TP 제거·FAB 겹침·hideHostControls)
 **Resume file:** None
 
 다음 세션에서 이어할 때:
@@ -492,3 +497,4 @@ Plan: 1 of 1
 - [Phase 23]: 23-06: shareMoa는 shareTrip early-return 제거한 단일 UPDATE — 재호출 시 share_mode 갱신 허용 (Open Q3, 'dates' 숨김은 Phase 24 클라이언트 몫)
 - [Phase 23]: 23-06: joinMoa에 클라이언트 role 인자 없음 — role은 0025 join_moa RPC가 share_mode로 서버 결정 (T-23-16)
 - [Phase 23]: 23-06: rpc-only mock 패턴 — chain 불필요한 RPC 래퍼 테스트는 { rpc: vi.fn() }만으로 client mock
+- [Phase 25-06]: expanded 시트에서 FAB는 재배치가 아니라 숨김 — 풀스크린 리스트 위 어디든 하트와 겹치므로 숨김이 최소·안전 픽스
