@@ -1182,6 +1182,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      cast_date_vote_authed: {
+        Args: {
+          p_availability?: string
+          p_code: string
+          p_nickname: string
+          p_option_id?: string
+          p_vote_date?: string
+        }
+        Returns: undefined
+      }
       confirm_poll_date: {
         Args: { p_end_date: string; p_poll_id: string; p_start_date: string }
         Returns: undefined
@@ -1326,6 +1336,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
+      hide_place_as_member: { Args: { p_place_id: string }; Returns: undefined }
       join_moa: { Args: { p_share_slug: string }; Returns: string }
       join_shared_trip: { Args: { p_share_slug: string }; Returns: string }
       longtransactionsenabled: { Args: never; Returns: boolean }
@@ -1380,6 +1391,7 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      public_trip_poll: { Args: { p_slug: string }; Returns: Json }
       public_trip_view: { Args: { p_slug: string }; Returns: Json }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
