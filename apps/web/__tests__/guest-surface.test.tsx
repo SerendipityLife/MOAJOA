@@ -81,13 +81,17 @@ vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
     currentUserId: string;
     currentUserNickname: string;
     hideHostControls?: boolean;
+    pollSlot?: React.ReactNode;
   }) => (
     <div
       data-testid="moa-island"
       data-uid={props.currentUserId}
       data-nick={props.currentUserNickname}
       data-hide-host={String(props.hideHostControls ?? false)}
-    />
+      data-has-poll-slot={String(props.pollSlot != null)}
+    >
+      {props.pollSlot}
+    </div>
   ),
 }));
 
@@ -267,5 +271,35 @@ describe('GuestSurface — 호스트 전용 컨트롤 숨김 (25-06 Gap 4 — Te
 
     await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
     expect(screen.getByTestId('moa-island')).toHaveAttribute('data-hide-host', 'true');
+  });
+});
+
+describe('GuestSurface — both 모드 join 후 날짜투표 섹션 유지 (25-07 D-09/C2)', () => {
+  it('Test F: both + joined → MoaIsland에 pollSlot 전달 (날짜 정하기 헤딩·poll 임베드가 island 내부)', async () => {
+    mocks.mockUser.current = { id: 'u9' };
+    mocks.getMyTripRole.mockResolvedValue('member');
+
+    renderSurface('both');
+
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    // pollMeta hydrate 후 pollSlot 전달.
+    await waitFor(() =>
+      expect(screen.getByTestId('moa-island')).toHaveAttribute('data-has-poll-slot', 'true'),
+    );
+    const island = screen.getByTestId('moa-island');
+    expect(island).toContainElement(screen.getByText('날짜 정하기'));
+    expect(island).toContainElement(screen.getByTestId('poll-island'));
+    // 중복 렌더 금지: joined 시 sibling poll 섹션 제거 — poll-island는 1개만.
+    expect(screen.getAllByTestId('poll-island')).toHaveLength(1);
+  });
+
+  it('Test G(회귀): places + joined → pollSlot 미전달(undefined)', async () => {
+    mocks.mockUser.current = { id: 'u9' };
+    mocks.getMyTripRole.mockResolvedValue('member');
+
+    renderSurface('places');
+
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-has-poll-slot', 'false');
   });
 });
