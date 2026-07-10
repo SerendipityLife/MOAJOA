@@ -55,11 +55,16 @@ export async function addManualPlace(
   return data as Place;
 }
 
+/**
+ * Soft-delete a place via the `hide_place_as_member` DEFINER RPC (0029) — the
+ * single soft-delete path (D-12 DB-airtight, T-25-08). The RPC enforces own-only:
+ * host (am_trip_owner) can hide any place, everyone else (guest-editors included)
+ * only their own (added_by = auth.uid), else it raises. This replaces the raw
+ * `places UPDATE hidden_at` (gated only by can_edit_trip, which let a guest-editor
+ * hide another member's place — Pitfall 5).
+ */
 export async function hidePlace(client: MoajoaSupabaseClient, id: string): Promise<void> {
-  const { error } = await client
-    .from('places')
-    .update({ hidden_at: new Date().toISOString() })
-    .eq('id', id);
+  const { error } = await client.rpc('hide_place_as_member', { p_place_id: id });
   if (error) throw error;
 }
 

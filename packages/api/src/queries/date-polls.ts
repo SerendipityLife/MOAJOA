@@ -42,6 +42,47 @@ export async function pollByCode(client: MoajoaSupabaseClient, code: string): Pr
   return data;
 }
 
+/**
+ * Read slug→poll (poll_code/mode/status/options) via the anon-grant DEFINER RPC
+ * (0029). Lets a non-member guest embed the dates/both date-vote surface without
+ * a date_polls direct-read (can_read_trip) grant — DEFINER returns shaped
+ * metadata only, no voter PII (T-25-01). Mirrors pollByCode's house contract.
+ */
+export async function getPublicTripPoll(
+  client: MoajoaSupabaseClient,
+  slug: string,
+): Promise<unknown> {
+  const { data, error } = await client.rpc('public_trip_poll', { p_slug: slug });
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Cast a date vote with a SERVER-DERIVED device_token (0029 cast_date_vote_authed).
+ * Unlike castDateVote, no device_token is sent — the RPC uses auth.uid()::text so
+ * an anon session can't spoof another voter's token (T-25-02). Grant is
+ * authenticated-only (a session is required even for anon guests).
+ */
+export async function castDateVoteAuthed(
+  client: MoajoaSupabaseClient,
+  input: {
+    code: string;
+    nickname: string;
+    optionId?: string;
+    voteDate?: string;
+    availability: 'available' | 'unavailable';
+  },
+): Promise<void> {
+  const { error } = await client.rpc('cast_date_vote_authed', {
+    p_code: input.code,
+    p_nickname: input.nickname,
+    p_option_id: input.optionId ?? null,
+    p_vote_date: input.voteDate ?? null,
+    p_availability: input.availability,
+  });
+  if (error) throw error;
+}
+
 /** Read the shaped tally (per-option | per-date counts + nicknames, NO device_token). */
 export async function getPollTally(client: MoajoaSupabaseClient, code: string): Promise<unknown> {
   const { data, error } = await client.rpc('poll_vote_tally', { p_code: code });

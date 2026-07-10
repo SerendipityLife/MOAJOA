@@ -23,7 +23,10 @@ export interface BoardWithContents {
 
 /** Public board view — what an unauthenticated visitor sees via share link. */
 export interface PublicBoardView {
-  board: Pick<Trip, 'id' | 'title' | 'description' | 'city_code' | 'cover_image_url' | 'updated_at'>;
+  board: Pick<
+    Trip,
+    'id' | 'title' | 'description' | 'city_code' | 'cover_image_url' | 'updated_at' | 'share_mode'
+  >;
   links: Pick<
     Link,
     'id' | 'source_kind' | 'url' | 'title' | 'thumbnail_url' | 'author_name' | 'summary_ko'
