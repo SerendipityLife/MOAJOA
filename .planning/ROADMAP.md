@@ -274,7 +274,14 @@ Plans:
   3. 게스트가 share_mode에 따라 찜·장소/링크 추가·날짜 투표에 참여할 수 있다 (dates 모드 날짜투표는 기존 익명 poll RPC 임베드, device_token := auth.uid)
   4. 게스트의 찜·장소 추가가 호스트 화면에 실시간 반영되고, 게스트가 추가한 장소는 이어지는 순번(#N+1)을 받는다
 
-**Plans**: TBD
+**Plans**: 5 plans (3 waves)
+
+Plans:
+- [ ] 25-01-PLAN.md — [BLOCKING] 백엔드: 0029(public_trip_poll anon RPC + public_trip_view share_mode + cast_date_vote_authed 서버파생) + api 래퍼·core 타입 + 로컬 적용·typegen·스모크 (Wave 1, autonomous:false)
+- [ ] 25-02-PLAN.md — 컴포넌트 seam 파라미터화: poll-vote-island(deviceToken/nickname/onRequireMember) + place-list own-only 삭제 게이트(D-12) (Wave 1)
+- [ ] 25-03-PLAN.md — 게스트 통합 화면 뼈대: nickname-gate-sheet + guest-surface(세션 lifecycle·lazy 게이트·share_mode 분기·MoaIsland/Poll 재사용) + page.tsx 교체 (Wave 2)
+- [ ] 25-05-PLAN.md — 익명-세션 스모크 확장(RLS/realtime fan-out/#N+1 순번 — SHARE-03/04 DB 실증) (Wave 2)
+- [ ] 25-04-PLAN.md — 계정 승격 최소 심(D-03): guest-promote linkIdentity 진입점 + config.toml manual_linking (Wave 3, autonomous:false)
 
 **UI hint**: yes
 
@@ -317,6 +324,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 23. Web-First Foundation | 7/7 | ✅ Complete (verifier passed 12/12) | 2026-07-08 |
 | 24. Host Flow (온보딩·지도탭) | 5/7 | 🔧 Executing (Wave 2 완료) | - |
-| 25. Guest Unified Share | 0/TBD | Not started | - |
+| 25. Guest Unified Share | 0/5 | 📋 Planned (5 plans / 3 waves) | - |
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 0/TBD | Not started | - |
