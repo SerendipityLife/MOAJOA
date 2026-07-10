@@ -25,9 +25,10 @@ files_reviewed_list:
   - apps/web/__tests__/guest-mocks.ts
 findings:
   critical: 0
-  warning: 1
+  warning: 0
   info: 4
-  total: 5
+  total: 4
+  resolved: [WR-01]
 status: issues_found
 ---
 
@@ -54,7 +55,14 @@ status: issues_found
 
 ## Warnings
 
-### WR-01: anti-spoof RPC `cast_date_vote_authed`가 게스트 투표 경로에 미배선 — spoof 차단 목표 미충족
+### WR-01: anti-spoof RPC `cast_date_vote_authed`가 게스트 투표 경로에 미배선 — spoof 차단 목표 미충족 ✅ RESOLVED (commit 931c7f7)
+
+> **해결됨:** `poll-vote-island.tsx` 투표 핸들러를 분기 — 게스트 임베드 경로(`onRequireMember` 존재)는
+> `castDateVoteAuthed`(서버파생 device_token=auth.uid, 스푸핑 차단)로, 레거시 `/poll`(onRequireMember 부재)은
+> 기존 `castDateVote` 유지(D-10 무회귀). guest-surface는 항상 onRequireMember를 전달하므로 첫-투표·재접속
+> 게스트 전부 authed RPC 경유. 회귀 테스트(poll-vote-island.test — 게스트 경로 castDateVoteAuthed 호출·
+> castDateVote 미호출·payload에 deviceToken 부재). web 5/5·tsc 0.
+
 
 **File:** `apps/web/app/poll/[code]/_components/poll-vote-island.tsx:258`, `apps/web/app/t/[slug]/_components/guest-surface.tsx:68`
 
