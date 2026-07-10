@@ -330,14 +330,15 @@ export function MoaIsland({
           />
         </PlaceSheet>
 
-        {/* FAB [+] — collapsed 시트 상단에서 16px 위, z-order 시트보다 위(UI-SPEC §FAB).
-            add/share 시트가 열리면 시트 위로 뜨지 않게 숨긴다. */}
-        {!addOpen && !shareOpen && (
+        {/* FAB [+] — collapsed 시트(peek 30vh, place-sheet) 상단에서 16px 위(UI-SPEC 토큰:
+            FAB↔시트 오프셋 16px = spacing 4). expanded 시트는 리스트 풀스크린이라 첫 행
+            하트 탭 타깃과 겹침 → 숨긴다(25-06 gap fix). add/share 시트가 열릴 때도 숨김. */}
+        {!addOpen && !shareOpen && sheetAnchor !== 'expanded' && (
           <button
             type="button"
             aria-label="장소 추가"
             onClick={() => setAddOpen(true)}
-            className="absolute bottom-[136px] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
+            className="absolute bottom-[calc(30vh+16px)] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
           >
             <Plus className="size-6" aria-hidden />
           </button>
