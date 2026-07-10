@@ -72,6 +72,12 @@ blocked: 0
   severity: info
   test: 3
 
+- truth: "Gap closure 배포 후 라이브 재검증 (Claude, 2026-07-10 push d502839 + 0030 원격 적용)"
+  status: passed
+  reason: "게스트 쪽 픽스 3종 라이브 확인 — (1) TP 스크립트 소멸: 콘솔 [tp] 로그 0·emrldco 요청 0, (2) [함께 정하기] 게스트 미노출: 우상단 뒤로 버튼만, (3) FAB가 시트 위로 이동해 하트 완전 노출 + 하트 탭 → ♡0→♥1 즉시 토글(하이재킹·가로채기 소멸). 재접속 동일신원 재확인. 잔여: 호스트 측 '둘다 정하기' 재공유→후보 날짜 세팅→게스트 날짜투표 렌더(호스트 카카오 로그인 필요), 크로스-브라우저 실시간, Test 4 카카오 승격."
+  severity: info
+  test: 3
+
 - truth: "게스트에게 호스트 전용 컨트롤이 노출되지 않는다 (polish)"
   status: failed
   reason: "GuestSurface가 호스트 MoaIsland를 그대로 재사용(D-08 無수정)해 게스트에게도 [함께 정하기](호스트 공유 버튼)가 보임. 기능 블로커는 아니나 게스트 UX 혼란."
