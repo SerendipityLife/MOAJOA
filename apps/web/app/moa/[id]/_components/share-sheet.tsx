@@ -214,8 +214,40 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
     }
   }
 
+  // 스크롤 영역 밖 고정 CTA — 달력이 길어도, iOS 툴바가 겹쳐도 항상 노출.
+  const footer =
+    step === 'mode' ? (
+      <Button className="w-full" disabled={!selected || sharing} onClick={() => void handleShare()}>
+        링크 복사하기
+      </Button>
+    ) : (
+      <div className="flex flex-col gap-2">
+        <Button
+          className="w-full"
+          disabled={!draftRange?.from}
+          onClick={() => void handleAddOption()}
+        >
+          {draftRange?.from
+            ? `${rangeLabel(
+                toLocalYmd(draftRange.from),
+                toLocalYmd(draftRange.to ?? draftRange.from),
+              )} 후보로 추가`
+            : '달력에서 기간을 선택하세요'}
+        </Button>
+        {/* 빈 poll 공유 방지 넛지 — 후보 0개면 완료 비활성. */}
+        <Button
+          className="w-full"
+          variant="outline"
+          disabled={options.length === 0}
+          onClick={onClose}
+        >
+          완료
+        </Button>
+      </div>
+    );
+
   return (
-    <BottomSheet open={open} onClose={onClose} title="함께 정하기">
+    <BottomSheet open={open} onClose={onClose} title="함께 정하기" footer={footer}>
       {step === 'mode' ? (
         <div className="flex flex-col gap-3 pt-1">
           <div className="flex flex-col gap-2">
@@ -239,16 +271,6 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
             })}
           </div>
 
-          {/* sticky CTA — 시트 스크롤/iOS 툴바에 CTA가 잘리지 않게 항상 하단 고정. */}
-          <div className="sticky bottom-0 -mx-6 bg-white px-6 pb-[env(safe-area-inset-bottom)] pt-2">
-            <Button
-              className="w-full"
-              disabled={!selected || sharing}
-              onClick={() => void handleShare()}
-            >
-              링크 복사하기
-            </Button>
-          </div>
         </div>
       ) : (
         /* 후보 날짜 step (25-07 Gap 1) — 게스트가 투표할 날짜 윈도우 세팅. */
@@ -291,31 +313,6 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
               disabled={{ before: new Date() }}
               classNames={DAY_PICKER_CLASS_NAMES}
             />
-          </div>
-          {/* sticky CTA 묶음 — 달력이 길어도 추가·완료가 항상 보이게 하단 고정. */}
-          <div className="sticky bottom-0 -mx-6 flex flex-col gap-2 bg-white px-6 pb-[env(safe-area-inset-bottom)] pt-2">
-            <Button
-              className="w-full"
-              disabled={!draftRange?.from}
-              onClick={() => void handleAddOption()}
-            >
-              {draftRange?.from
-                ? `${rangeLabel(
-                    toLocalYmd(draftRange.from),
-                    toLocalYmd(draftRange.to ?? draftRange.from),
-                  )} 후보로 추가`
-                : '달력에서 기간을 선택하세요'}
-            </Button>
-
-            {/* 빈 poll 공유 방지 넛지 — 후보 0개면 완료 비활성. */}
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={options.length === 0}
-              onClick={onClose}
-            >
-              완료
-            </Button>
           </div>
         </div>
       )}

@@ -15,9 +15,14 @@ interface BottomSheetProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  /**
+   * 스크롤 영역 밖 고정 푸터(CTA 등). 내용이 길어도 시트 하단에 항상 노출 —
+   * iOS 툴바/스크롤에 CTA가 잘리는 문제의 구조적 해법.
+   */
+  footer?: React.ReactNode;
 }
 
-export function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, title, children, footer }: BottomSheetProps) {
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -58,7 +63,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
 
       <div
         className={cn(
-          'relative flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-3xl bg-white',
+          'relative flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-3xl bg-white',
           'transition-transform duration-[250ms] ease-out',
           shown ? 'translate-y-0' : 'translate-y-full',
         )}
@@ -78,6 +83,12 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         )}
 
         <div className="overflow-y-auto px-6 pb-8">{children}</div>
+
+        {footer && (
+          <div className="shrink-0 border-t border-neutral-100 px-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

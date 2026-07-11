@@ -45,11 +45,19 @@ vi.mock('@/components', () => ({
     open,
     title,
     children,
+    footer,
   }: {
     open: boolean;
     title?: string;
     children: React.ReactNode;
-  }) => (open ? <div data-testid="sheet" aria-label={title}>{children}</div> : null),
+    footer?: React.ReactNode;
+  }) =>
+    open ? (
+      <div data-testid="sheet" aria-label={title}>
+        {children}
+        {footer}
+      </div>
+    ) : null,
   Button: ({
     children,
     ...props
