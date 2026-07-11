@@ -65,13 +65,17 @@ function toLocalYmd(d: Date): string {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
-/** step-dates.tsx DAY_PICKER_CLASS_NAMES 미러 (A-8: default style.css 미사용). */
+/** step-dates.tsx DAY_PICKER_CLASS_NAMES 미러 (A-8: default style.css 미사용).
+ *  nav는 headless라 static 배치 시 좌측에 뭉침 → 캡션 행 양옆에 absolute 배치. */
 const DAY_PICKER_CLASS_NAMES = {
-  root: 'w-full',
+  root: 'relative w-full',
   months: 'flex justify-center',
   month: 'w-full',
   month_caption: 'flex justify-center py-2 text-base font-semibold text-neutral-900',
-  nav: 'flex items-center justify-between px-1',
+  nav: 'absolute inset-x-1 top-1 z-10 flex items-center justify-between',
+  button_previous: 'grid size-9 place-items-center rounded-full hover:bg-neutral-100',
+  button_next: 'grid size-9 place-items-center rounded-full hover:bg-neutral-100',
+  chevron: 'size-5 fill-neutral-600',
   month_grid: 'w-full border-collapse',
   weekdays: 'flex',
   weekday: 'flex-1 text-center text-xs font-normal text-neutral-500',
@@ -235,9 +239,16 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
             })}
           </div>
 
-          <Button className="w-full" disabled={!selected || sharing} onClick={() => void handleShare()}>
-            링크 복사하기
-          </Button>
+          {/* sticky CTA — 시트 스크롤/iOS 툴바에 CTA가 잘리지 않게 항상 하단 고정. */}
+          <div className="sticky bottom-0 -mx-6 bg-white px-6 pb-[env(safe-area-inset-bottom)] pt-2">
+            <Button
+              className="w-full"
+              disabled={!selected || sharing}
+              onClick={() => void handleShare()}
+            >
+              링크 복사하기
+            </Button>
+          </div>
         </div>
       ) : (
         /* 후보 날짜 step (25-07 Gap 1) — 게스트가 투표할 날짜 윈도우 세팅. */
@@ -281,23 +292,31 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
               classNames={DAY_PICKER_CLASS_NAMES}
             />
           </div>
-          <Button
-            className="w-full"
-            disabled={!draftRange?.from}
-            onClick={() => void handleAddOption()}
-          >
-            {draftRange?.from
-              ? `${rangeLabel(
-                  toLocalYmd(draftRange.from),
-                  toLocalYmd(draftRange.to ?? draftRange.from),
-                )} 후보로 추가`
-              : '달력에서 기간을 선택하세요'}
-          </Button>
+          {/* sticky CTA 묶음 — 달력이 길어도 추가·완료가 항상 보이게 하단 고정. */}
+          <div className="sticky bottom-0 -mx-6 flex flex-col gap-2 bg-white px-6 pb-[env(safe-area-inset-bottom)] pt-2">
+            <Button
+              className="w-full"
+              disabled={!draftRange?.from}
+              onClick={() => void handleAddOption()}
+            >
+              {draftRange?.from
+                ? `${rangeLabel(
+                    toLocalYmd(draftRange.from),
+                    toLocalYmd(draftRange.to ?? draftRange.from),
+                  )} 후보로 추가`
+                : '달력에서 기간을 선택하세요'}
+            </Button>
 
-          {/* 빈 poll 공유 방지 넛지 — 후보 0개면 완료 비활성. */}
-          <Button className="w-full" disabled={options.length === 0} onClick={onClose}>
-            완료
-          </Button>
+            {/* 빈 poll 공유 방지 넛지 — 후보 0개면 완료 비활성. */}
+            <Button
+              className="w-full"
+              variant="outline"
+              disabled={options.length === 0}
+              onClick={onClose}
+            >
+              완료
+            </Button>
+          </div>
         </div>
       )}
     </BottomSheet>

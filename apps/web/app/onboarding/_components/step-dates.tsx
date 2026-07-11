@@ -42,12 +42,17 @@ function ModeCard({
   );
 }
 
+// nav는 headless라 static 배치 시 좌측에 뭉침 → 캡션 행 양옆에 absolute 배치
+// (share-sheet DAY_PICKER_CLASS_NAMES와 미러 유지).
 const DAY_PICKER_CLASS_NAMES = {
-  root: 'w-full',
+  root: 'relative w-full',
   months: 'flex justify-center',
   month: 'w-full',
   month_caption: 'flex justify-center py-2 text-base font-semibold text-neutral-900',
-  nav: 'flex items-center justify-between px-1',
+  nav: 'absolute inset-x-1 top-1 z-10 flex items-center justify-between',
+  button_previous: 'grid size-9 place-items-center rounded-full hover:bg-neutral-100',
+  button_next: 'grid size-9 place-items-center rounded-full hover:bg-neutral-100',
+  chevron: 'size-5 fill-neutral-600',
   month_grid: 'w-full border-collapse',
   weekdays: 'flex',
   weekday: 'flex-1 text-center text-xs font-normal text-neutral-500',
