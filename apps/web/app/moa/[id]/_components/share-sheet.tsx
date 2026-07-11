@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { DayPicker, type DateRange } from 'react-day-picker';
+import { ko } from 'react-day-picker/locale';
 import type { ShareModeType, Trip } from '@moajoa/core';
 import {
   addPollOption,
@@ -56,6 +58,34 @@ function rangeLabel(start: string, end: string): string {
   return start === end ? fmt(start) : `${fmt(start)}–${fmt(end)}`;
 }
 
+/** 로컬 YYYY-MM-DD — toISOString의 UTC 시프트 회피 (onboarding build-draft 미러). */
+function toLocalYmd(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** step-dates.tsx DAY_PICKER_CLASS_NAMES 미러 (A-8: default style.css 미사용). */
+const DAY_PICKER_CLASS_NAMES = {
+  root: 'w-full',
+  months: 'flex justify-center',
+  month: 'w-full',
+  month_caption: 'flex justify-center py-2 text-base font-semibold text-neutral-900',
+  nav: 'flex items-center justify-between px-1',
+  month_grid: 'w-full border-collapse',
+  weekdays: 'flex',
+  weekday: 'flex-1 text-center text-xs font-normal text-neutral-500',
+  week: 'flex',
+  day: 'flex-1 p-0.5',
+  day_button:
+    'mx-auto grid size-11 place-items-center rounded-full text-sm text-neutral-900 hover:bg-neutral-100',
+  today: 'font-semibold text-brand-600',
+  disabled: 'text-neutral-300 pointer-events-none',
+  range_start: '[&_button]:bg-brand-600 [&_button]:text-white [&_button]:rounded-full',
+  range_end: '[&_button]:bg-brand-600 [&_button]:text-white [&_button]:rounded-full',
+  range_middle: '[&_button]:bg-brand-100 [&_button]:text-brand-700 [&_button]:rounded-none',
+} as const;
+
 export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
   const { toast } = useToast();
   const [selected, setSelected] = useState<ShareModeType | null>(presetOf(trip));
@@ -63,8 +93,8 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
   const [step, setStep] = useState<'mode' | 'options'>('mode');
   const [poll, setPoll] = useState<{ id: string; poll_code: string | null } | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
-  const [draftStart, setDraftStart] = useState('');
-  const [draftEnd, setDraftEnd] = useState('');
+  // 한 달력에서 시작→종료 연속 탭(같은 날 재탭=당일치기) — 추가 후 초기화돼 연달아 등록.
+  const [draftRange, setDraftRange] = useState<DateRange | undefined>(undefined);
   // WR-01: 더블탭이 createDatePoll을 레이스시키면 중복 poll → getPollByTrip 영구 에러.
   const [sharing, setSharing] = useState(false);
 
@@ -152,19 +182,20 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
 
   async function handleAddOption() {
     if (!poll) return;
-    // 가드: 둘 다 입력 + 종료 >= 시작 (YYYY-MM-DD 문자열 비교로 충분).
-    if (!draftStart || !draftEnd || draftEnd < draftStart) {
+    const from = draftRange?.from;
+    if (!from) {
       toast('날짜를 확인해 주세요', { variant: 'error' });
       return;
     }
+    // 종료 미탭 = 당일치기(from만).
+    const to = draftRange?.to ?? from;
     try {
       const row = await addPollOption(getSupabaseBrowser(), poll.id, {
-        startDate: draftStart,
-        endDate: draftEnd,
+        startDate: toLocalYmd(from),
+        endDate: toLocalYmd(to),
       });
       setOptions((prev) => [...prev, row]);
-      setDraftStart('');
-      setDraftEnd('');
+      setDraftRange(undefined); // 다음 후보를 같은 달력에서 바로 이어서 선택
     } catch {
       toast('저장하지 못했어요. 다시 시도해 주세요', { variant: 'error' });
     }
@@ -239,25 +270,29 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
             </ul>
           )}
 
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              aria-label="시작일"
-              value={draftStart}
-              onChange={(e) => setDraftStart(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900"
+          {/* 한 달력 range 픽커 — 시작 탭 → 종료 탭 (같은 날 재탭=당일치기). */}
+          <div className="rounded-xl border border-neutral-200 p-3">
+            <DayPicker
+              mode="range"
+              locale={ko}
+              selected={draftRange}
+              onSelect={setDraftRange}
+              disabled={{ before: new Date() }}
+              classNames={DAY_PICKER_CLASS_NAMES}
             />
-            <input
-              type="date"
-              aria-label="종료일"
-              value={draftEnd}
-              onChange={(e) => setDraftEnd(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900"
-            />
-            <Button size="sm" onClick={() => void handleAddOption()}>
-              추가
-            </Button>
           </div>
+          <Button
+            className="w-full"
+            disabled={!draftRange?.from}
+            onClick={() => void handleAddOption()}
+          >
+            {draftRange?.from
+              ? `${rangeLabel(
+                  toLocalYmd(draftRange.from),
+                  toLocalYmd(draftRange.to ?? draftRange.from),
+                )} 후보로 추가`
+              : '달력에서 기간을 선택하세요'}
+          </Button>
 
           {/* 빈 poll 공유 방지 넛지 — 후보 0개면 완료 비활성. */}
           <Button className="w-full" disabled={options.length === 0} onClick={onClose}>

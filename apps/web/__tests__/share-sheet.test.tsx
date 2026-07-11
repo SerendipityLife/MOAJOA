@@ -60,6 +60,26 @@ vi.mock('@/components', () => ({
   useToast: () => ({ toast }),
 }));
 
+// react-day-picker — 단위 대상은 share-sheet 로직(range→YYYY-MM-DD 변환·추가 흐름)이라
+// 달력 자체는 스텁: 클릭 시 6/14–6/16 range를 onSelect로 전달.
+vi.mock('react-day-picker', () => ({
+  DayPicker: (props: { onSelect?: (r: unknown) => void }) => (
+    <button
+      type="button"
+      data-testid="daypicker-stub"
+      onClick={() =>
+        props.onSelect?.({
+          from: new Date(2026, 5, 14), // 로컬 2026-06-14
+          to: new Date(2026, 5, 16),
+        })
+      }
+    >
+      달력
+    </button>
+  ),
+}));
+vi.mock('react-day-picker/locale', () => ({ ko: {} }));
+
 // Import AFTER mocks.
 import { ShareSheet } from '@/app/moa/[id]/_components/share-sheet';
 
@@ -222,9 +242,9 @@ describe('ShareSheet — 후보 날짜 세팅 step (25-07 Gap 1)', () => {
     fireEvent.click(screen.getByText('링크 복사하기'));
     await waitFor(() => expect(screen.getByText('후보 날짜')).toBeTruthy());
 
-    fireEvent.change(screen.getByLabelText('시작일'), { target: { value: '2026-06-14' } });
-    fireEvent.change(screen.getByLabelText('종료일'), { target: { value: '2026-06-16' } });
-    fireEvent.click(screen.getByText('추가'));
+    // 한 달력에서 range 선택(스텁: 6/14–6/16) → '후보로 추가' CTA.
+    fireEvent.click(screen.getByTestId('daypicker-stub'));
+    fireEvent.click(screen.getByText('6/14–6/16 후보로 추가'));
 
     await waitFor(() =>
       expect(addPollOption).toHaveBeenCalledWith({}, 'poll-1', {
