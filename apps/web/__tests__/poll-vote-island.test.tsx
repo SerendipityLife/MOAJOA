@@ -198,4 +198,16 @@ describe('PollVoteIsland', () => {
     expect(authedPayload).toMatchObject({ nickname: '게스트' });
     expect(authedPayload).not.toHaveProperty('deviceToken');
   });
+
+  it('embedded: 한마디(PollChat) 숨김 — 모아 채팅 탭과 중복 제거. 부재 시 유지(D-10 /poll 무회귀)', () => {
+    // 레거시(/poll, embedded 부재): 한마디 렌더.
+    const { unmount } = render(<PollVoteIsland {...baseProps} nickname="민지" />);
+    expect(screen.getByText('한마디')).toBeInTheDocument();
+    unmount();
+
+    // 임베드: 한마디 미렌더 (presence 스트립도 같은 가드 — viewers 0이라 여기선 한마디로 검증).
+    render(<PollVoteIsland {...baseProps} nickname="민지" embedded />);
+    expect(screen.getAllByText('가능').length).toBeGreaterThan(0); // 투표 UI는 그대로
+    expect(screen.queryByText('한마디')).toBeNull();
+  });
 });

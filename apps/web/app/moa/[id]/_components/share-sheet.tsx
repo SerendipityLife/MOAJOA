@@ -69,11 +69,31 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
   const [sharing, setSharing] = useState(false);
 
   // 재열림 시 현재 share_mode로 프리셋 재동기화(D-19) + step 리셋.
+  // 이미 dates/both로 공유했는데 후보 날짜가 0개면(빈 poll — 게스트가 투표 불가)
+  // 바로 후보 단계로 점프해 미완성 상태를 복구시킨다 (UAT: 단계를 못 보고 닫은 케이스).
   useEffect(() => {
-    if (open) {
-      setSelected(presetOf(trip));
-      setStep('mode');
-    }
+    if (!open) return;
+    setSelected(presetOf(trip));
+    setStep('mode');
+    if (trip.share_mode !== 'dates' && trip.share_mode !== 'both') return;
+    let active = true;
+    (async () => {
+      try {
+        const client = getSupabaseBrowser();
+        const p = await getPollByTrip(client, trip.id);
+        if (!active || !p) return;
+        const opts = await getPollOptions(client, p.id);
+        if (!active || opts.length > 0) return;
+        setPoll({ id: p.id, poll_code: p.poll_code });
+        setOptions(opts);
+        setStep('options');
+      } catch {
+        /* 조회 실패는 조용히 — mode step 그대로 */
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [open, trip.share_mode, trip.start_date]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // D-17: 날짜 확정 모아는 'dates' 카드 미렌더(disabled 아님).

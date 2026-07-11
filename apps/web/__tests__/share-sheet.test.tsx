@@ -251,4 +251,40 @@ describe('ShareSheet — 후보 날짜 세팅 step (25-07 Gap 1)', () => {
     expect(addPollOption).not.toHaveBeenCalled();
     expect(screen.queryByText('후보 날짜')).toBeNull();
   });
+
+  it('재열기 복구: both 공유됨 + 후보 0개 poll → 열자마자 후보 날짜 step 점프', async () => {
+    getPollByTrip.mockResolvedValue({ id: 'poll-1', poll_code: 'code1' });
+    getPollOptions.mockResolvedValue([]);
+
+    render(
+      <ShareSheet
+        trip={makeTrip({ share_mode: 'both', visibility: 'shared' })}
+        open
+        onClose={vi.fn()}
+      />,
+    );
+
+    // 미완성 poll(후보 0) 감지 → 모드 카드 대신 후보 단계로.
+    await waitFor(() => expect(screen.getByText('후보 날짜')).toBeTruthy());
+    expect(createDatePoll).not.toHaveBeenCalled(); // 조회만, 생성 아님
+  });
+
+  it('재열기: both 공유됨 + 후보 있는 poll → 모드 step 유지(점프 없음)', async () => {
+    getPollByTrip.mockResolvedValue({ id: 'poll-1', poll_code: 'code1' });
+    getPollOptions.mockResolvedValue([
+      { id: 'opt-1', start_date: '2026-06-14', end_date: '2026-06-16' },
+    ]);
+
+    render(
+      <ShareSheet
+        trip={makeTrip({ share_mode: 'both', visibility: 'shared' })}
+        open
+        onClose={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(getPollOptions).toHaveBeenCalled());
+    expect(screen.queryByText('후보 날짜')).toBeNull(); // 모드 카드 화면 유지
+    expect(screen.getByText('둘다 정하기')).toBeTruthy();
+  });
 });

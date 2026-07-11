@@ -96,8 +96,13 @@ vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
 }));
 
 vi.mock('@/app/poll/[code]/_components/poll-vote-island', () => ({
-  PollVoteIsland: (props: { code: string; deviceToken?: string }) => (
-    <div data-testid="poll-island" data-code={props.code} data-token={props.deviceToken ?? ''} />
+  PollVoteIsland: (props: { code: string; deviceToken?: string; embedded?: boolean }) => (
+    <div
+      data-testid="poll-island"
+      data-code={props.code}
+      data-token={props.deviceToken ?? ''}
+      data-embedded={String(props.embedded ?? false)}
+    />
   ),
 }));
 
@@ -122,7 +127,8 @@ function resetMocks() {
     poll_code: 'CODE1',
     mode: 'range',
     status: 'open',
-    options: [],
+    // 후보 1개 — 후보 0개는 poll-empty 안내로 분기하므로(전용 테스트) 기본은 투표 가능 상태.
+    options: [{ id: 'opt-1', start_date: '2026-06-14', end_date: '2026-06-16' }],
   });
   mocks.getVoteCounts.mockReset();
   mocks.getVoteCounts.mockResolvedValue({});
@@ -189,6 +195,26 @@ describe('GuestSurface — share_mode 구성 분기 (SHARE-02)', () => {
     renderSurface('both');
     await waitFor(() => expect(screen.getByTestId('poll-island')).toBeInTheDocument());
     expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument();
+  });
+
+  it('후보 0개 poll → PollVoteIsland 대신 "정하는 중" 안내 (빈 집계·한마디 노이즈 제거)', async () => {
+    mocks.getPublicTripPoll.mockResolvedValue({
+      poll_code: 'CODE1',
+      mode: 'range',
+      status: 'open',
+      options: [],
+    });
+    renderSurface('both');
+    await waitFor(() => expect(screen.getByTestId('poll-empty')).toBeInTheDocument());
+    expect(screen.getByText('호스트가 후보 날짜를 정하는 중이에요')).toBeInTheDocument();
+    expect(screen.queryByTestId('poll-island')).not.toBeInTheDocument();
+  });
+
+  it('both 임베드는 embedded=true, dates 전용 화면은 embedded=false (한마디·presence 유지)', async () => {
+    renderSurface('both');
+    await waitFor(() =>
+      expect(screen.getByTestId('poll-island')).toHaveAttribute('data-embedded', 'true'),
+    );
   });
 });
 

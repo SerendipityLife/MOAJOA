@@ -271,18 +271,32 @@ export function GuestSurface({
     <NicknameGateSheet open={gateOpen} onConfirm={handleConfirmNickname} onClose={handleCloseGate} />
   );
 
+  // 후보 0개면 투표할 대상이 없다 — poll 위젯(집계·presence) 대신 안내만.
+  // 호스트가 공유 시트에서 후보를 추가하면 새로고침 시 투표 UI로 바뀐다.
   const pollSection =
     pollMeta != null ? (
-      <PollVoteIsland
-        code={pollMeta.poll_code}
-        tripId={tripId}
-        mode={pollMeta.mode}
-        status={pollMeta.status}
-        options={pollMeta.options}
-        deviceToken={userId ?? undefined}
-        nickname={nickname || undefined}
-        onRequireMember={requireMember}
-      />
+      pollMeta.options.length === 0 ? (
+        <div
+          data-testid="poll-empty"
+          className="mt-4 rounded-lg bg-neutral-50 px-4 py-3 text-sm font-normal text-neutral-500"
+        >
+          호스트가 후보 날짜를 정하는 중이에요
+        </div>
+      ) : (
+        <PollVoteIsland
+          code={pollMeta.poll_code}
+          tripId={tripId}
+          mode={pollMeta.mode}
+          status={pollMeta.status}
+          options={pollMeta.options}
+          deviceToken={userId ?? undefined}
+          nickname={nickname || undefined}
+          onRequireMember={requireMember}
+          // both: 모아 [채팅] 탭·presence가 있으므로 poll 자체 한마디·보는중은 중복 → 숨김.
+          // dates: poll이 화면 전부라 한마디·presence가 유일한 소셜 표면 → 유지.
+          embedded={shareMode === 'both'}
+        />
+      )
     ) : null;
 
   // read-only 비멤버 뷰 — seed props + anon 집계만(Pitfall 1). 찜 탭 시 게이트.

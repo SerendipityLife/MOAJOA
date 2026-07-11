@@ -65,6 +65,12 @@ interface Props {
    * inline 닉네임 게이트가 동작한다.
    */
   onRequireMember?: () => Promise<{ uid: string; nickname: string }>;
+  /**
+   * /t 임베드 seam: 모아 화면 안에 포함될 때 poll 자체 채팅(한마디)과 presence
+   * 스트립("지금 N명 보는 중")을 숨긴다 — 모아의 [채팅] 탭·presence와 중복되므로.
+   * 부재 시 기존 /poll 레거시 그대로(D-10).
+   */
+  embedded?: boolean;
 }
 
 /** `6/14–16` style label for a candidate range (single-day → just the day). */
@@ -99,6 +105,7 @@ export function PollVoteIsland({
   deviceToken,
   nickname: nicknameProp,
   onRequireMember,
+  embedded,
 }: Props) {
   const { toast } = useToast();
 
@@ -361,7 +368,9 @@ export function PollVoteIsland({
           </p>
         </div>
 
-        <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
+        {!embedded && (
+          <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
+        )}
       </section>
     );
   }
@@ -410,8 +419,9 @@ export function PollVoteIsland({
 
   return (
     <section className="mt-8">
-      {/* Presence strip — "지금 N명 보는 중" (hidden at 0, singular at 1). */}
-      {viewers > 0 && (
+      {/* Presence strip — "지금 N명 보는 중" (hidden at 0, singular at 1).
+          임베드에선 숨김 — 모아 채팅 탭의 presence와 중복. */}
+      {!embedded && viewers > 0 && (
         <div className="mb-4 flex items-center gap-1.5 text-xs text-neutral-500">
           <span className="size-1.5 rounded-full bg-brand-500" aria-hidden />
           <span>{viewers <= 1 ? '지금 보는 중' : `지금 ${viewers}명 보는 중`}</span>
@@ -547,7 +557,9 @@ export function PollVoteIsland({
         )}
       </div>
 
-      <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
+      {!embedded && (
+        <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
+      )}
     </section>
   );
 }
