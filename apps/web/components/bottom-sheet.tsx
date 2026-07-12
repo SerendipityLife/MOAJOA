@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/cn';
 
 /**
@@ -44,8 +45,13 @@ export function BottomSheet({ open, onClose, title, children, footer }: BottomSh
   }, [open, onClose]);
 
   if (!open) return null;
+  // SSR 가드 — open은 클라이언트 상호작용으로만 true가 되지만 방어적으로.
+  if (typeof document === 'undefined') return null;
 
-  return (
+  // Portal to body — island의 fixed 래퍼 안에 마운트되면 iOS WebKit이
+  // (fixed = 항상 스태킹 컨텍스트) 모달 z-50을 그 컨텍스트에 가둬 탭바(z-40)가
+  // 모달 위에 그려진다. body 직속 렌더로 조상 트랩/컨텍스트에서 탈출.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center"
       role="dialog"
@@ -90,6 +96,7 @@ export function BottomSheet({ open, onClose, title, children, footer }: BottomSh
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
