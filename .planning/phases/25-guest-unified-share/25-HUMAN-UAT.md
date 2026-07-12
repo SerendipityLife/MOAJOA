@@ -85,3 +85,9 @@ blocked: 0
   test: 3
   artifacts: [apps/web/app/t/[slug]/_components/guest-surface.tsx:336 MoaIsland 재사용]
   missing: [게스트 컨텍스트에서 호스트 전용 컨트롤 숨김]
+
+- truth: "UAT round 3 — 시트 모달 스태킹 수정 + 게스트 날짜투표 라이브 실증 (Claude, 2026-07-12)"
+  status: passed
+  reason: "근본원인: 시트가 island fixed 래퍼 내부 마운트 → iOS WebKit(fixed=항상 스태킹 컨텍스트)이 모달 z-50을 가둬 탭바(z-40)가 모달 위에 그려짐(iPhone CTA 잘림/미노출). BottomSheet를 createPortal(document.body)로 이전(47c375c) + CTA footer 슬롯(7c15db7) + 달력 한 달력 range 픽커(0c0c236) + nav 균형(871c008). Claude 라이브 검증(390px): 추가하기 시트 CTA 완전 노출·모달이 탭바 덮음·게스트 날짜투표 cast_date_vote_authed 204→tally 반영(클로드게스트 가능 1). 잔여: 호스트 iPhone 재확인(공유시트 footer)·하트(사용자 기기)·카카오 승격."
+  severity: info
+  test: 3
