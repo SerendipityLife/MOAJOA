@@ -1,11 +1,12 @@
 ---
-status: pending
+status: partial
 phase: 27-hardening-wrapup
 source: [27-01-PLAN.md, 27-02-PLAN.md, 25-HUMAN-UAT.md, 28-VERIFICATION.md, supabase-js-upgrade-presence.md]
 started: 2026-07-13T16:05:00Z
-updated: 2026-07-13T16:05:00Z
+updated: 2026-07-13T16:20:00Z
 ---
 
+> **SC-3: PENDING** — 항목 3(게스트 B) pass, 항목 2(호스트 A)·4(A 복귀 실시간) human/2인극 세션 대기. 세 항목 전부 pass 시 SC-3 충족.
 > **SC-3 판정 기준:** 항목 2·3·4 전부 pass = SC-3(2인극 UAT) 충족. 나머지 항목은 D-07 합류분(Phase 25 잔여·Phase 28 라이브·presence·SEC-01·revalidate) — SC-3 판정과 독립 기록.
 > **태그:** `[Claude]` = 브라우저 두 컨텍스트(일반+시크릿)로 자동 실증 가능 / `[human]` = 카카오 실로그인·iPhone 실기기·유료 API 트리거 필요 (D-08 하이브리드).
 > **배포 전제 (27-03 Task 1 완료):** main push eea5cc3 동기화 · extract-youtube EF v140→v141 ACTIVE.

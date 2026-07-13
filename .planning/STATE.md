@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: "Phase 27 wave 2 완료 — 배포(EF v141·main push eea5cc3) + 27-HUMAN-UAT.md(11항목) + 401 실증. 다음: wave 3 통합 UAT(27-04)"
-last_updated: "2026-07-13T16:06:31.461Z"
+stopped_at: "Phase 27 wave 3 — 27-04 UAT round 1 완료(항목 3 게스트 흐름 pass·NAME-01 라이브 확인·항목 1 게이트 partial). human checkpoint 대기: 카카오 로그인·iPhone·유료 AI 일정 2건·2인극 실시간/presence. SC-3 PENDING. 코드·배포 완료"
+last_updated: "2026-07-13T16:17:22.997Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 7
@@ -434,9 +434,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-13T16:06:31.454Z
-**Stopped at:** Phase 27 wave 2 완료 — 배포(EF v141·main push eea5cc3) + 27-HUMAN-UAT.md(11항목) + 401 실증. 다음: wave 3 통합 UAT(27-04)
-**Resume file:** None
+**Last session:** 2026-07-13T16:17:22.991Z
+**Stopped at:** Phase 27 wave 3 — 27-04 UAT round 1 완료(항목 3 게스트 흐름 pass·NAME-01 라이브 확인·항목 1 게이트 partial). human checkpoint 대기: 카카오 로그인·iPhone·유료 AI 일정 2건·2인극 실시간/presence. SC-3 PENDING. 코드·배포 완료
+**Resume file:** .planning/phases/27-hardening-wrapup/27-HUMAN-UAT.md
 **Previous stop:** Phase 25 UAT round 3 완료 — BottomSheet body portal(47c375c)로 iOS WebKit 스태킹 트랩 해소, 게스트 날짜투표 라이브 실증(cast_date_vote_authed 204→tally 클로드게스트 1). 잔여 UAT는 Phase 27 통합 UAT로 합류(27-CONTEXT.md D-07). 참고: `.planning/phases/25-guest-unified-share/25-HUMAN-UAT.md`
 
 다음 세션에서 이어할 때:
