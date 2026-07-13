@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
   if (callerErr || !caller?.user) {
     return jsonError(401, 'unauthorized');
   }
+  const callerId = caller.user.id;
 
   let body: unknown;
   try {
@@ -105,6 +106,36 @@ Deno.serve(async (req) => {
   if (!KNOWN_SOURCES.has(link.source_kind)) {
     return jsonError(400, `cannot auto-extract source_kind=${link.source_kind}`);
   }
+
+  // ---- Membership gate (SEC-01, Security V4) ------------------------------
+  // Must happen BEFORE the claim UPDATE (first DB write) and any paid call —
+  // a non-member must not be able to flip extraction_status to 'processing'.
+  // Mirror the can_edit_trip helper (0016 L313-336) with a service-role query,
+  // since auth.uid() is null under the service role: owner OR an accepted
+  // owner/editor membership. The trip row is also reused downstream for the
+  // LLM city hint, the Places language choice, and the revalidate webhook.
+  const { data: trip, error: tripErr } = await admin
+    .from('trips')
+    .select('owner_id, city_code, share_slug, visibility')
+    .eq('id', link.trip_id)
+    .maybeSingle();
+  if (tripErr) return jsonError(500, tripErr.message);
+  if (!trip) return jsonError(404, 'trip not found');
+
+  let canEdit = trip.owner_id === callerId;
+  if (!canEdit) {
+    const { data: membership } = await admin
+      .from('memberships')
+      .select('role, accepted_at')
+      .eq('trip_id', link.trip_id)
+      .eq('user_id', callerId)
+      .maybeSingle();
+    canEdit = !!membership &&
+      membership.accepted_at !== null &&
+      (membership.role === 'owner' || membership.role === 'editor');
+  }
+  if (!canEdit) return jsonError(403, 'forbidden');
+
   // ---- Claim the link (atomic) -------------------------------------------
   // Single conditional UPDATE replaces the old check-then-set, which raced:
   // two concurrent triggers could both pass the check and double-spend on
@@ -139,14 +170,6 @@ Deno.serve(async (req) => {
     // link's real state to clients. 409 matches the ready case above.
     return jsonError(409, 'already processing');
   }
-
-  // Trip row feeds the LLM city hint, the Places language choice, and the
-  // revalidate webhook at the end (single fetch, reused).
-  const { data: trip } = await admin
-    .from('trips')
-    .select('city_code, share_slug, visibility')
-    .eq('id', link.trip_id)
-    .maybeSingle();
 
   // Declared outside try so the catch handler can persist whatever metadata
   // was fetched before the failure (failed rows show a title, not a bare URL).
