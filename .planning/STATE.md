@@ -394,7 +394,9 @@ Plan: 1 of 1
 ### Blockers
 
 - ~~**[28-01 BLOCKING human-action] `0031_trip_day_count.sql` 원격 미적용.**~~ ✅ **해소 2026-07-13** — 사용자 승인 후 `supabase db push` 실행, `migration list`가 `local:0031 / remote:0031` 확인. 프로덕션 `trips.day_count` 존재(nullable INT, CHECK 1..30, 기존 행 전부 null → 무영향).
-- **[28-06 대기] `generate-plan` EF 원격 재배포.** 28-03이 EF 코드(day_count fallback + D-21 pinned_placements)를 고쳐도 `supabase functions deploy generate-plan` 없이는 라이브에 반영되지 않는다 — 코드 머지 ≠ 프로덕션. 28-06 Task 4가 이 게이트를 소유.
+- ~~**[28-06 대기] `generate-plan` EF 원격 재배포.**~~ ✅ **해소 2026-07-13** — 사용자 승인 후 `supabase functions deploy generate-plan --use-api` 실행, `functions list`가 **version 2 / ACTIVE** 확인. 배포 소스에 day_count select·pinned_placements·enforcePinnedPlacements 전부 포함.
+  - ⚠ **환경 함정 기록:** 기본 `functions deploy`는 colima에서 실패한다 (`failed to open eszip: ENOENT ... /var/folders/...`). colima는 `$HOME`만 VM에 마운트하는데 supabase CLI가 macOS 임시 디렉터리에 번들 출력을 쓰기 때문. **`--use-api`로 우회**(서버측 번들링, docker 불필요).
+- **[28 라이브 UAT 잔여]** 유료 API 왕복이 필요한 스모크 2종은 미실행: (1) 날짜 미정 + 기간 pill 2박3일 → **Day 탭 3개**(1개면 EF 구버전), (2) 수동 배치 → 재생성 → **그 Day 유지**(D-21). `/gsd-verify-work 28`에서 확인.
 - (그 외 없음 — Apple Developer 계정은 가입됨 $99/yr, Share Extension/EAS 게이트 해소됨)
 
 ### Quick Tasks Completed
