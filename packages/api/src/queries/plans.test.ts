@@ -151,8 +151,8 @@ describe('moveToPool — delete the plan_item (unplaced = no row, D-13)', () => 
   });
 });
 
-describe('moveToDay — insert a plan_item (placed), is_anchor false', () => {
-  it("inserts into plan_items with the day/order and is_anchor false", async () => {
+describe('moveToDay — insert a plan_item (placed), is_anchor TRUE (D-21 Day 고정)', () => {
+  it("inserts into plan_items with the day/order and is_anchor true", async () => {
     const { client, from, chain } = makeClient({
       result: { data: { id: ITEM, plan_id: PLAN, place_id: PLACE }, error: null },
     });
@@ -163,14 +163,32 @@ describe('moveToDay — insert a plan_item (placed), is_anchor false', () => {
       sort_order: 3,
     });
     expect(from).toHaveBeenCalledWith('plan_items');
+    // is_anchor:true is the marker that makes a manual placement survive a
+    // regenerate: the client collects anchored items into pinned_placements and
+    // the EF force-holds them on their day (D-21).
     expect(chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         plan_id: PLAN,
         place_id: PLACE,
         day_index: 0,
         sort_order: 3,
-        is_anchor: false,
+        is_anchor: true,
       }),
+    );
+  });
+
+  it('still inserts leg_travel_seconds null ("이동시간 —" until the next regenerate)', async () => {
+    const { client, chain } = makeClient({
+      result: { data: { id: ITEM, plan_id: PLAN, place_id: PLACE }, error: null },
+    });
+    await moveToDay(client, {
+      plan_id: PLAN,
+      place_id: PLACE,
+      day_index: 1,
+      sort_order: 0,
+    });
+    expect(chain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ leg_travel_seconds: null }),
     );
   });
 

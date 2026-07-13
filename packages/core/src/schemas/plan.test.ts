@@ -12,12 +12,13 @@ import { GeneratePlanRequestSchema, PlanSchema, PlanItemSchema } from './plan';
 const UUID = '11111111-1111-4111-8111-111111111111';
 
 describe('GeneratePlanRequestSchema — EF request defaults + reject cases (D-08/D-10/D-11)', () => {
-  it('applies defaults: travel_mode=transit, anchor/removed arrays empty', () => {
+  it('applies defaults: travel_mode=transit, anchor/removed/pinned arrays empty', () => {
     expect(GeneratePlanRequestSchema.parse({ trip_id: UUID })).toEqual({
       trip_id: UUID,
       travel_mode: 'transit',
       anchor_place_ids: [],
       removed_place_ids: [],
+      pinned_placements: [],
     });
   });
 
@@ -33,6 +34,7 @@ describe('GeneratePlanRequestSchema — EF request defaults + reject cases (D-08
       travel_mode: 'walk',
       anchor_place_ids: [UUID],
       removed_place_ids: [],
+      pinned_placements: [],
     });
   });
 
@@ -50,6 +52,48 @@ describe('GeneratePlanRequestSchema — EF request defaults + reject cases (D-08
     expect(() =>
       GeneratePlanRequestSchema.parse({ anchor_place_ids: ['bad'], trip_id: UUID }),
     ).toThrow();
+  });
+});
+
+describe('GeneratePlanRequestSchema.pinned_placements — 수동 배치 Day 고정 힌트 (D-21)', () => {
+  it('defaults to an empty array when omitted (기존 호출부 무회귀)', () => {
+    expect(GeneratePlanRequestSchema.parse({ trip_id: UUID }).pinned_placements).toEqual([]);
+  });
+
+  it('parses a { place_id, day_index } pair', () => {
+    const parsed = GeneratePlanRequestSchema.parse({
+      trip_id: UUID,
+      pinned_placements: [{ place_id: UUID, day_index: 2 }],
+    });
+    expect(parsed.pinned_placements).toEqual([{ place_id: UUID, day_index: 2 }]);
+  });
+
+  it('rejects a negative day_index', () => {
+    expect(() =>
+      GeneratePlanRequestSchema.parse({
+        trip_id: UUID,
+        pinned_placements: [{ place_id: UUID, day_index: -1 }],
+      }),
+    ).toThrow();
+  });
+
+  it('rejects a non-uuid place_id', () => {
+    expect(() =>
+      GeneratePlanRequestSchema.parse({
+        trip_id: UUID,
+        pinned_placements: [{ place_id: 'not-a-uuid', day_index: 0 }],
+      }),
+    ).toThrow();
+  });
+
+  it('has NO Day-count field — Day 수는 서버가 trips 행에서 읽는다 (T-28-08)', () => {
+    const parsed = GeneratePlanRequestSchema.parse({
+      trip_id: UUID,
+      // deliberately spoofed: an attacker inflating the Day count to drive up
+      // Claude/Routes spend must not be able to smuggle it through the body.
+      day_count: 30,
+    } as Record<string, unknown>);
+    expect(parsed).not.toHaveProperty('day_count');
   });
 });
 
