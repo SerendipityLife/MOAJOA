@@ -207,7 +207,7 @@ Plans:
 - [x] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가 (7/7 plans — gap closure 25-06·25-07 완료 2026-07-10, 라이브 UAT Test 3/4 재검증은 배포 후)
 - [x] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩 (4/4 plans, 라이브는 0028 main 배포 후)
 - [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
-- [ ] **Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)** — `/onboarding` 4단계를 레퍼런스 룩으로 개편 + 기간 pill(`trips.day_count` 0031) + 기존 generate-plan EF를 웹 결과 화면(Day 탭·타임라인)으로 연결
+- [x] **Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)** — `/onboarding` 4단계를 레퍼런스 룩으로 개편 + 기간 pill(`trips.day_count` 0031) + 기존 generate-plan EF를 웹 결과 화면(Day 탭·타임라인)으로 연결 (completed 2026-07-13)
 
 ### Phase Details
 
@@ -355,7 +355,7 @@ Plans:
 5. 장소 검색으로 장소를 추가할 때 몇 일차에 넣을지 물어보고, '모르겠다'면 AI 배치로 넘어간다 — 동작 규칙이 가이드 카피로 사용자에게 보인다
 6. `apps/ios` 및 기존 마이그레이션 파일 diff 0
 
-**Plans**: 5/6 plans executed
+**Plans**: 6/6 plans complete
 
 Plans:
 **Wave 1**
@@ -374,7 +374,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 28-06-PLAN.md — island 배선: RSC seed · 번호 핀 지도 · 생성 트리거 · 검색 추가 Day 분기 (SC-4·SC-5·SC-6)
+- [x] 28-06-PLAN.md — island 배선: RSC seed · 번호 핀 지도 · 생성 트리거 · 검색 추가 Day 분기 (SC-4·SC-5·SC-6)
 
 Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-06
 
@@ -389,4 +389,4 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 | 25. Guest Unified Share | 5/5 | ✅ Complete 2026-07-10 (25-01 백엔드·25-02 seam·25-03 뼈대·25-04 linkIdentity·25-05 스모크 — 코드 완료, 원격 0029 push + Manual linking 토글 human-action 잔여) | 2026-07-10 |
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 0/TBD | Not started | - |
-| 28. Add-Trip Redesign | 5/6 | In Progress|  |
+| 28. Add-Trip Redesign | 6/6 | Complete   | 2026-07-13 |
