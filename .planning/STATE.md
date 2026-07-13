@@ -399,6 +399,7 @@ Plan: 1 of 1
 | 260612-p0p1 | 도그푸딩 P0/P1: OG 이미지 500(Satori woff2+flex) + 로그인→/boards 루프(?next=+안내 페이지) — 라이브 검증 | 2026-06-12 | 08cb410 | v2-backlog #4·#6 해소 |
 | 260612-place | 장소 상세 UX: 통합 리스트(해설+펼침+Google지도/영상점프+inline ❤️) + 0013 view 필드 — 라이브 검증 | 2026-06-12 | 1131357 | 사용자 결정: 투표는 인라인 |
 | 260713-hrg | 웹 모아 상세 탭바에 마이 탭 + 계정 시트 추가, bottom-nav dev-tools 게이트 해제 | 2026-07-13 | aa15cb6 | [260713-hrg-bottom-nav-dev-tools](./quick/260713-hrg-bottom-nav-dev-tools/) |
+| 260713-iii | PlaceSheet 제스처 소유권 분리 — 본문=스크롤 전용(overscroll-contain), 핸들·헤더=드래그 전용. 지도·시트 동시 이동 해소 | 2026-07-13 | f006549 | [260713-iii-moa-placesheet](./quick/260713-iii-moa-placesheet/) |
 | Phase 17-trip-foundation-ia P01 | ~7 min | 3 tasks | 11 files |
 | Phase 18 P03 | 6min | 2 tasks | 6 files |
 | Phase 19 P01 | 6min | 2 tasks | 2 files |
