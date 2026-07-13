@@ -320,7 +320,13 @@ Plans:
   2. 유저 대면 카피 전반(랜딩·로그인·공유화면·리스트·OG·poll 푸터)이 보드→"모아", 가고싶어→"찜"으로 표기되고, 관련 테스트 카피 단언이 같은 커밋에서 갱신된다 (코드 식별자는 유지)
   3. 2인극 UAT가 전체 통과한다 — 브라우저 A(호스트): 로그인→온보딩(여행지+미정+함께)→유튜브 링크→#1..#N 핀→함께 정하기 '둘다'→복사 / 브라우저 B(시크릿): 링크 열기→즉시 렌더→찜 시 닉네임 게이트→날짜투표+장소추가(#N+1)→채팅 "#3 어때?" / A 복귀: 실시간 반영·찜순 정렬·순번 불변
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 27-01-PLAN.md — SEC-01 추출 멤버십 게이트 (스모크 RED→GREEN, claim 앞 배치) + revalidate shared 갭 fix
+- [ ] 27-02-PLAN.md — NAME-01 가고싶어→찜 카피 스윕 + WORKSTREAMS·ARCHITECTURE 역할 기술 v2.1 갱신
+- [ ] 27-03-PLAN.md — 배포(main push + EF --use-api) + 27-HUMAN-UAT.md 통합 체크리스트 + 라이브 게이트 무비용 실증
+- [ ] 27-04-PLAN.md — 통합 UAT 하이브리드 실행 (Claude 자동분 → human checkpoint → 최종 판정 + presence todo 처리)
 
 ### Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)
 
