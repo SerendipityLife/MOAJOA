@@ -1,10 +1,11 @@
 ---
 phase: 28
 slug: 28-add-trip-redesign-ai
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-13
+reviewed_at: 2026-07-13
 ---
 
 # Phase 28 — UI Design Contract (Add-Trip Redesign: 트리플 룩 위저드 + 웹 AI 일정)
@@ -191,8 +192,8 @@ Phase 24가 선언한 스케일의 부분집합 — 4의 배수만:
 ┌─────────────────────────────────┐
 │ ←(44px)                    1/4  │  h-14, px-4. 좌: chevron(step>1). 우: 카운터
 │                                 │
-│              🌏                 │  48px 아래, 이모지 40px(text-[40px] 아님 →
-│                                 │  span text-4xl 36px 허용? → 아래 계약 참조)
+│              🌏                 │  48px 아래, 이모지 text-4xl(36px) — A-6 계약
+│                                 │
 │        어디로 떠나요?            │  24/600 중앙, leading-tight, 최대 2줄
 │     도시 1곳을 선택해 주세요      │  14/400 neutral-500 중앙
 │                                 │  ↕ 32px
@@ -389,14 +390,14 @@ Phase 24 예산을 **초과하지 않는다**:
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: FLAG (non-blocking) — 18px `text-lg`·Chip weight 500이 pre-existing 예외로 잔존. 이 phase 신규 코드에서는 4사이즈/2웨이트 계약 유지
+- [x] Dimension 5 Spacing: FLAG (non-blocking) — 드래그 핸들 `h-1.5`(6px)만 4의 배수 밖. pre-existing·무수정
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-07-13 (gsd-ui-checker — 6/6, FLAG 2건 non-blocking)
 
 ---
 
