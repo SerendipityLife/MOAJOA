@@ -480,6 +480,10 @@ export function MoaIsland({
     places.map((p) => [p.id, { seqNo: p.seq_no, name: p.name_local }]),
   );
 
+  // Day 수 — PlanSection의 파생식과 동일해야 두 시트의 Day pill 수가 어긋나지 않는다.
+  const maxDayIndex = (plan?.plan_items ?? []).reduce((m, it) => Math.max(m, it.day_index), -1);
+  const planDayTotal = Math.max(dayCount ?? 0, maxDayIndex + 1, 1);
+
   // ── Day ↔ 지도 (D-16) ──
   // 플랜이 있으면 지도는 **선택 Day의 핀만** 번호로 보여주고 그 영역으로 재프레이밍한다.
   // 플랜이 없으면 셋 다 미전달 → 기존 전체 뷰·추가자 색 핀·"증가 시 fitBounds" 경로 그대로.
@@ -625,11 +629,17 @@ export function MoaIsland({
           </button>
         )}
 
+        {/* 검색 추가 Day 배치 분기(D-19/D-20). Day 수는 PlanSection과 같은 파생식을 쓴다
+            (day_count가 stale하거나 null인 레거시 플랜에서 items가 있는 Day를 숨기지 않기 위해
+            max()로 감싼다 — 28-05와 동일). */}
         <AddSheet
           tripId={trip.id}
           open={addOpen}
           onClose={() => setAddOpen(false)}
           onAdded={() => void reconcile()}
+          planExists={plan !== null}
+          dayCount={planDayTotal}
+          onPlacePickedForDay={(placeId, dayIndex) => void onMovePlaceToDay(placeId, dayIndex)}
         />
 
         <ShareSheet
