@@ -282,4 +282,79 @@ describe('OnboardingPage — step 2 기간 (D-06/D-07)', () => {
     fireEvent.click(screen.getByText('나중에 정할게요'));
     expect((screen.getByText('다음') as HTMLButtonElement).disabled).toBe(false);
   });
+
+  it('an over-limit range keeps the CTA disabled → INSERT가 발생하지 않는다 (2차 방어)', () => {
+    render(<OnboardingPage />);
+    advanceToDateStep();
+    fireEvent.click(screen.getByText('정확한 날짜 고르기'));
+
+    fireEvent.click(screen.getByText('mock-pick-35day'));
+    expect((screen.getByText('다음') as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(screen.getByText('mock-pick-3day'));
+    expect((screen.getByText('다음') as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
+// --- Phase 28 위저드 셸 리스타일 (D-01~D-05, D-22) --------------------------
+
+describe('OnboardingPage — 위저드 셸 (D-02/D-03/D-05)', () => {
+  it('renders an N/4 counter with a screen-reader label, not a 4-dot indicator (D-02)', () => {
+    render(<OnboardingPage />);
+    const counter = screen.getByLabelText('4단계 중 1단계');
+    expect(counter.textContent).toBe('1/4');
+
+    advanceToDateStep();
+    expect(screen.getByLabelText('4단계 중 2단계').textContent).toBe('2/4');
+  });
+
+  it('shows the back chevron from step 2 onward, never on step 1 (D-02)', () => {
+    render(<OnboardingPage />);
+    expect(screen.queryByLabelText('뒤로')).toBeNull();
+
+    advanceToDateStep();
+    expect(screen.getByLabelText('뒤로')).toBeTruthy();
+  });
+
+  it('renders the centred title ensemble — icon + title + subtitle (D-03)', () => {
+    render(<OnboardingPage />);
+    expect(screen.getByText('어디로 떠나요?')).toBeTruthy();
+    expect(screen.getByText('도시 1곳을 선택해 주세요')).toBeTruthy();
+
+    advanceToDateStep();
+    expect(screen.getByText('언제 가요?')).toBeTruthy();
+    expect(screen.getByText('원하는 기간을 선택해 주세요')).toBeTruthy();
+  });
+
+  it('keeps 다음 disabled on step 1 until a city is picked (D-05 비활성 CTA)', () => {
+    render(<OnboardingPage />);
+    const next = screen.getByText('다음') as HTMLButtonElement;
+    expect(next.disabled).toBe(true);
+
+    fireEvent.click(screen.getByText('도쿄'));
+    expect((screen.getByText('다음') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('renders city/companion choices as toggle pills with aria-pressed (D-04)', () => {
+    render(<OnboardingPage />);
+    expect(screen.getByText('도쿄').getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(screen.getByText('도쿄'));
+    expect(screen.getByText('도쿄').getAttribute('aria-pressed')).toBe('true');
+
+    fireEvent.click(screen.getByText('다음'));
+    fireEvent.click(screen.getByText('나중에 정할게요'));
+    fireEvent.click(screen.getByText('다음'));
+    expect(screen.getByText('친구').getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(screen.getByText('친구'));
+    expect(screen.getByText('친구').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('step 4 shows the D-22 subcopy (AI 일정 약속)', () => {
+    render(<OnboardingPage />);
+    advanceToSeedStep();
+    expect(screen.getByText('봐둔 곳이 있나요?')).toBeTruthy();
+    expect(
+      screen.getByText('유튜브·블로그 링크를 넣으면 영상 속 장소를 찾아 AI가 일정을 짜드려요'),
+    ).toBeTruthy();
+  });
 });
