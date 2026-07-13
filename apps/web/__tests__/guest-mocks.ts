@@ -21,6 +21,7 @@ export function makeTrip(overrides: Partial<Trip> = {}): Trip {
     cover_image_url: null,
     share_mode: 'places',
     companion: null,
+    day_count: null,
     created_at: '2026-07-01T00:00:00Z',
     updated_at: '2026-07-01T00:00:00Z',
     ...overrides,

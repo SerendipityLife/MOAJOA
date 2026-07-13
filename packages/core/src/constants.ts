@@ -20,6 +20,20 @@ export const Limits = {
   TripDescMax: 280,
   /** Max characters in a vote/comment note. */
   VoteNoteMax: 140,
+  /**
+   * Max Day count for a trip's itinerary (trips.day_count, migration 0031).
+   *
+   * SINGLE SOURCE — this number is duplicated by necessity in exactly two other
+   * places and they MUST stay equal:
+   *   1. `supabase/migrations/0031_trip_day_count.sql` CHECK literal (SQL cannot
+   *      import constants — its header comment records the binding)
+   *   2. the 위저드 캘린더 range max 제약 (Phase 28), which imports THIS constant
+   *
+   * Drift is not a cosmetic bug: a legit long trip would pass Zod, reach INSERT,
+   * and get rejected by the DB CHECK — 모아 생성이 통째로 실패한다. The cap also
+   * bounds Claude prompt + Routes leg cost per plan (T-28-02).
+   */
+  TripDayCountMax: 30,
 } as const;
 
 /**
