@@ -2,16 +2,19 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
+current_phase: 25
+current_phase_name: Guest Unified Share
 status: executing
-stopped_at: Completed 25-07-PLAN.md (웹 날짜투표 full flow — Phase 25 gap closure 완료, 7/7)
-last_updated: "2026-07-10T16:17:16.000Z"
-last_activity: 2026-07-10 -- Phase 25 gap closure complete (25-07)
+stopped_at: Phase 28 context gathered
+last_updated: "2026-07-13T06:29:54.082Z"
+last_activity: 2026-07-13
+last_activity_desc: "Completed quick task 260713-hrg: 웹 모아 상세 탭바에 마이 탭 + 계정 시트 추가, bottom-nav dev-tools 게이트 해제"
 progress:
-  total_phases: 7
-  completed_phases: 6
-  total_plans: 29
-  completed_plans: 29
-  percent: 100
+  total_phases: 6
+  completed_phases: 5
+  total_plans: 26
+  completed_plans: 26
+  percent: 83
 ---
 
 # STATE: MOAJOA v2.1
@@ -425,9 +428,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-10T16:01:42.247Z
-**Stopped at:** Completed 25-06-PLAN.md (UAT gap closure — TP 제거·FAB 겹침·hideHostControls)
-**Resume file:** None
+**Last session:** 2026-07-13T06:29:54.069Z
+**Stopped at:** Phase 28 context gathered
+**Resume file:** .planning/phases/28-add-trip-redesign-ai/28-CONTEXT.md
 
 다음 세션에서 이어할 때:
 
