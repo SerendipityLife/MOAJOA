@@ -839,6 +839,7 @@ export type Database = {
           companion: string | null
           cover_image_url: string | null
           created_at: string
+          day_count: number | null
           description: string | null
           end_date: string | null
           id: string
@@ -857,6 +858,7 @@ export type Database = {
           companion?: string | null
           cover_image_url?: string | null
           created_at?: string
+          day_count?: number | null
           description?: string | null
           end_date?: string | null
           id?: string
@@ -875,6 +877,7 @@ export type Database = {
           companion?: string | null
           cover_image_url?: string | null
           created_at?: string
+          day_count?: number | null
           description?: string | null
           end_date?: string | null
           id?: string
