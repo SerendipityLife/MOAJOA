@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: "Phase 29 context gathered — 채팅 단일화(D-01 dates=MoaIsland·D-02 한마디 코드 완전 제거·D-03 /poll 유지+통일채팅 탑재). presence·승격게이트는 Claude 재량. 다음: plan-phase 29 (UI hint yes → ui-phase 선행 가능)"
-last_updated: "2026-07-13T23:26:38.871Z"
+stopped_at: Phase 29 UI-SPEC approved
+last_updated: "2026-07-13T23:37:56.157Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 7
@@ -434,9 +434,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-13T23:26:38.863Z
-**Stopped at:** Phase 29 context gathered — 채팅 단일화(D-01 dates=MoaIsland·D-02 한마디 코드 완전 제거·D-03 /poll 유지+통일채팅 탑재). presence·승격게이트는 Claude 재량. 다음: plan-phase 29 (UI hint yes → ui-phase 선행 가능)
-**Resume file:** .planning/phases/29-chat-unification/29-CONTEXT.md
+**Last session:** 2026-07-13T23:37:56.151Z
+**Stopped at:** Phase 29 UI-SPEC approved
+**Resume file:** .planning/phases/29-chat-unification/29-UI-SPEC.md
 **Previous stop:** Phase 25 UAT round 3 완료 — BottomSheet body portal(47c375c)로 iOS WebKit 스태킹 트랩 해소, 게스트 날짜투표 라이브 실증(cast_date_vote_authed 204→tally 클로드게스트 1). 잔여 UAT는 Phase 27 통합 UAT로 합류(27-CONTEXT.md D-07). 참고: `.planning/phases/25-guest-unified-share/25-HUMAN-UAT.md`
 
 다음 세션에서 이어할 때:
