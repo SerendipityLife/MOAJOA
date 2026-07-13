@@ -327,14 +327,14 @@ cd supabase/functions/extract-youtube && deno task test
 
 기타 전 항목은 `[VERIFIED]` — 코드베이스·마이그레이션·문서 직접 실측.
 
-## Open Questions
+## Open Questions (RESOLVED — 전부 plan에서 재량 결정으로 잠금)
 
-1. **revalidate visibility 갭을 fix할 것인가, 문서화만 할 것인가**
+1. **revalidate visibility 갭을 fix할 것인가, 문서화만 할 것인가** → RESOLVED: fix 포함 (27-01 Task 3, 별도 커밋)
    - What we know: 갭 실재 (§revalidate 실측). fix는 extract-youtube 조건 1줄 + 이미 예정된 재배포에 편승.
    - What's unclear: "revalidate 확인"(재량)의 해석 — 확인 결과가 '동작 안 함'일 때의 조치 범위.
    - Recommendation: fix 포함 (마감 phase 취지 + 수술적 1줄 + 동일 파일·동일 배포). plan에서 별도 태스크로 명시해 diff 추적 가능하게.
-2. **NAME-01 대체 카피 문안** — "가고싶어"→"찜"의 정확한 문장 (예: page.tsx L115 "가고 싶은 곳에 찜을 눌러주세요"). 기계적 치환으로 충분하나 aria-label("찜")과 안내 문구의 자연스러움은 planner/executor 재량.
-3. **게이트 스모크의 영구 하네스 여부** — 1회성 curl 검증 vs `supabase/tests/`에 스크립트로 남기기. 권고: 기존 스모크 파일 append 또는 신규 소형 스크립트 (25-05 append 선례) — UAT 문서에 결과만 남기는 것보다 재실행 가능성이 낫다.
+2. **NAME-01 대체 카피 문안** → RESOLVED: 27-02 Task 1에서 문안 확정("가고 싶은 곳에 찜을 눌러주세요." 계열) — "가고싶어"→"찜"의 정확한 문장 (예: page.tsx L115 "가고 싶은 곳에 찜을 눌러주세요"). 기계적 치환으로 충분하나 aria-label("찜")과 안내 문구의 자연스러움은 planner/executor 재량.
+3. **게이트 스모크의 영구 하네스 여부** → RESOLVED: 신규 소형 스크립트 `supabase/tests/extract_gate_smoke.sh` (27-01 Task 1) — 1회성 curl 검증 vs `supabase/tests/`에 스크립트로 남기기. 권고: 기존 스모크 파일 append 또는 신규 소형 스크립트 (25-05 append 선례) — UAT 문서에 결과만 남기는 것보다 재실행 가능성이 낫다.
 
 ## Environment Availability
 
