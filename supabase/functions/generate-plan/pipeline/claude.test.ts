@@ -1,10 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from 'jsr:@std/assert';
-import {
-  buildPlanPrompt,
-  enforcePinnedPlacements,
-  PlanLLMOutput,
-  validatePlanIds,
-} from './claude.ts';
+import { buildPlanPrompt, PlanLLMOutput, validatePlanIds } from './claude.ts';
+import { enforcePinnedPlacements } from './claude.ts';
 
 const ID = (n: number) => `${n}${n}${n}${n}${n}${n}${n}${n}-${n}${n}${n}${n}-4${n}${n}${n}-8${n}${n}${n}-${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}`;
 const P1 = ID(1);

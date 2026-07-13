@@ -43,8 +43,14 @@ export interface PlanPlace {
   summary_ko: string | null;
 }
 
+/** "이 장소는 반드시 이 Day에" — 사용자가 손으로 배치한 항목 (D-21). */
+export interface PinnedPlacement {
+  place_id: string;
+  day_index: number;
+}
+
 export interface PlanInputs {
-  /** N = inclusive day count from trip start_date..end_date. */
+  /** N = trips.day_count, else the inclusive count from start_date..end_date (D-09). */
   dayCount: number;
   /** Placeable places (already filtered: hidden + (0,0) excluded). */
   places: PlanPlace[];
@@ -52,6 +58,12 @@ export interface PlanInputs {
   anchorIds: string[];
   /** ids the user explicitly removed — must NOT appear (D-11). */
   removedIds: string[];
+  /**
+   * 수동 배치 Day 고정 힌트 (D-21). The prompt asks Claude to respect these, but the
+   * prompt is only the polite path — enforcePinnedPlacements force-holds them after
+   * the fact, because an LLM constraint is not a guarantee.
+   */
+  pinnedPlacements: PinnedPlacement[];
 }
 
 export interface CallInputs extends PlanInputs {
@@ -127,18 +139,34 @@ const SYSTEM_PROMPT =
  */
 export function buildPlanPrompt(inputs: PlanInputs): string {
   const anchorSet = new Set(inputs.anchorIds);
+
+  // place_id → pinned day (1-based for the prompt; the contract is 0-based).
+  const pinnedDayById = new Map<string, number>();
+  for (const p of inputs.pinnedPlacements) pinnedDayById.set(p.place_id, p.day_index);
+
   const placeLines = inputs.places
     .map((p) => {
       const name = p.name_ko || p.name_local || '(이름 없음)';
       const anchorTag = anchorSet.has(p.id) ? ' [필수/ANCHOR]' : '';
+      const pinnedDay = pinnedDayById.get(p.id);
+      const pinnedTag = pinnedDay === undefined ? '' : ` [${pinnedDay + 1}일차 고정/PINNED]`;
       const summary = p.summary_ko ? ` — ${p.summary_ko}` : '';
-      return `- ${p.id} | ${name} | (${p.lat},${p.lng}) | ${p.category ?? 'other'}${anchorTag}${summary}`;
+      return `- ${p.id} | ${name} | (${p.lat},${p.lng}) | ${p.category ?? 'other'}${anchorTag}${pinnedTag}${summary}`;
     })
     .join('\n');
 
   const anchorLine = inputs.anchorIds.length > 0
     ? inputs.anchorIds.map((id) => `  - ${id}`).join('\n')
     : '  (none)';
+
+  // Empty pinned → the whole block is omitted, so the prompt is byte-identical to
+  // the pre-D-21 one (the existing prompt tests are the 무회귀 anchor).
+  const pinnedConstraint = inputs.pinnedPlacements.length > 0
+    ? `\n- 사용자가 직접 배치한 [PINNED] 장소는 지정된 day_index에 **고정**이다. 다른 day로 옮기지 말고, unplaced 풀에도 넣지 마라. 나머지 장소를 이 고정 장소들 주변으로 다시 클러스터링하라 (D-21). 고정 목록 (place_id → day_index):\n` +
+      inputs.pinnedPlacements
+        .map((p) => `  - ${p.place_id} → day_index ${p.day_index} (${p.day_index + 1}일차 고정)`)
+        .join('\n')
+    : '';
 
   return `# Task
 Cluster these saved places into a ${inputs.dayCount}-day itinerary for a 일본 도시 자유여행 trip.
@@ -163,7 +191,7 @@ Group places that are near each other into the same day, order each day as an ef
 - Anchor (필수) places MUST be placed into a day — never the unplaced pool — and the day should be reclustered around them (D-10). Anchor ids:
 ${anchorLine}
 - Every place_id MUST be one of the ids in the place list below — copy it verbatim. Never invent or alter an id.
-- Every input place must appear EXACTLY once across days ∪ unplaced. Do not drop or duplicate a place.
+- Every input place must appear EXACTLY once across days ∪ unplaced. Do not drop or duplicate a place.${pinnedConstraint}
 
 # Places (${inputs.places.length})
 ${placeLines}`;
@@ -205,6 +233,66 @@ export function validatePlanIds(inputPlaceIds: string[], out: PlanLLMOutputT): P
     if (!placed.has(id) && !unplaced.includes(id)) unplaced.push(id);
   }
 
+  return { reasoning: out.reasoning, days, unplaced };
+}
+
+/**
+ * Force-hold user-pinned placements (D-21). The prompt *asks* Claude to keep a
+ * hand-placed place on its day; this *guarantees* it. Same layer as validatePlanIds
+ * (T-18-12): LLM output is untrusted, so the invariant is re-established in code.
+ *
+ * Also the security boundary for the pinned hint itself — `pinned_placements` crosses
+ * the browser→EF trust boundary and is untrusted input:
+ *  1. intersect with `inputPlaceIds` (this trip's placeable set) — another trip's place
+ *     or a hallucinated uuid is dropped, never injected (T-28-09 / FK safety);
+ *  2. clamp day_index into [0, dayCount-1] — no negative or out-of-range day (T-28-10);
+ *  3. remove each pinned id from every day AND the pool first, then append it to its day —
+ *     so a pinned place ends up exactly once (never dropped, never duplicated).
+ *
+ * MUST be called AFTER validatePlanIds (hallucinated ids stripped → then pins forced).
+ * sort_order is not re-numbered here: index.ts renumbers by array index on insert.
+ */
+export function enforcePinnedPlacements(
+  inputPlaceIds: string[],
+  pinned: PinnedPlacement[],
+  dayCount: number,
+  out: PlanLLMOutputT,
+): PlanLLMOutputT {
+  if (pinned.length === 0) return out; // no-op — byte-identical output (무회귀)
+
+  const inputSet = new Set(inputPlaceIds);
+  const maxDay = Math.max(0, dayCount - 1);
+
+  // (1) intersect + (2) clamp. Duplicate place_id in the hint → last one wins.
+  const targetDayById = new Map<string, number>();
+  for (const p of pinned) {
+    if (!inputSet.has(p.place_id)) continue; // T-28-09: foreign / hallucinated id
+    targetDayById.set(p.place_id, Math.min(maxDay, Math.max(0, p.day_index))); // T-28-10
+  }
+  if (targetDayById.size === 0) return out;
+
+  // (3) strip the pinned ids from wherever the LLM put them.
+  const days = out.days.map((day) => ({
+    day_index: day.day_index,
+    items: day.items.filter((item) => !targetDayById.has(item.place_id)),
+  }));
+  const unplaced = out.unplaced.filter((id) => !targetDayById.has(id));
+
+  // (4) append each to its designated day, creating the day if the LLM omitted it.
+  const dayByIndex = new Map<number, (typeof days)[number]>();
+  for (const day of days) dayByIndex.set(day.day_index, day);
+
+  for (const [placeId, dayIndex] of targetDayById) {
+    let day = dayByIndex.get(dayIndex);
+    if (!day) {
+      day = { day_index: dayIndex, items: [] };
+      dayByIndex.set(dayIndex, day);
+      days.push(day);
+    }
+    day.items.push({ place_id: placeId, sort_order: day.items.length });
+  }
+
+  days.sort((a, b) => a.day_index - b.day_index);
   return { reasoning: out.reasoning, days, unplaced };
 }
 
