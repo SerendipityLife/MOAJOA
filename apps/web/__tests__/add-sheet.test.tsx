@@ -24,6 +24,29 @@ vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({}),
 }));
 
+// DaySelectSheet 스텁 — 자체 계약(1-based 표시 ↔ 0-based day_index 변환)은 day-select-sheet.test가
+// 검증한다. 여기서는 **열림 여부 + 콜백 배선**만 관심.
+vi.mock('@/app/moa/[id]/_components/day-select-sheet', () => ({
+  DaySelectSheet: ({
+    open,
+    dayCount,
+    onSelectDay,
+    onSkip,
+  }: {
+    open: boolean;
+    dayCount: number;
+    onSelectDay: (dayIndex: number) => void;
+    onSkip: () => void;
+  }) =>
+    open ? (
+      <div data-testid="day-sheet">
+        <span data-testid="day-count">{dayCount}</span>
+        <button onClick={() => onSelectDay(1)}>day-2</button>
+        <button onClick={onSkip}>day-skip</button>
+      </div>
+    ) : null,
+}));
+
 // @/components — BottomSheet pass-through(open일 때만 children), AddContentTabs harness
 // (onAddLink/onPickPlace 콜백을 버튼으로 노출), useToast swallow.
 const toast = vi.fn();
@@ -163,5 +186,123 @@ describe('AddSheet', () => {
     );
     expect(onClose).not.toHaveBeenCalled();
     expect(onAdded).not.toHaveBeenCalled();
+  });
+});
+
+// ── Plan 06 — 검색 추가 Day 배치 분기 (D-19 · D-20 · D-24). ──
+describe('AddSheet — 플랜 유무에 따른 Day 배치 분기 (SC-5)', () => {
+  it('D-19: 플랜 없음 → Day를 묻지 않고 바로 담고 안내 토스트', async () => {
+    const onClose = vi.fn();
+    const onPlacePickedForDay = vi.fn();
+    render(
+      <AddSheet
+        tripId="trip-1"
+        open
+        onClose={onClose}
+        onAdded={vi.fn()}
+        planExists={false}
+        onPlacePickedForDay={onPlacePickedForDay}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('pick-place'));
+
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith(
+        '지도에 담았어요 — 일정 만들기를 누르면 며칠차에 넣을지 AI가 정해줘요',
+      ),
+    );
+    // 플랜이 없으면 moveToDay의 plan_id가 없어 Day 배치가 물리적으로 불가능하다.
+    expect(screen.queryByTestId('day-sheet')).toBeNull();
+    expect(onPlacePickedForDay).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('D-20: 플랜 있음 → DaySelectSheet가 열리고 Day 수가 전달된다', async () => {
+    render(
+      <AddSheet
+        tripId="trip-1"
+        open
+        onClose={vi.fn()}
+        onAdded={vi.fn()}
+        planExists
+        dayCount={3}
+        onPlacePickedForDay={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('pick-place'));
+
+    await waitFor(() => expect(screen.getByTestId('day-sheet')).toBeInTheDocument());
+    expect(screen.getByTestId('day-count').textContent).toBe('3');
+    // D-24 토스트는 플랜 없음 경로 전용 — 여기선 Day를 직접 묻는다.
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('D-20: Day 2 선택 → onPlacePickedForDay(placeId, 1) (0-based day_index)', async () => {
+    const onPlacePickedForDay = vi.fn();
+    render(
+      <AddSheet
+        tripId="trip-1"
+        open
+        onClose={vi.fn()}
+        onAdded={vi.fn()}
+        planExists
+        dayCount={3}
+        onPlacePickedForDay={onPlacePickedForDay}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('pick-place'));
+    fireEvent.click(await screen.findByText('day-2'));
+
+    // 배치(moveToDay)는 plan을 소유한 island이 실행한다 — add-sheet은 addManualPlace까지만.
+    expect(onPlacePickedForDay).toHaveBeenCalledWith('place-1', 1);
+    expect(screen.queryByTestId('day-sheet')).toBeNull();
+  });
+
+  it("D-20: '아직 모르겠다' → 배치하지 않고 풀에 남긴다 (즉시 재생성·자동 append 없음)", async () => {
+    const onPlacePickedForDay = vi.fn();
+    render(
+      <AddSheet
+        tripId="trip-1"
+        open
+        onClose={vi.fn()}
+        onAdded={vi.fn()}
+        planExists
+        dayCount={3}
+        onPlacePickedForDay={onPlacePickedForDay}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('pick-place'));
+    fireEvent.click(await screen.findByText('day-skip'));
+
+    expect(onPlacePickedForDay).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('day-sheet')).toBeNull();
+    // 장소 자체는 이미 담겼다 — 미배치 풀('아직 안 넣은 곳')에 노출된다.
+    expect(addManualPlace).toHaveBeenCalledTimes(1);
+  });
+
+  it('링크 추가 경로는 무회귀 — 플랜이 있어도 Day를 묻지 않는다 (추출이 비동기)', async () => {
+    const onClose = vi.fn();
+    render(
+      <AddSheet
+        tripId="trip-1"
+        open
+        onClose={onClose}
+        onAdded={vi.fn()}
+        planExists
+        dayCount={3}
+        onPlacePickedForDay={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('stage-link'));
+
+    await waitFor(() => expect(addLink).toHaveBeenCalledTimes(1));
+    expect(triggerExtraction).toHaveBeenCalledWith({}, 'link-1');
+    expect(screen.queryByTestId('day-sheet')).toBeNull();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
