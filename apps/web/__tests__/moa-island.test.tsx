@@ -157,7 +157,9 @@ vi.mock('@/app/moa/[id]/_components/plan-section', () => ({
         </button>
         <button onClick={() => (props.onSelectDay as (d: number) => void)(1)}>plan-day-2</button>
         <button onClick={props.onShare as () => void}>plan-share</button>
-        <div data-testid="plan-pool">{renderPool?.(pool, () => {})}</div>
+        {/* 실물 계약 미러: renderPool은 **플랜이 있을 때(상태 D)만** 호출된다.
+            플랜 전에는 island이 전체 PlaceList를 직접 그리므로 여기서 부르면 리스트가 겹친다. */}
+        <div data-testid="plan-pool">{plan ? renderPool?.(pool, () => {}) : null}</div>
       </div>
     );
   },

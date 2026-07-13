@@ -2,25 +2,39 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Link, Place, ShareModeType, Trip, TripMessage } from '@moajoa/core';
-import { moaChannelName, TripMessageCreateSchema } from '@moajoa/core';
+import type {
+  Link,
+  Place,
+  PlanStepType,
+  ShareModeType,
+  TravelModeType,
+  Trip,
+  TripMessage,
+} from '@moajoa/core';
+import { moaChannelName, planChannelName, TripMessageCreateSchema } from '@moajoa/core';
 import {
   castVote,
+  generatePlan,
+  getPlanByTrip,
   getProfileNames,
   getVoteCounts,
   hidePlace,
   listLinksByTrip,
   listPlacesByTrip,
+  moveToDay,
+  moveToPool,
   retractVote,
   sendTripMessage,
+  setTravelMode,
   triggerExtraction,
+  updateTrip,
 } from '@moajoa/api';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { memberColor } from '@/lib/member-color';
 import { Button, useToast } from '@/components';
 import { MoaMap } from './moa-map';
-import type { PlanWithItemsView } from './plan-section';
+import { PlanSection, type PlanWithItemsView } from './plan-section';
 import { PlaceSheet, type SheetAnchor } from './place-sheet';
 import { PlaceList } from './place-list';
 import { AddSheet } from './add-sheet';
@@ -73,6 +87,7 @@ export function MoaIsland({
   memberIdsInJoinOrder,
   initialProfileNames,
   initialMessages,
+  initialPlan,
   currentUserNickname,
   hideHostControls,
   pollSlot,
@@ -94,6 +109,15 @@ export function MoaIsland({
   const [addOpen, setAddOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [localShareMode, setLocalShareMode] = useState<ShareModeType | null>(trip.share_mode);
+
+  // [일정] 상태 (Plan 06 — D-12~D-18). plan_items는 realtime publication 대상이 아니다
+  // (단일 사용자 편집 표면 — Pitfall 11): RSC seed로 시작하고 mutation 후 refetch로만 갱신한다.
+  const [plan, setPlan] = useState<PlanWithItemsView | null>(initialPlan);
+  const [dayCount, setDayCount] = useState<number | null>(trip.day_count);
+  const [generating, setGenerating] = useState(false);
+  const [planStep, setPlanStep] = useState<PlanStepType | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState(0);
 
   // 채팅(모아 내부 섹션 탭 — D-01/D-02). 탭 전환은 클라이언트 상태라 island이 한 번만
   // 마운트되고 단일 moa:{tripId} 채널이 유지된다(뷰만 스위치, 언마운트 없음).
@@ -206,6 +230,173 @@ export function MoaIsland({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.id]);
 
+  // ── [일정] 허브 (Plan 06) ───────────────────────────────────────────────────────
+  // 생성 in-flight 가드. setState는 비동기 배치라 같은 tick의 연타를 막지 못한다 —
+  // 유료 API(Claude + Routes) 이중 지출을 원천 차단하려면 ref가 단일 진실이어야 한다(T-28-23).
+  const generatingRef = useRef(false);
+  const planChannelRef = useRef<ReturnType<
+    ReturnType<typeof getSupabaseBrowser>['channel']
+  > | null>(null);
+
+  function closePlanChannel() {
+    const ch = planChannelRef.current;
+    if (!ch) return;
+    planChannelRef.current = null;
+    void getSupabaseBrowser().removeChannel(ch);
+  }
+
+  // 진행 표시는 **moa 채널이 아니라 plan:{tripId} 임시 broadcast 채널**이다.
+  // postgres_changes는 subscribe 시점에 서버와 negotiate되므로 기존 채널에 사후 바인딩을
+  // 추가하면 무음 no-op이 된다(#1917 — Phase 26이 겪은 함정). 생성할 때만 열고 끝나면 닫는다.
+  function openPlanChannel() {
+    if (planChannelRef.current) return;
+    const client = getSupabaseBrowser();
+    const ch = client.channel(planChannelName(trip.id));
+    ch.on('broadcast', { event: 'progress' }, (msg) => {
+      const step = (msg.payload as { step?: PlanStepType } | undefined)?.step;
+      if (!step) return;
+      if (step === 'done' || step === 'error') {
+        setPlanStep(null);
+        closePlanChannel();
+        return;
+      }
+      setPlanStep(step);
+    }).subscribe();
+    planChannelRef.current = ch;
+  }
+
+  async function refetchPlan() {
+    setPlan(await getPlanByTrip(getSupabaseBrowser(), trip.id));
+  }
+
+  // D-12 생성/재생성. D-21 루프의 **클라이언트 절반**이 여기 있다.
+  async function runGenerate() {
+    if (generatingRef.current) return; // 연타 가드 (T-28-23)
+    generatingRef.current = true;
+    setGenerating(true);
+    setPlanError(null);
+    setPlanStep(null);
+
+    const client = getSupabaseBrowser();
+    openPlanChannel();
+    try {
+      // is_anchor = "사용자가 손으로 그 Day에 놓았다"(moveToDay, 28-03). 그 좌표를
+      // pinned_placements로 되돌려 보내야 EF가 고정을 강제한다 — 이 수집이 없으면
+      // 빈 배열이 나가서 D-25 카피("직접 옮긴 장소는 그대로 두고…")가 거짓말이 된다.
+      const pinned = (plan?.plan_items ?? [])
+        .filter((it) => it.is_anchor)
+        .map((it) => ({ place_id: it.place_id, day_index: it.day_index }));
+      await generatePlan(client, {
+        trip_id: trip.id,
+        travel_mode: plan?.travel_mode ?? 'transit',
+        // pinned = "어느 Day에", anchor = "반드시 배치". 둘 다 필요하다.
+        anchor_place_ids: pinned.map((p) => p.place_id),
+        pinned_placements: pinned,
+        removed_place_ids: [],
+        // day_count는 보내지 않는다 — 서버가 trips에서 읽는다(T-28-08 비용 조작 차단).
+      });
+      setPlan(await getPlanByTrip(client, trip.id));
+      setSelectedDay(0);
+    } catch (err) {
+      console.error(err);
+      const raw = err instanceof Error ? err.message : '';
+      const message = /placeable/i.test(raw)
+        ? '자동 배치할 장소가 없어요'
+        : '일정을 만들지 못했어요';
+      setPlanError(message);
+      toast(message, { variant: 'error' });
+    } finally {
+      generatingRef.current = false;
+      setGenerating(false);
+      setPlanStep(null);
+      closePlanChannel();
+    }
+  }
+
+  // D-13 기간 게이트 — 저장에 성공해야 생성으로 넘어간다. trips UPDATE RLS는 owner 전용(0016)이라
+  // editor의 저장은 실패한다: 조용히 넘기지 않고 에러 토스트로 **fail-closed**(T-28-25).
+  async function onSaveDuration(nextDayCount: number) {
+    try {
+      await updateTrip(getSupabaseBrowser(), trip.id, { day_count: nextDayCount });
+      setDayCount(nextDayCount); // Day 탭 수가 곧바로 고른 기간을 반영(SC-4)
+    } catch (err) {
+      console.error(err);
+      toast('기간을 저장하지 못했어요. 다시 시도해 주세요', { variant: 'error' });
+      return;
+    }
+    await runGenerate();
+  }
+
+  async function onMovePlaceToDay(placeId: string, dayIndex: number) {
+    if (!plan) return;
+    const sortOrder = plan.plan_items.filter((it) => it.day_index === dayIndex).length;
+    try {
+      await moveToDay(getSupabaseBrowser(), {
+        plan_id: plan.id,
+        place_id: placeId,
+        day_index: dayIndex,
+        sort_order: sortOrder,
+      });
+      await refetchPlan();
+      toast(`Day ${dayIndex + 1}에 넣었어요`);
+    } catch (err) {
+      console.error(err);
+      await refetchPlan();
+      toast('일정을 바꾸지 못했어요', { variant: 'error' });
+    }
+  }
+
+  // 배치된 항목의 Day 이동. reorderPlanItem 대신 **삭제 후 재insert**를 택한다 —
+  // reorderPlanItem은 is_anchor를 세우지 않아 AI가 놓은 항목을 손으로 옮겨도 고정 마커가
+  // 안 생기고, 그러면 다음 재생성에서 그 이동이 조용히 사라진다(D-21 루프가 끊긴다).
+  async function onMoveItemToDay(itemId: string, placeId: string, dayIndex: number) {
+    if (!plan) return;
+    const sortOrder = plan.plan_items.filter(
+      (it) => it.day_index === dayIndex && it.id !== itemId,
+    ).length;
+    try {
+      const client = getSupabaseBrowser();
+      await moveToPool(client, itemId);
+      await moveToDay(client, {
+        plan_id: plan.id,
+        place_id: placeId,
+        day_index: dayIndex,
+        sort_order: sortOrder,
+      });
+      await refetchPlan();
+      toast(`Day ${dayIndex + 1}에 넣었어요`);
+    } catch (err) {
+      console.error(err);
+      await refetchPlan();
+      toast('일정을 바꾸지 못했어요', { variant: 'error' });
+    }
+  }
+
+  async function onMoveToPool(itemId: string) {
+    try {
+      await moveToPool(getSupabaseBrowser(), itemId);
+      await refetchPlan();
+    } catch (err) {
+      console.error(err);
+      await refetchPlan();
+      toast('일정을 바꾸지 못했어요', { variant: 'error' });
+    }
+  }
+
+  // A-10: 저장만 한다. 자동 재생성 금지 — 토글 연타로 Claude+Routes가 반복 호출되는
+  // 비용 경로를 원천 차단한다(T-28-23). 경로 재계산은 사용자가 '일정 다시 만들기'를 누를 때.
+  async function onTravelModeChange(mode: TravelModeType) {
+    if (!plan) return;
+    try {
+      await setTravelMode(getSupabaseBrowser(), plan.id, mode);
+      await refetchPlan();
+    } catch (err) {
+      console.error(err);
+      await refetchPlan();
+      toast('일정을 바꾸지 못했어요', { variant: 'error' });
+    }
+  }
+
   // 찜 토글 (A-5) — vote-island optimistic+rollback. 호스트 화면이라 join/anon 분기 없음.
   async function onToggleVote(placeId: string) {
     const client = getSupabaseBrowser();
@@ -228,6 +419,12 @@ export function MoaIsland({
       setVotePending((p) => ({ ...p, [placeId]: false }));
     }
   }
+
+  // plan 채널 누수 방지 — 생성 중 언마운트되면 finally가 못 돌 수 있다.
+  useEffect(() => {
+    return () => closePlanChannel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 마커 탭 (MOA-05): 행 열기 + 시트 expanded. 스크롤은 place-list openPlaceId effect.
   const onMarkerTap = (id: string) => {
@@ -283,6 +480,54 @@ export function MoaIsland({
     places.map((p) => [p.id, { seqNo: p.seq_no, name: p.name_local }]),
   );
 
+  // ── Day ↔ 지도 (D-16) ──
+  // 플랜이 있으면 지도는 **선택 Day의 핀만** 번호로 보여주고 그 영역으로 재프레이밍한다.
+  // 플랜이 없으면 셋 다 미전달 → 기존 전체 뷰·추가자 색 핀·"증가 시 fitBounds" 경로 그대로.
+  const placeById = new Map(places.map((p) => [p.id, p]));
+  const dayItems = plan
+    ? [...plan.plan_items]
+        .filter((it) => it.day_index === selectedDay)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .flatMap((it) => {
+          const place = placeById.get(it.place_id);
+          // (0,0)은 좌표 미상 — 지도에 찍으면 대서양에 핀이 뜬다(Pitfall 3).
+          // 풀 행의 '위치 정보 없음' 캡션(28-05)이 사용자에게 사유를 설명한다.
+          if (!place || (place.lat === 0 && place.lng === 0)) return [];
+          return [{ place, label: it.sort_order + 1 }];
+        })
+    : null;
+  const mapPlaces = dayItems ? dayItems.map((d) => d.place) : places;
+  const mapLabels = dayItems
+    ? Object.fromEntries(dayItems.map((d) => [d.place.id, d.label]))
+    : undefined;
+
+  // 시트 본문의 장소 리스트. 플랜이 있으면 **미배치 풀**로 재사용된다(renderPool seam, 28-05) —
+  // 12개 prop을 PlanSection이 재선언하지 않게 클로저를 그대로 넘긴다. 배치+미배치 합집합이
+  // 전체 places라 정보 손실이 0이다(A-12).
+  const renderPlaceList = (rows: Place[], onAddToPlan?: (placeId: string) => void) => (
+    <PlaceList
+      places={rows}
+      links={links}
+      counts={counts}
+      myVotes={myVotes}
+      votePending={votePending}
+      profileNames={profileNames}
+      colorFor={colorFor}
+      openPlaceId={openPlaceId}
+      onOpenPlace={setOpenPlaceId}
+      onToggleVote={onToggleVote}
+      onRetry={onRetry}
+      onDelete={handleDelete}
+      onReply={(placeId) => {
+        setReplyToPlaceId(placeId);
+        setActiveTab('chat');
+      }}
+      currentUserId={currentUserId}
+      ownerId={trip.owner_id}
+      {...(onAddToPlan && { onAddToPlan })}
+    />
+  );
+
   return (
     <>
       {/* 모으기 뷰 — 탭 전환 시 언마운트하지 않고 hidden으로 숨김(지도 인스턴스·채널 보존 D-02).
@@ -291,7 +536,13 @@ export function MoaIsland({
         <div className="fixed inset-0 flex justify-center bg-neutral-100">
           <div className="relative h-full w-full max-w-lg overflow-hidden">
             {/* 지도 풀 채움 — 불투명 상단 바 없음(지도 감성, UI-SPEC). */}
-            <MoaMap places={places} colorFor={colorFor} onMarkerTap={onMarkerTap} />
+            <MoaMap
+              places={mapPlaces}
+              colorFor={colorFor}
+              onMarkerTap={onMarkerTap}
+              {...(mapLabels && { labels: mapLabels })}
+              {...(plan && { fitKey: selectedDay })}
+            />
 
         {/* 뒤로 chevron 오버레이(흰 원형 + shadow). */}
         <button
@@ -326,26 +577,38 @@ export function MoaIsland({
         >
           {/* both 모드 게스트 날짜투표 임베드(D-09/C2) — 호스트 /moa는 미전달=diff 0. */}
           {pollSlot}
-          <PlaceList
-            places={places}
-            links={links}
-            counts={counts}
-            myVotes={myVotes}
-            votePending={votePending}
-            profileNames={profileNames}
-            colorFor={colorFor}
-            openPlaceId={openPlaceId}
-            onOpenPlace={setOpenPlaceId}
-            onToggleVote={onToggleVote}
-            onRetry={onRetry}
-            onDelete={handleDelete}
-            onReply={(placeId) => {
-              setReplyToPlaceId(placeId);
-              setActiveTab('chat');
-            }}
-            currentUserId={currentUserId}
-            ownerId={trip.owner_id}
-          />
+
+          {/* [일정] 영역 (D-15/HC-4) — 신규 라우트·탭이 아니라 기존 시트의 children이다.
+              PlaceSheet 자체는 한 줄도 수정하지 않는다(HC-5 — 제스처 소유권 회귀 방지).
+              게스트(/t/[slug]) 마운트에는 노출하지 않는다 — 열람자에게 플랜 변경 표면을
+              주지 않는다(T-28-28). 실제 쓰기는 can_edit_trip RLS(0017)가 최종 게이트. */}
+          {!hideHostControls && (
+            <PlanSection
+              plan={plan}
+              places={places}
+              links={links}
+              trip={{ ...trip, day_count: dayCount }}
+              currentUserId={currentUserId}
+              generating={generating}
+              planStep={planStep}
+              error={planError}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+              onGenerate={() => void runGenerate()}
+              onSaveDuration={(n) => void onSaveDuration(n)}
+              onMovePlaceToDay={(placeId, dayIndex) => void onMovePlaceToDay(placeId, dayIndex)}
+              onMoveItemToDay={(itemId, placeId, dayIndex) =>
+                void onMoveItemToDay(itemId, placeId, dayIndex)
+              }
+              onMoveToPool={(itemId) => void onMoveToPool(itemId)}
+              onTravelModeChange={(mode) => void onTravelModeChange(mode)}
+              onShare={() => setShareOpen(true)}
+              renderPool={(pool, onAddToPlan) => renderPlaceList(pool, onAddToPlan)}
+            />
+          )}
+
+          {/* 플랜이 있으면 풀이 PlanSection 안에서 이미 렌더된다 — 여기서 또 그리면 중복(A-12). */}
+          {!plan && renderPlaceList(places)}
         </PlaceSheet>
 
         {/* FAB [+] — collapsed 시트(peek 30vh, place-sheet) 상단에서 16px 위(UI-SPEC 토큰:
