@@ -91,4 +91,36 @@ describe('buildMarkerIconUrl', () => {
     const without = buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9 });
     expect(withUndef).toBe(without);
   });
+
+  /**
+   * Phase 28 D-16 — Day 번호 핀. `label?: number`는 additive 확장이며
+   * 미전달 시 기존 출력이 바이트 단위로 동일하다(24-02 `fill` 확장 선례 미러).
+   * 삽입값은 String(number)만 — 사용자 문자열은 SVG에 절대 넣지 않는다(HC-6 / T-24-04).
+   */
+  it('label: 3 — 흰색 숫자 text 요소로 렌더된다', () => {
+    const svg = decode(buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9, label: 3 }));
+    expect(svg).toContain('>3<');
+    expect(svg).toContain('<text');
+    expect(svg).toContain('fill="#ffffff"');
+  });
+
+  it('label과 물음표 배지 조건이 동시면 label이 우선하고 "?"는 렌더되지 않는다', () => {
+    // confidence 0.4 = 저신뢰(원래 "?" 배지 조건)인데 label이 있으면 번호가 이긴다.
+    const svg = decode(buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.4, label: 2 }));
+    expect(svg).toContain('>2<');
+    expect(svg).not.toContain('>?<');
+    // 저신뢰 투명도 자체는 유지 — label은 배지만 대체한다.
+    expect(svg).toContain('fill-opacity="0.45"');
+  });
+
+  it('omitting label keeps the existing output byte-for-byte', () => {
+    const withUndef = buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.4, label: undefined });
+    const without = buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.4 });
+    expect(withUndef).toBe(without);
+
+    // 저신뢰 "?" 배지 경로(가장 복잡한 기존 분기)도 미전달 시 그대로다.
+    expect(without).toBe(
+      buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.4, fill: undefined }),
+    );
+  });
 });
