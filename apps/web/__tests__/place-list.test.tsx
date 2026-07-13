@@ -69,6 +69,7 @@ const onToggleVote = vi.fn();
 const onRetry = vi.fn();
 const onDelete = vi.fn();
 const onReply = vi.fn();
+const onAddToPlan = vi.fn();
 
 function renderList(overrides: Partial<PlaceListProps> = {}) {
   const props: PlaceListProps = {
@@ -96,6 +97,7 @@ beforeEach(() => {
   onRetry.mockClear();
   onDelete.mockClear();
   onReply.mockClear();
+  onAddToPlan.mockClear();
 });
 
 describe('PlaceList', () => {
@@ -297,5 +299,55 @@ describe('PlaceList', () => {
     // 타이머(1.5s) 종료 전에 닫으면 — 잔상 없이 즉시 해제되어야 함
     rerender(<PlaceList {...base} openPlaceId={null} />);
     expect(row()?.getAttribute('data-highlighted')).toBeNull();
+  });
+
+  // ─── Phase 28-05 Task 2: onAddToPlan additive prop (미배치 풀 편입 진입점) ───
+
+  it("Test 19 (28-05): onAddToPlan 미전달 시 '일정에 넣기' 버튼이 없다 (기존 렌더 무회귀)", () => {
+    renderList({ places: [makePlace({ id: 'p1' })], openPlaceId: 'p1' });
+    expect(screen.queryByText('일정에 넣기')).toBeNull();
+  });
+
+  it("Test 20 (28-05): onAddToPlan 전달 시 아코디언 액션 행에 '일정에 넣기'가 렌더된다", () => {
+    renderList({ places: [makePlace({ id: 'p1' })], openPlaceId: 'p1', onAddToPlan });
+    expect(screen.getByText('일정에 넣기')).toBeTruthy();
+  });
+
+  it("Test 21 (28-05): '일정에 넣기' 탭 → onAddToPlan(placeId), 행 토글 미발화", () => {
+    renderList({ places: [makePlace({ id: 'p1' })], openPlaceId: 'p1', onAddToPlan });
+    fireEvent.click(screen.getByText('일정에 넣기'));
+    expect(onAddToPlan).toHaveBeenCalledWith('p1');
+    expect(onOpenPlace).not.toHaveBeenCalled();
+  });
+
+  it('Test 22 (28-05 Pitfall 3): 풀 모드에서 (0,0) 좌표 장소는 "위치 정보 없음" 캡션 병기', () => {
+    // 좌표 없는 장소는 AI가 영원히 배치하지 못한다 — "왜 안 들어가지?" 혼란을 캡션이 흡수.
+    // 풀 모드(onAddToPlan 전달)에서만 노출 — 기존 지도탭 리스트 렌더는 무변경.
+    const { rerender } = renderList({
+      places: [makePlace({ id: 'p1', lat: 0, lng: 0 })],
+      onAddToPlan,
+    });
+    expect(screen.getByText('위치 정보 없음')).toBeTruthy();
+
+    // 좌표가 있는 장소엔 캡션이 없다.
+    rerender(
+      <PlaceList
+        places={[makePlace({ id: 'p2', lat: 35, lng: 139 })]}
+        links={[]}
+        counts={{}}
+        myVotes={{}}
+        votePending={{}}
+        profileNames={{}}
+        colorFor={() => 'rgb(255, 112, 67)'}
+        openPlaceId={null}
+        onOpenPlace={onOpenPlace}
+        onToggleVote={onToggleVote}
+        onRetry={onRetry}
+        onDelete={onDelete}
+        onReply={onReply}
+        onAddToPlan={onAddToPlan}
+      />,
+    );
+    expect(screen.queryByText('위치 정보 없음')).toBeNull();
   });
 });
