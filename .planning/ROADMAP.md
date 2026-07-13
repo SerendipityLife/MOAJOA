@@ -325,7 +325,7 @@ Plans:
 
 **Goal**: 웹 `/onboarding` 추가하기 위저드를 `references/add_trip`(트리플 앱) 레퍼런스와 동일한 UI/UX로 개편하고, **이미 존재하는** AI 일정 엔진(Phase 18의 `generate-plan` EF + `plans`/`plan_items`)을 웹 결과 화면(Day 탭·번호 타임라인)으로 연결한다. 링크 붙여넣기·장소 검색은 기존 `AddContentTabs`를 그대로 재사용해 유지한다. 백엔드 신규는 `trips.day_count` 한 컬럼(0030)뿐 — EF·RPC·플랜 모델은 전부 기존 것.
 **Depends on**: Phase 24 (`/onboarding` 위저드 · `/moa/[id]` 지도탭 — 개편 대상 표면), Phase 18 (`generate-plan` EF · `plans`/`plan_items` · api 래퍼 — 결과 화면 백엔드)
-**Requirements**: TBD (discuss에서 확정)
+**Requirements**: SC-1~SC-6 (아래 Success Criteria를 requirement 축으로 사용 — REQUIREMENTS.md에 Phase 28 전용 ID 미발급)
 
 **Locked decisions** (사용자 확정 2026-07-13 — discuss에서 재질문 금지):
 
@@ -333,7 +333,7 @@ Plans:
 2. 히어로 인트로 화면(IMG_2917)은 **추가하지 않는다** — 바로 스텝 1부터
 3. 스텝 리스타일(IMG_2918~2921): 상단 뒤로가기 chevron + 우측 `N/총` 카운터(현 점 인디케이터 교체) · 중앙 이모지/아이콘 · 큰 굵은 2줄 타이틀 + 회색 서브카피 · 2열 큰 pill 그리드(선택 = 흰 배경 + 파란 테두리 + 파란 텍스트) · 하단 고정 풀폭 CTA(비활성 = 연한 파랑 bg + 흰 글씨)
 4. 날짜 스텝: 기간 pill(당일치기·1박2일·2박3일·3박4일·4박5일·5박6일)로 교체 + 그 이상/정확한 날짜는 **별도 버튼 → 기존 캘린더**(react-day-picker) 범위 선택
-5. 기간 저장: `trips.day_count` 신설 — 마이그레이션 **append-only 새 번호 0030** + `packages/core` 스키마 짝지어 변경 + `pnpm supabase:types` 재생성. `generate-plan` EF의 `computeDayCount`([index.ts L289-297](../../supabase/functions/generate-plan/index.ts))에 fallback: `dayCount = trip.day_count ?? computeDayCount(start,end)` — **현재는 날짜가 null이면 무조건 1일이라 Day 탭이 1개만 나옴**
+5. 기간 저장: `trips.day_count` 신설 — 마이그레이션 **append-only 새 번호 ~~0030~~ → `0031`** (⚠ 계획 시 정정: `0030_poll_write_hardening.sql`이 Phase 25 gap closure로 이미 0030을 점유. append-only 의도는 승계, 번호만 `0031_trip_day_count.sql`로 확정) + `packages/core` 스키마 짝지어 변경 + `pnpm supabase:types` 재생성. `generate-plan` EF의 `computeDayCount`([index.ts L289-297](../../supabase/functions/generate-plan/index.ts))에 fallback: `dayCount = trip.day_count ?? computeDayCount(start,end)` — **현재는 날짜가 null이면 무조건 1일이라 Day 탭이 1개만 나옴**
 6. 링크 붙여넣기 / 장소 검색 **반드시 유지** — 기존 `apps/web/components/add-content-tabs.tsx` 재사용, 탭 자체 재구현 금지
 7. 위저드 완료 → 지금처럼 `/moa/{id}` 지도 보드로 이동. AI 일정은 자동이 아니라 **보드의 명시적 버튼**으로 생성 (Phase 18 D-01과 동일)
 8. 결과 화면(IMG_2922~2925) 웹 신규: Day 1~N 탭 + 번호 타임라인 + 장소 카드 + 지도. **백엔드 신규 0** — `generatePlan`/`getPlanByTrip`/`moveToDay`/`reorderPlanItem`/`setAnchor` 재사용
@@ -354,7 +354,17 @@ Plans:
 5. 장소 검색으로 장소를 추가할 때 몇 일차에 넣을지 물어보고, '모르겠다'면 AI 배치로 넘어간다 — 동작 규칙이 가이드 카피로 사용자에게 보인다
 6. `apps/ios` 및 기존 마이그레이션 파일 diff 0
 
-**Plans**: TBD
+**Plans**: 6 plans / 4 waves
+
+Plans:
+- [ ] 28-01-PLAN.md — [BLOCKING] day_count seam: 0031 마이그레이션 + core 스키마 + api 래퍼 + typegen + DB push (SC-2·SC-6)
+- [ ] 28-02-PLAN.md — 프레젠테이션 프리미티브: SelectPill · DurationPills · marker-svg 번호 라벨 (SC-1·SC-6)
+- [ ] 28-03-PLAN.md — D-21 수동배치 Day 고정 계약 + EF day_count fallback (SC-4·SC-5)
+- [ ] 28-04-PLAN.md — 위저드 리스타일: 헤더·타이틀·2열 pill·CTA + 기간 pill 스텝 + build-draft (SC-1·SC-2·SC-3)
+- [ ] 28-05-PLAN.md — [일정] 결과 화면: PlanSection · DurationGateSheet · DaySelectSheet (SC-4·SC-5)
+- [ ] 28-06-PLAN.md — island 배선: RSC seed · 번호 핀 지도 · 생성 트리거 · 검색 추가 Day 분기 (SC-4·SC-5·SC-6)
+
+Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-06
 
 **UI hint**: yes
 
@@ -367,4 +377,4 @@ Plans:
 | 25. Guest Unified Share | 5/5 | ✅ Complete 2026-07-10 (25-01 백엔드·25-02 seam·25-03 뼈대·25-04 linkIdentity·25-05 스모크 — 코드 완료, 원격 0029 push + Manual linking 토글 human-action 잔여) | 2026-07-10 |
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 0/TBD | Not started | - |
-| 28. Add-Trip Redesign | 0/TBD | Not started | - |
+| 28. Add-Trip Redesign | 0/6 | 📋 Planned (6 plans / 4 waves) | - |
