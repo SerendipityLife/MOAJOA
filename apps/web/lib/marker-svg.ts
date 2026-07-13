@@ -25,11 +25,19 @@ import { colors } from '@moajoa/ui-tokens';
  * pins can carry their memberColor. It MUST be a ui-tokens literal (e.g. a
  * colors.member[…] value) — never a user string, preserving the no-injection
  * contract (T-24-04). When omitted, output is identical to before.
+ *
+ * `label` (optional, Phase 28 D-16) draws the Day visit order on the pin so the
+ * map numbers match the timeline badges. Its type is `number` — that IS the
+ * injection contract (T-28-05 / HC-6): only String(number) is ever interpolated,
+ * so place names and other user strings can never reach the SVG. A label wins
+ * over the low-confidence "?" badge (they share the same slot). When omitted,
+ * output is identical to before, byte for byte.
  */
 export function buildMarkerIconUrl(input: {
   source_kind: 'ai' | 'manual';
   confidence: number | null | undefined;
   fill?: string;
+  label?: number;
 }): string {
   const isAi = input.source_kind === 'ai';
   const conf = input.confidence;
@@ -40,11 +48,16 @@ export function buildMarkerIconUrl(input: {
   // Explicit fill (ui-tokens literal only) wins over the source_kind default.
   const fill = input.fill ?? (isAi ? colors.brand[500] : colors.neutral[900]); // brand-500 (AI) · neutral-900 (manual)
   const fillOpacity = isLowConf ? 0.45 : 1.0;
-  const showQ = isLowConf;
+  const hasLabel = typeof input.label === 'number';
+  // A number label owns the badge slot; the "?" only shows when there is none.
+  const showQ = isLowConf && !hasLabel;
 
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">` +
     `<path d="M16 0C7.16 0 0 7.16 0 16c0 9.6 16 24 16 24s16-14.4 16-24C32 7.16 24.84 0 16 0z" fill="${fill}" fill-opacity="${fillOpacity}"/>` +
+    (hasLabel
+      ? `<text x="16" y="22" text-anchor="middle" font-size="15" font-weight="600" font-family="sans-serif" fill="#ffffff">${String(input.label)}</text>`
+      : '') +
     (showQ
       ? `<text x="16" y="22" text-anchor="middle" font-size="14" font-family="sans-serif" fill="#ffffff">?</text>`
       : '') +
