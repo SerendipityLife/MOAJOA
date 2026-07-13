@@ -393,7 +393,8 @@ Plan: 1 of 1
 
 ### Blockers
 
-- **[28-01 BLOCKING human-action] `0031_trip_day_count.sql` 원격 미적용.** 로컬 DB·typegen·전 스위트는 그린이나 프로덕션 `trips.day_count`는 아직 없다. 사용자가 `supabase db push`(또는 `git push origin main` → Supabase↔GitHub 통합)를 실행해야 한다. 미적용 상태에서는 빌드·타입체크·유닛테스트가 전부 통과하면서도 **라이브에서 day_count 저장이 조용히 실패**하고 EF fallback(28-03)이 영원히 1일 플랜을 낸다. 확인: `supabase migration list`의 Remote 컬럼에 0031.
+- ~~**[28-01 BLOCKING human-action] `0031_trip_day_count.sql` 원격 미적용.**~~ ✅ **해소 2026-07-13** — 사용자 승인 후 `supabase db push` 실행, `migration list`가 `local:0031 / remote:0031` 확인. 프로덕션 `trips.day_count` 존재(nullable INT, CHECK 1..30, 기존 행 전부 null → 무영향).
+- **[28-06 대기] `generate-plan` EF 원격 재배포.** 28-03이 EF 코드(day_count fallback + D-21 pinned_placements)를 고쳐도 `supabase functions deploy generate-plan` 없이는 라이브에 반영되지 않는다 — 코드 머지 ≠ 프로덕션. 28-06 Task 4가 이 게이트를 소유.
 - (그 외 없음 — Apple Developer 계정은 가입됨 $99/yr, Share Extension/EAS 게이트 해소됨)
 
 ### Quick Tasks Completed
