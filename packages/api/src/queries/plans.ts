@@ -1,7 +1,7 @@
 import type {
   Plan,
   PlanItem,
-  GeneratePlanRequest,
+  GeneratePlanRequestInput,
   GeneratePlanResult,
   TravelModeType,
 } from '@moajoa/core';
@@ -46,10 +46,14 @@ export async function getPlanByTrip(
  *
  * RLS / cost gate: the EF re-verifies caller can_edit_trip server-side before
  * spending (T-18-09); this wrapper adds no client-side check.
+ *
+ * body는 **pre-parse** 타입(`GeneratePlanRequestInput`)이다 — 이 래퍼는 파스하지 않고 EF가
+ * 같은 스키마로 재파스하며 `.default()`를 채우기 때문이다. 덕분에 `pinned_placements`(D-21)처럼
+ * 기본값 있는 필드를 additive로 추가해도 기존 호출부(동결된 iOS 포함)가 무변경으로 컴파일된다.
  */
 export async function generatePlan(
   client: MoajoaSupabaseClient,
-  body: GeneratePlanRequest,
+  body: GeneratePlanRequestInput,
 ): Promise<GeneratePlanResult> {
   const { data, error } = await client.functions.invoke('generate-plan', { body });
   if (error) throw error;
@@ -111,9 +115,24 @@ export async function moveToPool(
 
 /**
  * Place a pooled place onto a day (D-13). Inserts a plan_item at the given
- * day/order; is_anchor defaults false (manual placement isn't a 필수 anchor) and
- * leg_travel_seconds is null until the next regenerate re-grounds the leg
- * ("이동시간 —" meanwhile). RLS via can_edit_trip through the parent plan.
+ * day/order; leg_travel_seconds is null until the next regenerate re-grounds the
+ * leg ("이동시간 —" meanwhile). RLS via can_edit_trip through the parent plan.
+ *
+ * **is_anchor=true (D-21, Phase 28에서 false → true로 전환).** generate-plan은 draft를
+ * 통째로 delete 후 재insert하는 멱등 덮어쓰기라, "수동 배치"를 식별할 마커가 없으면 사용자가
+ * 손으로 Day 3에 옮긴 장소가 '일정 다시 만들기' 한 번에 날아간다. is_anchor가 그 마커다 —
+ * 의미가 "필수 장소(D-10)"에서 **"필수 + 그 Day에 고정"** 으로 확장됐다.
+ *
+ * 계약 루프: moveToDay(is_anchor:true) → 재생성 시 클라이언트가 is_anchor 항목에서
+ * {place_id, day_index}를 모아 generatePlan(pinned_placements)로 전달 → EF가 프롬프트 제약 +
+ * enforcePinnedPlacements 사후 강제(LLM 불복 시에도 강제 이동) → EF가 다시 is_anchor:true로
+ * 기록 → 2회차 재생성에도 고정이 산다.
+ *
+ * ⚠ **iOS 런타임 의미 변화 (파일 diff는 0이지만 동작은 바뀐다).** 이 함수는 동결된 iOS
+ * plan.tsx도 호출하고, iOS는 웹과 달리 `setAnchor` 별표 UI를 실제로 노출한다(Phase 18 D-10).
+ * 따라서 iOS에서 장소를 손으로 Day에 옮기면 그 장소가 **별표(필수 앵커)로 승격**되고, 이후 iOS
+ * 재생성 시 anchor_place_ids에 포함되어 "반드시 배치" 대상이 된다. 이는 **의도된 계약 통일**이다
+ * — "손으로 옮긴 건 존중한다"가 두 플랫폼에서 같은 의미를 갖는다 (28-03 SUMMARY 기록).
  */
 export async function moveToDay(
   client: MoajoaSupabaseClient,
@@ -121,7 +140,7 @@ export async function moveToDay(
 ): Promise<PlanItem> {
   const { data, error } = await client
     .from('plan_items')
-    .insert({ ...input, is_anchor: false, leg_travel_seconds: null })
+    .insert({ ...input, is_anchor: true, leg_travel_seconds: null })
     .select('*')
     .single();
   if (error) throw error;
