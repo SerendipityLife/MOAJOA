@@ -11,7 +11,12 @@ import { StepWhere } from './_components/step-where';
 import { StepDates } from './_components/step-dates';
 import { StepWho } from './_components/step-who';
 import { StepSeed } from './_components/step-seed';
-import { buildDraft } from './_lib/build-draft';
+import {
+  buildDraft,
+  deriveDayCount,
+  isDayCountWithinLimit,
+  type DateMode,
+} from './_lib/build-draft';
 
 /**
  * /onboarding — 단일 라우트 클라이언트 위저드 (D-02). 4단계(어디로→날짜→누구랑→봐둔 곳)를
@@ -35,7 +40,8 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
   const [city, setCity] = useState<string | null>(null);
   const [cityCustom, setCityCustom] = useState(false);
-  const [dateMode, setDateMode] = useState<'fixed' | 'unset' | null>(null);
+  const [dateMode, setDateMode] = useState<DateMode | null>(null);
+  const [dayCount, setDayCount] = useState<number | null>(null);
   const [range, setRange] = useState<DateRange | undefined>(undefined);
   const [companion, setCompanion] = useState<string | null>(null);
   const [companionCustom, setCompanionCustom] = useState(false);
@@ -65,11 +71,33 @@ export default function OnboardingPage() {
     window.history.back();
   }, []);
 
+  // 날짜 3경로는 상호 배타 — 하나를 고르면 나머지 값을 비운다. 남겨두면 buildDraft가
+  // 모드를 단일 진실로 삼더라도 UI가 두 선택을 동시에 켜 놓은 것처럼 보인다.
+  const pickDuration = useCallback((n: number) => {
+    setDateMode('duration');
+    setDayCount(n);
+    setRange(undefined);
+  }, []);
+
+  const pickDateMode = useCallback((mode: DateMode) => {
+    setDateMode(mode);
+    if (mode !== 'duration') setDayCount(null);
+    if (mode !== 'fixed') setRange(undefined);
+  }, []);
+
+  // 2차 방어(BLOCKER): 캘린더 경로는 상한 검사를 통과해야 진행할 수 있다. 상한을 넘으면
+  // CTA가 눌리지 않으므로 createMoaDraft INSERT가 **물리적으로 발생하지 않는다**.
+  // 판정은 step-dates와 같은 함수 한 벌(deriveDayCount + isDayCountWithinLimit)로 한다.
+  // 안내 카피는 step-dates가 캘린더 밑에 이미 띄우므로 여기서 중복 렌더하지 않는다.
   const canProceed =
     step === 1
       ? city !== null && city.trim().length > 0
       : step === 2
-        ? dateMode === 'unset' || (dateMode === 'fixed' && range?.from != null)
+        ? dateMode === 'unset' ||
+          (dateMode === 'duration' && dayCount !== null) ||
+          (dateMode === 'fixed' &&
+            range?.from != null &&
+            isDayCountWithinLimit(deriveDayCount(range.from, range.to)))
         : step === 3
           ? companion !== null && companion.trim().length > 0
           : true;
@@ -78,7 +106,7 @@ export default function OnboardingPage() {
     if (submitting || dateMode === null || city === null) return;
     setSubmitting(true);
     try {
-      const draft = buildDraft({ city, cityCustom, dateMode, range, companion });
+      const draft = buildDraft({ city, cityCustom, dateMode, dayCount, range, companion });
       const client = getSupabaseBrowser();
       const trip = await createMoaDraft(client, draft);
       for (const url of seedLinks) {
@@ -153,8 +181,10 @@ export default function OnboardingPage() {
         {step === 2 && (
           <StepDates
             mode={dateMode}
+            dayCount={dayCount}
             range={range}
-            onModeChange={setDateMode}
+            onDayCountChange={pickDuration}
+            onModeChange={pickDateMode}
             onRangeChange={setRange}
           />
         )}
