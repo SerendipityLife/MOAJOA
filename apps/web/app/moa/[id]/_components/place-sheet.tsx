@@ -23,12 +23,15 @@ export interface PlaceSheetProps {
  * snap 250ms ease-out(bounce 없음). 상시 표시(뒷막·닫기 없음),
  * 2단 앵커(collapsed ~30vh peek / expanded 85vh, A-3), 데스크톱 max-w-lg 컬럼(A-10).
  *
+ * 제스처 소유권은 표면별로 배타적이다: 본문 = 스크롤 전용(overscroll-contain으로
+ * document 체이닝 차단 — 안 그러면 빈 본문에서 스크롤이 페이지로 새어 fixed 지도까지
+ * 같이 밀린다), 핸들·헤더 = 드래그 전용. 한 표면이 두 제스처를 겸하지 않는다.
+ *
  * 드래그·snap·플릭은 jsdom에서 검증 불가 → 로컬 브라우저 UAT 항목. 계약은
  * controlled anchor prop으로 고정되어 island(24-06)이 상태만 배선하면 된다.
  */
 export function PlaceSheet({ anchor, onAnchorChange, header, children }: PlaceSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
 
   // collapsed에서 화면에 남길 peek(~30vh)만큼만 보이도록 아래로 내리는 px.
   // = 시트 높이(85vh) − peek(30vh). 리사이즈에 반응해 재측정.
@@ -59,8 +62,7 @@ export function PlaceSheet({ anchor, onAnchorChange, header, children }: PlaceSh
   const restingTranslate = anchor === 'expanded' ? 0 : collapsedOffset;
 
   const startDrag = useCallback(
-    (e: React.PointerEvent, allowed: boolean) => {
-      if (!allowed) return;
+    (e: React.PointerEvent) => {
       e.currentTarget.setPointerCapture(e.pointerId);
       const start = anchor === 'expanded' ? 0 : collapsedOffset;
       drag.current = {
@@ -101,11 +103,6 @@ export function PlaceSheet({ anchor, onAnchorChange, header, children }: PlaceSh
     onAnchorChange(next);
   }, [collapsedOffset, onAnchorChange]);
 
-  // 스크롤 충돌: expanded + 본문 scrollTop>0이면 본문 드래그 시작 안 함.
-  // 핸들/헤더 영역 드래그는 항상 허용.
-  const bodyDragAllowed = () =>
-    anchor === 'collapsed' || (bodyRef.current?.scrollTop ?? 0) === 0;
-
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center">
       <div
@@ -116,10 +113,10 @@ export function PlaceSheet({ anchor, onAnchorChange, header, children }: PlaceSh
         )}
         style={{ transform: `translateY(${dragY ?? restingTranslate}px)` }}
       >
-        {/* 핸들 + 헤더 = 드래그 손잡이 (항상 드래그 허용). */}
+        {/* 핸들 + 헤더 = 드래그 전용 표면 (시트 앵커를 바꾸는 유일한 곳). */}
         <div
           className="shrink-0 cursor-grab touch-none select-none active:cursor-grabbing"
-          onPointerDown={(e) => startDrag(e, true)}
+          onPointerDown={startDrag}
           onPointerMove={moveDrag}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
@@ -130,15 +127,8 @@ export function PlaceSheet({ anchor, onAnchorChange, header, children }: PlaceSh
           <div className="px-6 pt-2 pb-3">{header}</div>
         </div>
 
-        {/* 본문 — expanded에서 리스트 스크롤. scrollTop>0이면 드래그 시작 안 함. */}
-        <div
-          ref={bodyRef}
-          className="flex-1 touch-pan-y overflow-y-auto px-6 pb-8"
-          onPointerDown={(e) => startDrag(e, bodyDragAllowed())}
-          onPointerMove={moveDrag}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-        >
+        {/* 본문 — 스크롤 전용. overscroll-contain: 스크롤할 게 없어도 document로 체이닝 X. */}
+        <div className="flex-1 touch-pan-y overflow-y-auto overscroll-contain px-6 pb-8">
           {children}
         </div>
       </div>
