@@ -12,13 +12,14 @@ updated: 2026-07-13T16:05:00Z
 
 ## Current Test
 
-awaiting — 27-04에서 [Claude] 태그 항목 선소진 후 human-only 안내
+항목 1 partial 기록 (401 실증 완료·403은 slug 확보 후) — 27-04에서 [Claude] 태그 항목 선소진 후 human-only 안내
 
 ## Tests
 
 ### 1. [Claude] SEC-01 라이브 게이트 — 무비용 401/403
 expected: anon-key 원시 토큰 → 401 (getUser가 link 로드 전에 거부, T-18-08). 비멤버 익명 세션 + 실존 link_id → 403 (멤버십 게이트, claim 앞이라 DB 무변이). 유료 API 발화 0.
-result: [pending]
+result: partial
+notes: "2026-07-13 프로덕션(EF v141) 실측 — (a) anon-key 원시 토큰 HTTP 401 확인 (유료 발화 0, DB 무변이). (b) 비멤버 익명 403은 라이브 shared slug 미확보로 pending — 27-04 브라우저 세션에서 slug 확보 후 재실행."
 
 ### 2. [human] 호스트 A 흐름 (SC-3 전반)
 expected: 카카오 로그인 → 온보딩(여행지+날짜 미정+함께) → 유튜브 링크 추가 → #1..#N 핀 등장 → 함께 정하기 '둘다' → 링크 복사. 각 단계 완주 + 멤버 추출 정상(게이트 통과 — 링크 추가 후 분석중→핀). ※ 이미 로그인된 사용자 브라우저 세션이 있으면 로그인 이후 단계는 [Claude] 실증 가능 — 27-04에서 판단.
