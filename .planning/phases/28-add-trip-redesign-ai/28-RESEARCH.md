@@ -450,7 +450,9 @@ const byDay = (d: number) =>
 | A3 | 레퍼런스 pill/CTA의 파란 계열이 기존 brand 토큰(200/300/500/600)으로 충분히 근사된다 [ASSUMED — 시각 판단] | 레퍼런스 분석 | 미묘한 톤 차이 — 신규 hex 금지 규약상 토큰 내 선택만 허용, UAT에서 확인 |
 | A4 | day_count 상한 CHECK(≤30)가 프롬프트·비용 방어로 적절하다 [ASSUMED — 제안값] | Code Examples | 상한 불요 판단 시 CHECK 제거해도 성립 |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> **상태: 전부 해소됨** (2026-07-13, 플랜 작성 시 확정). Q1~Q5 각 항목 끝에 **→ 결정** 줄로 최종 채택안과 출처 플랜을 기록한다. 이 섹션은 이제 이력이며, 실행 계약은 각 PLAN.md가 소유한다.
 
 1. **D-21 "수동 배치 Day 고정" 계약 — 옵션 3종 (플래너가 설계·확정)**
    - What we know: EF는 draft를 delete→재insert(멱등 덮어쓰기). plan_items에 수동 마커 없음(`moveToDay`→`is_anchor:false`). `anchor_place_ids`는 배치만 보장, Day는 미보장. 프롬프트는 anchor를 "[필수/ANCHOR]" 태그로만 주입.
@@ -459,10 +461,16 @@ const byDay = (d: number) =>
      - (b) EF가 기존 plan_items 중 수동분을 보존(부분 덮어쓰기): 수동 마커 컬럼이 없어 **식별 불가** — plan_items에 컬럼 추가 시 마이그레이션 1개 더(범위 확대). 비권장.
      - (c) 클라이언트 사후 복원: 재생성 응답 후 클라가 moveToDay로 되돌림 — 레이스·깜빡임·Routes leg 불일치. 비권장.
    - Recommendation: (a). 단 웹 UI에 setAnchor(필수 별)를 이 phase에서 노출하지 않는다면 is_anchor의 유일한 쓰기 경로가 moveToDay가 되어 의미 충돌도 없음.
+   - **→ 결정: 옵션 (a) 채택.** `28-03-PLAN.md` `<objective>` + Task 1/2/3이 계약 전문을 소유(`moveToDay`→`is_anchor:true` · `pinned_placements` additive 요청 필드 · 프롬프트 제약 · `enforcePinnedPlacements` 사후 강제 · EF의 `is_anchor` 재기록으로 루프 폐쇄). DB 마이그레이션 추가 0. ⚠ 단, "의미 충돌 없음"은 **웹에만** 해당 — iOS는 `setAnchor` 별표 UI를 노출하므로 iOS의 수동 배치가 필수 앵커로 승격된다(의도된 통일, 28-03 Task 1 doc 주석 + SUMMARY에 명시).
 2. **editor 멤버의 D-13 기간 게이트 처리** — Pitfall 2의 (a)/(b) 중 확정. 권장: 게이트 UI는 owner 한정 + editor 안내 카피.
+   - **→ 결정: owner 한정(A-9).** `28-05-PLAN.md` Task 1/3 — 비-owner는 '일정 만들기' disabled + `호스트가 여행 기간을 정하면 일정을 만들 수 있어요` 카피, DurationGateSheet를 열지 않는다. 근거: `trips` UPDATE RLS가 owner 전용(0016)이라 editor의 `day_count` 저장은 조용히 0행 갱신된다. 신규 RLS로 editor에 여는 것은 범위 밖(보안 표면 확대 금지, T-28-18/25).
 3. **day_count·정확 날짜 동시 존재 시 정합** — Pitfall 7. 권장: 캘린더 확정 시 day_count를 파생값으로 동시 갱신(EF fallback 순서는 D-09 그대로).
+   - **→ 결정: 파생 저장 채택.** `28-04-PLAN.md` Task 1이 계약 소유 — "day_count는 항상 채운다. 캘린더로 정확한 날짜를 정하면 day_count를 그 범위에서 파생시켜 함께 저장한다." EF fallback 순서(`trip.day_count ?? computeDayCount`)는 D-09 그대로 단일 유지.
+     ⚠ **후속 발견(플랜 체커 BLOCKER):** 캘린더 range에는 길이 상한이 없어 파생 day_count가 0031 CHECK(1..30)를 넘길 수 있었다. 상한을 `Limits.TripDayCountMax`(=30, `packages/core/src/constants.ts`, 28-01) **단일 소스**로 정의하고 캘린더 `max` → Zod `.max()` → DB CHECK 세 곳이 같은 숫자를 쓰도록 잠갔다(28-01 Task 1 · 28-04 Task 1/2/3).
 4. **ONBOARD-04 '미정' 경로의 잔존 형태** — 레퍼런스에 미정 선택지 없음. 기간 pill 아래 '나중에 정할게요' 텍스트 버튼으로 유지 권장(기존 요구사항 보존). 완전 제거 시 ONBOARD-04 회귀 — 제거하려면 REQUIREMENTS 갱신 필요.
+   - **→ 결정: '나중에 정할게요' 존치(A-8).** `28-04-PLAN.md` Task 2 — 기간 pill 그리드 아래 text 버튼으로 유지, acceptance가 `grep -c '나중에 정할게요' → 1`로 강제. REQUIREMENTS 갱신 불필요(ONBOARD-04 무회귀).
 5. **[일정] 영역의 시트 내 배치** — PlaceList(모으기 리스트)와 Day 그룹의 상하 관계·전환(토글 vs 연속 스크롤). CONTEXT는 "[모으기] 시트 안에서 장소가 Day별로 묶여 표시"라고만 잠금 — 플랜 미생성 시 기존 리스트 그대로 + 생성 후 Day 그룹이 리스트를 대체/상단 점유하는 안이 자연스러움. 플래너 확정.
+   - **→ 결정: 연속 스크롤 + 상단 점유(A-12).** `28-06-PLAN.md` Task 2(f) — `PlanSection`을 `PlaceSheet` children **최상단**(PlaceList 위)에 삽입. 플랜 없으면 [일정] 빈 상태 카드 + 기존 PlaceList, 플랜 있으면 Day 그룹 + 미배치 풀(PlaceList 재사용). 배치+미배치 합집합 = 전체 places라 정보 손실 0. 신규 탭·라우트 0(D-15/HC-4), `place-sheet.tsx` diff 0(HC-5).
 
 ## Environment Availability
 

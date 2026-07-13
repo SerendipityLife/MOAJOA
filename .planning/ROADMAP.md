@@ -207,7 +207,7 @@ Plans:
 - [x] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가 (7/7 plans — gap closure 25-06·25-07 완료 2026-07-10, 라이브 UAT Test 3/4 재검증은 배포 후)
 - [x] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩 (4/4 plans, 라이브는 0028 main 배포 후)
 - [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
-- [ ] **Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)** — `/onboarding` 4단계를 레퍼런스 룩으로 개편 + 기간 pill(`trips.day_count` 0030) + 기존 generate-plan EF를 웹 결과 화면(Day 탭·타임라인)으로 연결
+- [ ] **Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)** — `/onboarding` 4단계를 레퍼런스 룩으로 개편 + 기간 pill(`trips.day_count` 0031) + 기존 generate-plan EF를 웹 결과 화면(Day 탭·타임라인)으로 연결
 
 ### Phase Details
 
@@ -323,7 +323,7 @@ Plans:
 
 ### Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)
 
-**Goal**: 웹 `/onboarding` 추가하기 위저드를 `references/add_trip`(트리플 앱) 레퍼런스와 동일한 UI/UX로 개편하고, **이미 존재하는** AI 일정 엔진(Phase 18의 `generate-plan` EF + `plans`/`plan_items`)을 웹 결과 화면(Day 탭·번호 타임라인)으로 연결한다. 링크 붙여넣기·장소 검색은 기존 `AddContentTabs`를 그대로 재사용해 유지한다. 백엔드 신규는 `trips.day_count` 한 컬럼(0030)뿐 — EF·RPC·플랜 모델은 전부 기존 것.
+**Goal**: 웹 `/onboarding` 추가하기 위저드를 `references/add_trip`(트리플 앱) 레퍼런스와 동일한 UI/UX로 개편하고, **이미 존재하는** AI 일정 엔진(Phase 18의 `generate-plan` EF + `plans`/`plan_items`)을 웹 결과 화면(Day 탭·번호 타임라인)으로 연결한다. 링크 붙여넣기·장소 검색은 기존 `AddContentTabs`를 그대로 재사용해 유지한다. 백엔드 신규는 `trips.day_count` 한 컬럼(**0031** — 0030은 Phase 25 gap closure가 점유)뿐 — EF·RPC·플랜 모델은 전부 기존 것.
 **Depends on**: Phase 24 (`/onboarding` 위저드 · `/moa/[id]` 지도탭 — 개편 대상 표면), Phase 18 (`generate-plan` EF · `plans`/`plan_items` · api 래퍼 — 결과 화면 백엔드)
 **Requirements**: SC-1~SC-6 (아래 Success Criteria를 requirement 축으로 사용 — REQUIREMENTS.md에 Phase 28 전용 ID 미발급)
 
