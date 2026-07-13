@@ -207,6 +207,7 @@ Plans:
 - [x] **Phase 25: Guest Unified Share (통합 공유화면)** — `/t/[slug]` share_mode 통합 + 닉네임→익명인증→join_moa + 익명 찜 + 날짜투표 임베드 + 게스트 장소 추가 (7/7 plans — gap closure 25-06·25-07 완료 2026-07-10, 라이브 UAT Test 3/4 재검증은 배포 후)
 - [x] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩 (4/4 plans, 라이브는 0028 main 배포 후)
 - [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
+- [ ] **Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)** — `/onboarding` 4단계를 레퍼런스 룩으로 개편 + 기간 pill(`trips.day_count` 0030) + 기존 generate-plan EF를 웹 결과 화면(Day 탭·타임라인)으로 연결
 
 ### Phase Details
 
@@ -320,6 +321,43 @@ Plans:
 
 **Plans**: TBD
 
+### Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)
+
+**Goal**: 웹 `/onboarding` 추가하기 위저드를 `references/add_trip`(트리플 앱) 레퍼런스와 동일한 UI/UX로 개편하고, **이미 존재하는** AI 일정 엔진(Phase 18의 `generate-plan` EF + `plans`/`plan_items`)을 웹 결과 화면(Day 탭·번호 타임라인)으로 연결한다. 링크 붙여넣기·장소 검색은 기존 `AddContentTabs`를 그대로 재사용해 유지한다. 백엔드 신규는 `trips.day_count` 한 컬럼(0030)뿐 — EF·RPC·플랜 모델은 전부 기존 것.
+**Depends on**: Phase 24 (`/onboarding` 위저드 · `/moa/[id]` 지도탭 — 개편 대상 표면), Phase 18 (`generate-plan` EF · `plans`/`plan_items` · api 래퍼 — 결과 화면 백엔드)
+**Requirements**: TBD (discuss에서 확정)
+
+**Locked decisions** (사용자 확정 2026-07-13 — discuss에서 재질문 금지):
+
+1. 대상은 `apps/web`의 `/onboarding` (배포처 moajoa-web.vercel.app). **iOS는 v2.1 동결 — 수정 금지** (`apps/ios/app/trip/[id]/(tabs)/plan.tsx`는 읽기 전용 analog)
+2. 히어로 인트로 화면(IMG_2917)은 **추가하지 않는다** — 바로 스텝 1부터
+3. 스텝 리스타일(IMG_2918~2921): 상단 뒤로가기 chevron + 우측 `N/총` 카운터(현 점 인디케이터 교체) · 중앙 이모지/아이콘 · 큰 굵은 2줄 타이틀 + 회색 서브카피 · 2열 큰 pill 그리드(선택 = 흰 배경 + 파란 테두리 + 파란 텍스트) · 하단 고정 풀폭 CTA(비활성 = 연한 파랑 bg + 흰 글씨)
+4. 날짜 스텝: 기간 pill(당일치기·1박2일·2박3일·3박4일·4박5일·5박6일)로 교체 + 그 이상/정확한 날짜는 **별도 버튼 → 기존 캘린더**(react-day-picker) 범위 선택
+5. 기간 저장: `trips.day_count` 신설 — 마이그레이션 **append-only 새 번호 0030** + `packages/core` 스키마 짝지어 변경 + `pnpm supabase:types` 재생성. `generate-plan` EF의 `computeDayCount`([index.ts L289-297](../../supabase/functions/generate-plan/index.ts))에 fallback: `dayCount = trip.day_count ?? computeDayCount(start,end)` — **현재는 날짜가 null이면 무조건 1일이라 Day 탭이 1개만 나옴**
+6. 링크 붙여넣기 / 장소 검색 **반드시 유지** — 기존 `apps/web/components/add-content-tabs.tsx` 재사용, 탭 자체 재구현 금지
+7. 위저드 완료 → 지금처럼 `/moa/{id}` 지도 보드로 이동. AI 일정은 자동이 아니라 **보드의 명시적 버튼**으로 생성 (Phase 18 D-01과 동일)
+8. 결과 화면(IMG_2922~2925) 웹 신규: Day 1~N 탭 + 번호 타임라인 + 장소 카드 + 지도. **백엔드 신규 0** — `generatePlan`/`getPlanByTrip`/`moveToDay`/`reorderPlanItem`/`setAnchor` 재사용
+9. 링크 유무 분기: 유튜브 링크가 있어 장소 추출이 가능하면 AI 일정을 추천. 링크가 없으면 모아만 생성하고, 이후 링크 추가 시 추출 → 일정 추천. 장소 검색으로 추가할 때는 **"몇 일차에 넣을지" 묻고** 해당 Day에 배치, "아직 모르겠다"면 AI 배치에 맡기고 나중에 변경 가능. **이 규칙은 사용자에게 가이드 카피로 노출**
+
+**Open gray areas** (discuss에서 잠글 것):
+
+- 플랜 미생성 상태에서는 Day가 존재하지 않는다(`plan_items`는 플랜의 자식) — 장소 검색 추가 시 "몇 일차?"를 어떻게 처리할지: 질문 숨김 / `day_count` 기준 Day 후보 선노출 후 플랜 생성 시 반영 / unplaced pool
+- 날짜·기간 모두 미정인 모아의 결과 화면·Day 탭 처리
+- 추출이 비동기라 링크 추가 후 장소가 늦게 생김 — 일정 추천 트리거 시점·진행 표시
+
+**Success Criteria** (what must be TRUE):
+
+1. `/onboarding` 스텝들이 레퍼런스 IMG_2918~2921과 동일한 레이아웃(뒤로가기 + `N/총` 카운터, 중앙 아이콘, 큰 타이틀 + 서브카피, 2열 pill, 하단 고정 CTA)으로 렌더된다
+2. 날짜 스텝에서 기간 pill을 고르면 `trips.day_count`에 저장되고, 캘린더 버튼으로 정확한 날짜 범위도 선택할 수 있다
+3. 링크 붙여넣기·장소 검색이 위저드에서 기존과 동일하게 동작한다 (`AddContentTabs` 재사용 — 병렬 구현 0)
+4. 유튜브 링크로 장소가 추출된 모아에서 '일정 만들기'를 누르면 Day 1~N 탭 + 번호 타임라인 결과 화면이 뜬다 (날짜 미정이어도 `day_count` 기준 Day 수)
+5. 장소 검색으로 장소를 추가할 때 몇 일차에 넣을지 물어보고, '모르겠다'면 AI 배치로 넘어간다 — 동작 규칙이 가이드 카피로 사용자에게 보인다
+6. `apps/ios` 및 기존 마이그레이션 파일 diff 0
+
+**Plans**: TBD
+
+**UI hint**: yes
+
 ### Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -329,3 +367,4 @@ Plans:
 | 25. Guest Unified Share | 5/5 | ✅ Complete 2026-07-10 (25-01 백엔드·25-02 seam·25-03 뼈대·25-04 linkIdentity·25-05 스모크 — 코드 완료, 원격 0029 push + Manual linking 토글 human-action 잔여) | 2026-07-10 |
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 0/TBD | Not started | - |
+| 28. Add-Trip Redesign | 0/TBD | Not started | - |
