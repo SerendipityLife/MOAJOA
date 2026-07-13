@@ -2,13 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { isDevToolsEnabled } from '@/lib/env';
 
 /**
  * Bottom tab bar mirroring the iOS app's (tabs) group: 모아 / 둘러보기 / 내 정보.
  * Shows only on those three top-level screens (so a pushed /moa/[id] has none,
- * matching iOS) and only when dev tools are on (the web app shell is a dev tool —
- * the public production viewer stays chrome-free).
+ * matching iOS).
+ *
+ * It used to render only when dev tools were on, back when the web app shell was
+ * itself a dev tool and the public surface was a chrome-free viewer. The v2.1
+ * web-first pivot reversed that: the web IS the product surface now, so gating
+ * the shell off in production stranded users with no route to 내 정보 — and thus
+ * no way to log out. The path check alone decides.
  */
 const TABS = [
   { href: '/moa', label: '모아', Icon: BookmarkIcon },
@@ -19,7 +23,7 @@ const TABS = [
 export function BottomNav() {
   const pathname = usePathname();
   const onTab = TABS.some((t) => t.href === pathname);
-  if (!onTab || !isDevToolsEnabled()) return null;
+  if (!onTab) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 backdrop-blur">
