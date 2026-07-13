@@ -104,6 +104,10 @@ export async function createTrip(
  * Phase 24 온보딩 draft 생성 (ONBOARD-03, D-03). createTrip과 별도 —
  * TripCreateDraft는 dates nullable + companion(0025)을 나른다. 기존 createTrip(iOS) 무수정.
  * seq_no·visibility·representative_id·share_slug는 전부 서버 몫(트리거) — 클라이언트 미전송.
+ *
+ * day_count(0031, D-08): 위저드 기간 pill이 고른 Day 수. null = 기간 미정.
+ * TripCreateDraftSchema가 `.default(null)`이라 parse를 거친 입력은 항상 이 키를 갖는다 —
+ * INSERT 객체에서 키가 누락되는 일이 없다(undefined 누수 0).
  */
 export async function createMoaDraft(
   client: MoajoaSupabaseClient,
@@ -117,6 +121,7 @@ export async function createMoaDraft(
       start_date: input.start_date,
       end_date: input.end_date,
       companion: input.companion,
+      day_count: input.day_count,
     })
     .select('*')
     .single();
@@ -124,6 +129,18 @@ export async function createMoaDraft(
   return data as Trip;
 }
 
+/**
+ * Partial trip UPDATE — 조건부 spread라 patch에 없는 키는 건드리지 않는다.
+ *
+ * day_count(0031, D-08/D-13): 기간 미정 모아의 기간 게이트가 이 경로로 Day 수를 저장한다.
+ * `!== undefined` 검사여야 `null`(기간 미정으로 되돌리기)이 정상 통과한다 — falsy 검사로
+ * 바꾸면 null이 조용히 무시된다.
+ *
+ * ⚠ 쓰기 게이트: trips UPDATE RLS는 **owner 전용**(0016 "trips: owner full access").
+ * editor 멤버가 호출하면 에러 없이 0행이 갱신된다(조용한 실패). 따라서 D-13 기간 게이트
+ * UI는 owner에게만 노출한다(UI-SPEC A-9) — UI 은닉 + RLS로 심층방어 2겹.
+ * 신규 RLS·RPC로 editor에게 trips UPDATE를 여는 것은 이 phase 범위 밖이다(보안 표면 확대 금지).
+ */
 export async function updateTrip(
   client: MoajoaSupabaseClient,
   id: string,
@@ -138,6 +155,7 @@ export async function updateTrip(
       ...(patch.city_code !== undefined && { city_code: patch.city_code }),
       ...(patch.start_date !== undefined && { start_date: patch.start_date }),
       ...(patch.end_date !== undefined && { end_date: patch.end_date }),
+      ...(patch.day_count !== undefined && { day_count: patch.day_count }),
     })
     .eq('id', id)
     .select('*')
