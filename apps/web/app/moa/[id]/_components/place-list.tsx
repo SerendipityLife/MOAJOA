@@ -34,6 +34,14 @@ export interface PlaceListProps {
   currentUserId?: string;
   /** D-12: trip owner id. currentUserId===ownerId면 전 장소 삭제 가능(호스트). */
   ownerId?: string;
+  /**
+   * Phase 28 D-17 — 미배치 풀 편입 진입점. **전달된 경우에만** 행 아코디언에 풀 편입 버튼이
+   * 뜨고, (0,0) 좌표 장소에 '위치 정보 없음' 캡션이 병기된다("풀 모드").
+   *
+   * 미전달 시 렌더는 기존과 완전히 동일하다 — 지도탭 기본 리스트는 이 prop을 주지 않으므로
+   * 무회귀다(기존 18케이스가 그 앵커). PlanSection이 pool 리스트에만 전달해 DaySelectSheet를 연다.
+   */
+  onAddToPlan?: (placeId: string) => void;
 }
 
 /** `4:00` 스타일 라벨 (vote-island tsLabel 미러 — m:ss zero-pad). */
@@ -67,6 +75,7 @@ export function PlaceList({
   onReply,
   currentUserId,
   ownerId,
+  onAddToPlan,
 }: PlaceListProps) {
   // MOA-05 마커 탭: openPlaceId 외부 변경 시 해당 행으로 스크롤.
   useEffect(() => {
@@ -194,6 +203,11 @@ export function PlaceList({
                 <p className="truncate text-xs font-normal text-neutral-500">
                   {profileNames[p.added_by] ?? '알 수 없음'}님이 담음
                 </p>
+                {/* 풀 모드(28-05 Pitfall 3): 좌표가 없는 장소는 AI가 영원히 Day에 배치하지
+                    못한다 — 이유를 캡션으로 드러내 "왜 안 들어가지?"를 흡수. */}
+                {onAddToPlan && p.lat === 0 && p.lng === 0 && (
+                  <p className="truncate text-xs font-normal text-neutral-500">위치 정보 없음</p>
+                )}
               </div>
 
               {/* 우: 찜 하트 토글 — 행 토글과 분리(stopPropagation). */}
@@ -256,6 +270,20 @@ export function PlaceList({
                 >
                   답장
                 </button>
+                {/* 28-05 D-17 풀 편입 — onAddToPlan 전달 시에만. 하트·답장과 동일하게
+                    stopPropagation으로 행 아코디언 토글과 분리. */}
+                {onAddToPlan && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddToPlan(p.id);
+                    }}
+                    className="self-start text-sm font-medium text-brand-600"
+                  >
+                    일정에 넣기
+                  </button>
+                )}
                 {/* 삭제 (soft-delete via hidden_at) — island이 optimistic 제거 + hidePlace.
                     D-12: own-only affordance (UI) — 게스트는 자기 장소(added_by===currentUserId)
                     또는 호스트(currentUserId===ownerId)만 렌더. currentUserId 부재=레거시 무조건
