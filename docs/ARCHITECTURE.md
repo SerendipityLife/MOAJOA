@@ -16,23 +16,22 @@
 - **Realtime** — 협업 보드 투표 라이브 반영을 Postgres replication으로 받음.
 - **비용** — read 무료 청구 모델이 Firestore보다 훨씬 우호적.
 
-### Next.js for Web (열람), Expo for iOS (저장)
+### Next.js for Web (입력·저장·편집 풀 서피스), Expo for iOS (v2.1 동결)
 
+- **v2.1 웹 퍼스트 피봇(Phase 23, 2026-07)** — 웹이 입력·저장·편집 풀 서피스 (공유 열람·투표·채팅 포함).
 - **공유 링크 비로그인 열람이 핵심 acquisition.** 카톡으로 받은 링크 → SSR로 즉시 렌더링 → OG 카드 → 가입 전환. Flutter Web으로는 이 경험을 만들기 어렵.
-- **iOS Share Extension은 Expo로도 가능** — `expo-share-intent` config plugin 사용. 첫 셋업 0.5–1주.
+- **iOS Share Extension은 Expo로도 가능** — `expo-share-intent` config plugin 사용. 첫 셋업 0.5–1주. (v2.1 웹 퍼스트 동안 iOS 전면 동결 — 작업 보류.)
 
 ## Data flow: 링크 추가 → 장소 추출
 
 ```
-[iOS] Share Sheet → MOAJOA 선택
+[Web] /onboarding 추가 위저드 또는 /moa/[id] add-sheet에 링크 입력
    ↓
-[iOS] expo-share-intent 핸들러가 URL 수신
-   ↓
-[iOS] supabase.from('links').insert({ board_id, url, source_kind:'youtube' })
-   ↓ (RLS: user must be board editor)
+[Web] supabase.from('links').insert({ trip_id, url, source_kind:'youtube' })
+   ↓ (RLS: user must be trip editor (can_edit_trip))
 [Supabase] links 행 생성, extraction_status='pending'
    ↓
-[iOS] supabase.functions.invoke('extract-youtube', { link_id })
+[Web] supabase.functions.invoke('extract-youtube', { link_id })
    ↓
 [Edge Function] YouTube oEmbed/Data API → 메타데이터
    ↓
@@ -42,21 +41,21 @@
    ↓
 [Edge Function] Google Places Text Search → 각 후보 → place_id + lat/lng
    ↓
-[Edge Function] places 테이블 upsert (on conflict: board_id + google_place_id)
+[Edge Function] places 테이블 upsert (on conflict: trip_id + google_place_id)
    ↓
 [Edge Function] links UPDATE extraction_status='ready'
    ↓
-[iOS/Web] Supabase Realtime 구독으로 places 변경 감지 → 지도 갱신
+[Web] Supabase Realtime 구독으로 places 변경 감지 → 지도 갱신
 ```
 
 ## Data flow: 협업 보드 투표 (Phase 1.5)
 
 ```
-[A user] 보드 visibility='shared' 설정 → boards.share_slug 자동 생성
+[A user] 트립 visibility='shared' 설정 → trips.share_slug 자동 생성
    ↓
-[A user] /b/<slug> 공유 링크를 카톡에 붙여 친구 B에게 전송
+[A user] /t/[slug] 공유 링크를 카톡에 붙여 친구 B에게 전송
    ↓
-[B user] /b/<slug> 클릭 → Next.js SSR로 즉시 렌더링 (비로그인 OK)
+[B user] /t/[slug] 클릭 → Next.js SSR로 즉시 렌더링 (비로그인 OK)
    ↓
 [B user] "투표하려면 로그인" → magic link → 가입
    ↓

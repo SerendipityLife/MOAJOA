@@ -18,6 +18,8 @@
 
 **상태:** **로컬 시뮬 빌드·실행 동작** (2026-06-03 — iPhone 17 Pro 시뮬에 로그인 화면까지 렌더 확인). 네이티브 모듈(expo-share-intent 등) 포함 빌드 OK.
 
+> **v2.1 웹 퍼스트 동안 iOS 전면 동결 (Phase 23 피봇, 2026-07).** 아래 할 일은 v2.0 이전 기준의 역사 기록 — 현행 트립 4탭 구조는 v2.0 산출물이며, 동결 해제 후 재평가.
+
 **파일 영역 (배타적):**
 ```
 apps/ios/**          ← 전부
@@ -43,9 +45,9 @@ apps/ios/**          ← 전부
 
 ---
 
-## 2️⃣ Web — 공개 보드 열람 (Owner: 프론트엔드)
+## 2️⃣ Web — 입력·저장·편집 풀 서피스 (Owner: 프론트엔드)
 
-**상태:** 작동. 다만 *현재는 dev tool 성격의 폼*도 포함 (보드 생성·링크 추가). 본래 web의 역할은 **열람·공유 랜딩**만.
+**상태:** 작동. v2.1 웹 퍼스트 피봇(Phase 23, 2026-07 공식 반전)으로 웹이 **입력·저장·편집 풀 서피스** — 공유 열람·투표·채팅 포함. 현행 라우트: `/onboarding`(추가 위저드) · `/moa/[id]`(지도 보드·채팅) · `/t/[slug]`(공유 열람 + 게스트 참여) · `/poll/[code]`(날짜 투표).
 
 **파일 영역 (배타적):**
 ```
@@ -54,17 +56,11 @@ apps/web/**          ← 전부
 
 **해야 할 일 (우선순위 순):**
 
-1. **`/b/[slug]` 공개 보드 페이지 폴리시**
-   - OG 이미지 자동 생성 (`@vercel/og`로 보드 제목 + 첫 핀 위치 카드)
-   - SEO meta tags (description, keywords from board.city_code)
-   - 모바일 반응형 (현재 데스크탑 위주)
-   - 지도 핀 클릭 시 영상 타임스탬프 jump
-2. **`/boards` 목록** — 현재 보드 카드만. 본래는 *내가 만든 + 멤버로 초대받은* 두 섹션
-3. **보드 생성/링크 추가 UI 제거 or admin-only로 격리**
-   - 현재 코드: `apps/web/app/boards/_components/create-board-button.tsx`, `apps/web/app/boards/[id]/_components/add-link-form.tsx`
-   - 처리 안: 환경변수 `NEXT_PUBLIC_ENABLE_DEV_TOOLS=1`일 때만 노출
-4. **공유 보드 협업 UI (Phase 1.5)** — `/b/[slug]?vote=1` 모드에서 ❤️ 투표 버튼
-5. **둘러보기 (`/discover`)** — 공개 보드 탐색 (Phase 2)
+1. ~~`/b/[slug]` 공개 보드 페이지 폴리시~~ — `/t/[slug]` 공유 열람 표면으로 대체됨 (OG·SEO meta·모바일 반응형 포함, Phase 23–25)
+2. ~~`/boards` 목록~~ — 구 보드 라우트 제거됨 (boards→trips 전환, v2.1)
+3. ~~보드 생성/링크 추가 UI 제거 or admin-only로 격리~~ — `NEXT_PUBLIC_ENABLE_DEV_TOOLS` 격리 완료. v2.1부터 정식 입력 UI는 `/onboarding` 위저드 · `/moa` add-sheet가 담당
+4. ~~공유 보드 협업 UI (Phase 1.5)~~ — `/t/[slug]` 게스트 표면(찜·날짜 투표·닉네임 게이트)으로 구현됨 (Phase 25)
+5. **둘러보기 (`/discover`)** — 공개 모아 탐색 (Phase 2)
 
 **막혔을 때:**
 - Next.js 15 + App Router + Tailwind v4 환경 (`@config` 디렉티브로 preset 로드)
