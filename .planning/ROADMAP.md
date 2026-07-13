@@ -208,6 +208,7 @@ Plans:
 - [x] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩 (4/4 plans, 라이브는 0028 main 배포 후)
 - [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
 - [x] **Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)** — `/onboarding` 4단계를 레퍼런스 룩으로 개편 + 기간 pill(`trips.day_count` 0031) + 기존 generate-plan EF를 웹 결과 화면(Day 탭·타임라인)으로 연결 (completed 2026-07-13)
+- [ ] **Phase 29: Chat Unification (채팅 단일화)** — 분절된 대화 기능 2종(poll 한마디 `date_comments`/`poll-chat` · 모아 채팅탭 `trip_messages`/`moa-chat`)을 채팅(`trip_messages`)으로 완전 통일 + dates 공유 게스트 채팅 접근 개방 + 한마디 은퇴
 
 ### Phase Details
 
@@ -386,6 +387,32 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 
 **UI hint**: yes
 
+### Phase 29: Chat Unification (채팅 단일화)
+
+**Goal**: 두 갈래로 분절된 대화 기능을 채팅(`trip_messages`) 하나로 통일한다. 현재 poll 한마디(`date_comments`/`poll-chat.tsx`, Phase 19 — 익명 device_token·무이력·broadcast·멘션 없음)와 모아 채팅탭(`trip_messages`/`moa-chat.tsx`, Phase 26 — 멤버 auth.uid·영속 이력·presence·장소 멘션 답장 칩)이 별개 백엔드·채널·신원으로 갈라져 있어, 사용자 혼란 + `dates` 공유에서 호스트(채팅)와 게스트(한마디)가 서로 다른 저장소에 써서 메시지가 안 보이는 분절이 있다. 채팅을 유일 표면으로 삼고 한마디를 은퇴시킨다.
+
+**Depends on**: Phase 26 (`trip_messages` 채팅 기반 — 통일 대상 백엔드), Phase 25 (게스트 익명 멤버 승격 `signInAnonymously`+`joinMoa` — 채팅 참여 자격), Phase 19 (poll 한마디 — 은퇴 대상)
+
+**Requirements**: 신규 (discuss/plan에서 CHAT-04 계열 발급 — REQUIREMENTS.md 미매핑, 아래 Success Criteria를 requirement 축으로 사용)
+
+**사용자 확정 방향 (2026-07-14)**: "채팅으로 완전 통일" — trip_messages 백엔드 단일화, dates 공유 게스트에게도 채팅 진입 개방, poll 한마디(date_comments/poll-chat) 은퇴. (경량 라벨 정리·역방향 한마디 통일은 반려됨.)
+
+**Success Criteria** (what must be TRUE — discuss에서 확정·정제):
+
+  1. `dates` 공유 게스트가 채팅(`trip_messages`)에 접근·참여할 수 있다 (현재는 한마디만 노출, 채팅탭 없음)
+  2. 호스트와 게스트가 공유 모드(`dates`·`both`·`places`) 무관하게 **같은 저장소**에서 대화한다 (서로 메시지가 보임)
+  3. poll 한마디(`poll-chat.tsx` "한마디")가 은퇴되고 중복 대화 표면이 제거된다
+  4. 기존 채팅 기능(영속 이력·presence·장소 멘션 답장 칩) 무회귀
+
+**Open design questions** (discuss에서 잠글 회색지대):
+- `dates` 공유의 채팅 진입 형태 (MoaIsland 셸 마운트 + 장소 영역 비움 vs 전용 경량 채팅 시트)
+- 독립 `/poll/[code]` 페이지 처리 (채팅으로 이관 vs `/poll` 은퇴 vs 유지)
+- 기존 `date_comments` 데이터 (마이그레이션 vs 폐기 — 원래 휘발성)
+- presence 통일 (`poll:{tripId}` → `moa:{tripId}` 단일화, Phase 27 presence 확인과 연결)
+- 익명 멤버 승격 시점 (현 투표 시 join → 채팅 진입에도 닉네임 게이트)
+
+**UI hint**: yes
+
 ### Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -396,3 +423,4 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 3/4 | In Progress|  |
 | 28. Add-Trip Redesign | 6/6 | Complete   | 2026-07-13 |
+| 29. Chat Unification (채팅 단일화) | 0/? | 📋 Discussing | - |
