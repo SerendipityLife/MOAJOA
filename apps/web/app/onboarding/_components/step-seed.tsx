@@ -30,8 +30,10 @@ export function StepSeed({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-neutral-500">
-        유튜브·블로그 링크를 붙여넣거나 장소를 검색해 담아 두세요
+      {/* D-22 — 이 스텝의 서브카피는 step-seed가 소유한다(page.tsx의 타이틀 앙상블은
+          step 4 subtitle을 null로 두어 중복 렌더를 피한다). AI 일정 약속을 여기서 건다. */}
+      <p className="text-center text-sm text-neutral-500">
+        유튜브·블로그 링크를 넣으면 영상 속 장소를 찾아 AI가 일정을 짜드려요
       </p>
 
       <AddContentTabs onAddLink={onAddLink} onPickPlace={onPickPlace} />

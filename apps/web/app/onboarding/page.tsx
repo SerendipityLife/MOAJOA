@@ -26,11 +26,16 @@ import {
 
 type Step = 1 | 2 | 3 | 4;
 
-const HEADINGS: Record<Step, string> = {
-  1: '어디로 떠나요?',
-  2: '언제 가요?',
-  3: '누구랑 가요?',
-  4: '봐둔 곳이 있나요?',
+/**
+ * 타이틀 앙상블 (D-03): 중앙 이모지 → 큰 타이틀 → 회색 서브카피.
+ * 아이콘은 이모지 텍스트다(A-6) — 신규 에셋·아이콘 라이브러리 0.
+ * step 4의 서브카피(D-22)는 step-seed가 소유한다 — 여기서 렌더하면 중복이라 null.
+ */
+const HEADINGS: Record<Step, { icon: string; title: string; subtitle: string | null }> = {
+  1: { icon: '🌏', title: '어디로 떠나요?', subtitle: '도시 1곳을 선택해 주세요' },
+  2: { icon: '📅', title: '언제 가요?', subtitle: '원하는 기간을 선택해 주세요' },
+  3: { icon: '😎', title: '누구랑 가요?', subtitle: '함께 갈 사람을 선택해 주세요' },
+  4: { icon: '📍', title: '봐둔 곳이 있나요?', subtitle: null },
 };
 
 export default function OnboardingPage() {
@@ -135,8 +140,9 @@ export default function OnboardingPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-surface-background">
-      {/* 상단: 스텝 인디케이터 (A-6) + 뒤로 chevron */}
-      <div className="relative flex h-14 items-center justify-center px-4">
+      {/* 상단 (D-02): 좌 뒤로 chevron(step>1) + 우 N/4 카운터. 4-dot 인디케이터는 제거됨.
+          카운터는 step 상태에서 파생 — pushState/popstate 배선은 무수정. */}
+      <div className="relative flex h-14 items-center px-4">
         {step > 1 && (
           <button
             type="button"
@@ -147,25 +153,30 @@ export default function OnboardingPage() {
             <ChevronLeft className="size-6" strokeWidth={2} />
           </button>
         )}
-        <div className="flex items-center gap-1.5" aria-hidden>
-          {([1, 2, 3, 4] as Step[]).map((s) => (
-            <span
-              key={s}
-              className={
-                s === step
-                  ? 'h-1.5 w-6 rounded-full bg-brand-600'
-                  : 'h-1.5 w-1.5 rounded-full bg-neutral-300'
-              }
-            />
-          ))}
-        </div>
+        {/* 총 스텝은 4 고정(D-02). 시각 표기는 `1/4`(공백 없음, A-5)이고, 슬래시는
+            시각 전용이라 스크린리더에는 문장형 라벨로 따로 전달한다(A11y Contract). */}
+        <span
+          aria-label={`4단계 중 ${step}단계`}
+          className="ml-auto text-xs font-semibold tabular-nums text-brand-600"
+        >
+          {step}/4
+        </span>
       </div>
 
       {/* 콘텐츠 */}
       <div className="flex-1 px-4 pt-12">
-        <h1 className="mb-8 text-lg font-semibold leading-tight text-neutral-900">
-          {HEADINGS[step]}
-        </h1>
+        {/* 타이틀 앙상블 (D-03) — 이모지는 장식이라 스크린리더에서 숨긴다. */}
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <span aria-hidden className="text-4xl">
+            {HEADINGS[step].icon}
+          </span>
+          <h1 className="text-center text-2xl font-semibold leading-tight text-neutral-900">
+            {HEADINGS[step].title}
+          </h1>
+          {HEADINGS[step].subtitle && (
+            <p className="text-center text-sm text-neutral-500">{HEADINGS[step].subtitle}</p>
+          )}
+        </div>
 
         {step === 1 && (
           <StepWhere
@@ -214,12 +225,19 @@ export default function OnboardingPage() {
 
       {/* 하단 고정 CTA */}
       <div className="sticky bottom-0 bg-surface-background px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3">
+        {/* 비활성 CTA (D-05) = 연한 파랑 채움 + **흰 글씨**. Button primary는 이미
+            `disabled:bg-brand-300`을 갖고 있고 기본 글씨가 반투명(text-white/60)이라,
+            twMerge로 불투명 흰색만 덮는다 — 신규 Button variant 추가 없음(A-4). */}
         {step < 4 ? (
-          <Button className="w-full" disabled={!canProceed} onClick={goNext}>
+          <Button className="w-full disabled:text-white" disabled={!canProceed} onClick={goNext}>
             다음
           </Button>
         ) : (
-          <Button className="w-full" disabled={submitting} onClick={handleSubmit}>
+          <Button
+            className="w-full disabled:text-white"
+            disabled={submitting}
+            onClick={handleSubmit}
+          >
             모아 만들기
           </Button>
         )}
