@@ -355,7 +355,7 @@ Plans:
 5. 장소 검색으로 장소를 추가할 때 몇 일차에 넣을지 물어보고, '모르겠다'면 AI 배치로 넘어간다 — 동작 규칙이 가이드 카피로 사용자에게 보인다
 6. `apps/ios` 및 기존 마이그레이션 파일 diff 0
 
-**Plans**: 4/6 plans executed
+**Plans**: 5/6 plans executed
 
 Plans:
 **Wave 1**
@@ -370,7 +370,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 28-05-PLAN.md — [일정] 결과 화면: PlanSection · DurationGateSheet · DaySelectSheet (SC-4·SC-5)
+- [x] 28-05-PLAN.md — [일정] 결과 화면: PlanSection · DurationGateSheet · DaySelectSheet (SC-4·SC-5)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -389,4 +389,4 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 | 25. Guest Unified Share | 5/5 | ✅ Complete 2026-07-10 (25-01 백엔드·25-02 seam·25-03 뼈대·25-04 linkIdentity·25-05 스모크 — 코드 완료, 원격 0029 push + Manual linking 토글 human-action 잔여) | 2026-07-10 |
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 0/TBD | Not started | - |
-| 28. Add-Trip Redesign | 4/6 | In Progress|  |
+| 28. Add-Trip Redesign | 5/6 | In Progress|  |
