@@ -215,6 +215,10 @@ export function GuestSurface({
       memberIdsInJoinOrder: members.map((m) => m.user_id),
       initialProfileNames: profileNames,
       initialMessages,
+      // 게스트 표면에는 [일정] 영역을 마운트하지 않는다(T-28-28) — 공유 링크 열람자에게
+      // 플랜 변경 권한이 새지 않도록 seed 자체를 주지 않는다. island이 hideHostControls로
+      // 섹션을 숨기고, DB의 can_edit_trip RLS(0017)가 최종 방어다.
+      initialPlan: null,
       currentUserNickname: profileNames[uid] ?? nick,
     });
   }

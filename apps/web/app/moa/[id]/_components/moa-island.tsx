@@ -20,6 +20,7 @@ import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { memberColor } from '@/lib/member-color';
 import { Button, useToast } from '@/components';
 import { MoaMap } from './moa-map';
+import type { PlanWithItemsView } from './plan-section';
 import { PlaceSheet, type SheetAnchor } from './place-sheet';
 import { PlaceList } from './place-list';
 import { AddSheet } from './add-sheet';
@@ -37,6 +38,11 @@ export interface MoaIslandProps {
   memberIdsInJoinOrder: string[];
   initialProfileNames: Record<string, string>;
   initialMessages: TripMessage[];
+  /**
+   * RSC seed된 draft 플랜(없으면 null). plan_items는 realtime publication 대상이 아니라
+   * 이 seed + mutation 후 로컬 refetch가 유일한 갱신 경로다(Pitfall 11). 배선은 Plan 06 Task 2.
+   */
+  initialPlan: PlanWithItemsView | null;
   /** 전송·presence track에 쓰는 로그인 사용자 display_name 스냅샷(D-08). */
   currentUserNickname: string;
   /** 게스트 마운트(/t)에서 호스트 전용 컨트롤([함께 정하기]) 숨김 (25-06 Gap 4). */

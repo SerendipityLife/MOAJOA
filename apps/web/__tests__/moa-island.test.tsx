@@ -219,6 +219,7 @@ const baseProps: MoaIslandProps = {
   memberIdsInJoinOrder: [],
   initialProfileNames: { u1: '나' },
   initialMessages: [],
+  initialPlan: null,
   currentUserNickname: '나',
 };
 

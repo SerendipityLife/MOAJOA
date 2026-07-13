@@ -9,8 +9,8 @@ import { buildMarkerIconUrl } from '@/lib/marker-svg';
 const mapCtor = vi.fn();
 const fitBounds = vi.fn();
 type MarkerOpts = { icon: { url: string }; position: { lat: number; lng: number } };
-let markers: { opts: MarkerOpts; setIcon: ReturnType<typeof vi.fn>; setMap: ReturnType<typeof vi.fn> }[] =
-  [];
+type MarkerRecord = { opts: MarkerOpts; setIcon: ReturnType<typeof vi.fn>; setMap: ReturnType<typeof vi.fn> };
+let markers: MarkerRecord[] = [];
 
 class MapStub {
   constructor(el: unknown, opts: unknown) {
@@ -19,12 +19,10 @@ class MapStub {
   fitBounds = fitBounds;
 }
 class MarkerStub {
-  setIcon = vi.fn((icon: { url: string }) => {
-    this.record.opts.icon = icon;
-  });
+  setIcon = vi.fn();
   setMap = vi.fn();
   addListener = vi.fn();
-  record: { opts: MarkerOpts; setIcon: ReturnType<typeof vi.fn>; setMap: ReturnType<typeof vi.fn> };
+  record: MarkerRecord;
   constructor(opts: MarkerOpts) {
     this.record = { opts, setIcon: this.setIcon, setMap: this.setMap };
     markers.push(this.record);
@@ -197,12 +195,14 @@ describe('MoaMap — labels + fitKey additive props (D-16 · A-14 · Pitfall 4)'
     );
     // 마커를 재생성하지 않고(깜빡임 0) 아이콘만 교체한다.
     expect(markers).toHaveLength(1);
-    expect(markers[0]!.opts.icon.url).toBe(
-      buildMarkerIconUrl({
-        source_kind: 'ai',
-        confidence: 0.9,
-        fill: colors.brand[500],
-        label: 3,
+    expect(markers[0]!.setIcon).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: buildMarkerIconUrl({
+          source_kind: 'ai',
+          confidence: 0.9,
+          fill: colors.brand[500],
+          label: 3,
+        }),
       }),
     );
   });
