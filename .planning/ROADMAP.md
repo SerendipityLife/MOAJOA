@@ -278,6 +278,7 @@ Plans:
 **Plans**: 7 plans (7 complete — 코드 5 + gap closure 2, 2026-07-10)
 
 Plans:
+
 - [x] 25-01-PLAN.md — [BLOCKING] 백엔드: 0029(public_trip_poll anon RPC + public_trip_view share_mode + cast_date_vote_authed 서버파생 + hide_place_as_member own-only) + api 래퍼·core 타입 + 로컬 적용·typegen·스모크 (Wave 1, autonomous:false) ✅ 로컬 완료 — 원격 push 게이트 open
 - [x] 25-02-PLAN.md — 컴포넌트 seam 파라미터화: poll-vote-island(deviceToken/nickname/onRequireMember) + place-list own-only 삭제 게이트(D-12) (Wave 1) — ✅ 2026-07-10 (web 144 그린·tsc 0·page.tsx diff 0, commits 5198d46·623aea7·af1d537·61788ab)
 - [x] 25-03-PLAN.md — 게스트 통합 화면 뼈대: nickname-gate-sheet + guest-surface(세션 lifecycle·lazy 게이트·share_mode 분기·MoaIsland/Poll 재사용) + page.tsx 교체 (Wave 2) — ✅ 2026-07-10 (web 150 그린·tsc 0·build PASS `ƒ /t/[slug]` 219kB, commits ababe25·8eca62c·dcdea3e·d34e7fd)
@@ -357,11 +358,22 @@ Plans:
 **Plans**: 6 plans / 4 waves
 
 Plans:
+**Wave 1**
+
 - [ ] 28-01-PLAN.md — [BLOCKING] day_count seam: 0031 마이그레이션 + core 스키마 + api 래퍼 + typegen + DB push (SC-2·SC-6)
 - [ ] 28-02-PLAN.md — 프레젠테이션 프리미티브: SelectPill · DurationPills · marker-svg 번호 라벨 (SC-1·SC-6)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 28-03-PLAN.md — D-21 수동배치 Day 고정 계약 + EF day_count fallback (SC-4·SC-5)
 - [ ] 28-04-PLAN.md — 위저드 리스타일: 헤더·타이틀·2열 pill·CTA + 기간 pill 스텝 + build-draft (SC-1·SC-2·SC-3)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 28-05-PLAN.md — [일정] 결과 화면: PlanSection · DurationGateSheet · DaySelectSheet (SC-4·SC-5)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 28-06-PLAN.md — island 배선: RSC seed · 번호 핀 지도 · 생성 트리거 · 검색 추가 Day 분기 (SC-4·SC-5·SC-6)
 
 Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-06
