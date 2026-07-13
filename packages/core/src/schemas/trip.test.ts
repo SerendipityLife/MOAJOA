@@ -3,9 +3,11 @@ import {
   TripCreateSchema,
   TripCreateDraftSchema,
   TripSchema,
+  TripUpdateSchema,
   type Trip,
   type TripId,
 } from './trip';
+import { Limits } from '../constants';
 
 describe('TripCreateSchema — required dates + end >= start (SETUP-01, D-09)', () => {
   it('accepts a valid multi-day create', () => {
@@ -76,6 +78,7 @@ describe('TripSchema — full trip row (D-02, D-10)', () => {
     cover_image_url: null,
     share_mode: null,
     companion: null,
+    day_count: null,
     created_at: '2026-06-21T10:00:00.000Z',
     updated_at: '2026-06-21T10:00:00.000Z',
   };
@@ -113,6 +116,54 @@ describe('TripSchema — full trip row (D-02, D-10)', () => {
 
   it('allows a null companion (0025 mirror)', () => {
     expect(TripSchema.parse(fullTrip).companion).toBeNull();
+  });
+
+  // --- day_count (migration 0031, D-08) — required-nullable, share_mode 선례 미러 ---
+
+  it('accepts a null day_count (기간 미정 — 레거시 모아도 이 값)', () => {
+    expect(TripSchema.parse(fullTrip).day_count).toBeNull();
+  });
+
+  it('accepts day_count at the lower bound (1 = 당일치기)', () => {
+    expect(TripSchema.parse({ ...fullTrip, day_count: 1 }).day_count).toBe(1);
+  });
+
+  it('accepts day_count at the upper bound (Limits.TripDayCountMax)', () => {
+    const max = Limits.TripDayCountMax;
+    expect(TripSchema.parse({ ...fullTrip, day_count: max }).day_count).toBe(max);
+  });
+
+  it('rejects day_count above the upper bound (0031 CHECK와 같은 상한 — 초과분이 INSERT까지 새면 DB가 거부한다)', () => {
+    expect(() =>
+      TripSchema.parse({ ...fullTrip, day_count: Limits.TripDayCountMax + 1 }),
+    ).toThrow();
+  });
+
+  it('rejects day_count 0 and negatives (하한 1)', () => {
+    expect(() => TripSchema.parse({ ...fullTrip, day_count: 0 })).toThrow();
+    expect(() => TripSchema.parse({ ...fullTrip, day_count: -1 })).toThrow();
+  });
+
+  it('rejects a non-integer day_count', () => {
+    expect(() => TripSchema.parse({ ...fullTrip, day_count: 2.5 })).toThrow();
+  });
+
+  it('rejects a missing day_count key (required-nullable — share_mode 선례)', () => {
+    const { day_count, ...withoutDayCount } = fullTrip;
+    void day_count;
+    expect(() => TripSchema.parse(withoutDayCount)).toThrow();
+  });
+});
+
+describe('Day 수 상한 단일 소스 — Limits.TripDayCountMax (0031 CHECK ↔ Zod ↔ 캘린더 max)', () => {
+  /**
+   * 회귀 가드 (ShareMode `.toEqual` 선례): 이 숫자는 0031 마이그레이션의
+   * `day_count between 1 and 30` CHECK 리터럴과 **반드시 같아야** 한다. SQL은 상수를
+   * import할 수 없으므로 이 단언 + 0031 헤더 주석이 결속 장치다. 어긋나면 정상 입력
+   * (장기 여행)이 Zod를 통과하고 DB CHECK에서 거부되어 모아 생성이 통째로 실패한다.
+   */
+  it('is 30 — 0031 CHECK 리터럴과 동일', () => {
+    expect(Limits.TripDayCountMax).toBe(30);
   });
 });
 
@@ -186,5 +237,43 @@ describe('TripCreateDraftSchema — 온보딩 4단계 draft, dates optional (ONB
         companion: 'ㅁ'.repeat(21),
       }),
     ).toThrow();
+  });
+
+  // --- day_count (0031, D-08) — 위저드 기간 pill이 싣는 값. 제출 마지막 방어선 ---
+
+  const baseDraft = {
+    title: '오사카',
+    city_code: 'osaka',
+    start_date: null,
+    end_date: null,
+    companion: null,
+  };
+
+  it('accepts a null day_count (기간 미정 통과 — ONBOARD-04)', () => {
+    expect(TripCreateDraftSchema.parse({ ...baseDraft, day_count: null }).day_count).toBeNull();
+  });
+
+  it('accepts a 기간 pill day_count (2박 3일 = 3)', () => {
+    expect(TripCreateDraftSchema.parse({ ...baseDraft, day_count: 3 }).day_count).toBe(3);
+  });
+
+  it('rejects day_count above Limits.TripDayCountMax (캘린더가 상한 밖 범위를 흘려도 제출 전에 막힌다)', () => {
+    expect(() =>
+      TripCreateDraftSchema.parse({ ...baseDraft, day_count: Limits.TripDayCountMax + 1 }),
+    ).toThrow();
+  });
+});
+
+describe('TripUpdateSchema — day_count 부분 갱신 (D-13 기간 게이트, 0031)', () => {
+  it('accepts a day_count-only patch', () => {
+    expect(TripUpdateSchema.parse({ day_count: 4 }).day_count).toBe(4);
+  });
+
+  it('accepts a null day_count patch (기간 미정으로 되돌리기)', () => {
+    expect(TripUpdateSchema.parse({ day_count: null }).day_count).toBeNull();
+  });
+
+  it('rejects a day_count patch above Limits.TripDayCountMax', () => {
+    expect(() => TripUpdateSchema.parse({ day_count: Limits.TripDayCountMax + 1 })).toThrow();
   });
 });
