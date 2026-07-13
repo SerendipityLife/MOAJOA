@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 import { CITY_KO_MAP } from '@moajoa/core';
@@ -10,6 +10,14 @@ import { GuestPromote } from './_components/guest-promote';
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+/** /moa/[id]와 같은 지도 서피스 — 페이지 줌이 지도 줌을 가로채지 않도록 D-13을 덮는다. */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 /**
  * Description template per CONTEXT D-09 §specifics:

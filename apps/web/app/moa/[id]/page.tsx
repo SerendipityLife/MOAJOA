@@ -1,3 +1,4 @@
+import type { Viewport } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import {
   getMyVotedPlaceIds,
@@ -11,6 +12,22 @@ import {
 } from '@moajoa/api';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { MoaIsland } from './_components/moa-island';
+
+/**
+ * 루트 layout의 maximumScale:5(D-13, WCAG 1.4.4)를 이 서피스에서만 덮는다.
+ *
+ * 페이지 줌이 1을 넘는 순간 visual viewport가 패닝 가능해지고, 그때부터는 시트를
+ * 끌든 어디를 끌든 fixed 레이어(지도 + 시트)가 통째로 따라 움직인다. 합성기 레벨이라
+ * touch-action·overscroll-behavior로 막을 수 없다. 게다가 지도 화면에서 핀치는
+ * "지도를 확대"하려는 동작이지 "페이지를 확대"하려는 동작이 아니다 — 페이지 줌이
+ * 지도 줌을 가로채는 것 자체가 오작동이다.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 /**
  * /moa/[id] — 지도탭 RSC (auth 게이트 + 초기 데이터 로드).
