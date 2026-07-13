@@ -443,10 +443,10 @@ Deno.serve(async (req) => {
 
     // Fire-and-forget webhook to web /api/revalidate (per CONTEXT D-04, D-05).
     // Uses the trip row loaded before extraction — only POST when
-    // visibility=public + slug present.
+    // visibility=public/shared + slug present.
     // Local dev: WEB_BASE_URL unset → skip silently (RESEARCH Pitfall 6).
     try {
-      if (trip?.visibility === 'public' && trip.share_slug) {
+      if ((trip?.visibility === 'public' || trip?.visibility === 'shared') && trip.share_slug) {
         const webBase = Deno.env.get('WEB_BASE_URL');
         const revalidateSecret = Deno.env.get('REVALIDATE_SECRET');
         if (webBase && revalidateSecret) {
