@@ -112,7 +112,7 @@ export default async function PublicBoardPage({ params }: Props) {
             <div className="min-w-0">
               <p className="text-[15px] font-semibold leading-snug text-brand-900">{inviteLine}</p>
               <p className="mt-1 text-sm leading-relaxed text-brand-700">
-                가고 싶은 곳에 <span className="font-semibold">가고싶어!</span>를 눌러주세요.
+                가고 싶은 곳에 <span className="font-semibold">찜</span>을 눌러주세요.
                 많이 모인 곳으로 같이 정해요.
               </p>
             </div>

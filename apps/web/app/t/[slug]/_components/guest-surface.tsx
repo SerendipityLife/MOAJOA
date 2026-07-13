@@ -316,13 +316,13 @@ export function GuestSurface({
               </span>
               <button
                 type="button"
-                aria-label="가고싶어"
+                aria-label="찜"
                 data-testid={`guest-vote-${p.id}`}
                 onClick={() => openGate()}
                 className="shrink-0 inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-brand-300 hover:text-brand-600"
               >
                 <Heart className="size-3.5" strokeWidth={2.2} fill="none" />
-                가고싶어
+                찜
                 <span className="text-neutral-400">{counts[p.id] ?? 0}</span>
               </button>
             </div>
