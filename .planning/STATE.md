@@ -432,8 +432,9 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-13T13:31:03.686Z
-**Stopped at:** Phase 25 UAT round 3 완료 — BottomSheet body portal(47c375c)로 iOS WebKit 스태킹 트랩 해소, 게스트 날짜투표 라이브 실증(cast_date_vote_authed 204→tally 클로드게스트 1). 잔여: iPhone 재확인(공유시트 footer CTA·달력 nav·하트) + Test 4 카카오 승격 + 크로스브라우저 실시간. 주의: 원격에 Phase 28(add-trip-redesign-ai) 병렬 작업 유입됨
+**Last session:** 2026-07-13 (resumed)
+**Stopped at:** Session resumed — Phase 28 완료 확인(verification passed 6/6, 라이브 UAT 2건 pending), Phase 25 UAT 잔여 확인. 사용자 선택: Phase 27(Hardening & 마감) discuss 착수 → `/gsd-discuss-phase 27` 라우팅
+**Previous stop:** Phase 25 UAT round 3 완료 — BottomSheet body portal(47c375c)로 iOS WebKit 스태킹 트랩 해소, 게스트 날짜투표 라이브 실증(cast_date_vote_authed 204→tally 클로드게스트 1). 잔여: iPhone 재확인(공유시트 footer CTA·달력 nav·하트) + Test 4 카카오 승격 + 크로스브라우저 실시간. 주의: 원격에 Phase 28(add-trip-redesign-ai) 병렬 작업 유입됨
 **Resume file:** .planning/phases/25-guest-unified-share/25-HUMAN-UAT.md
 
 다음 세션에서 이어할 때:
