@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: Completed 27-02-PLAN.md
-last_updated: "2026-07-13T16:00:55.706Z"
+stopped_at: "Phase 27 wave 2 완료 — 배포(EF v141·main push eea5cc3) + 27-HUMAN-UAT.md(11항목) + 401 실증. 다음: wave 3 통합 UAT(27-04)"
+last_updated: "2026-07-13T16:06:31.461Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 7
@@ -434,8 +434,8 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-13T16:00:55.700Z
-**Stopped at:** Completed 27-02-PLAN.md
+**Last session:** 2026-07-13T16:06:31.454Z
+**Stopped at:** Phase 27 wave 2 완료 — 배포(EF v141·main push eea5cc3) + 27-HUMAN-UAT.md(11항목) + 401 실증. 다음: wave 3 통합 UAT(27-04)
 **Resume file:** None
 **Previous stop:** Phase 25 UAT round 3 완료 — BottomSheet body portal(47c375c)로 iOS WebKit 스태킹 트랩 해소, 게스트 날짜투표 라이브 실증(cast_date_vote_authed 204→tally 클로드게스트 1). 잔여 UAT는 Phase 27 통합 UAT로 합류(27-CONTEXT.md D-07). 참고: `.planning/phases/25-guest-unified-share/25-HUMAN-UAT.md`
 
