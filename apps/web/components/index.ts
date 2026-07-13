@@ -1,6 +1,8 @@
 export { Button } from './button';
 export { Input } from './input';
 export { Chip } from './chip';
+export { SelectPill } from './select-pill';
+export type { SelectPillProps } from './select-pill';
 export { Card } from './card';
 export { Dialog } from './dialog';
 export { BottomSheet } from './bottom-sheet';
