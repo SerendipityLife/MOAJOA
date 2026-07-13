@@ -323,7 +323,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 27-01-PLAN.md — SEC-01 추출 멤버십 게이트 (스모크 RED→GREEN, claim 앞 배치) + revalidate shared 갭 fix
+- [x] 27-01-PLAN.md — SEC-01 추출 멤버십 게이트 (스모크 RED→GREEN, claim 앞 배치) + revalidate shared 갭 fix
 - [ ] 27-02-PLAN.md — NAME-01 가고싶어→찜 카피 스윕 + WORKSTREAMS·ARCHITECTURE 역할 기술 v2.1 갱신
 - [ ] 27-03-PLAN.md — 배포(main push + EF --use-api) + 27-HUMAN-UAT.md 통합 체크리스트 + 라이브 게이트 무비용 실증
 - [ ] 27-04-PLAN.md — 통합 UAT 하이브리드 실행 (Claude 자동분 → human checkpoint → 최종 판정 + presence todo 처리)
@@ -394,5 +394,5 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 | 24. Host Flow (온보딩·지도탭) | 5/7 | 🔧 Executing (Wave 2 완료) | - |
 | 25. Guest Unified Share | 5/5 | ✅ Complete 2026-07-10 (25-01 백엔드·25-02 seam·25-03 뼈대·25-04 linkIdentity·25-05 스모크 — 코드 완료, 원격 0029 push + Manual linking 토글 human-action 잔여) | 2026-07-10 |
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
-| 27. Hardening & 마감 | 0/TBD | Not started | - |
+| 27. Hardening & 마감 | 1/4 | In Progress|  |
 | 28. Add-Trip Redesign | 6/6 | Complete   | 2026-07-13 |
