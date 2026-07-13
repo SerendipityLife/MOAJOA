@@ -358,7 +358,7 @@ Roadmap (2026-06-21)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 
 ### 네이밍 & 보안 (NAME / SEC)
 
-- [ ] **NAME-01**: 유저 대면 카피 전반에서 보드→"모아", 가고싶어→"찜"으로 표기된다 (코드 식별자는 유지)
+- [x] **NAME-01**: 유저 대면 카피 전반에서 보드→"모아", 가고싶어→"찜"으로 표기된다 (코드 식별자는 유지)
 - [x] **SEC-01**: 추출 트리거(Edge Function)가 해당 모아의 멤버에게만 허용된다 (익명 세션의 추출 비용 남용 차단)
 
 ## v2.1 Out of Scope (명시 제외)
@@ -395,7 +395,7 @@ Roadmap (2026-07-07)에서 매핑됨. 자세한 phase 정의는 `.planning/ROADM
 | CHAT-02 | Phase 26 (26-03) | ✅ 코드완료 (라이브 0028 배포 후) |
 | CHAT-03 | Phase 26 (26-04) | ✅ 코드완료 (라이브 0028 배포 후) |
 | SEC-01 | Phase 27 | Complete |
-| NAME-01 | Phase 27 | Pending |
+| NAME-01 | Phase 27 | Complete |
 
 **Coverage:**
 
