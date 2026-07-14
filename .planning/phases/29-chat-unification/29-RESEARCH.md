@@ -416,14 +416,14 @@ async function handleSend(body: string, _replyTo: string | null) {
 | A3 | poll_code 보유자의 voter 멤버십은 trip 전체 read(places/links/messages)를 부여 — dates 시맨틱 trip엔 통상 장소가 없어 실질 노출 미미, 그리고 D-03a가 승격 방향 자체를 잠갔으므로 수용 [ASSUMED — 스코프 확장 평가] | Security | 장소가 있는 trip의 poll_code가 유출되면 장소 목록 열람 가능. /t dates 공유와 동일한 노출 수준이라 신규 위험은 아님 |
 | A4 | `castDateVote`(device_token RPC)와 `getDeviceToken`은 이번 phase에서 제거하지 않는다 — /poll이 onRequireMember 경로로 전환되면 웹 호출부가 사라질 수 있으나 D-02 범위 밖 [ASSUMED — surgical 해석] | 은퇴 지도 | plan이 /poll 투표를 authed 경로로 완전 전환하면 castDateVote가 웹 orphan이 됨 — 제거 여부는 plan에서 명시 결정 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Phase 27 UAT 항목 5 (presence 수렴)가 아직 `pending`이다** [VERIFIED: 27-HUMAN-UAT.md:41 "result: pending"]
+1. **Phase 27 UAT 항목 5 (presence 수렴)가 아직 `pending`이다** [VERIFIED: 27-HUMAN-UAT.md:41 "result: pending"] — **RESOLVED: 블로커 아님 처분 확정, moa presence 2인극 확인은 phase 29 UAT로 이관 (CHAT-07 test map manual-only 항목).**
    - What we know: CONTEXT는 "Phase 27 presence pass가 이 통일의 전제 신호"라 했다. Phase 20 UAT에서 poll 채널 presence는 라이브 수렴 PASS(2.110.0). moa 채널 presence는 코드 동일 패턴이나 2인극 라이브 미확정.
    - What's unclear: moa:{tripId} presence의 라이브 수렴.
    - Recommendation: 블로커 아님 — 같은 supabase-js·같은 track/sync 패턴이 poll 채널에서 라이브 실증됐다. phase 29 UAT에 moa presence 2인극 확인을 포함시켜 27 잔여와 함께 소진.
 
-2. **/poll 투표를 onRequireMember(authed) 경로로 전환할 것인가, 레거시 castDateVote를 병존시킬 것인가**
+2. **/poll 투표를 onRequireMember(authed) 경로로 전환할 것인가, 레거시 castDateVote를 병존시킬 것인가** — **RESOLVED: 전환 채택 (29-04 Task 1이 명시 소비) — 재방문자 중복투표 엣지는 낮은 확률·낮은 피해로 수용하고 코드 주석에 기록.**
    - What we know: A-7은 "투표 첫 참여도 동일 게이트 공유"라 했다 → 래퍼가 onRequireMember를 전달하면 투표가 cast_date_vote_authed로 감. 이 경우 /poll 투표자도 전원 익명 멤버가 된다(신원 통일 — phase 목적 정합). device_token 투표 이력과 auth.uid 투표 이력은 dedup 키(device_token 컬럼)가 달라 **재방문자의 기존 투표가 새 신원으로 중복 행이 될 수 있다** (poll_vote_tally는 nickname distinct 집계라 available_count는 device 단위 — 같은 사람이 구 token 행 + 신 uid 행 2행 가능).
    - Recommendation: 전환을 권고 (게이트·신원 단일화가 phase 목적). 중복 투표 엣지는 낮은 확률(재방문+재투표 교집합)·낮은 피해(집계 +1)로 수용하고 plan에 명시. 병존(투표=레거시, 채팅=authed)은 게이트 2벌·신원 2벌로 A-7 위반.
 
