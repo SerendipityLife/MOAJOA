@@ -57,13 +57,21 @@ blocked: 1
   missing: ["host MoaIsland pollSlot (현황 뷰) 배선", "무음 catch 로깅"]
 
 - truth: "dates/both 공유 게스트가 join 후 MoaIsland(채팅탭 포함)를 본다"
-  status: needs_retest
-  reason: "User reported: 게스트(/t)는 탭바·채팅 미표시. 진단 결과 관찰 오류 가능성 높음 — 시크릿 창은 세션 없음→joined=false→비join 뷰(투표+장소, 탭바 없음)가 UI-SPEC A-2 설계 그대로. 투표자 목록의 '클로드게스트'는 2026-07-12 죽은 세션 잔재(현재 세션 join 증거 아님). 라이브 재현 프로브에서 익명 join→hydrate 전 쿼리(getTrip/places/messages/members) 성공 = 코드 결함 반증."
+  status: resolved
+  resolution: "재검증(2026-07-15) 확정: join(투표/닉네임) 후 게스트가 통합 MoaIsland(호스트형 앱쉘, hideHostControls)로 전환됨 = Phase 29 D-01 설계대로 동작. 사용자 결정: '이대로 유지'(설계 의도). 채팅은 그 [채팅] 탭 경유. 최초 오독('탭바 없음')은 비join 뷰를 본 것 + 죽은 세션 투표자 잔재."
   severity: major
   test: 2
-  diagnosis: "NOT A DEPLOYED-CODE DEFECT (H1~H4 전부 반증). 재검증 필요: 배포 후 새 시크릿 창에서 반드시 join 액션(투표/찜/전송→닉네임 게이트) 수행 후 탭바/채팅 확인. debug: .planning/debug/guest-chat-island-not-mounted.md. 부차 취약점: guest-surface.tsx:114 hydrateMember try/catch 부재(일시 실패 시 무증상 감금) — 강건화는 별도."
-  artifacts: ["apps/web/app/t/[slug]/_components/guest-surface.tsx:114,191"]
+  artifacts: ["apps/web/app/t/[slug]/_components/guest-surface.tsx"]
   missing: []
+
+- truth: "게스트 /t 뷰(join 전)에 채팅 진입 어포던스가 있고, 입력 시도 시 투표와 동일하게 닉네임 게이트→앱쉘 채팅탭으로 이동한다"
+  status: new_request
+  reason: "사용자 신규 요청(2026-07-15): '게스트 화면에서 채팅이 보이고 메시지 입력하려고 하면 날짜·장소 투표와 마찬가지로 닉네임 입력하게 해서 호스트형 앱쉘로 이동'. 현재 /t join 전 뷰엔 상시 채팅 섹션 없음(상시 채팅은 /poll에만, UI-SPEC A-2). /poll의 poll-guest-island empty-state 채팅 어포던스 패턴을 /t에도 이식."
+  severity: enhancement
+  test: 2
+  planned_by: 29-06
+  artifacts: ["apps/web/app/t/[slug]/_components/guest-surface.tsx", "apps/web/app/poll/[code]/_components/poll-guest-island.tsx (analog)"]
+  missing: ["게스트 /t 채팅 teaser 섹션(비회원 empty-state)", "입력 시도→ensureGuestMember 게이트→MoaIsland 채팅탭 착지"]
 
 - truth: "게스트가 /poll/{code}에서 투표 UI 아래 통일 채팅 섹션을 보고 메시지를 보낼 수 있다"
   status: needs_retest
@@ -74,10 +82,10 @@ blocked: 1
   artifacts: ["apps/web/app/poll/[code]/_components/poll-guest-island.tsx:252-300"]
   missing: []
 
-- truth: "호스트 /moa 채팅탭 입력창·보내기 버튼이 온전히 보인다 (CHAT-07 무회귀)"
-  status: resolved
-  resolution: "7a6d156 — moa-island.tsx:665 채팅탭 컨테이너 pb-[64px] → pb-[72px]. 탭바 실제 높이(≈65.5px)보다 예약 여백이 작아 겹치던 문제. 탭바 계약 무접촉. 라이브 재검증은 verify-work."
+- truth: "호스트 /moa 채팅탭·모으기탭 하단 콘텐츠가 탭바에 안 가린다"
+  status: reopened_deferred
+  reason: "재검증(2026-07-15): 7a6d156(pb-72) 이후에도 채팅 입력부 여전히 잘림 + 모으기탭 하단(장소 리스트)도 잘림. 근본원인 변경 — 동료 병합(1421a2b·31199a8 바나나 팔레트)이 moa-tab-bar 아이콘에 pill(px-5 py-1, :56-65) 추가로 탭바 높이 ~65→~74px 증가. pb-[72px]가 다시 부족해짐. 두 탭 공통 뿌리. 사용자 결정(2026-07-15): #4 게스트 채팅 확인 후 일괄 처리로 보류."
   severity: minor
   test: 2
-  diagnosis: "CONFIRMED. Phase 26 기원(26-03 2eeb9b5). debug: .planning/debug/chat-input-covered-by-tabbar.md"
-  artifacts: ["apps/web/app/moa/[id]/_components/moa-island.tsx:665"]
+  artifacts: ["apps/web/app/moa/[id]/_components/moa-island.tsx:665", "apps/web/app/moa/[id]/_components/moa-tab-bar.tsx:56"]
+  missing: ["새 탭바 높이(~74px)에 맞춘 모으기탭+채팅탭 하단 여백 재조정 (견고하게 — 하드코딩 지양)"]
