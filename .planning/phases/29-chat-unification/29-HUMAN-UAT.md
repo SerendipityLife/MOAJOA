@@ -46,8 +46,9 @@ blocked: 1
 
 ## Gaps
 
-- truth: "호스트가 공유페이지(/t) 접속 시 날짜 투표 현황을 확인할 수 있다"
-  status: failed
+- truth: "호스트가 /moa 본화면에서 날짜 투표 현황을 확인할 수 있다"
+  status: resolved
+  resolution: "29-05 (c9b8c3d) — host /moa/[id] RSC가 getPollByTrip(owner RLS)로 poll 조회 → 존재 시 PollVoteIsland 현황 뷰를 기존 pollSlot seam으로 전달. both 무음 catch에 console.error 추가(a5e2701). 라이브 재검증은 verify-work."
   reason: "User reported: 호스트는 공유페이지 접속 시 바로 모으기 탭(MoaIsland)으로 이동하고, 모으기 탭에는 날짜 투표 현황을 확인할 방법이 없음"
   severity: major
   test: 2
@@ -74,13 +75,9 @@ blocked: 1
   missing: []
 
 - truth: "호스트 /moa 채팅탭 입력창·보내기 버튼이 온전히 보인다 (CHAT-07 무회귀)"
-  status: failed
-  reason: "User reported: 호스트 채팅 탭에서 메시지 입력창과 버튼이 살짝 가려짐"
+  status: resolved
+  resolution: "7a6d156 — moa-island.tsx:665 채팅탭 컨테이너 pb-[64px] → pb-[72px]. 탭바 실제 높이(≈65.5px)보다 예약 여백이 작아 겹치던 문제. 탭바 계약 무접촉. 라이브 재검증은 verify-work."
   severity: minor
   test: 2
-  diagnosis: "CONFIRMED. moa-island.tsx:665 채팅탭 컨테이너 pb-[64px]가 실제 탭바 높이(≈65.5px — moa-tab-bar.tsx:40-63 border+py-2.5+icon+gap+11px 라벨 line-height)보다 작아 compose row 하단 ~1.5–2px가 탭바 뒤로 겹침. Phase 26 기원(26-03 2eeb9b5), Phase 29 회귀 아님. debug: .planning/debug/chat-input-covered-by-tabbar.md"
-  fix_hint: "moa-island.tsx:665 pb-[64px] → pb-[72px] (탭바 계약 HC-6 무접촉, 한 클래스)"
-  severity: minor
-  test: 2
+  diagnosis: "CONFIRMED. Phase 26 기원(26-03 2eeb9b5). debug: .planning/debug/chat-input-covered-by-tabbar.md"
   artifacts: ["apps/web/app/moa/[id]/_components/moa-island.tsx:665"]
-  missing: []
