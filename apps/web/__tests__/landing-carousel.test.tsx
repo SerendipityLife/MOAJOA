@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 // --- Mocks ---------------------------------------------------------------
 // next/image → passthrough <img>. `fill`/`priority` are next-only booleans that
@@ -38,14 +38,44 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+interface OAuthArgs {
+  provider: string;
+  options: { redirectTo: string };
+}
+const mockSignIn = vi.fn(async (_args: OAuthArgs) => ({
+  error: null as { message: string } | null,
+}));
+vi.mock('@/lib/supabase/browser', () => ({
+  getSupabaseBrowser: () => ({ auth: { signInWithOAuth: mockSignIn } }),
+}));
+
+// useToast throws outside a ToastProvider, and we render the carousel bare.
+// SocialAuthButtons is a *path* import, so it is deliberately NOT mocked here —
+// the real buttons render, which is the point of the social assertions below.
+const toast = vi.fn();
+vi.mock('@/components', () => ({
+  useToast: () => ({ toast }),
+}));
+
 // Import AFTER mocks so the component picks them up.
 import LandingCarousel from '@/app/_components/landing-carousel';
 
 const SLIDE_WIDTH = 390;
 const scrollTo = vi.fn();
 
+/** Drive the carousel to slide `i`. jsdom ignores scrollLeft assignment, so the
+ *  track's getter has to be redefined before firing the scroll event. */
+function scrollToSlide(i: number) {
+  const track = screen.getByTestId('carousel-track');
+  Object.defineProperty(track, 'scrollLeft', { configurable: true, value: i * SLIDE_WIDTH });
+  fireEvent.scroll(track);
+}
+
 beforeEach(() => {
   scrollTo.mockClear();
+  mockSignIn.mockClear();
+  mockSignIn.mockResolvedValue({ error: null });
+  toast.mockClear();
   // jsdom has no layout: clientWidth is always 0 and scrollTo is undefined.
   Object.defineProperty(Element.prototype, 'clientWidth', {
     configurable: true,
@@ -111,7 +141,7 @@ describe('LandingCarousel', () => {
 
   it('exposes three accessible dots and scrolls to the picked slide', () => {
     render(<LandingCarousel />);
-    const dots = screen.getAllByRole('button');
+    const dots = screen.getAllByRole('button', { name: /^슬라이드 / });
     expect(dots).toHaveLength(3);
     for (const [i, dot] of dots.entries()) {
       expect(dot).toHaveAttribute('aria-label', `슬라이드 ${i + 1}`);
@@ -123,8 +153,55 @@ describe('LandingCarousel', () => {
     expect(scrollTo).toHaveBeenCalledWith({ left: SLIDE_WIDTH, behavior: 'smooth' });
   });
 
-  it('points the 시작하기 CTA at /login', () => {
+  it('scrolls the 시작하기 CTA to the login slide instead of navigating away', () => {
     render(<LandingCarousel />);
-    expect(screen.getByRole('link', { name: '시작하기' })).toHaveAttribute('href', '/login');
+    fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith({ left: 2 * SLIDE_WIDTH, behavior: 'smooth' });
+  });
+
+  it('hides the CTA on the login slide but keeps all three dots', () => {
+    render(<LandingCarousel />);
+    expect(screen.getByRole('button', { name: '시작하기' })).toBeInTheDocument();
+
+    scrollToSlide(2);
+
+    expect(screen.queryByRole('button', { name: '시작하기' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /^슬라이드 / })).toHaveLength(3);
+  });
+
+  it('renders the three social buttons exactly once (third slide only)', () => {
+    render(<LandingCarousel />);
+    expect(screen.getByRole('button', { name: '카카오로 시작하기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Google로 계속하기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apple로 계속하기' })).toBeInTheDocument();
+  });
+
+  it('signs in with kakao against a /auth/callback URL that carries no ?next=', async () => {
+    render(<LandingCarousel />);
+    fireEvent.click(screen.getByRole('button', { name: '카카오로 시작하기' }));
+
+    await waitFor(() => expect(mockSignIn).toHaveBeenCalledTimes(1));
+    expect(mockSignIn).toHaveBeenCalledWith({
+      provider: 'kakao',
+      options: { redirectTo: expect.stringContaining('/auth/callback') },
+    });
+    const redirectTo = mockSignIn.mock.calls[0]![0].options.redirectTo;
+    expect(redirectTo).not.toContain('next');
+    expect(redirectTo).not.toContain('?');
+  });
+
+  it('surfaces an error toast when signInWithOAuth fails', async () => {
+    mockSignIn.mockResolvedValueOnce({ error: { message: '카카오 로그인 실패' } });
+    render(<LandingCarousel />);
+    fireEvent.click(screen.getByRole('button', { name: '카카오로 시작하기' }));
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith('카카오 로그인 실패', { variant: 'error' }),
+    );
+  });
+
+  it('offers an e-mail escape hatch to /login', () => {
+    render(<LandingCarousel />);
+    expect(screen.getByRole('link', { name: '이메일로 로그인' })).toHaveAttribute('href', '/login');
   });
 });
