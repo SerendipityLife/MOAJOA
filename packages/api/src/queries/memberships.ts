@@ -30,6 +30,14 @@ export async function joinMoa(
   return data as string;
 }
 
+// TDD RED stub (29-01): behavioral failure without import error — GREEN replaces this.
+export async function joinMoaByPollCode(
+  _client: MoajoaSupabaseClient,
+  _code: string,
+): Promise<string> {
+  throw new Error('not implemented');
+}
+
 /**
  * The caller's relationship to a trip: 'owner' (no memberships row by design),
  * 'member' (accepted memberships row), or null. Lets vote surfaces render the
