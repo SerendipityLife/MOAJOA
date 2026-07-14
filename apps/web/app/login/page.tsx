@@ -1,22 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
-import { Button, Input, useToast } from '@/components';
-// Path import, not the barrel: login.test.tsx mocks '@/components' wholesale.
+import { useToast } from '@/components';
+// Path imports, not the barrel: login.test.tsx mocks '@/components' wholesale.
 import { SocialAuthButtons } from '@/components/social-auth-buttons';
-
-type Mode = 'password' | 'magic';
-
-/* The blue canvas inverts the component defaults: Input ships a neutral-100
- * fill + gray border, Button a brand-600 fill. tailwind-merge lets these
- * className overrides win, so the shared components stay untouched. */
-const INPUT_ON_BLUE = 'border-transparent bg-white text-base shadow-md';
-const CTA_ON_BLUE =
-  'w-full bg-banana-100 font-extrabold text-brand-900 shadow-lg hover:bg-banana-200 active:bg-banana-200 disabled:bg-banana-200 disabled:text-brand-900/60';
-const LINK_ON_BLUE = 'text-banana-100 underline';
+import { EmailAuthForm } from '@/components/email-auth-form';
 
 /**
  * Where to land after auth. Honors a validated ?next= (vote flow passes
@@ -43,12 +34,6 @@ function callbackUrl(): string {
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [mode, setMode] = useState<Mode>('password');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [magicSent, setMagicSent] = useState(false);
 
   // Surface failures bounced here by the auth callback route (/login?error=...),
   // then strip the param so a refresh doesn't re-show it.
@@ -62,58 +47,7 @@ export default function LoginPage() {
     router.replace(`/login${query ? `?${query}` : ''}` as never);
   }, [router, toast]);
 
-  async function signIn(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setPending(true);
-    const { error } = await getSupabaseBrowser().auth.signInWithPassword({ email, password });
-    setPending(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    router.replace(postLoginDestination() as never);
-  }
-
-  async function signUp() {
-    setError(null);
-    setPending(true);
-    const { error } = await getSupabaseBrowser().auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: callbackUrl(),
-      },
-    });
-    setPending(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    // With Confirm Email off, signUp returns a session immediately.
-    router.replace(postLoginDestination() as never);
-  }
-
-  async function sendMagicLink(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setPending(true);
-    const { error } = await getSupabaseBrowser().auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: callbackUrl(),
-      },
-    });
-    setPending(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setMagicSent(true);
-  }
-
   async function oauth(provider: 'google' | 'apple' | 'kakao') {
-    setError(null);
     const { error } = await getSupabaseBrowser().auth.signInWithOAuth({
       provider,
       options: {
@@ -123,30 +57,6 @@ export default function LoginPage() {
     // On success the browser redirects away; an error means we never left.
     if (error) toast(error.message, { variant: 'error' });
   }
-
-  /* Social is the lowest-friction path in, so password AND magic modes both get
-   * it — hiding it behind a mode switch just adds drop-off. The buttons themselves
-   * now live in components/social-auth-buttons.tsx (shared with the landing); this
-   * wrapper stays because 회원가입 closes over signUp/pending/email/password, which
-   * is /login-only. magicSent deliberately does NOT render it: that user's next
-   * step is their inbox, so the buttons are noise. */
-  const socialBlock = (
-    <>
-      <SocialAuthButtons onProvider={oauth} />
-
-      <p className="pt-1.5 text-[13px] text-banana-100">
-        계정이 없나요?{' '}
-        <button
-          type="button"
-          onClick={signUp}
-          disabled={pending || !email || password.length < 6}
-          className="font-bold text-banana-100 underline disabled:opacity-60"
-        >
-          회원가입
-        </button>
-      </p>
-    </>
-  );
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-brand-700 px-6 py-12">
@@ -182,99 +92,15 @@ export default function LoginPage() {
         <MapIllustration />
 
         <div className="animate-fade-up mt-3 [animation-delay:240ms]">
-          {mode === 'magic' && magicSent ? (
-            <div>
-              <p className="text-white">
-                <strong>{email}</strong>으로 로그인 링크를 보냈어요.
-                <br />
-                메일에서 링크를 클릭해 계속 진행해주세요.
-              </p>
-              <button
-                onClick={() => {
-                  setMagicSent(false);
-                  setMode('password');
-                }}
-                className={`mt-4 text-sm ${LINK_ON_BLUE}`}
-              >
-                비밀번호로 로그인
-              </button>
-            </div>
-          ) : mode === 'password' ? (
-            <form onSubmit={signIn} className="space-y-2.5">
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="이메일 주소"
-                required
-                autoComplete="email"
-                className={INPUT_ON_BLUE}
-              />
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호 (6자 이상)"
-                required
-                minLength={6}
-                autoComplete="current-password"
-                className={INPUT_ON_BLUE}
-              />
-              <Button type="submit" disabled={pending} className={CTA_ON_BLUE}>
-                {pending ? '...' : '로그인'}
-              </Button>
-
-              {socialBlock}
-              {/* Magic link stays fully functional — demoted to a quiet entry
-                  point by size/weight only. Lowering its alpha would break AA. */}
-              <button
-                type="button"
-                onClick={() => {
-                  setError(null);
-                  setMode('magic');
-                }}
-                className={`text-xs ${LINK_ON_BLUE}`}
-              >
-                메일 링크로 로그인
-              </button>
-            </form>
-          ) : (
-            // magic-link mode
-            <form onSubmit={sendMagicLink} className="space-y-2.5">
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="이메일 주소"
-                required
-                autoComplete="email"
-                className={INPUT_ON_BLUE}
-              />
-              <Button type="submit" disabled={pending || !email} className={CTA_ON_BLUE}>
-                {pending ? '...' : '메일로 로그인 링크 받기'}
-              </Button>
-              {socialBlock}
-              <button
-                type="button"
-                onClick={() => {
-                  setError(null);
-                  setMode('password');
-                }}
-                className={`block w-full text-center text-xs ${LINK_ON_BLUE}`}
-              >
-                비밀번호로 로그인
-              </button>
-            </form>
-          )}
-
-          {/* danger on blue collapses, and a translucent red pill's contrast would
-              depend on whatever it composites over. An opaque white pill pins it
-              at a verifiable 4.61:1 regardless of background. */}
-          {error && (
-            <p role="alert" className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
-          )}
+          {/* The form itself (password / magic / magic-sent + 회원가입) lives in
+              components/email-auth-form.tsx, shared with the landing modal. The
+              entrance animation stays here: it belongs to the page, not the form. */}
+          <EmailAuthForm
+            surface="blue"
+            getCallbackUrl={callbackUrl}
+            onAuthenticated={() => router.replace(postLoginDestination() as never)}
+            socialSlot={<SocialAuthButtons onProvider={oauth} />}
+          />
         </div>
       </div>
     </main>
