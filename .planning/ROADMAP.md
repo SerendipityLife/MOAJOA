@@ -208,7 +208,7 @@ Plans:
 - [x] **Phase 26: Realtime Chat** — trip_messages + `moa:{tripId}` 단일 채널 + presence + 장소 멘션 답장 칩 (4/4 plans, 라이브는 0028 main 배포 후)
 - [ ] **Phase 27: Hardening & 마감** — 추출 멤버십 게이트(비용 남용 차단) + 모아/찜 카피 스윕 마무리 + 문서 + 2인극 UAT
 - [x] **Phase 28: Add-Trip Redesign (트리플 룩 위저드 + 웹 AI 일정)** — `/onboarding` 4단계를 레퍼런스 룩으로 개편 + 기간 pill(`trips.day_count` 0031) + 기존 generate-plan EF를 웹 결과 화면(Day 탭·타임라인)으로 연결 (completed 2026-07-13)
-- [ ] **Phase 29: Chat Unification (채팅 단일화)** — 분절된 대화 기능 2종(poll 한마디 `date_comments`/`poll-chat` · 모아 채팅탭 `trip_messages`/`moa-chat`)을 채팅(`trip_messages`)으로 완전 통일 + dates 공유 게스트 채팅 접근 개방 + 한마디 은퇴
+- [x] **Phase 29: Chat Unification (채팅 단일화)** (completed 2026-07-14) — 분절된 대화 기능 2종(poll 한마디 `date_comments`/`poll-chat` · 모아 채팅탭 `trip_messages`/`moa-chat`)을 채팅(`trip_messages`)으로 완전 통일 + dates 공유 게스트 채팅 접근 개방 + 한마디 은퇴
 
 ### Phase Details
 
@@ -433,4 +433,4 @@ Waves: W1 = 29-01 ∥ 29-02 → W2 = 29-03 → W3 = 29-04
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 3/4 | In Progress|  |
 | 28. Add-Trip Redesign | 6/6 | Complete   | 2026-07-13 |
-| 29. Chat Unification (채팅 단일화) | 4/4 | ✅ Executed (전 plan 실행·원격 0032 정합 — 라이브 스팟 체크는 verify-work) | 2026-07-14 |
+| 29. Chat Unification (채팅 단일화) | 4/4 | ✅ Complete (verifier 19/19 must-haves·human_needed 4항목 사용자 approved — 라이브 UAT 잔여는 29-HUMAN-UAT.md) | 2026-07-14 |

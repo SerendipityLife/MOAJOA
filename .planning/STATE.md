@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
-status: executing
-stopped_at: Completed 29-04-PLAN.md — Phase 29 4/4 plans executed
-last_updated: "2026-07-14T06:05:00.000Z"
+status: phase_complete
+stopped_at: Phase 29 complete — verifier passed (human_needed approved), UAT 잔여 29-HUMAN-UAT.md
+last_updated: "2026-07-14T06:30:00.000Z"
 last_activity: 2026-07-14
 progress:
   total_phases: 7
-  completed_phases: 6
-  total_plans: 29
-  completed_plans: 29
+  completed_phases: 7
+  total_plans: 33
+  completed_plans: 33
   percent: 100
 ---
 
@@ -33,9 +33,9 @@ progress:
 
 ## Current Position
 
-Phase: 29 (Chat Unification (채팅 단일화)) — ✅ EXECUTED 4/4 plans (2026-07-14)
+Phase: 29 (Chat Unification (채팅 단일화)) — ✅ COMPLETE (2026-07-14, verifier 19/19 must-haves·human_needed 4항목 사용자 approved·코드리뷰 critical 0/warning 2)
 Plan(29): W1 = **29-01 ✅[backend]** 0032 join_moa_by_poll_code + joinMoaByPollCode 래퍼·voter RLS smoke ∥ **29-02 ✅** dates→both 수렴(D-01)+hidePlaceAdd → W2 = **29-03 ✅** 한마디 은퇴(D-02, fc4f11e·376b8c4·e7fb6b6) → W3 = **29-04 ✅** /poll 통일 채팅 poll-guest-island(D-03)+page 마운트(fe9fb50·a64c246·3289bde) + 원격 0032 human-action **resolved**(사용자 지시 origin/main push eea5cc3..3289bde 33커밋 — Phase 28+29 최초 배포, `supabase migration list` 0032|0032 정합 실측).
-Next(29): **`/gsd-verify-work 29`** — 라이브 스팟 체크 3항목(시크릿 /poll 채팅 섹션+A-7 카피 → 게이트→전송 → /moa 채팅탭 수렴+실시간) Vercel 전파 후 + Success Criteria 4종 UAT + CHAT-05/06/07 REQUIREMENTS 등록·마킹.
+Next(29): **`/gsd-verify-work 29`** — 29-HUMAN-UAT.md 4항목 소진(라이브 /poll 채팅 a/b/c·dates 게스트·presence 2인극·iOS broadcast) + CHAT-04~07 REQUIREMENTS 등록·마킹. 코드리뷰 warning 2건(0033 revoke 권고·게이트 promise 누수 1줄)은 `/gsd-code-review-fix 29` 후보 — 상세 29-REVIEW.md.
 
 ---
 

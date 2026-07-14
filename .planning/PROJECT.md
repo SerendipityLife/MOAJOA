@@ -45,6 +45,7 @@
 - ✓ **YouTube 추출 Edge Function** (oEmbed → transcript → Claude → Places API → upsert) — baseline 동작
 - ✓ **Web SSR 보드 열람 (`/b/[slug]`)** — Next.js 15 App Router에서 동작
 - ✓ **이메일/매직링크 인증** — Web + iOS 양쪽
+- ✓ **통일 채팅 (trip_messages 단일 표면)** — dates 게스트·/poll 방문자 포함 전 공유 모드가 같은 저장소·`moa:{tripId}` 채널에서 대화, 한마디(poll-chat/date_comments) 은퇴. Validated in Phase 29: Chat Unification (2026-07-14)
 
 ### Active
 
@@ -124,4 +125,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-08 — Phase 23 (Web-First Foundation) 완료. 이전: 2026-07-07 milestone v2.1 시작, 2026-06-21 v2.0 (미완 잔여 보존: 19 UAT·21 배포·22), 2026-06-07 v1.1, 2026-05-25 brownfield init*
+*Last updated: 2026-07-14 — Phase 29 (Chat Unification) 완료: 채팅 단일화·한마디 은퇴·0032 원격 적용. 이전: 2026-07-08 Phase 23 (Web-First Foundation) 완료. 이전: 2026-07-07 milestone v2.1 시작, 2026-06-21 v2.0 (미완 잔여 보존: 19 UAT·21 배포·22), 2026-06-07 v1.1, 2026-05-25 brownfield init*
