@@ -26,24 +26,32 @@ export function BottomNav() {
   if (!onTab) return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-banana-300 bg-banana-100/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 backdrop-blur">
       <ul className="mx-auto flex max-w-3xl items-stretch">
         {TABS.map(({ href, label, Icon }) => {
           const active = pathname === href;
           return (
             <li key={href} className="flex-1">
-              {/* Banana bar (see /design.md). The 11px label needs 4.5:1: brand-700
-                  is 6.08:1 on banana, neutral-600 is 6.68:1. brand-500 (Royal Blue)
-                  would be 3.19:1 — it is never a small-text color. */}
-              <Link
-                href={href}
-                className={
-                  'flex flex-col items-center gap-1 py-2.5 ' +
-                  (active ? 'text-brand-700' : 'text-neutral-600')
-                }
-              >
-                <Icon />
-                <span className="text-[11px] font-medium">{label}</span>
+              {/* Only the selected tab carries banana — a pill behind its icon
+                  (/design.md §4). The label is 11px, so it needs 4.5:1: brand-700
+                  is 6.89:1 on white. brand-500 (Royal Blue) would be 3.62:1 — it is
+                  never a small-text color. Icon on the banana-200 pill: 5.51:1. */}
+              <Link href={href} className="flex flex-col items-center gap-1 py-2.5">
+                <span
+                  className={
+                    'grid place-items-center rounded-full px-5 py-1 transition-colors duration-150 ease-out ' +
+                    (active ? 'bg-banana-200 text-brand-700' : 'text-neutral-500')
+                  }
+                >
+                  <Icon />
+                </span>
+                <span
+                  className={
+                    'text-[11px] font-medium ' + (active ? 'text-brand-700' : 'text-neutral-500')
+                  }
+                >
+                  {label}
+                </span>
               </Link>
             </li>
           );

@@ -123,15 +123,11 @@ export function PlaceList({
 
   if (isEmpty) {
     return (
-      <div className="px-4 py-8">
-        {/* 바나나 하이라이트 패널(/design.md §4) — 흰 시트 위에서 "여기서 시작하세요"를
-            색으로 먼저 말한다. 잉크 15.67:1 / neutral-600 6.68:1. */}
-        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-banana-300 bg-banana-100 px-6 py-12 text-center">
-          <p className="text-lg font-semibold text-neutral-900">아직 담은 장소가 없어요</p>
-          <p className="text-sm font-normal text-neutral-600">
-            아래 + 버튼으로 링크를 붙여넣거나 장소를 검색해 보세요
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+        <p className="text-lg font-semibold text-neutral-900">아직 담은 장소가 없어요</p>
+        <p className="text-sm font-normal text-neutral-500">
+          아래 + 버튼으로 링크를 붙여넣거나 장소를 검색해 보세요
+        </p>
       </div>
     );
   }
