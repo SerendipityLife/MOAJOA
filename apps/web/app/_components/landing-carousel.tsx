@@ -1,12 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { useToast } from '@/components';
-// Path import, not the barrel — see the note in social-auth-buttons.tsx.
+// Path imports, not the barrel — see the note in social-auth-buttons.tsx.
 import { SocialAuthButtons, type SocialProvider } from '@/components/social-auth-buttons';
+import { Dialog } from '@/components/dialog';
+import { EmailAuthForm } from '@/components/email-auth-form';
 
 /**
  * Landing carousel — the web twin of the iOS welcome screen (apps/ios/app/welcome.tsx).
@@ -97,8 +99,10 @@ function landingCallbackUrl(): string {
 const LOGIN_SLIDE = 2;
 
 export default function LandingCarousel() {
+  const router = useRouter();
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const [emailOpen, setEmailOpen] = useState(false);
   const { toast } = useToast();
 
   async function oauth(provider: SocialProvider) {
@@ -183,9 +187,13 @@ export default function LandingCarousel() {
                         WCAG 1.4.11 (3:1 for non-text boundaries). */}
                     <SocialAuthButtons onProvider={oauth} buttonClassName="ring-2 ring-white/80" />
                     <p className="pt-4 text-center">
-                      <Link href="/login" className="text-[13px] text-white underline">
+                      <button
+                        type="button"
+                        onClick={() => setEmailOpen(true)}
+                        className="text-[13px] text-white underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      >
                         이메일로 로그인
-                      </Link>
+                      </button>
                     </p>
                   </div>
                 )}
@@ -229,6 +237,24 @@ export default function LandingCarousel() {
           </div>
         </div>
       </div>
+
+      {/* Sibling of the track — NOT a descendant of it. Inside the track, wheel
+          and touch on the backdrop would bubble into the `overflow-x-auto` track
+          and page the carousel behind the modal. As a sibling the scroll chain
+          never reaches it. (main's `overflow-hidden` doesn't clip this: there's
+          no transformed ancestor, so the fixed backdrop's containing block is the
+          viewport and the modal centers on screen.)
+
+          No socialSlot: the three social buttons are already on the slide behind
+          this modal. And no ?next= can reach landingCallbackUrl(), so the
+          destination is always /moa. */}
+      <Dialog open={emailOpen} onClose={() => setEmailOpen(false)} title="이메일로 로그인">
+        <EmailAuthForm
+          surface="light"
+          getCallbackUrl={landingCallbackUrl}
+          onAuthenticated={() => router.replace('/moa' as never)}
+        />
+      </Dialog>
     </main>
   );
 }

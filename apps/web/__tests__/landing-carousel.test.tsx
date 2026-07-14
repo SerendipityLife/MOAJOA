@@ -30,12 +30,9 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-vi.mock('next/link', () => ({
-  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
+const replace = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace }),
 }));
 
 interface OAuthArgs {
@@ -45,15 +42,35 @@ interface OAuthArgs {
 const mockSignIn = vi.fn(async (_args: OAuthArgs) => ({
   error: null as { message: string } | null,
 }));
+const signInWithPassword = vi.fn(async (_a: { email: string; password: string }) => ({
+  error: null as { message: string } | null,
+}));
+const signUp = vi.fn(async () => ({ error: null as { message: string } | null }));
+const signInWithOtp = vi.fn(async () => ({ error: null as { message: string } | null }));
 vi.mock('@/lib/supabase/browser', () => ({
-  getSupabaseBrowser: () => ({ auth: { signInWithOAuth: mockSignIn } }),
+  getSupabaseBrowser: () => ({
+    auth: { signInWithOAuth: mockSignIn, signInWithPassword, signUp, signInWithOtp },
+  }),
 }));
 
 // useToast throws outside a ToastProvider, and we render the carousel bare.
-// SocialAuthButtons is a *path* import, so it is deliberately NOT mocked here —
-// the real buttons render, which is the point of the social assertions below.
+// Button/Input are here because the modal's EmailAuthForm imports them from the
+// barrel — this wholesale mock would otherwise hand it `undefined` and blow up
+// the render. SocialAuthButtons, Dialog and EmailAuthForm are *path* imports, so
+// they are deliberately NOT mocked: the real ones render, which is the point of
+// the social + modal assertions below.
 const toast = vi.fn();
 vi.mock('@/components', () => ({
+  Button: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => {
+    const { variant: _v, size: _s, ...rest } = props as Record<string, unknown>;
+    return (
+      <button {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>
+    );
+  },
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   useToast: () => ({ toast }),
 }));
 
@@ -75,6 +92,11 @@ beforeEach(() => {
   scrollTo.mockClear();
   mockSignIn.mockClear();
   mockSignIn.mockResolvedValue({ error: null });
+  signInWithPassword.mockClear();
+  signInWithPassword.mockResolvedValue({ error: null });
+  signUp.mockClear();
+  signInWithOtp.mockClear();
+  replace.mockClear();
   toast.mockClear();
   // jsdom has no layout: clientWidth is always 0 and scrollTo is undefined.
   Object.defineProperty(Element.prototype, 'clientWidth', {
@@ -200,8 +222,61 @@ describe('LandingCarousel', () => {
     );
   });
 
-  it('offers an e-mail escape hatch to /login', () => {
+  it('offers e-mail login as a button, not a trip to /login', () => {
     render(<LandingCarousel />);
-    expect(screen.getByRole('link', { name: '이메일로 로그인' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('button', { name: '이메일로 로그인' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '이메일로 로그인' })).toBeNull();
+    for (const link of screen.queryAllByRole('link')) {
+      expect(link).not.toHaveAttribute('href', '/login');
+    }
+  });
+});
+
+describe('LandingCarousel — e-mail login modal', () => {
+  function openModal() {
+    render(<LandingCarousel />);
+    fireEvent.click(screen.getByRole('button', { name: '이메일로 로그인' }));
+    return screen.getByRole('dialog');
+  }
+
+  it('opens a named dialog holding the e-mail form', () => {
+    const dialog = openModal();
+    expect(dialog).toHaveAttribute('aria-label', '이메일로 로그인');
+    expect(screen.getByPlaceholderText('이메일 주소')).toBeInTheDocument();
+  });
+
+  it('closes on Escape', () => {
+    openModal();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('closes on a backdrop click', () => {
+    const dialog = openModal();
+    const backdrop = dialog.querySelector('[aria-hidden]');
+    fireEvent.click(backdrop!);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('signs in from inside the modal and lands on /moa', async () => {
+    openModal();
+    fireEvent.change(screen.getByPlaceholderText('이메일 주소'), {
+      target: { value: 'a@b.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('비밀번호 (6자 이상)'), {
+      target: { value: 'secret1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
+
+    await waitFor(() => expect(signInWithPassword).toHaveBeenCalledTimes(1));
+    expect(signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.com', password: 'secret1' });
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/moa'));
+  });
+
+  it('does not duplicate the social buttons while open', () => {
+    openModal();
+    expect(screen.getAllByRole('button', { name: '카카오로 시작하기' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Google로 계속하기' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Apple로 계속하기' })).toHaveLength(1);
   });
 });
