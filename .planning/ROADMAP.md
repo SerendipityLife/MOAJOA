@@ -411,6 +411,16 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 - presence 통일 (`poll:{tripId}` → `moa:{tripId}` 단일화, Phase 27 presence 확인과 연결)
 - 익명 멤버 승격 시점 (현 투표 시 join → 채팅 진입에도 닉네임 게이트)
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 29-01-PLAN.md — 0032 `join_moa_by_poll_code` RPC + `joinMoaByPollCode` 래퍼 + voter trip_messages RLS smoke ([BLOCKING] 로컬 db reset·typegen)
+- [ ] 29-02-PLAN.md — dates→both 수렴 (D-01, 가드 2곳 제거·MoaIsland pollSlot) + `hidePlaceAdd` FAB 게이트 (F-2)
+- [ ] 29-03-PLAN.md — 한마디 은퇴 (D-02: poll-chat 삭제·presence 단일화·embedded 제거·api orphan) + stored-nickname 401 봉합
+- [ ] 29-04-PLAN.md — /poll 통일 채팅 래퍼 poll-guest-island (D-03) + page 마운트 교체 + 원격 0032 human-action
+
+Waves: W1 = 29-01 ∥ 29-02 → W2 = 29-03 → W3 = 29-04
+
 **UI hint**: yes
 
 ### Progress
@@ -423,4 +433,4 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 | 26. Realtime Chat | 4/4 | ✅ Complete (전 plan 실행 — 라이브는 0028 main 배포 후) | 2026-07-09 |
 | 27. Hardening & 마감 | 3/4 | In Progress|  |
 | 28. Add-Trip Redesign | 6/6 | Complete   | 2026-07-13 |
-| 29. Chat Unification (채팅 단일화) | 0/? | 📋 Discussing | - |
+| 29. Chat Unification (채팅 단일화) | 0/4 | 📋 Planned | - |
