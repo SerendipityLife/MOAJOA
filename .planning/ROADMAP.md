@@ -393,7 +393,7 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 
 **Depends on**: Phase 26 (`trip_messages` 채팅 기반 — 통일 대상 백엔드), Phase 25 (게스트 익명 멤버 승격 `signInAnonymously`+`joinMoa` — 채팅 참여 자격), Phase 19 (poll 한마디 — 은퇴 대상)
 
-**Requirements**: 신규 (discuss/plan에서 CHAT-04 계열 발급 — REQUIREMENTS.md 미매핑, 아래 Success Criteria를 requirement 축으로 사용) · **CHAT-08** (호스트 투표 현황 가시성 — UAT Gap 3, 2026-07-14 발급) · **CHAT-09** (게스트 /t 채팅 진입 어포던스 — UAT new_request, 2026-07-15 발급)
+**Requirements**: 신규 (discuss/plan에서 CHAT-04 계열 발급 — REQUIREMENTS.md 미매핑, 아래 Success Criteria를 requirement 축으로 사용) · **CHAT-08** (호스트 투표 현황 가시성 — UAT Gap 3, 2026-07-14 발급) · **CHAT-09** (게스트 /t 채팅 진입 어포던스 — UAT new_request, 2026-07-15 발급) · **CHAT-10** (게스트 /t join 전 실제 채팅 메시지 열람 — UAT new_request, 2026-07-15 발급)
 
 **사용자 확정 방향 (2026-07-14)**: "채팅으로 완전 통일" — trip_messages 백엔드 단일화, dates 공유 게스트에게도 채팅 진입 개방, poll 한마디(date_comments/poll-chat) 은퇴. (경량 라벨 정리·역방향 한마디 통일은 반려됨.)
 
@@ -405,6 +405,7 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
   4. 기존 채팅 기능(영속 이력·presence·장소 멘션 답장 칩) 무회귀
   5. **(CHAT-08)** 호스트가 /moa 본화면에서 날짜 투표 현황(후보 날짜·집계·투표자)을 볼 수 있다 (UAT Gap 3)
   6. **(CHAT-09)** 게스트가 /t(places·dates·both) join 전 화면에서 채팅 진입 어포던스를 보고, 입력 시도 시 닉네임 게이트→MoaIsland [채팅] 탭에 착지한다 (UAT new_request)
+  7. **(CHAT-10)** 게스트가 /t(places·dates·both) join 전에도 실제 채팅 메시지 스냅샷을 읽는다 (empty-state 대신 — anon-grant DEFINER RPC 0034). 입력 시도 시 게이트는 CHAT-09 그대로 (UAT new_request)
 
 **Open design questions** (discuss에서 잠글 회색지대):
 - `dates` 공유의 채팅 진입 형태 (MoaIsland 셸 마운트 + 장소 영역 비움 vs 전용 경량 채팅 시트)
@@ -413,7 +414,7 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 - presence 통일 (`poll:{tripId}` → `moa:{tripId}` 단일화, Phase 27 presence 확인과 연결)
 - 익명 멤버 승격 시점 (현 투표 시 join → 채팅 진입에도 닉네임 게이트)
 
-**Plans:** 4/4 plans executed + 2 gap-closure plans
+**Plans:** 4/4 plans executed + 3 gap-closure plans
 
 Plans:
 - [x] 29-01-PLAN.md — 0032 `join_moa_by_poll_code` RPC + `joinMoaByPollCode` 래퍼 + voter trip_messages RLS smoke ([BLOCKING] 로컬 db reset·typegen)
@@ -422,8 +423,9 @@ Plans:
 - [x] 29-04-PLAN.md — /poll 통일 채팅 래퍼 poll-guest-island (D-03) + page 마운트 교체 + 원격 0032 human-action — ✅ 2026-07-14 (TDD 6케이스·전 스위트 exit 0(core 192·api 111·web 278·ios 128)·tsc 0·build PASS ƒ /poll/[code]·HC-7 0건, commits fe9fb50·a64c246·3289bde; human-action resolved — origin/main push 33커밋 + 원격 0032 정합 실측, 라이브 스팟 체크는 verify-work)
 - [x] 29-05-PLAN.md — [gap-closure] UAT Gap 3 (CHAT-08): 호스트 /moa 본화면 날짜 투표 현황 — getPollByTrip(owner RLS) → pollSlot(PollVoteIsland 재사용) MoaIsland 전달 + guest-surface 무음 catch 진단 로깅 — ✅ 2026-07-14 (web test 278/278·tsc 0·build PASS ƒ /moa/[id]·moa-island diff 0·iOS/core/migrations diff 0·deviation 0, commits c9b8c3d·a5e2701) — `29-05-SUMMARY.md`
 - [x] 29-06-PLAN.md — [gap-closure] UAT new_request (CHAT-09): 게스트 /t 채팅 진입 어포던스 — MoaIsland additive `initialTab` prop + guest-surface 비회원 채팅 teaser(empty-state 카피 + 입력창) → focus/보내기 시 ensureGuestMember 게이트 → MoaIsland [채팅] 탭 착지 (poll-guest-island 패턴 재사용, 신규 컴포넌트 0) — ✅ 2026-07-15 (web test 338/338·tsc 0·build PASS ƒ /t/[slug]·host page.tsx/iOS/core/api/migrations diff 0·deviation 0, commits b12f7c3·c3767ba) — `29-06-SUMMARY.md`
+- [ ] 29-07-PLAN.md — [gap-closure] UAT new_request (CHAT-10): 게스트 /t join 전 실제 채팅 메시지 열람 — 신규 0034 `public_trip_messages` anon-grant DEFINER 읽기 RPC(public_trip_poll 0029 미러·user_id PII 미노출·limit 200) + `getPublicTripMessages` 래퍼 + guest-surface teaser empty-state→스냅샷 렌더(read-only, 29-06 입력 게이트 무회귀). 비멤버 realtime 없음(1회 fetch, 라이브는 join 후). 원격 push는 human-action.
 
-Waves: W1 = 29-01 ∥ 29-02 → W2 = 29-03 → W3 = 29-04 · [gap] 29-05 · [gap] 29-06 (각 독립)
+Waves: W1 = 29-01 ∥ 29-02 → W2 = 29-03 → W3 = 29-04 · [gap] 29-05 · [gap] 29-06 · [gap] 29-07 (각 독립)
 
 **UI hint**: yes
 
