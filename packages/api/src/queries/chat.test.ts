@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { listTripMessages, sendTripMessage } from './chat';
+import { getPublicTripMessages, listTripMessages, sendTripMessage } from './chat';
 import type { MoajoaSupabaseClient } from '../client';
 
 // uuid v4 fixtures (mirror date-polls.test.ts idiom).
@@ -21,11 +21,15 @@ function makeChain(result: { data: unknown; error: unknown }): MockChain {
   return chain;
 }
 
-function makeClient(result: { data: unknown; error: unknown }) {
+function makeClient(
+  result: { data: unknown; error: unknown },
+  rpcResult?: { data: unknown; error: unknown },
+) {
   const chain = makeChain(result);
   const from = vi.fn(() => chain);
-  const client = { from } as unknown as MoajoaSupabaseClient;
-  return { client, from, chain };
+  const rpc = vi.fn(() => Promise.resolve(rpcResult ?? result));
+  const client = { from, rpc } as unknown as MoajoaSupabaseClient;
+  return { client, from, chain, rpc };
 }
 
 describe('listTripMessages — direct-table read (votes/places idiom, NOT rpc)', () => {
@@ -92,5 +96,30 @@ describe('sendTripMessage — direct-table insert, user_id filled by 0028 trigge
     await expect(
       sendTripMessage(client, { trip_id: TRIP, nickname: '나', body: 'x' }),
     ).rejects.toBeTruthy();
+  });
+});
+
+describe('getPublicTripMessages — rpc(public_trip_messages), anon slug→messages snapshot (CHAT-10)', () => {
+  it('calls rpc with p_slug and returns data (getPublicTripPoll idiom)', async () => {
+    const rows = [
+      { id: MSG, nickname: '호스트', body: '안녕 게스트', reply_to_place_id: null, created_at: 'x' },
+    ];
+    const { client, rpc, from } = makeClient(
+      { data: null, error: null },
+      { data: rows, error: null },
+    );
+    const out = await getPublicTripMessages(client, 'my-slug');
+    expect(rpc).toHaveBeenCalledWith('public_trip_messages', { p_slug: 'my-slug' });
+    expect(out).toEqual(rows);
+    // Read snapshot goes through the DEFINER rpc, never a direct table read.
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('throws when rpc returns { error }', async () => {
+    const { client } = makeClient(
+      { data: null, error: null },
+      { data: null, error: { message: 'boom' } },
+    );
+    await expect(getPublicTripMessages(client, 'my-slug')).rejects.toBeTruthy();
   });
 });
