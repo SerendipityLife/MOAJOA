@@ -111,10 +111,8 @@ export function GuestSurface({
         if (role) {
           const stored = getStoredNickname();
           if (stored) setNickname(stored);
-          if (shareMode !== 'dates') {
-            await hydrateMember(uid, stored);
-            if (!active) return;
-          }
+          await hydrateMember(uid, stored);
+          if (!active) return;
           setJoined(true);
         }
       }
@@ -245,7 +243,7 @@ export function GuestSurface({
       const uid = await ensureGuestMember(nick);
       setUserId(uid);
       setNickname(nick);
-      if (shareMode !== 'dates') await hydrateMember(uid, nick);
+      await hydrateMember(uid, nick);
       setJoined(true);
       gateResolve.current?.({ uid, nickname: nick });
       const act = pendingAction.current;
@@ -296,9 +294,6 @@ export function GuestSurface({
           deviceToken={userId ?? undefined}
           nickname={nickname || undefined}
           onRequireMember={requireMember}
-          // both: 모아 [채팅] 탭·presence가 있으므로 poll 자체 한마디·보는중은 중복 → 숨김.
-          // dates: poll이 화면 전부라 한마디·presence가 유일한 소셜 표면 → 유지.
-          embedded={shareMode === 'both'}
         />
       )
     ) : null;
@@ -334,9 +329,28 @@ export function GuestSurface({
 
   // ── share_mode 분기 (D-09, UI-SPEC C2) ────────────────────────────────────
   if (shareMode === 'dates') {
+    // D-01: dates도 join 후 both과 동일하게 MoaIsland(채팅탭 포함) 마운트 — pollSlot에
+    // 날짜 정하기, 장소는 빈 상태(PlaceList 기존 empty). 비join은 현행 유지(A-2).
+    // hidePlaceAdd: dates join role은 voter(D-A1) — places INSERT 불가라 FAB 숨김(F-2).
     return (
       <>
-        {pollSection}
+        {joined && moaSeed ? (
+          <MoaIsland
+            {...moaSeed}
+            hideHostControls
+            hidePlaceAdd
+            pollSlot={
+              pollMeta != null ? (
+                <section>
+                  <h3 className="text-sm font-semibold text-neutral-700">날짜 정하기</h3>
+                  {pollSection}
+                </section>
+              ) : undefined
+            }
+          />
+        ) : (
+          pollSection
+        )}
         {gate}
       </>
     );
