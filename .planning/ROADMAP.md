@@ -393,7 +393,7 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 
 **Depends on**: Phase 26 (`trip_messages` 채팅 기반 — 통일 대상 백엔드), Phase 25 (게스트 익명 멤버 승격 `signInAnonymously`+`joinMoa` — 채팅 참여 자격), Phase 19 (poll 한마디 — 은퇴 대상)
 
-**Requirements**: 신규 (discuss/plan에서 CHAT-04 계열 발급 — REQUIREMENTS.md 미매핑, 아래 Success Criteria를 requirement 축으로 사용)
+**Requirements**: 신규 (discuss/plan에서 CHAT-04 계열 발급 — REQUIREMENTS.md 미매핑, 아래 Success Criteria를 requirement 축으로 사용) · **CHAT-08** (호스트 투표 현황 가시성 — UAT Gap 3, 2026-07-14 발급)
 
 **사용자 확정 방향 (2026-07-14)**: "채팅으로 완전 통일" — trip_messages 백엔드 단일화, dates 공유 게스트에게도 채팅 진입 개방, poll 한마디(date_comments/poll-chat) 은퇴. (경량 라벨 정리·역방향 한마디 통일은 반려됨.)
 
@@ -403,6 +403,7 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
   2. 호스트와 게스트가 공유 모드(`dates`·`both`·`places`) 무관하게 **같은 저장소**에서 대화한다 (서로 메시지가 보임)
   3. poll 한마디(`poll-chat.tsx` "한마디")가 은퇴되고 중복 대화 표면이 제거된다
   4. 기존 채팅 기능(영속 이력·presence·장소 멘션 답장 칩) 무회귀
+  5. **(CHAT-08)** 호스트가 /moa 본화면에서 날짜 투표 현황(후보 날짜·집계·투표자)을 볼 수 있다 (UAT Gap 3)
 
 **Open design questions** (discuss에서 잠글 회색지대):
 - `dates` 공유의 채팅 진입 형태 (MoaIsland 셸 마운트 + 장소 영역 비움 vs 전용 경량 채팅 시트)
@@ -411,15 +412,16 @@ Waves: W1 = 28-01 ∥ 28-02 → W2 = 28-03 ∥ 28-04 → W3 = 28-05 → W4 = 28-
 - presence 통일 (`poll:{tripId}` → `moa:{tripId}` 단일화, Phase 27 presence 확인과 연결)
 - 익명 멤버 승격 시점 (현 투표 시 join → 채팅 진입에도 닉네임 게이트)
 
-**Plans:** 4/4 plans executed
+**Plans:** 4/4 plans executed + 1 gap-closure plan
 
 Plans:
 - [x] 29-01-PLAN.md — 0032 `join_moa_by_poll_code` RPC + `joinMoaByPollCode` 래퍼 + voter trip_messages RLS smoke ([BLOCKING] 로컬 db reset·typegen)
 - [x] 29-02-PLAN.md — dates→both 수렴 (D-01, 가드 2곳 제거·MoaIsland pollSlot) + `hidePlaceAdd` FAB 게이트 (F-2)
 - [x] 29-03-PLAN.md — 한마디 은퇴 (D-02: poll-chat 삭제·presence 단일화·embedded 제거·api orphan) + stored-nickname 401 봉합 — ✅ 2026-07-14 (HC-7 grep 3종 0건·전 스위트 exit 0·tsc 0·iOS/migrations diff 0, commits fc4f11e·376b8c4·e7fb6b6)
 - [x] 29-04-PLAN.md — /poll 통일 채팅 래퍼 poll-guest-island (D-03) + page 마운트 교체 + 원격 0032 human-action — ✅ 2026-07-14 (TDD 6케이스·전 스위트 exit 0(core 192·api 111·web 278·ios 128)·tsc 0·build PASS ƒ /poll/[code]·HC-7 0건, commits fe9fb50·a64c246·3289bde; human-action resolved — origin/main push 33커밋 + 원격 0032 정합 실측, 라이브 스팟 체크는 verify-work)
+- [ ] 29-05-PLAN.md — [gap-closure] UAT Gap 3 (CHAT-08): 호스트 /moa 본화면 날짜 투표 현황 — getPollByTrip(owner RLS) → pollSlot(PollVoteIsland 재사용) MoaIsland 전달 + guest-surface 무음 catch 진단 로깅
 
-Waves: W1 = 29-01 ∥ 29-02 → W2 = 29-03 → W3 = 29-04
+Waves: W1 = 29-01 ∥ 29-02 → W2 = 29-03 → W3 = 29-04 · [gap] 29-05 (독립)
 
 **UI hint**: yes
 
