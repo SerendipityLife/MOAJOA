@@ -46,25 +46,10 @@
   --color-danger: #dd3131; /* 4.61:1 */
   --color-info: #2a6acb; /* = brand-600, 5.22:1 */
 
-  /* Map pin states (vote-trust semantics) */
-  --color-pin-candidate: #94a3b8;
-  --color-pin-loved: #4886e4; /* Royal Blue */
-  --color-pin-confirmed: #0d844d;
-  --color-pin-hidden: #d1d5db;
-
-  /* Place-category chips — soft fill + same-hue dark label, so they don't
-   * fight the map tiles underneath. `food`/`shopping` moved off amber/brown,
-   * which turned muddy next to Banana Mania. */
-  --color-category-nature: #dcf3e4;
-  --color-category-nature-fg: #1b6b43;
-  --color-category-food: #ffe4dc;
-  --color-category-food-fg: #b33a1a;
-  --color-category-culture: #e4e4fb;
-  --color-category-culture-fg: #4a45a8;
-  --color-category-wellness: #d6f1ef;
-  --color-category-wellness-fg: #146b67;
-  --color-category-shopping: #fbe0ee;
-  --color-category-shopping-fg: #a32a6b;
+  /* Map pin + category colors are NOT redefined here. Nothing renders them via
+   * a Tailwind utility — the pins are SVG data: URLs built in lib/marker-svg.ts,
+   * which reads lib/palette.ts. Category chips do not exist yet; design.md §7.2
+   * holds their spec for when they do. */
 
   /* Brand-tinted float shadow — tracks Royal Blue rgb(72,134,228). */
   --shadow-fab: 0 4px 16px rgba(72, 134, 228, 0.3);

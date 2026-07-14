@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildMarkerIconUrl } from '@/lib/marker-svg';
-import { colors } from '@moajoa/ui-tokens';
+import { palette } from '@/lib/palette';
 
 /**
  * Pure-function tests for the SVG data URL builder consumed by
@@ -22,7 +22,7 @@ describe('buildMarkerIconUrl', () => {
 
   it('AI high confidence (>= 0.7) — brand fill, full opacity, no "?"', () => {
     const svg = decode(buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.92 }));
-    expect(svg).toContain(`fill="${colors.brand[500]}"`);
+    expect(svg).toContain(`fill="${palette.brand[600]}"`);
     expect(svg).toContain('fill-opacity="1"');
     expect(svg).not.toContain('>?<');
   });
@@ -35,7 +35,7 @@ describe('buildMarkerIconUrl', () => {
 
   it('AI low confidence (< 0.7) — brand fill at 0.45 opacity + "?" badge', () => {
     const svg = decode(buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.4 }));
-    expect(svg).toContain(`fill="${colors.brand[500]}"`);
+    expect(svg).toContain(`fill="${palette.brand[600]}"`);
     expect(svg).toContain('fill-opacity="0.45"');
     expect(svg).toContain('>?<');
     // Badge must be white over translucent brand for contrast (UI-SPEC §States)
@@ -44,7 +44,7 @@ describe('buildMarkerIconUrl', () => {
 
   it('AI with null confidence — treated as high (D-15: null != low)', () => {
     const svg = decode(buildMarkerIconUrl({ source_kind: 'ai', confidence: null }));
-    expect(svg).toContain(`fill="${colors.brand[500]}"`);
+    expect(svg).toContain(`fill="${palette.brand[600]}"`);
     expect(svg).toContain('fill-opacity="1"');
     expect(svg).not.toContain('>?<');
   });
@@ -59,7 +59,7 @@ describe('buildMarkerIconUrl', () => {
 
   it('manual pin — neutral fill, full opacity, no "?" regardless of confidence', () => {
     const svg = decode(buildMarkerIconUrl({ source_kind: 'manual', confidence: null }));
-    expect(svg).toContain(`fill="${colors.neutral[900]}"`);
+    expect(svg).toContain(`fill="${palette.neutral[900]}"`);
     expect(svg).toContain('fill-opacity="1"');
     expect(svg).not.toContain('>?<');
   });
@@ -67,7 +67,7 @@ describe('buildMarkerIconUrl', () => {
   it('manual pin with a stray numeric confidence — still neutral, no badge', () => {
     // Defensive: low-conf branch must only fire on AI pins.
     const svg = decode(buildMarkerIconUrl({ source_kind: 'manual', confidence: 0.2 }));
-    expect(svg).toContain(`fill="${colors.neutral[900]}"`);
+    expect(svg).toContain(`fill="${palette.neutral[900]}"`);
     expect(svg).not.toContain('>?<');
   });
 
@@ -78,12 +78,12 @@ describe('buildMarkerIconUrl', () => {
     expect(svg).toContain('viewBox="0 0 32 40"');
   });
 
-  it('explicit fill (ui-tokens member color) overrides the source_kind fill', () => {
+  it('explicit fill (palette member color) overrides the source_kind fill', () => {
     const svg = decode(
-      buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9, fill: colors.member[0] }),
+      buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9, fill: palette.member[0] }),
     );
-    expect(svg).toContain(`fill="${colors.member[0]}"`); // '#FF7043'
-    expect(svg).not.toContain(`fill="${colors.brand[500]}"`);
+    expect(svg).toContain(`fill="${palette.member[0]}"`); // '#D73B23'
+    expect(svg).not.toContain(`fill="${palette.brand[600]}"`);
   });
 
   it('omitting fill keeps the existing source_kind output byte-for-byte', () => {

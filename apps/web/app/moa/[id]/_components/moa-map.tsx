@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { Place } from '@moajoa/core';
-import { colors } from '@moajoa/ui-tokens';
+import { palette } from '@/lib/palette';
 import { buildMarkerIconUrl } from '@/lib/marker-svg';
 
 export interface MoaMapProps {
@@ -64,7 +64,7 @@ export function MoaMap({ places, colorFor, onMarkerTap, labels, fitKey }: MoaMap
     return buildMarkerIconUrl({
       source_kind: p.source_kind,
       confidence: p.confidence,
-      fill: label != null ? colors.brand[500] : colorForRef.current(p.added_by),
+      fill: label != null ? palette.brand[600] : colorForRef.current(p.added_by),
       ...(label != null && { label }),
     });
   }
