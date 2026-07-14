@@ -24,10 +24,12 @@ vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({ channel, removeChannel }),
 }));
 
-// Device-token util — stable token + nickname store seam.
+// Device-token util — stable token + configurable stored-nickname seam
+// (Pitfall 1 케이스가 재방문자의 localStorage 닉네임을 시뮬레이션한다).
+const getStoredNickname = vi.fn(() => '');
 vi.mock('@/lib/device-token', () => ({
   getDeviceToken: () => 'dev-token-1',
-  getStoredNickname: () => '',
+  getStoredNickname: () => getStoredNickname(),
   setStoredNickname: vi.fn(),
 }));
 
@@ -45,15 +47,11 @@ const getPollTally = vi.fn(async (_client: unknown, _code: string) => ({
   mode: 'range',
   tally: [] as unknown[],
 }));
-const postComment = vi.fn(async (_client: unknown, _input: unknown) => ({}));
-const deleteComment = vi.fn(async (_client: unknown, _input: unknown) => undefined);
 vi.mock('@moajoa/api', () => ({
   castDateVote: (client: unknown, input: CastInput) => castDateVote(client, input),
   castDateVoteAuthed: (client: unknown, input: Omit<CastInput, 'deviceToken'>) =>
     castDateVoteAuthed(client, input),
   getPollTally: (client: unknown, code: string) => getPollTally(client, code),
-  postComment: (client: unknown, input: unknown) => postComment(client, input),
-  deleteComment: (client: unknown, input: unknown) => deleteComment(client, input),
 }));
 
 // useToast + Dialog (chat) — capture toast calls, render Dialog inert.
@@ -95,6 +93,8 @@ beforeEach(() => {
   castDateVoteAuthed.mockClear();
   castDateVoteAuthed.mockResolvedValue(undefined);
   getPollTally.mockClear();
+  getStoredNickname.mockClear();
+  getStoredNickname.mockReturnValue('');
   toast.mockClear();
   sendBroadcast.mockClear();
 });
@@ -199,15 +199,19 @@ describe('PollVoteIsland', () => {
     expect(authedPayload).not.toHaveProperty('deviceToken');
   });
 
-  it('embedded: 한마디(PollChat) 숨김 — 모아 채팅 탭과 중복 제거. 부재 시 유지(D-10 /poll 무회귀)', () => {
-    // 레거시(/poll, embedded 부재): 한마디 렌더.
-    const { unmount } = render(<PollVoteIsland {...baseProps} nickname="민지" />);
-    expect(screen.getByText('한마디')).toBeInTheDocument();
-    unmount();
+  it('Pitfall 1: stored nickname이 있어도 onRequireMember 게이트를 우회하지 않는다', async () => {
+    // 재방문자 시나리오: localStorage에 닉네임만 남고 익명 세션은 없다. stored hydrate가
+    // 게이트를 스킵하면 castDateVoteAuthed(세션 필수 RPC)가 401을 맞는다 — 게이트가
+    // 먼저 신원(uid)을 확정해야 한다 (T-29-11).
+    getStoredNickname.mockReturnValue('저장된닉');
+    const onRequireMember = vi.fn(async () => ({ uid: 'auth-uid-7', nickname: '게스트' }));
+    render(<PollVoteIsland {...baseProps} onRequireMember={onRequireMember} />);
 
-    // 임베드: 한마디 미렌더 (presence 스트립도 같은 가드 — viewers 0이라 여기선 한마디로 검증).
-    render(<PollVoteIsland {...baseProps} nickname="민지" embedded />);
-    expect(screen.getAllByText('가능').length).toBeGreaterThan(0); // 투표 UI는 그대로
-    expect(screen.queryByText('한마디')).toBeNull();
+    const availButtons = await screen.findAllByText('가능');
+    fireEvent.click(availButtons[0]!);
+
+    await waitFor(() => expect(onRequireMember).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(castDateVoteAuthed).toHaveBeenCalledTimes(1));
+    expect(castDateVote).not.toHaveBeenCalled();
   });
 });
