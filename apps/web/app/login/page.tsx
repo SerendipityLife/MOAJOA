@@ -115,133 +115,137 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
+    <main className="min-h-screen flex items-center justify-center bg-banana-100 px-6">
       <div className="animate-fade-up w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="grid size-12 place-items-center rounded-2xl bg-brand-600 text-white shadow-fab">
             <MapPin className="size-6" strokeWidth={2} />
           </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-neutral-900">
-            MOAJOA
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">여행 정보를 모아두는 지도</p>
+          <h1 className="mt-4 text-xl font-bold tracking-tight text-neutral-900">MOAJOA</h1>
+          {/* neutral-500 is only 4.27:1 on the banana canvas — bump to 600. */}
+          <p className="mt-1 text-sm text-neutral-600">여행 정보를 모아두는 지도</p>
         </div>
 
-        {mode === 'magic' && magicSent ? (
-          <div className="text-center">
-            <p className="text-neutral-700 mb-4">
-              <strong>{email}</strong>으로 로그인 링크를 보냈어요.
-              <br />
-              메일에서 링크를 클릭해 계속 진행해주세요.
-            </p>
+        {/* The form sits on a white card rather than straight on the canvas:
+            Kakao's mandated #FEE500 is nearly indistinguishable from Banana
+            Mania, and the hairline gray borders wash out on it. */}
+        <div className="rounded-2xl border border-banana-300 bg-white p-6 shadow-md">
+          {mode === 'magic' && magicSent ? (
+            <div className="text-center">
+              <p className="text-neutral-700 mb-4">
+                <strong>{email}</strong>으로 로그인 링크를 보냈어요.
+                <br />
+                메일에서 링크를 클릭해 계속 진행해주세요.
+              </p>
+              <button
+                onClick={() => {
+                  setMagicSent(false);
+                  setMode('password');
+                }}
+                className="text-brand-700 underline text-sm"
+              >
+                비밀번호로 로그인
+              </button>
+            </div>
+          ) : mode === 'password' ? (
+            <form onSubmit={signIn} className="space-y-3">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="이메일 주소"
+                required
+                autoComplete="email"
+              />
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호 (6자 이상)"
+                required
+                minLength={6}
+                autoComplete="current-password"
+              />
+              <div className="flex gap-2">
+                <Button type="submit" disabled={pending} className="flex-1">
+                  {pending ? '...' : '로그인'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={signUp}
+                  disabled={pending || !email || password.length < 6}
+                  className="flex-1"
+                >
+                  가입하기
+                </Button>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setMode('magic');
+                }}
+                className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
+              >
+                비밀번호 없이 메일 링크로 로그인
+              </button>
+            </form>
+          ) : (
+            // magic-link mode
+            <form onSubmit={sendMagicLink} className="space-y-3">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="이메일 주소"
+                required
+                autoComplete="email"
+              />
+              <Button type="submit" disabled={pending || !email} className="w-full">
+                {pending ? '...' : '메일로 로그인 링크 받기'}
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setMode('password');
+                }}
+                className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
+              >
+                비밀번호로 로그인
+              </button>
+            </form>
+          )}
+
+          {error && <p className="text-danger text-sm mt-3 text-center">{error}</p>}
+
+          <div className="my-6 flex items-center gap-3">
+            <hr className="flex-1 border-neutral-200" />
+            <span className="text-xs text-neutral-500">또는</span>
+            <hr className="flex-1 border-neutral-200" />
+          </div>
+
+          <div className="space-y-2">
             <button
-              onClick={() => {
-                setMagicSent(false);
-                setMode('password');
-              }}
-              className="text-brand-500 underline text-sm"
+              onClick={() => oauth('google')}
+              className="w-full rounded-lg border border-neutral-300 py-3 font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-50"
             >
-              비밀번호로 로그인
+              Google로 계속
+            </button>
+            <button
+              onClick={() => oauth('apple')}
+              className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition-colors hover:bg-neutral-800"
+            >
+              Apple로 계속
+            </button>
+            <button
+              onClick={() => oauth('kakao')}
+              className="w-full rounded-lg bg-[#FEE500] py-3 font-medium text-neutral-900 transition-colors hover:bg-[#FDD800]"
+            >
+              카카오로 시작하기
             </button>
           </div>
-        ) : mode === 'password' ? (
-          <form onSubmit={signIn} className="space-y-3">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일 주소"
-              required
-              autoComplete="email"
-            />
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="비밀번호 (6자 이상)"
-              required
-              minLength={6}
-              autoComplete="current-password"
-            />
-            <div className="flex gap-2">
-              <Button type="submit" disabled={pending} className="flex-1">
-                {pending ? '...' : '로그인'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={signUp}
-                disabled={pending || !email || password.length < 6}
-                className="flex-1"
-              >
-                가입하기
-              </Button>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setMode('magic');
-              }}
-              className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
-            >
-              비밀번호 없이 메일 링크로 로그인
-            </button>
-          </form>
-        ) : (
-          // magic-link mode
-          <form onSubmit={sendMagicLink} className="space-y-3">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일 주소"
-              required
-              autoComplete="email"
-            />
-            <Button type="submit" disabled={pending || !email} className="w-full">
-              {pending ? '...' : '메일로 로그인 링크 받기'}
-            </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setMode('password');
-              }}
-              className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
-            >
-              비밀번호로 로그인
-            </button>
-          </form>
-        )}
-
-        {error && <p className="text-danger text-sm mt-3 text-center">{error}</p>}
-
-        <div className="my-6 flex items-center gap-3">
-          <hr className="flex-1 border-neutral-200" />
-          <span className="text-xs text-neutral-500">또는</span>
-          <hr className="flex-1 border-neutral-200" />
-        </div>
-
-        <div className="space-y-2">
-          <button
-            onClick={() => oauth('google')}
-            className="w-full rounded-lg border border-neutral-300 py-3 font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-50"
-          >
-            Google로 계속
-          </button>
-          <button
-            onClick={() => oauth('apple')}
-            className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition-colors hover:bg-neutral-800"
-          >
-            Apple로 계속
-          </button>
-          <button
-            onClick={() => oauth('kakao')}
-            className="w-full rounded-lg bg-[#FEE500] py-3 font-medium text-neutral-900 transition-colors hover:bg-[#FDD800]"
-          >
-            카카오로 시작하기
-          </button>
         </div>
       </div>
     </main>
