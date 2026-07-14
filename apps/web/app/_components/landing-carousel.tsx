@@ -3,6 +3,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { useToast } from '@/components';
+// Path import, not the barrel — see the note in social-auth-buttons.tsx.
+import { SocialAuthButtons, type SocialProvider } from '@/components/social-auth-buttons';
 
 /**
  * Landing carousel — the web twin of the iOS welcome screen (apps/ios/app/welcome.tsx).
@@ -78,9 +82,33 @@ const SLIDES: Slide[] = [
 const SCRIM =
   'bg-[linear-gradient(to_bottom,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.55)_28%,rgba(0,0,0,0.55)_72%,rgba(0,0,0,0.78)_100%)]';
 
+/**
+ * Where OAuth comes back to. Unlike /login's callbackUrl() this takes no ?next=
+ * — there is no code path here that can append a query string, so the landing
+ * cannot be turned into an open-redirect vector. The callback route defaults a
+ * missing `next` to /moa, which is exactly where a fresh sign-in should land.
+ */
+function landingCallbackUrl(): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+  return `${base}/auth/callback`;
+}
+
+/** The slide that carries the inline login block. */
+const LOGIN_SLIDE = 2;
+
 export default function LandingCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const { toast } = useToast();
+
+  async function oauth(provider: SocialProvider) {
+    const { error } = await getSupabaseBrowser().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: landingCallbackUrl() },
+    });
+    // On success the browser redirects away; an error means we never left.
+    if (error) toast(error.message, { variant: 'error' });
+  }
 
   function onScroll() {
     const el = trackRef.current;
@@ -102,6 +130,7 @@ export default function LandingCarousel() {
       <div
         ref={trackRef}
         onScroll={onScroll}
+        data-testid="carousel-track"
         className="flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {SLIDES.map((slide, i) => (
@@ -120,12 +149,34 @@ export default function LandingCarousel() {
             />
             <div aria-hidden className={`absolute inset-0 ${SCRIM}`} />
 
-            <div className="relative flex h-full flex-col justify-center pb-44">
+            {/* The login slide hides the CTA, so its bottom chrome is just the dots —
+                it can afford less bottom padding. That extra room is what keeps the
+                taller content off the scrim's bright top band (see SCRIM above): with
+                `justify-center`, a longer column pushes the wordmark *up*, not down. */}
+            <div
+              className={`relative flex h-full flex-col justify-center ${
+                i === LOGIN_SLIDE ? 'pb-28' : 'pb-44'
+              }`}
+            >
               <div className="mx-auto w-full max-w-lg px-8">
                 <p className="text-4xl font-extrabold tracking-wider text-white">MOAJOA</p>
                 <h1 className="mt-5 whitespace-pre-line text-3xl font-extrabold leading-tight text-white">
                   {slide.title}
                 </h1>
+
+                {i === LOGIN_SLIDE && (
+                  <div className="mt-8">
+                    {/* The white ring is a landing-only affordance: on a photo the black
+                        Apple circle can fall to 1.2:1 against dark pixels, which fails
+                        WCAG 1.4.11 (3:1 for non-text boundaries). */}
+                    <SocialAuthButtons onProvider={oauth} buttonClassName="ring-2 ring-white/80" />
+                    <p className="pt-4 text-center">
+                      <Link href="/login" className="text-[13px] text-white underline">
+                        이메일로 로그인
+                      </Link>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -150,13 +201,19 @@ export default function LandingCarousel() {
             ))}
           </div>
 
-          <div className="mt-4 flex justify-center">
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-8 py-3.5 text-base font-semibold text-white shadow-fab transition-colors duration-150 ease-out hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
-            >
-              시작하기
-            </Link>
+          {/* Fixed height, conditional child. The CTA sits *below* the dots inside
+              bottom-anchored chrome, so unmounting it outright would let the dots
+              slide down ~52px on the login slide. The wrapper holds the gap open. */}
+          <div className="mt-4 flex min-h-[52px] justify-center">
+            {index !== LOGIN_SLIDE && (
+              <button
+                type="button"
+                onClick={() => goTo(LOGIN_SLIDE)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-8 py-3.5 text-base font-semibold text-white shadow-fab transition-colors duration-150 ease-out hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
+              >
+                시작하기
+              </button>
+            )}
           </div>
         </div>
       </div>
