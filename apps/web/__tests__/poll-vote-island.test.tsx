@@ -2,8 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 // --- Mocks ---------------------------------------------------------------
-// Realtime channel stub: chainable .on/.subscribe + capturing .track/.send.
-const track = vi.fn(async () => undefined);
+// Realtime channel stub: chainable .on/.subscribe + capturing .send (vote broadcast).
 const sendBroadcast = vi.fn();
 function makeChannel() {
   const ch: Record<string, unknown> = {};
@@ -12,9 +11,7 @@ function makeChannel() {
     cb?.('SUBSCRIBED');
     return ch;
   });
-  ch.track = track;
   ch.send = sendBroadcast;
-  ch.presenceState = vi.fn(() => ({}));
   return ch;
 }
 const removeChannel = vi.fn();
@@ -54,11 +51,10 @@ vi.mock('@moajoa/api', () => ({
   getPollTally: (client: unknown, code: string) => getPollTally(client, code),
 }));
 
-// useToast + Dialog (chat) — capture toast calls, render Dialog inert.
+// useToast — capture toast calls.
 const toast = vi.fn();
 vi.mock('@/components', () => ({
   useToast: () => ({ toast }),
-  Dialog: () => null,
 }));
 
 // Import AFTER mocks.

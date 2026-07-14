@@ -11,7 +11,6 @@ import {
   setStoredNickname,
 } from '@/lib/device-token';
 import { useToast } from '@/components';
-import { PollChat } from './poll-chat';
 
 type Mode = 'range' | 'grid';
 type Status = 'open' | 'closed';
@@ -65,12 +64,6 @@ interface Props {
    * inline 닉네임 게이트가 동작한다.
    */
   onRequireMember?: () => Promise<{ uid: string; nickname: string }>;
-  /**
-   * /t 임베드 seam: 모아 화면 안에 포함될 때 poll 자체 채팅(한마디)과 presence
-   * 스트립("지금 N명 보는 중")을 숨긴다 — 모아의 [채팅] 탭·presence와 중복되므로.
-   * 부재 시 기존 /poll 레거시 그대로(D-10).
-   */
-  embedded?: boolean;
 }
 
 /** `6/14–16` style label for a candidate range (single-day → just the day). */
@@ -86,11 +79,11 @@ function rangeLabel(start: string, end: string): string {
  * Web anonymous voting island (Phase 19 / POLL-02 + POLL-03 read side).
  *
  * Hydration discipline (mirror vote-island.tsx): the SSR shell passes ONLY static
- * cached metadata (options/mode/status). Nickname, votes, live tally, and presence
- * all hydrate client-side here so the cookies-free anon cache is never poisoned
+ * cached metadata (options/mode/status). Nickname, votes, and live tally all
+ * hydrate client-side here so the cookies-free anon cache is never poisoned
  * (RESEARCH Pitfall 2 GOTCHA). Votes go through the castDateVote anon RPC with an
  * optimistic update + rollback + error toast (the vote-island.tsx onToggleVote
- * template), and a vote broadcast fans the delta out to other viewers on the
+ * template), and a vote broadcast fans the delta out to other visitors on the
  * public poll:{tripId} channel.
  */
 export function PollVoteIsland({
@@ -105,7 +98,6 @@ export function PollVoteIsland({
   deviceToken,
   nickname: nicknameProp,
   onRequireMember,
-  embedded,
 }: Props) {
   const { toast } = useToast();
 
@@ -118,24 +110,17 @@ export function PollVoteIsland({
   const [rangeTally, setRangeTally] = useState<RangeTallyEntry[]>(initialRangeTally ?? []);
   const [gridTally, setGridTally] = useState<GridTallyEntry[]>(initialGridTally ?? []);
 
-  const [viewers, setViewers] = useState(0);
-
-  // Stable per-mount channel handle so chat can broadcast on the SAME channel.
+  // Stable per-mount channel handle for the vote broadcast .send() fan-out.
   const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>['channel']> | null>(
     null,
   );
-  // The single shared poll channel, surfaced as state so <PollChat> binds its
-  // comment events onto THIS instance instead of opening a second channel on the
-  // same topic (a same-topic 2nd channel silently steals the topic's deliveries —
-  // vote/presence would stop fanning out). One channel = host-parity (poll:{tripId}).
-  const [sharedChannel, setSharedChannel] = useState<
-    ReturnType<ReturnType<typeof getSupabaseBrowser>['channel']> | null
-  >(null);
 
   // Hydrate the persisted nickname client-side (returning visitor skips the gate).
-  // 임베드가 nickname prop을 주입하면 stored 조회를 건너뛴다(주입값 우선).
+  // 임베드가 nickname prop을 주입하면 stored 조회를 건너뛴다(주입값 우선). onRequireMember
+  // 주입 시에도 건너뛴다 — stored nickname만 있고 세션 없는 재방문자가 게이트를 우회하면
+  // castDateVoteAuthed(세션 필수 RPC)가 401을 맞는다 (Pitfall 1 / T-29-11).
   useEffect(() => {
-    if (nicknameProp || initialNickname) return;
+    if (nicknameProp || initialNickname || onRequireMember) return;
     const stored = getStoredNickname();
     if (stored) setNickname(stored);
   }, [nicknameProp, initialNickname]);
@@ -166,46 +151,27 @@ export function PollVoteIsland({
     };
   }, [code, initialRangeTally, initialGridTally]);
 
-  // One public Realtime channel: vote broadcasts + presence (chat reuses it).
+  // One public Realtime channel: vote broadcasts (iOS 호스트 plan 탭 수신 계약 —
+  // poll:{tripId} 채널 프로토콜 무변경, D-02).
   useEffect(() => {
     if (initialRangeTally || initialGridTally) return; // test seam: skip realtime
     const client = getSupabaseBrowser();
-    // 임베드가 익명 auth.uid를 주입하면 presence key로 쓴다(부재 시 device token).
-    const presenceToken = deviceToken ?? getDeviceToken();
-    const channel = client.channel(pollChannelName(tripId), {
-      config: { presence: { key: presenceToken } },
-    });
+    const channel = client.channel(pollChannelName(tripId));
     channelRef.current = channel;
-    setSharedChannel(channel);
 
     channel
       .on('broadcast', { event: 'vote' }, () => {
         // Reconcile against server truth on any peer vote (mirror optimistic+reconcile).
         void refetchTally();
       })
-      .on('presence', { event: 'sync' }, () => {
-        setViewers(Object.keys(channel.presenceState()).length);
-      })
-      .subscribe(async (s) => {
-        if (s === 'SUBSCRIBED') {
-          await channel.track({ nickname, online_at: new Date().toISOString() });
-        }
-      });
+      .subscribe();
 
     return () => {
       channelRef.current = null;
-      setSharedChannel(null);
       void client.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripId, code]);
-
-  // Re-track presence when the nickname is set so peers see the real name.
-  useEffect(() => {
-    const channel = channelRef.current;
-    if (!channel || !nickname) return;
-    void channel.track({ nickname, online_at: new Date().toISOString() });
-  }, [nickname]);
 
   async function refetchTally() {
     const client = getSupabaseBrowser();
@@ -367,10 +333,6 @@ export function PollVoteIsland({
             함께 정한 일정을 앱에서 이어가요
           </p>
         </div>
-
-        {!embedded && (
-          <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
-        )}
       </section>
     );
   }
@@ -419,15 +381,6 @@ export function PollVoteIsland({
 
   return (
     <section className="mt-8">
-      {/* Presence strip — "지금 N명 보는 중" (hidden at 0, singular at 1).
-          임베드에선 숨김 — 모아 채팅 탭의 presence와 중복. */}
-      {!embedded && viewers > 0 && (
-        <div className="mb-4 flex items-center gap-1.5 text-xs text-neutral-500">
-          <span className="size-1.5 rounded-full bg-brand-500" aria-hidden />
-          <span>{viewers <= 1 ? '지금 보는 중' : `지금 ${viewers}명 보는 중`}</span>
-        </div>
-      )}
-
       {/* 4b — Vote input (two modes, binary 가능/불가). */}
       {mode === 'range' ? (
         <ul className="space-y-2">
@@ -556,10 +509,6 @@ export function PollVoteIsland({
           </ul>
         )}
       </div>
-
-      {!embedded && (
-        <PollChat code={code} status={status} nickname={nickname} channel={sharedChannel} />
-      )}
     </section>
   );
 }
