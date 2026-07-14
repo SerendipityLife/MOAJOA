@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { MapPin } from 'lucide-react';
 import { getCachedPoll } from '@/lib/poll-cache';
-import { PollVoteIsland } from './_components/poll-vote-island';
+import { PollGuestIsland } from './_components/poll-guest-island';
 
 interface Props {
   params: Promise<{ code: string }>;
@@ -28,8 +28,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  *
  * Cookies-free cached SSR shell: only the static poll metadata is server-rendered
  * (header chrome + the island mount). ALL mutable state — nickname, votes, live
- * tally, presence, chat — hydrates client-side in <PollVoteIsland> so the shared
- * anon cache is never poisoned (RESEARCH Pitfall 2 GOTCHA).
+ * tally, presence, chat — hydrates client-side in <PollGuestIsland> (vote island +
+ * unified chat wrapper) so the shared anon cache is never poisoned (RESEARCH
+ * Pitfall 2 GOTCHA).
  */
 export default async function PollPage({ params }: Props) {
   const { code } = await params;
@@ -77,8 +78,10 @@ export default async function PollPage({ params }: Props) {
           </p>
         </header>
 
-        {/* Static cached props ONLY — votes/tally/presence/chat hydrate inside. */}
-        <PollVoteIsland
+        {/* Static cached props ONLY — votes/tally/presence hydrate inside, and the
+            unified chat (trip_messages · moa:{tripId}) hydrates client-side in the
+            wrapper island so the anon SSR cache stays clean (D-03). */}
+        <PollGuestIsland
           code={code}
           tripId={poll.trip_id}
           mode={poll.mode}
