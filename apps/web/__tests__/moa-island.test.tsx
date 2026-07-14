@@ -567,6 +567,18 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
     expect(screen.getByTestId('moa-switcher')).toHaveTextContent('도쿄 모아');
     expect(screen.queryByLabelText('뒤로')).toBeNull();
   });
+
+  it('Test A: initialTab="chat" → 탭 클릭 없이 첫 렌더에 채팅 뷰 visible (CHAT-09 착지)', () => {
+    render(<MoaIsland {...baseProps} initialTab="chat" />);
+    const chatWrapper = screen.getByTestId('moa-chat').parentElement!.parentElement!;
+    expect(chatWrapper.className).not.toContain('hidden');
+  });
+
+  it('Test B: initialTab 미전달 → 기존 "moa" 기본 탭 (채팅 뷰 hidden — 호스트 무회귀)', () => {
+    render(<MoaIsland {...baseProps} />);
+    const chatWrapper = screen.getByTestId('moa-chat').parentElement!.parentElement!;
+    expect(chatWrapper.className).toContain('hidden');
+  });
 });
 
 // ── Plan 06 — plan 상태 허브 (D-12~D-18, D-21, D-25). ──

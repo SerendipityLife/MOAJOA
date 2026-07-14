@@ -68,6 +68,8 @@ export interface MoaIslandProps {
   pollSlot?: ReactNode;
   /** 좌상단 스위처의 내 모아 목록. 게스트 마운트(/t)는 미전달 → 정적 제목 pill. */
   moas?: Trip[];
+  /** 게스트가 채팅 진입 어포던스로 join한 경우 [채팅] 탭에 착지(CHAT-09). 미전달=기존 'moa' 기본(호스트 /moa 무회귀). */
+  initialTab?: MoaTab;
 }
 
 /**
@@ -98,6 +100,7 @@ export function MoaIsland({
   hidePlaceAdd,
   pollSlot,
   moas,
+  initialTab,
 }: MoaIslandProps) {
   const { toast } = useToast();
 
@@ -126,7 +129,7 @@ export function MoaIsland({
 
   // 채팅(모아 내부 섹션 탭 — D-01/D-02). 탭 전환은 클라이언트 상태라 island이 한 번만
   // 마운트되고 단일 moa:{tripId} 채널이 유지된다(뷰만 스위치, 언마운트 없음).
-  const [activeTab, setActiveTab] = useState<MoaTab>('moa');
+  const [activeTab, setActiveTab] = useState<MoaTab>(initialTab ?? 'moa');
   const [messages, setMessages] = useState<TripMessage[]>(initialMessages);
   const [viewers, setViewers] = useState(0);
   const [replyToPlaceId, setReplyToPlaceId] = useState<string | null>(null); // 배선은 Plan 04
