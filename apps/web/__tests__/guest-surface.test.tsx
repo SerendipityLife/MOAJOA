@@ -83,6 +83,7 @@ vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
     hideHostControls?: boolean;
     hidePlaceAdd?: boolean;
     pollSlot?: React.ReactNode;
+    initialTab?: string;
   }) => (
     <div
       data-testid="moa-island"
@@ -91,6 +92,7 @@ vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
       data-hide-host={String(props.hideHostControls ?? false)}
       data-hide-place-add={String(props.hidePlaceAdd ?? false)}
       data-has-poll-slot={String(props.pollSlot != null)}
+      data-initial-tab={props.initialTab ?? ''}
     >
       {props.pollSlot}
     </div>
@@ -390,5 +392,71 @@ describe('GuestSurface — dates→both 수렴 (29-02 D-01)', () => {
 
     await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
     expect(screen.getByTestId('moa-island')).toHaveAttribute('data-hide-place-add', 'false');
+  });
+});
+
+// ── 29-06 CHAT-09 — 게스트 /t 채팅 진입 어포던스 (join 전 teaser + 게이트 → 채팅탭 착지). ──
+describe('GuestSurface — 게스트 채팅 진입 어포던스 (CHAT-09)', () => {
+  it('Test 1: places 비join → 채팅 teaser(empty-state 카피 + 입력창) 렌더, listTripMessages 미호출', async () => {
+    renderSurface('places');
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+    expect(screen.getByText('참여하면 지금까지의 대화를 볼 수 있어요')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('메시지 남기기')).toBeInTheDocument();
+    // 비회원은 메시지 이력을 못 읽는다 (RLS SELECT 멤버 전용 — hydrate 미실행).
+    expect(mocks.listTripMessages).not.toHaveBeenCalled();
+  });
+
+  it('Test 2: dates 비join → 채팅 teaser + pollSection 공존', async () => {
+    renderSurface('dates');
+    await waitFor(() => expect(screen.getByTestId('poll-island')).toBeInTheDocument());
+    expect(screen.getByText('참여하면 지금까지의 대화를 볼 수 있어요')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('메시지 남기기')).toBeInTheDocument();
+  });
+
+  it('Test 3: both 비join → 채팅 teaser + readOnlyPlaces 공존', async () => {
+    renderSurface('both');
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+    expect(screen.getByText('참여하면 지금까지의 대화를 볼 수 있어요')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('메시지 남기기')).toBeInTheDocument();
+  });
+
+  it('Test 4: teaser 보내기 클릭 → 닉네임 게이트 오픈', async () => {
+    renderSurface('places');
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('보내기'));
+    expect(screen.getByTestId('gate-sheet')).toBeInTheDocument();
+  });
+
+  it('Test 5: teaser 입력창 focus → 닉네임 게이트 오픈', async () => {
+    renderSurface('places');
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+    fireEvent.focus(screen.getByPlaceholderText('메시지 남기기'));
+    expect(screen.getByTestId('gate-sheet')).toBeInTheDocument();
+  });
+
+  it('Test 6: teaser 게이트 통과 → join 후 MoaIsland가 initialTab="chat"으로 마운트', async () => {
+    renderSurface('places');
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('보내기'));
+    fireEvent.change(screen.getByPlaceholderText('닉네임'), { target: { value: '철수' } });
+    fireEvent.click(screen.getByText('시작하기'));
+
+    await waitFor(() => expect(mocks.joinMoa).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-initial-tab', 'chat');
+  });
+
+  it('Test 7(무회귀): 찜 게이트 통과 → MoaIsland는 채팅탭이 아님 (모으기 기본)', async () => {
+    renderSurface('places');
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('guest-vote-p1'));
+    fireEvent.change(screen.getByPlaceholderText('닉네임'), { target: { value: '철수' } });
+    fireEvent.click(screen.getByText('시작하기'));
+
+    await waitFor(() => expect(mocks.joinMoa).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    expect(screen.getByTestId('moa-island')).not.toHaveAttribute('data-initial-tab', 'chat');
   });
 });

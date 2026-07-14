@@ -87,6 +87,8 @@ export function GuestSurface({
   const [pollMeta, setPollMeta] = useState<PollMeta | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [gateOpen, setGateOpen] = useState(false);
+  // 채팅 teaser로 게이트를 연 경우만 true — join 후 MoaIsland를 [채팅] 탭에 착지시킨다(CHAT-09).
+  const [pendingChatIntent, setPendingChatIntent] = useState(false);
 
   // Pending read-only action to resume after the gate clears (place 모드).
   const pendingAction = useRef<(() => void) | null>(null);
@@ -225,13 +227,21 @@ export function GuestSurface({
 
   /** 첫 참여 액션(read-only 찜) — 게이트를 열고 후속 액션을 보관. */
   function openGate(action?: () => void) {
+    setPendingChatIntent(false); // 찜 게이트는 채팅탭 착지 아님(모으기 기본)
     pendingAction.current = action ?? null;
+    setGateOpen(true);
+  }
+
+  /** 채팅 teaser 입력 시도(focus/보내기) — 게이트를 열고 join 후 MoaIsland를 채팅탭에 착지시킨다(CHAT-09). */
+  function openChatGate() {
+    setPendingChatIntent(true);
     setGateOpen(true);
   }
 
   /** PollVoteIsland 임베드 게이트 — 첫 투표 전 익명 인증·join을 await한다. */
   function requireMember(): Promise<{ uid: string; nickname: string }> {
     if (joined && userId) return Promise.resolve({ uid: userId, nickname });
+    setPendingChatIntent(false); // 투표 게이트는 채팅탭 착지 아님(모으기 기본)
     return new Promise((resolve, reject) => {
       gateReject.current?.(); // 이전 pending 호출자를 settle — promise를 절대 leak하지 않는다
       gateResolve.current = resolve;
@@ -266,6 +276,7 @@ export function GuestSurface({
 
   function handleCloseGate() {
     setGateOpen(false);
+    setPendingChatIntent(false);
     gateReject.current?.();
     pendingAction.current = null;
     gateResolve.current = null;
@@ -274,6 +285,37 @@ export function GuestSurface({
 
   const gate = (
     <NicknameGateSheet open={gateOpen} onConfirm={handleConfirmNickname} onClose={handleCloseGate} />
+  );
+
+  // 비회원 채팅 진입 어포던스(CHAT-09) — poll-guest-island 비멤버 empty-state 미러.
+  // 메시지 이력은 멤버 전용(RLS SELECT)이라 listTripMessages 미호출 — empty-state만 렌더.
+  // 입력창은 실 compose가 아니라 게이트 트리거(readOnly): focus/보내기 → 닉네임 게이트 →
+  // join 후 MoaIsland가 initialTab='chat'으로 실 compose를 소유한다.
+  const chatTeaser = (
+    <section className="mt-8 border-t border-neutral-200 pt-6">
+      <h3 className="mb-3 text-sm font-semibold text-neutral-700">채팅</h3>
+      <div className="flex flex-col">
+        <p className="py-10 text-center text-sm text-neutral-400">
+          참여하면 지금까지의 대화를 볼 수 있어요
+        </p>
+        <div className="mt-3 flex gap-2">
+          <input
+            type="text"
+            readOnly
+            onFocus={openChatGate}
+            placeholder="메시지 남기기"
+            className="min-w-0 flex-1 rounded-lg border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 outline-none focus:border-brand-300"
+          />
+          <button
+            type="button"
+            onClick={openChatGate}
+            className="shrink-0 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+          >
+            보내기
+          </button>
+        </div>
+      </div>
+    </section>
   );
 
   // 후보 0개면 투표할 대상이 없다 — poll 위젯(집계·presence) 대신 안내만.
@@ -342,6 +384,7 @@ export function GuestSurface({
             {...moaSeed}
             hideHostControls
             hidePlaceAdd
+            initialTab={pendingChatIntent ? 'chat' : undefined}
             pollSlot={
               pollMeta != null ? (
                 <section>
@@ -352,7 +395,10 @@ export function GuestSurface({
             }
           />
         ) : (
-          pollSection
+          <>
+            {pollSection}
+            {chatTeaser}
+          </>
         )}
         {gate}
       </>
@@ -369,6 +415,7 @@ export function GuestSurface({
           <MoaIsland
             {...moaSeed}
             hideHostControls
+            initialTab={pendingChatIntent ? 'chat' : undefined}
             pollSlot={
               pollMeta != null ? (
                 <section>
@@ -387,6 +434,7 @@ export function GuestSurface({
               </section>
             )}
             {readOnlyPlaces}
+            {chatTeaser}
           </>
         )}
         {gate}
@@ -397,7 +445,18 @@ export function GuestSurface({
   // places (기본) — join 후 호스트 MoaIsland 재사용, 그 전엔 read-only.
   return (
     <>
-      {joined && moaSeed ? <MoaIsland {...moaSeed} hideHostControls /> : readOnlyPlaces}
+      {joined && moaSeed ? (
+        <MoaIsland
+          {...moaSeed}
+          hideHostControls
+          initialTab={pendingChatIntent ? 'chat' : undefined}
+        />
+      ) : (
+        <>
+          {readOnlyPlaces}
+          {chatTeaser}
+        </>
+      )}
       {gate}
     </>
   );
