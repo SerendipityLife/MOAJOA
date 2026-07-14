@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import type {
   Link,
   Place,
@@ -29,11 +28,12 @@ import {
   triggerExtraction,
   updateTrip,
 } from '@moajoa/api';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { memberColor } from '@/lib/member-color';
 import { Button, useToast } from '@/components';
 import { MoaMap } from './moa-map';
+import { MoaSwitcher } from './moa-switcher';
 import { PlanSection, type PlanWithItemsView } from './plan-section';
 import { PlaceSheet, type SheetAnchor } from './place-sheet';
 import { PlaceList } from './place-list';
@@ -63,6 +63,8 @@ export interface MoaIslandProps {
   hideHostControls?: boolean;
   /** both 모드 게스트: [모으기] 시트 상단 날짜투표 임베드(D-09/C2, 25-07). */
   pollSlot?: ReactNode;
+  /** 좌상단 스위처의 내 모아 목록. 게스트 마운트(/t)는 미전달 → 정적 제목 pill. */
+  moas?: Trip[];
 }
 
 /**
@@ -91,8 +93,8 @@ export function MoaIsland({
   currentUserNickname,
   hideHostControls,
   pollSlot,
+  moas,
 }: MoaIslandProps) {
-  const router = useRouter();
   const { toast } = useToast();
 
   const [places, setPlaces] = useState<Place[]>(initialPlaces);
@@ -548,15 +550,7 @@ export function MoaIsland({
               {...(plan && { fitKey: selectedDay })}
             />
 
-        {/* 뒤로 chevron 오버레이(흰 원형 + shadow). */}
-        <button
-          type="button"
-          aria-label="뒤로"
-          onClick={() => router.push('/moa')}
-          className="absolute left-4 top-4 z-50 grid size-10 place-items-center rounded-full bg-white shadow-md"
-        >
-          <ChevronLeft className="size-5 text-neutral-700" aria-hidden />
-        </button>
+        <MoaSwitcher currentTripId={trip.id} title={trip.title} moas={moas} />
 
         {/* 상단 바 우측 — [함께 정하기] primary sm 오버레이(UI-SPEC §상단 바).
             게스트 마운트에선 숨김 — ShareSheet 마운트는 shareOpen이 절대 true가
