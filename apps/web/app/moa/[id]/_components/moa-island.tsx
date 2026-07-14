@@ -554,7 +554,12 @@ export function MoaIsland({
               {...(plan && { fitKey: selectedDay })}
             />
 
-        <MoaSwitcher currentTripId={trip.id} title={trip.title} moas={moas} />
+        <MoaSwitcher
+          currentTripId={trip.id}
+          title={trip.title}
+          currentUserId={currentUserId}
+          moas={moas}
+        />
 
         {/* 상단 바 우측 — [함께 정하기] primary sm 오버레이(UI-SPEC §상단 바).
             게스트 마운트에선 숨김 — ShareSheet 마운트는 shareOpen이 절대 true가
