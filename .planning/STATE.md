@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: Completed 29-02-PLAN.md
-last_updated: "2026-07-14T00:54:09.142Z"
+stopped_at: Completed 29-03-PLAN.md
+last_updated: "2026-07-14T04:11:00.000Z"
 last_activity: 2026-07-14
 progress:
   total_phases: 7
@@ -423,6 +423,7 @@ Plan: 1 of 1
 | Phase 27 P02 | 4m | 2 tasks | 4 files |
 | Phase 29 P01 | 7min | 3 tasks | 5 files |
 | Phase 29 P02 | 7min | 2 tasks | 4 files |
+| Phase 29 P03 | 15min | 2 tasks | 5 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 
@@ -436,8 +437,8 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-14T00:54:09.137Z
-**Stopped at:** Completed 29-02-PLAN.md
+**Last session:** 2026-07-14T04:11:00.000Z
+**Stopped at:** Completed 29-03-PLAN.md
 **Resume file:** None
 **Previous stop:** Phase 25 UAT round 3 완료 — BottomSheet body portal(47c375c)로 iOS WebKit 스태킹 트랩 해소, 게스트 날짜투표 라이브 실증(cast_date_vote_authed 204→tally 클로드게스트 1). 잔여 UAT는 Phase 27 통합 UAT로 합류(27-CONTEXT.md D-07). 참고: `.planning/phases/25-guest-unified-share/25-HUMAN-UAT.md`
 
@@ -529,3 +530,4 @@ Plan: 1 of 1
 - [Phase 27]: docs v2.1 갱신: WORKSTREAMS 구 할 일 취소선+사유 역사 보존, ARCHITECTURE data flow 기점 iOS→웹·board_id→trip_id·/b/slug→/t/[slug] 어휘만 갱신 (흐름 구조 유지)
 - [Phase 29]: 29-01: poll_code 자체를 bearer로 사용(D-03a) — slug 노출은 0018 bearer 스코프 분리 붕괴라 기각. 0032는 visibility·status 게이트 없음(레거시 private dateless-poll 커버·채팅은 trip 소속 A-8), role 고정 voter, grant authenticated만
 - [Phase 29]: 29-02: hidePlaceAdd는 클라이언트 파생(shareMode dates)로 충분 — DB can_edit_trip RLS가 최종 방어 (심층방어 2겹, T-29-07)
+- [Phase 29]: 29-03: presence 표면은 채팅 presence(moa:{tripId})로 단일화 — poll:{tripId}는 vote broadcast 전용 축소, 'vote' 프로토콜 무변경(iOS 계약 T-29-12). date_comments DROP은 append-only 규칙상 별건 후속(D-02a). stored-hydrate skip 조건을 onRequireMember 존재에 정렬해 세션 없는 재방문자 401 봉합(T-29-11)
