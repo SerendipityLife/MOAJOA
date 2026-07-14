@@ -175,6 +175,34 @@ function renderSurface(shareMode: 'places' | 'dates' | 'both') {
   );
 }
 
+// CHAT-10 — join 전 스냅샷 메시지를 seed하는 테스트 헬퍼(initialSnapshotMessages seam).
+function renderSurfaceWithSnapshot(
+  shareMode: 'places' | 'dates' | 'both',
+  messages: {
+    id: string;
+    nickname: string;
+    body: string;
+    reply_to_place_id: string | null;
+    created_at: string;
+  }[],
+) {
+  return render(
+    <GuestSurface
+      slug="slug-1"
+      tripId="trip-1"
+      board={makeBoard({ share_mode: shareMode })}
+      places={[makePlace({ id: 'p1' })]}
+      links={[]}
+      initialSnapshotMessages={messages}
+    />,
+  );
+}
+
+const SNAPSHOT_MSGS = [
+  { id: 'm1', nickname: '호스트', body: '안녕', reply_to_place_id: null, created_at: 'a' },
+  { id: 'm2', nickname: '영희', body: '반가워', reply_to_place_id: null, created_at: 'b' },
+];
+
 beforeEach(() => {
   resetMocks();
 });
@@ -458,5 +486,50 @@ describe('GuestSurface — 게스트 채팅 진입 어포던스 (CHAT-09)', () =
     await waitFor(() => expect(mocks.joinMoa).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
     expect(screen.getByTestId('moa-island')).not.toHaveAttribute('data-initial-tab', 'chat');
+  });
+});
+
+// ── 29-07 CHAT-10 — 게스트가 join 전 실제 채팅 스냅샷을 읽는다 (empty-state 교체). ──
+describe('GuestSurface — 게스트 join 전 채팅 스냅샷 읽기 (CHAT-10)', () => {
+  it('Test A: places 비join → 스냅샷 메시지(닉네임·본문) 렌더, empty-state 카피 미표시', async () => {
+    renderSurfaceWithSnapshot('places', SNAPSHOT_MSGS);
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+    expect(screen.getByText('안녕')).toBeInTheDocument();
+    expect(screen.getByText('반가워')).toBeInTheDocument();
+    expect(screen.getByText('호스트')).toBeInTheDocument();
+    expect(
+      screen.queryByText('참여하면 지금까지의 대화를 볼 수 있어요'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('Test B: dates·both 비join도 같은 스냅샷 렌더 (공통 chatTeaser)', async () => {
+    renderSurfaceWithSnapshot('dates', SNAPSHOT_MSGS);
+    await waitFor(() => expect(screen.getByTestId('poll-island')).toBeInTheDocument());
+    expect(screen.getByText('안녕')).toBeInTheDocument();
+
+    renderSurfaceWithSnapshot('both', SNAPSHOT_MSGS);
+    await waitFor(() => expect(screen.getAllByTestId('guest-vote-p1').length).toBeGreaterThan(0));
+    expect(screen.getAllByText('안녕').length).toBeGreaterThan(0);
+  });
+
+  it('Test C: 스냅샷 빈 배열 → 기존 empty-state 폴백', async () => {
+    renderSurfaceWithSnapshot('places', []);
+    await waitFor(() => expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument());
+    expect(screen.getByText('참여하면 지금까지의 대화를 볼 수 있어요')).toBeInTheDocument();
+  });
+
+  it('Test D(무회귀): 스냅샷이 있어도 보내기/focus → 닉네임 게이트 (29-06 openChatGate)', async () => {
+    renderSurfaceWithSnapshot('places', SNAPSHOT_MSGS);
+    await waitFor(() => expect(screen.getByText('안녕')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('보내기'));
+    expect(screen.getByTestId('gate-sheet')).toBeInTheDocument();
+  });
+
+  it('Test E: join 후엔 MoaIsland 마운트, 스냅샷 teaser 미표시', async () => {
+    mocks.mockUser.current = { id: 'u9' };
+    mocks.getMyTripRole.mockResolvedValue('member');
+    renderSurfaceWithSnapshot('places', SNAPSHOT_MSGS);
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    expect(screen.queryByText('안녕')).not.toBeInTheDocument();
   });
 });
