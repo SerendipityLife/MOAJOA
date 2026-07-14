@@ -81,6 +81,7 @@ vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
     currentUserId: string;
     currentUserNickname: string;
     hideHostControls?: boolean;
+    hidePlaceAdd?: boolean;
     pollSlot?: React.ReactNode;
   }) => (
     <div
@@ -88,6 +89,7 @@ vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
       data-uid={props.currentUserId}
       data-nick={props.currentUserNickname}
       data-hide-host={String(props.hideHostControls ?? false)}
+      data-hide-place-add={String(props.hidePlaceAdd ?? false)}
       data-has-poll-slot={String(props.pollSlot != null)}
     >
       {props.pollSlot}
@@ -96,13 +98,20 @@ vi.mock('@/app/moa/[id]/_components/moa-island', () => ({
 }));
 
 vi.mock('@/app/poll/[code]/_components/poll-vote-island', () => ({
-  PollVoteIsland: (props: { code: string; deviceToken?: string; embedded?: boolean }) => (
-    <div
-      data-testid="poll-island"
-      data-code={props.code}
-      data-token={props.deviceToken ?? ''}
-      data-embedded={String(props.embedded ?? false)}
-    />
+  PollVoteIsland: (props: {
+    code: string;
+    deviceToken?: string;
+    onRequireMember?: () => Promise<{ uid: string; nickname: string }>;
+  }) => (
+    <div data-testid="poll-island" data-code={props.code} data-token={props.deviceToken ?? ''}>
+      {/* 첫 투표 액션이 게이트를 여는 경로(onRequireMember)를 트리거하는 하네스 버튼. */}
+      <button
+        data-testid="poll-require-member"
+        onClick={() => void props.onRequireMember?.().catch(() => {})}
+      >
+        vote
+      </button>
+    </div>
   ),
 }));
 
@@ -197,7 +206,7 @@ describe('GuestSurface — share_mode 구성 분기 (SHARE-02)', () => {
     expect(screen.getByTestId('guest-vote-p1')).toBeInTheDocument();
   });
 
-  it('후보 0개 poll → PollVoteIsland 대신 "정하는 중" 안내 (빈 집계·한마디 노이즈 제거)', async () => {
+  it('후보 0개 poll → PollVoteIsland 대신 "정하는 중" 안내 (빈 집계 노이즈 제거)', async () => {
     mocks.getPublicTripPoll.mockResolvedValue({
       poll_code: 'CODE1',
       mode: 'range',
@@ -208,13 +217,6 @@ describe('GuestSurface — share_mode 구성 분기 (SHARE-02)', () => {
     await waitFor(() => expect(screen.getByTestId('poll-empty')).toBeInTheDocument());
     expect(screen.getByText('호스트가 후보 날짜를 정하는 중이에요')).toBeInTheDocument();
     expect(screen.queryByTestId('poll-island')).not.toBeInTheDocument();
-  });
-
-  it('both 임베드는 embedded=true, dates 전용 화면은 embedded=false (한마디·presence 유지)', async () => {
-    renderSurface('both');
-    await waitFor(() =>
-      expect(screen.getByTestId('poll-island')).toHaveAttribute('data-embedded', 'true'),
-    );
   });
 });
 
@@ -327,5 +329,66 @@ describe('GuestSurface — both 모드 join 후 날짜투표 섹션 유지 (25-0
 
     await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
     expect(screen.getByTestId('moa-island')).toHaveAttribute('data-has-poll-slot', 'false');
+  });
+});
+
+// ── 29-02 D-01 — dates 공유를 both 경로로 수렴 (CHAT-04). ──
+describe('GuestSurface — dates→both 수렴 (29-02 D-01)', () => {
+  it('Test 1: dates 재방문 멤버 → hydrate 후 MoaIsland 마운트 + hidePlaceAdd (poll-only 화면에 안 갇힘 — Pitfall 5)', async () => {
+    mocks.mockUser.current = { id: 'u9' };
+    mocks.getMyTripRole.mockResolvedValue('voter');
+    mocks.getStoredNickname.mockReturnValue('영희');
+
+    renderSurface('dates');
+
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    // 재방문도 무조건 hydrateMember 경유 (가드 1 제거 — 세션 effect).
+    expect(mocks.getTrip).toHaveBeenCalled();
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-uid', 'u9');
+    // voter는 places INSERT 불가 → FAB 숨김 (F-2).
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-hide-place-add', 'true');
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-hide-host', 'true');
+  });
+
+  it('Test 2: dates 비join → MoaIsland 미마운트, pollSection만 (A-2 현행 유지)', async () => {
+    renderSurface('dates');
+    await waitFor(() => expect(screen.getByTestId('poll-island')).toBeInTheDocument());
+    expect(screen.queryByTestId('moa-island')).not.toBeInTheDocument();
+    // 비join dates는 장소 리스트도 없음 (현행 유지).
+    expect(screen.queryByTestId('guest-vote-p1')).not.toBeInTheDocument();
+  });
+
+  it('Test 3: dates 첫 join → hydrateMember 호출 → MoaIsland 마운트, pollSlot에 날짜 정하기 (sibling 중복 렌더 0 — Pitfall 8)', async () => {
+    renderSurface('dates');
+    await waitFor(() => expect(screen.getByTestId('poll-island')).toBeInTheDocument());
+
+    // 첫 투표 액션 → onRequireMember → 게이트 오픈.
+    fireEvent.click(screen.getByTestId('poll-require-member'));
+    expect(screen.getByTestId('gate-sheet')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('닉네임'), { target: { value: '철수' } });
+    fireEvent.click(screen.getByText('시작하기'));
+
+    // ensureGuestMember(signInAnonymously→joinMoa) 후 hydrateMember (가드 2 제거).
+    await waitFor(() => expect(mocks.joinMoa).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.getTrip).toHaveBeenCalled());
+
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    const island = screen.getByTestId('moa-island');
+    expect(island).toHaveAttribute('data-has-poll-slot', 'true');
+    expect(island).toContainElement(screen.getByText('날짜 정하기'));
+    // pollSection은 pollSlot에만 — sibling 중복 렌더 금지 (poll:{tripId} 2채널 = 배달 탈취).
+    expect(screen.getAllByTestId('poll-island')).toHaveLength(1);
+    expect(island).toContainElement(screen.getByTestId('poll-island'));
+  });
+
+  it('Test 4: both joined → hidePlaceAdd 미전달 (editor는 FAB 유지 — 무회귀 앵커)', async () => {
+    mocks.mockUser.current = { id: 'u9' };
+    mocks.getMyTripRole.mockResolvedValue('member');
+
+    renderSurface('both');
+
+    await waitFor(() => expect(screen.getByTestId('moa-island')).toBeInTheDocument());
+    expect(screen.getByTestId('moa-island')).toHaveAttribute('data-hide-place-add', 'false');
   });
 });
