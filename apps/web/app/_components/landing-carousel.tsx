@@ -150,12 +150,24 @@ export default function LandingCarousel() {
             <div aria-hidden className={`absolute inset-0 ${SCRIM}`} />
 
             {/* The login slide hides the CTA, so its bottom chrome is just the dots —
-                it can afford less bottom padding. That extra room is what keeps the
-                taller content off the scrim's bright top band (see SCRIM above): with
-                `justify-center`, a longer column pushes the wordmark *up*, not down. */}
+                it can afford less bottom padding. That slack is load-bearing, not
+                cosmetic: with `justify-center` the taller login column pushes the
+                wordmark *up* into the scrim's bright 0.35 top band (see SCRIM above),
+                and less bottom padding pushes it back down.
+
+                pb-20 is the measured value, not a guessed one. Wordmark top as a
+                fraction of the viewport height (Playwright boundingBox):
+                  1440×900 → 268.5/900 = 0.298
+                   390×844 → 240.5/844 = 0.285
+                Both clear 0.28, the point where the gradient has fully reached its
+                0.55 plateau — so this slide inherits the 5.42:1 worst case measured
+                for the other two rather than needing its own scrim. pb-28 was tried
+                first and put mobile at 0.266 (α≈0.54, ~5.2:1 — AA, but leaning on the
+                ramp instead of the plateau). Do not raise this padding back up
+                without re-measuring. */}
             <div
               className={`relative flex h-full flex-col justify-center ${
-                i === LOGIN_SLIDE ? 'pb-28' : 'pb-44'
+                i === LOGIN_SLIDE ? 'pb-20' : 'pb-44'
               }`}
             >
               <div className="mx-auto w-full max-w-lg px-8">
