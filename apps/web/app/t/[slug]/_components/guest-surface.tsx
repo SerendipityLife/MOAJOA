@@ -6,6 +6,7 @@ import {
   getMyTripRole,
   getMyVotedPlaceIds,
   getProfileNames,
+  getPublicTripMessages,
   getPublicTripPoll,
   getTrip,
   getVoteCounts,
@@ -34,6 +35,15 @@ interface PollMeta {
   options: { id: string; start_date: string; end_date: string }[];
 }
 
+/** join 전 게스트에게 노출하는 채팅 스냅샷 행 (public_trip_messages 0034 — user_id 미포함). */
+interface SnapshotMessage {
+  id: string;
+  nickname: string;
+  body: string;
+  reply_to_place_id: string | null;
+  created_at: string;
+}
+
 interface GuestSurfaceProps {
   slug: string;
   tripId: string;
@@ -48,6 +58,8 @@ interface GuestSurfaceProps {
   initialUserId?: string;
   /** Test seam: seed the stored nickname. */
   initialNickname?: string;
+  /** Test seam: seed the join-전 채팅 스냅샷. */
+  initialSnapshotMessages?: SnapshotMessage[];
 }
 
 /**
@@ -76,6 +88,7 @@ export function GuestSurface({
   initialJoined,
   initialUserId,
   initialNickname,
+  initialSnapshotMessages,
 }: GuestSurfaceProps) {
   const { toast } = useToast();
   const shareMode: ShareModeType = initialShareMode ?? board.share_mode ?? 'places';
@@ -85,6 +98,9 @@ export function GuestSurface({
   const [nickname, setNickname] = useState<string>(initialNickname ?? '');
   const [moaSeed, setMoaSeed] = useState<MoaIslandProps | null>(null);
   const [pollMeta, setPollMeta] = useState<PollMeta | null>(null);
+  const [snapshotMessages, setSnapshotMessages] = useState<SnapshotMessage[]>(
+    initialSnapshotMessages ?? [],
+  );
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [gateOpen, setGateOpen] = useState(false);
   // 채팅 teaser로 게이트를 연 경우만 true — join 후 MoaIsland를 [채팅] 탭에 착지시킨다(CHAT-09).
@@ -167,6 +183,27 @@ export function GuestSurface({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareMode, joined]);
+
+  // join 전 게스트 채팅 스냅샷 — anon-grant DEFINER RPC(0034)로 1회 로드(CHAT-10).
+  // 비멤버는 realtime 구독 불가(WALRUS 멤버 전제)라 라이브 갱신 없음 — join 후 MoaIsland 담당.
+  useEffect(() => {
+    if (joined || initialSnapshotMessages !== undefined) return; // test seam / joined 스킵
+    let active = true;
+    (async () => {
+      const client = getSupabaseBrowser();
+      try {
+        const rows = (await getPublicTripMessages(client, slug)) as SnapshotMessage[] | null;
+        if (active && rows) setSnapshotMessages(rows);
+      } catch (err) {
+        // 실패 시 empty-state 폴백 — 진단용 로깅만(counts/pollMeta idiom).
+        console.error('[guest-surface] getPublicTripMessages failed', err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joined, slug]);
 
   // 2) Lazy 익명 게이트 (RESEARCH Pattern 1). 순서 고정: signInAnonymously →
   //    join_moa → setStoredNickname. Pitfall 4: join 완료 후에만 island 마운트.
@@ -287,17 +324,30 @@ export function GuestSurface({
     <NicknameGateSheet open={gateOpen} onConfirm={handleConfirmNickname} onClose={handleCloseGate} />
   );
 
-  // 비회원 채팅 진입 어포던스(CHAT-09) — poll-guest-island 비멤버 empty-state 미러.
-  // 메시지 이력은 멤버 전용(RLS SELECT)이라 listTripMessages 미호출 — empty-state만 렌더.
-  // 입력창은 실 compose가 아니라 게이트 트리거(readOnly): focus/보내기 → 닉네임 게이트 →
-  // join 후 MoaIsland가 initialTab='chat'으로 실 compose를 소유한다.
+  // 비회원 채팅 진입 어포던스(CHAT-09/10) — join 전 게스트도 실제 스냅샷 메시지를 읽는다.
+  // 이력은 anon-grant DEFINER RPC(0034)로 노출(멤버 SELECT RLS 우회, user_id PII 제외).
+  // 메시지가 없으면 기존 empty-state로 폴백. 입력창은 실 compose가 아니라 게이트
+  // 트리거(readOnly): focus/보내기 → 닉네임 게이트 → join 후 MoaIsland가 initialTab='chat'.
   const chatTeaser = (
     <section className="mt-8 border-t border-neutral-200 pt-6">
       <h3 className="mb-3 text-sm font-semibold text-neutral-700">채팅</h3>
       <div className="flex flex-col">
-        <p className="py-10 text-center text-sm text-neutral-400">
-          참여하면 지금까지의 대화를 볼 수 있어요
-        </p>
+        {snapshotMessages.length > 0 ? (
+          <ul className="max-h-80 space-y-2 overflow-y-auto">
+            {snapshotMessages.map((m) => (
+              <li key={m.id} className="flex justify-start">
+                <div className="max-w-[80%] rounded-2xl bg-neutral-100 px-3 py-2 text-neutral-900">
+                  <p className="text-xs font-semibold text-neutral-500">{m.nickname}</p>
+                  <p className="mt-0.5 whitespace-pre-wrap break-words text-sm">{m.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="py-10 text-center text-sm text-neutral-400">
+            참여하면 지금까지의 대화를 볼 수 있어요
+          </p>
+        )}
         <div className="mt-3 flex gap-2">
           <input
             type="text"
