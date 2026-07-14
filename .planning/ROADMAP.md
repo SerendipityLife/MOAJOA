@@ -421,7 +421,7 @@ Plans:
 - [x] 29-03-PLAN.md — 한마디 은퇴 (D-02: poll-chat 삭제·presence 단일화·embedded 제거·api orphan) + stored-nickname 401 봉합 — ✅ 2026-07-14 (HC-7 grep 3종 0건·전 스위트 exit 0·tsc 0·iOS/migrations diff 0, commits fc4f11e·376b8c4·e7fb6b6)
 - [x] 29-04-PLAN.md — /poll 통일 채팅 래퍼 poll-guest-island (D-03) + page 마운트 교체 + 원격 0032 human-action — ✅ 2026-07-14 (TDD 6케이스·전 스위트 exit 0(core 192·api 111·web 278·ios 128)·tsc 0·build PASS ƒ /poll/[code]·HC-7 0건, commits fe9fb50·a64c246·3289bde; human-action resolved — origin/main push 33커밋 + 원격 0032 정합 실측, 라이브 스팟 체크는 verify-work)
 - [x] 29-05-PLAN.md — [gap-closure] UAT Gap 3 (CHAT-08): 호스트 /moa 본화면 날짜 투표 현황 — getPollByTrip(owner RLS) → pollSlot(PollVoteIsland 재사용) MoaIsland 전달 + guest-surface 무음 catch 진단 로깅 — ✅ 2026-07-14 (web test 278/278·tsc 0·build PASS ƒ /moa/[id]·moa-island diff 0·iOS/core/migrations diff 0·deviation 0, commits c9b8c3d·a5e2701) — `29-05-SUMMARY.md`
-- [ ] 29-06-PLAN.md — [gap-closure] UAT new_request (CHAT-09): 게스트 /t 채팅 진입 어포던스 — MoaIsland additive `initialTab` prop + guest-surface 비회원 채팅 teaser(empty-state 카피 + 입력창) → focus/보내기 시 ensureGuestMember 게이트 → MoaIsland [채팅] 탭 착지 (poll-guest-island 패턴 재사용, 신규 컴포넌트 0)
+- [x] 29-06-PLAN.md — [gap-closure] UAT new_request (CHAT-09): 게스트 /t 채팅 진입 어포던스 — MoaIsland additive `initialTab` prop + guest-surface 비회원 채팅 teaser(empty-state 카피 + 입력창) → focus/보내기 시 ensureGuestMember 게이트 → MoaIsland [채팅] 탭 착지 (poll-guest-island 패턴 재사용, 신규 컴포넌트 0) — ✅ 2026-07-15 (web test 338/338·tsc 0·build PASS ƒ /t/[slug]·host page.tsx/iOS/core/api/migrations diff 0·deviation 0, commits b12f7c3·c3767ba) — `29-06-SUMMARY.md`
 
 Waves: W1 = 29-01 ∥ 29-02 → W2 = 29-03 → W3 = 29-04 · [gap] 29-05 · [gap] 29-06 (각 독립)
 

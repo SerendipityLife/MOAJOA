@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: phase_complete
-stopped_at: Phase 29 complete — 29-05 gap closure(UAT Gap 3/CHAT-08) 실행 완료, 라이브 재검증 잔여
-last_updated: "2026-07-14T14:58:00.000Z"
-last_activity: 2026-07-14
+stopped_at: Phase 29 complete — 29-06 gap closure(UAT new_request/CHAT-09) 실행 완료, 라이브 재검증 잔여
+last_updated: "2026-07-15T07:50:00.000Z"
+last_activity: 2026-07-15
 progress:
   total_phases: 7
   completed_phases: 7
@@ -36,6 +36,10 @@ progress:
 Phase: 29 (Chat Unification (채팅 단일화)) — ✅ COMPLETE (2026-07-14, verifier 19/19 must-haves·human_needed 4항목 사용자 approved·코드리뷰 critical 0/warning 2)
 Plan(29): W1 = **29-01 ✅[backend]** 0032 join_moa_by_poll_code + joinMoaByPollCode 래퍼·voter RLS smoke ∥ **29-02 ✅** dates→both 수렴(D-01)+hidePlaceAdd → W2 = **29-03 ✅** 한마디 은퇴(D-02, fc4f11e·376b8c4·e7fb6b6) → W3 = **29-04 ✅** /poll 통일 채팅 poll-guest-island(D-03)+page 마운트(fe9fb50·a64c246·3289bde) + 원격 0032 human-action **resolved**(사용자 지시 origin/main push eea5cc3..3289bde 33커밋 — Phase 28+29 최초 배포, `supabase migration list` 0032|0032 정합 실측).
 Next(29): **`/gsd-verify-work 29`** — 29-HUMAN-UAT.md 4항목 소진(라이브 /poll 채팅 a/b/c·dates 게스트·presence 2인극·iOS broadcast) + CHAT-04~07 REQUIREMENTS 등록·마킹. 코드리뷰 warning 2건(0033 revoke 권고·게이트 promise 누수 1줄)은 `/gsd-code-review-fix 29` 후보 — 상세 29-REVIEW.md.
+
+---
+
+**29-06 gap closure 실행 완료 (2026-07-15, commits b12f7c3·c3767ba):** UAT new_request(CHAT-09) 종결 — 게스트 /t join 전 채팅 진입 어포던스. 신규 컴포넌트·마이그레이션·RPC 0(poll-guest-island empty-state 패턴 + ensureGuestMember + MoaIsland + NicknameGateSheet 전부 재사용). **Task 1(feat b12f7c3, TDD):** `moa-island.tsx`에 additive optional `initialTab?: MoaTab` — destructure + `useState<MoaTab>(initialTab ?? 'moa')` 한 줄 교체(나머지 무변경). 미전달=기존 'moa' 기본(호스트 /moa page.tsx diff 0), `initialTab='chat'`이면 첫 렌더에 채팅 뷰 visible. moa-island.test Test A/B. **Task 2(feat c3767ba, TDD):** `guest-surface.tsx` — `pendingChatIntent` state + `openChatGate`(teaser focus/보내기 트리거) + `chatTeaser` 공통 element(비회원 empty-state 카피 '참여하면 지금까지의 대화를 볼 수 있어요' + readOnly 입력창 + 보내기, `listTripMessages` 미호출=RLS SELECT 멤버전용 심층방어 T-29-06-01). 3 비join 분기(places·dates·both)에 teaser 렌더 + 3 joined MoaIsland에 `initialTab={pendingChatIntent ? 'chat' : undefined}` 배선. openGate/requireMember/handleCloseGate에 `setPendingChatIntent(false)`(찜/투표/close 게이트는 'moa' 착지 leak 방지). guest-surface.test Test 1~7(teaser 3모드·보내기/focus 게이트·채팅탭 착지·찜 무회귀) + MoaIsland mock `data-initial-tab`. **검증:** web typecheck 0·**전 스위트 338/338 그린**(37 files 무회귀)·**build PASS `ƒ /t/[slug]` 4.07kB**·acceptance grep 전종 통과·`git diff moa/[id]/page.tsx` 빈 diff(호스트 caller 미전달)·`apps/ios`/`packages/core`/`packages/api`/`supabase/migrations` diff 0·`한마디` grep 0(HC-7 유지)·신규 hex 0·`.js` 워크스페이스 import 0. **deviation 0 — plan 원안 그대로.** CHAT-09는 REQUIREMENTS 미등록(UAT new_request)이라 마킹 스킵. 라이브 재검증(시크릿 /t 게스트→teaser→보내기→닉네임 게이트→채팅탭 착지)은 verify-work 몫. 상세: `29-06-SUMMARY.md`.
 
 ---
 
