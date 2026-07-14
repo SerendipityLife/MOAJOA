@@ -65,9 +65,9 @@ describe('LandingCarousel', () => {
     render(<LandingCarousel />);
     const imgs = screen.getAllByTestId('slide-img');
     expect(imgs).toHaveLength(3);
-    expect(imgs[0]).toHaveAttribute('src', '/onboarding/travel-photo.jpg');
+    expect(imgs[0]).toHaveAttribute('src', '/onboarding/fuji-photo.jpg');
     expect(imgs[1]).toHaveAttribute('src', '/onboarding/lake-photo.jpg');
-    expect(imgs[2]).toHaveAttribute('src', '/onboarding/fuji-photo.jpg');
+    expect(imgs[2]).toHaveAttribute('src', '/onboarding/travel-photo.jpg');
   });
 
   it('marks only the first photo as priority (LCP)', () => {

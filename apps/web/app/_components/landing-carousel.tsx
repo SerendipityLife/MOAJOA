@@ -35,14 +35,13 @@ interface Slide {
 
 const SLIDES: Slide[] = [
   {
-    key: 'link',
-    src: '/onboarding/travel-photo.jpg',
-    title: '유튜브 링크 하나로\n여행 지도 완성',
-    // 4:5 → desktop shows only ~50% of the height. Y=45% keeps the visible band at
-    // 22.5–72.5%, which holds the glasses (14–31%), the dense middle of the Rome map
-    // (30–75%) and the pencils (38–78%). What gets cropped is the empty desk up top
-    // (no information) and the writing hand at the bottom (buried under the scrim anyway).
-    objectPosition: 'object-[50%_45%]',
+    key: 'vote',
+    src: '/onboarding/fuji-photo.jpg',
+    title: '친구랑 투표로\n어디 갈지 정해요',
+    // 2:3 → desktop shows ~42% of the height. Y=50% (center) puts the snow-capped
+    // summit (43%) at the 33% line of the frame — textbook placement. The crop only
+    // eats flat sky and dark foreground rock, so desktop actually improves on the original.
+    objectPosition: 'object-[50%_50%]',
   },
   {
     key: 'share',
@@ -55,13 +54,14 @@ const SLIDES: Slide[] = [
     objectPosition: 'object-[50%_40%]',
   },
   {
-    key: 'vote',
-    src: '/onboarding/fuji-photo.jpg',
-    title: '친구랑 투표로\n어디 갈지 정해요',
-    // 2:3 → desktop shows ~42% of the height. Y=50% (center) puts the snow-capped
-    // summit (43%) at the 33% line of the frame — textbook placement. The crop only
-    // eats flat sky and dark foreground rock, so desktop actually improves on the original.
-    objectPosition: 'object-[50%_50%]',
+    key: 'link',
+    src: '/onboarding/travel-photo.jpg',
+    title: '유튜브 링크 하나로\n여행 지도 완성',
+    // 4:5 → desktop shows only ~50% of the height. Y=45% keeps the visible band at
+    // 22.5–72.5%, which holds the glasses (14–31%), the dense middle of the Rome map
+    // (30–75%) and the pencils (38–78%). What gets cropped is the empty desk up top
+    // (no information) and the writing hand at the bottom (buried under the scrim anyway).
+    objectPosition: 'object-[50%_45%]',
   },
 ];
 
