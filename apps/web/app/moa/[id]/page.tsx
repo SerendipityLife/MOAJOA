@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import {
   getMyVotedPlaceIds,
   getPlanByTrip,
+  getPollByTrip,
+  getPollOptions,
   getProfileNames,
   getTrip,
   getVoteCounts,
@@ -13,6 +15,7 @@ import {
 } from '@moajoa/api';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { MoaIsland } from './_components/moa-island';
+import { PollVoteIsland } from '@/app/poll/[code]/_components/poll-vote-island';
 
 /**
  * 루트 layout의 maximumScale:5(D-13, WCAG 1.4.4)를 이 서피스에서만 덮는다.
@@ -74,6 +77,25 @@ export default async function MoaTripPage({
   const profileNames = await getProfileNames(supabase, nameIds);
   const memberIdsInJoinOrder = members.map((m) => m.user_id);
 
+  // Gap 3 (CHAT-08) — 호스트 본 화면 날짜 투표 현황. getPollByTrip은 owner RLS
+  // (am_trip_owner)로 poll 메타를 읽는다(no voter PII, T-19-07). poll이 있을 때만
+  // pollSlot을 채운다 — 없으면 seam은 undefined로 남아 기존 렌더와 동일(무회귀).
+  const poll = await getPollByTrip(supabase, id);
+  const pollOptions = poll ? await getPollOptions(supabase, poll.id) : [];
+  const pollSlot = poll?.poll_code ? (
+    <section>
+      <h3 className="text-sm font-semibold text-neutral-700">날짜 투표 현황</h3>
+      <PollVoteIsland
+        code={poll.poll_code}
+        tripId={id}
+        mode={poll.mode}
+        status={poll.status}
+        options={pollOptions}
+        nickname={profileNames[user.id] ?? '나'}
+      />
+    </section>
+  ) : undefined;
+
   return (
     <MoaIsland
       trip={trip}
@@ -87,6 +109,7 @@ export default async function MoaTripPage({
       initialMessages={initialMessages}
       initialPlan={plan}
       currentUserNickname={profileNames[user.id] ?? '나'}
+      pollSlot={pollSlot}
     />
   );
 }
