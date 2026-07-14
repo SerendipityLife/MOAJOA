@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MapPin } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { Button, Input, useToast } from '@/components';
 
@@ -121,6 +122,84 @@ export default function LoginPage() {
     if (error) toast(error.message, { variant: 'error' });
   }
 
+  /* Social is the lowest-friction path in, so password AND magic modes both get
+   * it — hiding it behind a mode switch just adds drop-off. Defined once here
+   * (not copy-pasted per branch, not split into its own file) because it closes
+   * over oauth/signUp/pending/email/password. magicSent deliberately does NOT
+   * render it: that user's next step is their inbox, so the buttons are noise. */
+  const socialBlock = (
+    <>
+      {/* The mock's 85%-alpha label lands at 4.25:1 — keep it opaque. */}
+      <div className="flex items-center gap-2.5 pt-1.5">
+        <span className="h-px flex-1 bg-white/35" />
+        <span className="text-xs text-white">간편 로그인</span>
+        <span className="h-px flex-1 bg-white/35" />
+      </div>
+
+      <div className="flex items-center justify-center gap-4 pt-0.5">
+        <button
+          type="button"
+          onClick={() => oauth('kakao')}
+          aria-label="카카오로 시작하기"
+          className="grid size-[52px] place-items-center rounded-full bg-[#FEE500] text-black shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-banana-100"
+        >
+          <svg className="size-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 3C6.477 3 2 6.463 2 10.734c0 2.777 1.86 5.21 4.657 6.578-.205.744-.744 2.7-.851 3.12-.134.522.19.515.4.375.166-.11 2.64-1.79 3.71-2.52.677.1 1.374.152 2.084.152 5.523 0 10-3.463 10-7.735C22 6.463 17.523 3 12 3Z" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => oauth('google')}
+          aria-label="Google로 계속하기"
+          className="grid size-[52px] place-items-center rounded-full bg-white shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-banana-100"
+        >
+          {/* Google's four brand colors are mandated by their branding
+              guidelines — the only hexes here that aren't design tokens. */}
+          <svg className="size-6" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.78.43 3.46 1.18 4.93l3.66-2.83z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => oauth('apple')}
+          aria-label="Apple로 계속하기"
+          className="grid size-[52px] place-items-center rounded-full bg-black text-white shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-banana-100"
+        >
+          <svg className="size-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+          </svg>
+        </button>
+      </div>
+
+      <p className="pt-1.5 text-[13px] text-banana-100">
+        계정이 없나요?{' '}
+        <button
+          type="button"
+          onClick={signUp}
+          disabled={pending || !email || password.length < 6}
+          className="font-bold text-banana-100 underline disabled:opacity-60"
+        >
+          회원가입
+        </button>
+      </p>
+    </>
+  );
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-brand-700 px-6 py-12">
       {/* Top glow. Capped at brand-600 rather than the mock's lighter blue, so
@@ -132,20 +211,29 @@ export default function LoginPage() {
       />
 
       <div className="relative mx-auto w-full max-w-sm text-center">
+        {/* Wordmark. The 1d mock has none, but the login screen still has to say
+            whose product this is. Kept small + white (5.22:1 on brand-600) rather
+            than banana so it reads as a label, not a second headline — the h1
+            stays the visual lead. */}
+        <div className="animate-fade-up flex items-center justify-center gap-1.5 text-white">
+          <MapPin className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+          <span className="text-xs font-bold tracking-[0.14em]">MOAJOA</span>
+        </div>
+
         {/* The mock's translucent-white chip lifts the local background enough to
             drop banana text to 3.48:1 — invert to a dark brand ink chip (5.62:1). */}
-        <span className="animate-fade-up inline-flex items-center gap-1.5 rounded-full border border-banana-100/60 bg-brand-900/25 px-3 py-1.5 text-xs font-semibold text-banana-100">
+        <span className="animate-fade-up mt-3 inline-flex items-center gap-1.5 rounded-full border border-banana-100/60 bg-brand-900/25 px-3 py-1.5 text-xs font-semibold text-banana-100 [animation-delay:60ms]">
           <span className="size-1.5 rounded-full bg-banana-100" />
           친구와 함께 결정
         </span>
 
-        <h1 className="animate-fade-up mt-3.5 text-3xl leading-tight font-extrabold tracking-tight text-banana-100 [animation-delay:60ms]">
+        <h1 className="animate-fade-up mt-3.5 text-3xl leading-tight font-extrabold tracking-tight text-banana-100 [animation-delay:120ms]">
           어디 갈지, <span className="whitespace-nowrap">같이 정해요.</span>
         </h1>
 
         <MapIllustration />
 
-        <div className="animate-fade-up mt-3 [animation-delay:180ms]">
+        <div className="animate-fade-up mt-3 [animation-delay:240ms]">
           {mode === 'magic' && magicSent ? (
             <div>
               <p className="text-white">
@@ -188,84 +276,7 @@ export default function LoginPage() {
                 {pending ? '...' : '로그인'}
               </Button>
 
-              {/* The mock's 85%-alpha label lands at 4.25:1 — keep it opaque. */}
-              <div className="flex items-center gap-2.5 pt-1.5">
-                <span className="h-px flex-1 bg-white/35" />
-                <span className="text-xs text-white">간편 로그인</span>
-                <span className="h-px flex-1 bg-white/35" />
-              </div>
-
-              <div className="flex items-center justify-center gap-4 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => oauth('kakao')}
-                  aria-label="카카오로 시작하기"
-                  className="grid size-[52px] place-items-center rounded-full bg-[#FEE500] text-black shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-banana-100"
-                >
-                  <svg
-                    className="size-6"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 3C6.477 3 2 6.463 2 10.734c0 2.777 1.86 5.21 4.657 6.578-.205.744-.744 2.7-.851 3.12-.134.522.19.515.4.375.166-.11 2.64-1.79 3.71-2.52.677.1 1.374.152 2.084.152 5.523 0 10-3.463 10-7.735C22 6.463 17.523 3 12 3Z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => oauth('google')}
-                  aria-label="Google로 계속하기"
-                  className="grid size-[52px] place-items-center rounded-full bg-white shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-banana-100"
-                >
-                  {/* Google's four brand colors are mandated by their branding
-                      guidelines — the only hexes here that aren't design tokens. */}
-                  <svg className="size-6" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.78.43 3.46 1.18 4.93l3.66-2.83z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => oauth('apple')}
-                  aria-label="Apple로 계속하기"
-                  className="grid size-[52px] place-items-center rounded-full bg-black text-white shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-banana-100"
-                >
-                  <svg
-                    className="size-6"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                  </svg>
-                </button>
-              </div>
-
-              <p className="pt-1.5 text-[13px] text-banana-100">
-                계정이 없나요?{' '}
-                <button
-                  type="button"
-                  onClick={signUp}
-                  disabled={pending || !email || password.length < 6}
-                  className="font-bold text-banana-100 underline disabled:opacity-60"
-                >
-                  회원가입
-                </button>
-              </p>
+              {socialBlock}
               {/* Magic link stays fully functional — demoted to a quiet entry
                   point by size/weight only. Lowering its alpha would break AA. */}
               <button
@@ -294,6 +305,7 @@ export default function LoginPage() {
               <Button type="submit" disabled={pending || !email} className={CTA_ON_BLUE}>
                 {pending ? '...' : '메일로 로그인 링크 받기'}
               </Button>
+              {socialBlock}
               <button
                 type="button"
                 onClick={() => {
@@ -331,7 +343,7 @@ function MapIllustration() {
   return (
     <div
       aria-hidden="true"
-      className="animate-fade-up relative mt-4 h-[190px] overflow-hidden rounded-2xl bg-neutral-200 shadow-lg [animation-delay:120ms]"
+      className="animate-fade-up relative mt-4 h-[190px] overflow-hidden rounded-2xl bg-neutral-200 shadow-lg [animation-delay:180ms]"
     >
       {/* river */}
       <div className="absolute -top-[14%] -left-[20%] h-10 w-[150%] rotate-[-20deg] bg-brand-100" />
