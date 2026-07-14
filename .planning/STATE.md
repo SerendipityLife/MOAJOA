@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: phase_complete
-stopped_at: Phase 29 complete — 29-06 gap closure(UAT new_request/CHAT-09) 실행 완료, 라이브 재검증 잔여
-last_updated: "2026-07-15T07:50:00.000Z"
+stopped_at: Phase 29 complete — 29-07 gap closure(UAT new_request/CHAT-10) 코드 실행 완료, 원격 0034 push(human-action)·라이브 재검증 잔여
+last_updated: "2026-07-15T08:48:12.000Z"
 last_activity: 2026-07-15
 progress:
   total_phases: 7
@@ -36,6 +36,10 @@ progress:
 Phase: 29 (Chat Unification (채팅 단일화)) — ✅ COMPLETE (2026-07-14, verifier 19/19 must-haves·human_needed 4항목 사용자 approved·코드리뷰 critical 0/warning 2)
 Plan(29): W1 = **29-01 ✅[backend]** 0032 join_moa_by_poll_code + joinMoaByPollCode 래퍼·voter RLS smoke ∥ **29-02 ✅** dates→both 수렴(D-01)+hidePlaceAdd → W2 = **29-03 ✅** 한마디 은퇴(D-02, fc4f11e·376b8c4·e7fb6b6) → W3 = **29-04 ✅** /poll 통일 채팅 poll-guest-island(D-03)+page 마운트(fe9fb50·a64c246·3289bde) + 원격 0032 human-action **resolved**(사용자 지시 origin/main push eea5cc3..3289bde 33커밋 — Phase 28+29 최초 배포, `supabase migration list` 0032|0032 정합 실측).
 Next(29): **`/gsd-verify-work 29`** — 29-HUMAN-UAT.md 4항목 소진(라이브 /poll 채팅 a/b/c·dates 게스트·presence 2인극·iOS broadcast) + CHAT-04~07 REQUIREMENTS 등록·마킹. 코드리뷰 warning 2건(0033 revoke 권고·게이트 promise 누수 1줄)은 `/gsd-code-review-fix 29` 후보 — 상세 29-REVIEW.md.
+
+---
+
+**29-07 gap closure 실행 완료 (2026-07-15, commits d44ec49·67634cc·6871764·77ac311·9968ba1):** UAT new_request(CHAT-10) 코드 종결 — join 전 게스트가 /t에서 실제 채팅 메시지 스냅샷(닉네임·본문)을 읽는다(empty-state 교체). 신규 컴포넌트 0(public_trip_poll 0029 백엔드 idiom + 29-06 teaser 구조 재사용). **사용자 잠금 결정(2026-07-15):** /t는 이미 투표자 이름·장소를 anon-with-link에 노출(public_trip_poll/view) → 채팅 동일 정책. **Task 1(TDD RED d44ec49→GREEN 67634cc):** `0034_public_trip_messages.sql` — public_trip_poll(0029) 미러 anon-read DEFINER RPC(slug→trip 해석·visibility 게이트·search_path 핀·grant authenticated,anon). trip_messages SELECT RLS(멤버 전용, 0025) 우회, 최근 200개(created_desc→jsonb_agg asc), **user_id(auth PII) 반환 shape 제외**(T-29-07-02, nickname은 공개 비정규화 D-A2). 0033 read RPC 미revoke 정책 일관. `getPublicTripMessages(client,slug)` 래퍼(chat.ts, getPublicTripPoll idiom) + chat.test rpc mock 2케이스. api 113/113. **Task 2(test 6871764):** `supabase db reset` 0016→0034 42P17=0 → `pnpm supabase:types` public_trip_messages 반영 → `public_trip_messages_smoke.sh` 신규(anon slug→messages len==2·asc·`'user_id' not in d[0]`·없는 slug=null, exit 0). **Task 3(TDD RED 77ac311→GREEN 9968ba1):** `guest-surface.tsx` — SnapshotMessage type + `initialSnapshotMessages` test seam + snapshotMessages state + snapshot useEffect(pollMeta/counts anon-read idiom 미러, join/seam 스킵, 비멤버 realtime 없음 WALRUS) + chatTeaser empty-state `<p>`→조건부 스냅샷 말풍선 렌더(닉네임·본문, reply_to_place 칩 생략), 메시지 없으면 empty 폴백. 입력 게이트(openChatGate·pendingChatIntent·initialTab 3분기) 무변경(surgical). guest-surface.test CHAT-10 Test A~E(places·dates·both 렌더·empty 폴백·게이트 무회귀·join 전환). **검증:** api 113·**web 343/343 그린**(37 files 무회귀)·aggregate `pnpm -r test` exit 0·web+api typecheck 0·**build PASS `ƒ /t/[slug]` 4.25kB**·acceptance grep 전종 통과·migrations diff=0034만(0016~0033 무수정)·`apps/ios`/`packages/core`/`apps/web/app/moa/[id]` diff 0·`.js` 워크스페이스 import 0. **deviation 0 — plan 원안 그대로.** CHAT-10은 REQUIREMENTS 미등록(UAT new_request)이라 마킹 스킵(CHAT-09 선례). **원격 0034 push(Task 4 human-action)·라이브 스냅샷 재검증(시크릿 /t 게스트→호스트 메시지 표시·입력창 게이트 무회귀)은 verify-work/사용자 몫.** 상세: `29-07-SUMMARY.md`.
 
 ---
 
