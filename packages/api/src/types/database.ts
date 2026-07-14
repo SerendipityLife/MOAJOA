@@ -1341,6 +1341,7 @@ export type Database = {
       gettransactionid: { Args: never; Returns: unknown }
       hide_place_as_member: { Args: { p_place_id: string }; Returns: undefined }
       join_moa: { Args: { p_share_slug: string }; Returns: string }
+      join_moa_by_poll_code: { Args: { p_code: string }; Returns: string }
       join_shared_trip: { Args: { p_share_slug: string }; Returns: string }
       longtransactionsenabled: { Args: never; Returns: boolean }
       poll_view_by_code: { Args: { p_code: string }; Returns: Json }

@@ -128,3 +128,56 @@ DT=$(psql "$DB" -tAc "select device_token from date_votes where poll_id='$POLL' 
 
 echo "PASS: anon(is_anonymous=true, role=authenticated) + join_moa(both→editor, dates→voter) + trip_messages RLS(200) + kakao authorize"
 echo "PASS: 게스트 익명 RLS — join 전 0건(places/votes/trip_messages) · join 후 add_manual_place(editor)·votes·trip_messages·cast_date_vote_authed(device_token=auth.uid) 통과"
+
+# =============================================================================
+# (7) join_moa_by_poll_code — poll_code bearer voter join + trip_messages RLS
+#     (Plan 29-01, CHAT-04/05 / T-29-01·03). fresh 익명 세션(섹션 (1) idiom)이
+#     slug 없이 poll_code만으로 T_DATES에 voter로 합류하고, voter role로
+#     trip_messages INSERT 201 + SELECT 200을 통과함을 실증 (RESEARCH Q3의
+#     "voter도 role-무관 정책 통과" 런타임 확인).
+# =============================================================================
+
+# (a) poll_code 시드 — T_DATES에 date_polls 행 (ensure_poll_code 트리거가 코드 발급).
+#     -q 필수: INSERT...RETURNING은 -t만으론 커맨드 태그가 섞여 나옴 (23-04 학습).
+POLL_DATES=$(psql "$DB" -qtAc "insert into date_polls (trip_id, mode, status) values ('$T_DATES','range','open') returning id")
+PCODE=$(psql "$DB" -tAc "select poll_code from date_polls where id='$POLL_DATES'")
+[ -n "$PCODE" ] || { echo "FAIL: ensure_poll_code가 poll_code를 발급하지 않음"; exit 1; }
+
+# (b) fresh 익명 세션 — 기존 JWT는 (3)에서 이미 T_DATES 멤버라 join 실증에 부적합
+RESP2=$(curl -s -X POST "$API/auth/v1/signup" \
+  -H "apikey: $ANON_KEY" -H "Content-Type: application/json" \
+  -d '{"data":{"name":"폴게스트"}}')
+JWT2=$(printf '%s' "$RESP2" | python3 -c "import json,sys; print(json.load(sys.stdin)['access_token'])")
+UID2=$(printf '%s' "$JWT2" | python3 -c "
+import json,base64,sys
+p=sys.stdin.read().split('.')[1]
+print(json.loads(base64.urlsafe_b64decode(p+'=='))['sub'])")
+
+# join_moa_by_poll_code — slug 없이 poll_code bearer로 voter 합류 (HTTP 200)
+J_CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/rpc/join_moa_by_poll_code" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT2" -H "Content-Type: application/json" \
+  -d "{\"p_code\":\"$PCODE\"}")
+[ "$J_CODE" = "200" ] || { echo "FAIL: join_moa_by_poll_code HTTP $J_CODE (want 200)"; exit 1; }
+R_PCODE=$(psql "$DB" -tAc "select role from memberships where trip_id='$T_DATES' and user_id='$UID2'")
+[ "$R_PCODE" = "voter" ] || { echo "FAIL: poll_code join role='$R_PCODE' (want voter)"; exit 1; }
+
+# 잘못된 코드 → 400 (raise exception 'poll not found')
+BAD_CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/rpc/join_moa_by_poll_code" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT2" -H "Content-Type: application/json" \
+  -d '{"p_code":"nope"}')
+[ "$BAD_CODE" = "400" ] || { echo "FAIL: bad poll_code HTTP $BAD_CODE (want 400)"; exit 1; }
+
+# (c) voter trip_messages 프로브 — INSERT 201 (user_id는 0028 트리거 몫) + SELECT 200 비어있지 않음
+M7_POST=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/trip_messages" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT2" -H "Content-Type: application/json" \
+  -d "{\"trip_id\":\"$T_DATES\",\"nickname\":\"폴게스트\",\"body\":\"poll_code 게스트 채팅\"}")
+[ "$M7_POST" = "201" ] || { echo "FAIL: voter trip_messages insert HTTP $M7_POST (want 201)"; exit 1; }
+M7_GET_CODE=$(curl -s -o /dev/null -w '%{http_code}' \
+  "$API/rest/v1/trip_messages?trip_id=eq.$T_DATES&select=id" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT2")
+[ "$M7_GET_CODE" = "200" ] || { echo "FAIL: voter trip_messages read HTTP $M7_GET_CODE (want 200)"; exit 1; }
+M7_GET=$(curl -s "$API/rest/v1/trip_messages?trip_id=eq.$T_DATES&select=id" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $JWT2")
+[ "$(count_json "$M7_GET")" -ge 1 ] || { echo "FAIL: voter trip_messages read $(count_json "$M7_GET")건 (want ≥1)"; exit 1; }
+
+echo "PASS: join_moa_by_poll_code — poll_code bearer voter join(200·role=voter)·bad code 400·voter trip_messages POST 201/GET 200(≥1건)"
