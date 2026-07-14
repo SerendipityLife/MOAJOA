@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: phase_complete
-stopped_at: Phase 29 complete — verifier passed (human_needed approved), UAT 잔여 29-HUMAN-UAT.md
-last_updated: "2026-07-14T06:30:00.000Z"
+stopped_at: Phase 29 complete — 29-05 gap closure(UAT Gap 3/CHAT-08) 실행 완료, 라이브 재검증 잔여
+last_updated: "2026-07-14T14:58:00.000Z"
 last_activity: 2026-07-14
 progress:
   total_phases: 7
@@ -36,6 +36,10 @@ progress:
 Phase: 29 (Chat Unification (채팅 단일화)) — ✅ COMPLETE (2026-07-14, verifier 19/19 must-haves·human_needed 4항목 사용자 approved·코드리뷰 critical 0/warning 2)
 Plan(29): W1 = **29-01 ✅[backend]** 0032 join_moa_by_poll_code + joinMoaByPollCode 래퍼·voter RLS smoke ∥ **29-02 ✅** dates→both 수렴(D-01)+hidePlaceAdd → W2 = **29-03 ✅** 한마디 은퇴(D-02, fc4f11e·376b8c4·e7fb6b6) → W3 = **29-04 ✅** /poll 통일 채팅 poll-guest-island(D-03)+page 마운트(fe9fb50·a64c246·3289bde) + 원격 0032 human-action **resolved**(사용자 지시 origin/main push eea5cc3..3289bde 33커밋 — Phase 28+29 최초 배포, `supabase migration list` 0032|0032 정합 실측).
 Next(29): **`/gsd-verify-work 29`** — 29-HUMAN-UAT.md 4항목 소진(라이브 /poll 채팅 a/b/c·dates 게스트·presence 2인극·iOS broadcast) + CHAT-04~07 REQUIREMENTS 등록·마킹. 코드리뷰 warning 2건(0033 revoke 권고·게이트 promise 누수 1줄)은 `/gsd-code-review-fix 29` 후보 — 상세 29-REVIEW.md.
+
+---
+
+**29-05 gap closure 실행 완료 (2026-07-14, commits c9b8c3d·a5e2701):** UAT Gap 3(CHAT-08) 종결 — 호스트 /moa 본화면 날짜 투표 현황 가시성. 신규 컴포넌트·마이그레이션·RPC 0(getPollByTrip/getPollOptions owner 래퍼 + PollVoteIsland 임베드 seam + MoaIslandProps.pollSlot seam 전부 기존). **Task 1(feat c9b8c3d):** `apps/web/app/moa/[id]/page.tsx` RSC가 `getPollByTrip(supabase,id)`(owner am_trip_owner RLS direct-read, no voter PII T-19-07) → poll 존재 시 `getPollOptions` → `PollVoteIsland`(nickname 주입으로 inline 게이트 스킵, onRequireMember 미전달=이미 owner 멤버) 현황 뷰를 `pollSlot`으로 MoaIsland(:587 seam)에 전달. `poll?.poll_code` 가드로 poll 없는 트립은 seam undefined 유지(무회귀). 헤딩 "날짜 투표 현황"(게스트 "날짜 정하기"와 구분). MoaIsland·PollVoteIsland·date-polls.ts 무변경(최대 surgical §3.3). **Task 2(fix a5e2701):** `guest-surface.tsx` both-mode poll 조회 무음 catch를 `catch (err)` + `console.error('[guest-surface] getPublicTripPoll failed', err)`로 확장(재발 진단 관측성). setPollMeta 스킵 동작·:157-159 카운트 catch 무변경. **검증:** web typecheck 0·**test 278/278 그린**(32 files 무회귀)·**build PASS `ƒ /moa/[id]` 247kB**·acceptance grep 전종 통과·`git diff moa-island.tsx` 빈 diff·`apps/ios`/`packages/core`/`supabase/migrations` diff 0·`.js` 워크스페이스 import 0. **deviation 0 — plan 원안 그대로.** 라이브 재검증(호스트 /moa poll 트립 접속→현황 확인)은 verify-work 몫. 상세: `29-05-SUMMARY.md`.
 
 ---
 
