@@ -119,6 +119,7 @@ export function PollGuestIsland({ code, tripId, mode, status, options }: PollGue
   function requireMember(): Promise<{ uid: string; nickname: string }> {
     if (joined && userId) return Promise.resolve({ uid: userId, nickname });
     return new Promise((resolve, reject) => {
+      gateReject.current?.(); // 이전 pending 호출자를 settle — promise를 절대 leak하지 않는다
       gateResolve.current = resolve;
       gateReject.current = reject;
       setGateOpen(true);
