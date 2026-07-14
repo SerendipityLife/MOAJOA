@@ -61,6 +61,9 @@ export interface MoaIslandProps {
   currentUserNickname: string;
   /** 게스트 마운트(/t)에서 호스트 전용 컨트롤([함께 정하기]) 숨김 (25-06 Gap 4). */
   hideHostControls?: boolean;
+  /** F-2: 쓰기 권한 없는 role(dates voter 게스트)에겐 장소 추가 FAB 미노출 — 실패하는
+      버튼 금지. 미전달=기존 렌더 동일 (29-02). */
+  hidePlaceAdd?: boolean;
   /** both 모드 게스트: [모으기] 시트 상단 날짜투표 임베드(D-09/C2, 25-07). */
   pollSlot?: ReactNode;
 }
@@ -90,6 +93,7 @@ export function MoaIsland({
   initialPlan,
   currentUserNickname,
   hideHostControls,
+  hidePlaceAdd,
   pollSlot,
 }: MoaIslandProps) {
   const router = useRouter();
@@ -618,7 +622,7 @@ export function MoaIsland({
         {/* FAB [+] — collapsed 시트(peek 30vh, place-sheet) 상단에서 16px 위(UI-SPEC 토큰:
             FAB↔시트 오프셋 16px = spacing 4). expanded 시트는 리스트 풀스크린이라 첫 행
             하트 탭 타깃과 겹침 → 숨긴다(25-06 gap fix). add/share 시트가 열릴 때도 숨김. */}
-        {!addOpen && !shareOpen && sheetAnchor !== 'expanded' && (
+        {!hidePlaceAdd && !addOpen && !shareOpen && sheetAnchor !== 'expanded' && (
           <button
             type="button"
             aria-label="장소 추가"
