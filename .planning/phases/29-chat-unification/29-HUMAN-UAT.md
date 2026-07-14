@@ -65,13 +65,21 @@ blocked: 1
   missing: []
 
 - truth: "게스트 /t 뷰(join 전)에 채팅 진입 어포던스가 있고, 입력 시도 시 투표와 동일하게 닉네임 게이트→앱쉘 채팅탭으로 이동한다"
-  status: new_request
-  reason: "사용자 신규 요청(2026-07-15): '게스트 화면에서 채팅이 보이고 메시지 입력하려고 하면 날짜·장소 투표와 마찬가지로 닉네임 입력하게 해서 호스트형 앱쉘로 이동'. 현재 /t join 전 뷰엔 상시 채팅 섹션 없음(상시 채팅은 /poll에만, UI-SPEC A-2). /poll의 poll-guest-island empty-state 채팅 어포던스 패턴을 /t에도 이식."
+  status: resolved
+  resolution: "29-06 (b12f7c3·c3767ba) 배포·확인(2026-07-15 IMG_8668): /t 게스트 뷰에 '채팅' 섹션+입력창 표시, 입력 시도→닉네임 게이트→join→MoaIsland 채팅탭 착지. join 후 메시지 정상 열람(사용자 확인)."
   severity: enhancement
   test: 2
   planned_by: 29-06
-  artifacts: ["apps/web/app/t/[slug]/_components/guest-surface.tsx", "apps/web/app/poll/[code]/_components/poll-guest-island.tsx (analog)"]
-  missing: ["게스트 /t 채팅 teaser 섹션(비회원 empty-state)", "입력 시도→ensureGuestMember 게이트→MoaIsland 채팅탭 착지"]
+  artifacts: ["apps/web/app/t/[slug]/_components/guest-surface.tsx", "apps/web/app/moa/[id]/_components/moa-island.tsx (initialTab)"]
+
+- truth: "게스트가 /t join 전에도 실제 채팅 대화를 읽을 수 있다 (empty-state 대신 메시지 스냅샷)"
+  status: new_request
+  reason: "사용자 결정(2026-07-15, IMG_8667 호스트 메시지 vs IMG_8668 게스트 empty-state 대조): 'join 전에도 메시지 보이게'. 근거: /t는 이미 투표자 이름·장소를 anon-with-link에 노출(public_trip_poll/view) → 채팅도 동일 정책 일관. 로드맵 SC2 '서로 메시지가 보임' 부합. 현재 trip_messages RLS는 멤버 SELECT만이라 비회원은 empty-state. 신설 필요: slug→메시지 anon-grant DEFINER 읽기 RPC(0034, public_trip_poll 0029 미러). 제약: 비회원 스냅샷은 realtime 구독 불가(WALRUS 멤버 전제) → 로드 시 1회 fetch, 라이브는 join 후. 입력 시도 시 게이트는 29-06 그대로."
+  severity: enhancement
+  test: 2
+  planned_by: 29-07
+  artifacts: ["supabase/migrations/0034_public_trip_messages.sql (신규)", "packages/api/src/queries/chat.ts", "apps/web/app/t/[slug]/_components/guest-surface.tsx"]
+  missing: ["slug→messages anon-grant RPC(0034) + smoke", "api 래퍼", "guest-surface teaser가 empty-state 대신 스냅샷 메시지 렌더(read-only, 입력 게이트 유지)"]
 
 - truth: "게스트가 /poll/{code}에서 투표 UI 아래 통일 채팅 섹션을 보고 메시지를 보낼 수 있다"
   status: needs_retest
