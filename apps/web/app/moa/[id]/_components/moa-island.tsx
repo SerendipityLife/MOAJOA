@@ -656,13 +656,13 @@ export function MoaIsland({
         </div>
       </div>
 
-      {/* 채팅 뷰 — 탭바(fixed bottom ~56px) 위에 입력바가 걸치지 않게 하단 여백 확보. */}
+      {/* 채팅 뷰 — 탭바(fixed bottom, border+py-2.5+아이콘+라벨 ≈65.5px) 위에 입력바가 걸치지 않게 하단 여백 확보. */}
       <div
         className={
           activeTab === 'chat' ? 'fixed inset-0 flex justify-center bg-neutral-100' : 'hidden'
         }
       >
-        <div className="relative flex h-full w-full max-w-lg flex-col overflow-hidden px-4 pb-[64px] pt-4">
+        <div className="relative flex h-full w-full max-w-lg flex-col overflow-hidden px-4 pb-[72px] pt-4">
           <MoaChat
             messages={messages}
             currentUserId={currentUserId}
