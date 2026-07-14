@@ -123,11 +123,15 @@ export function PlaceList({
 
   if (isEmpty) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-        <p className="text-lg font-semibold text-neutral-900">아직 담은 장소가 없어요</p>
-        <p className="text-sm font-normal text-neutral-500">
-          아래 + 버튼으로 링크를 붙여넣거나 장소를 검색해 보세요
-        </p>
+      <div className="px-4 py-8">
+        {/* 바나나 하이라이트 패널(/design.md §4) — 흰 시트 위에서 "여기서 시작하세요"를
+            색으로 먼저 말한다. 잉크 15.67:1 / neutral-600 6.68:1. */}
+        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-banana-300 bg-banana-100 px-6 py-12 text-center">
+          <p className="text-lg font-semibold text-neutral-900">아직 담은 장소가 없어요</p>
+          <p className="text-sm font-normal text-neutral-600">
+            아래 + 버튼으로 링크를 붙여넣거나 장소를 검색해 보세요
+          </p>
+        </div>
       </div>
     );
   }
@@ -197,9 +201,7 @@ export function PlaceList({
 
               {/* 중: 장소명 + '{닉네임}님이 담음' (MOA-06). */}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-semibold text-neutral-900">
-                  {p.name_local}
-                </p>
+                <p className="truncate text-base font-semibold text-neutral-900">{p.name_local}</p>
                 <p className="truncate text-xs font-normal text-neutral-500">
                   {profileNames[p.added_by] ?? '알 수 없음'}님이 담음
                 </p>
@@ -234,9 +236,7 @@ export function PlaceList({
             {/* 아코디언 (MOA-05, A-7 순서). 한 번에 하나만 — vote-island 조건부 마운트 미러. */}
             {isOpen && (
               <div className="flex flex-col gap-2 px-6 pb-4">
-                {p.address && (
-                  <p className="text-sm font-normal text-neutral-700">{p.address}</p>
-                )}
+                {p.address && <p className="text-sm font-normal text-neutral-700">{p.address}</p>}
                 <a
                   href={buildGoogleMapsPlaceUrl(p.name_local, p.google_place_id)}
                   target="_blank"

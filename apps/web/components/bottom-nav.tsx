@@ -26,17 +26,20 @@ export function BottomNav() {
   if (!onTab) return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-banana-300 bg-banana-100/95 backdrop-blur">
       <ul className="mx-auto flex max-w-3xl items-stretch">
         {TABS.map(({ href, label, Icon }) => {
           const active = pathname === href;
           return (
             <li key={href} className="flex-1">
+              {/* Banana bar (see /design.md). The 11px label needs 4.5:1: brand-700
+                  is 6.08:1 on banana, neutral-600 is 6.68:1. brand-500 (Royal Blue)
+                  would be 3.19:1 — it is never a small-text color. */}
               <Link
                 href={href}
                 className={
                   'flex flex-col items-center gap-1 py-2.5 ' +
-                  (active ? 'text-brand-500' : 'text-neutral-500')
+                  (active ? 'text-brand-700' : 'text-neutral-600')
                 }
               >
                 <Icon />

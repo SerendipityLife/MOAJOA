@@ -186,7 +186,7 @@ export default function LoginPage() {
                   setError(null);
                   setMode('magic');
                 }}
-                className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
+                className="w-full text-center text-sm text-neutral-500 hover:text-brand-700 mt-1"
               >
                 비밀번호 없이 메일 링크로 로그인
               </button>
@@ -211,7 +211,7 @@ export default function LoginPage() {
                   setError(null);
                   setMode('password');
                 }}
-                className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
+                className="w-full text-center text-sm text-neutral-500 hover:text-brand-700 mt-1"
               >
                 비밀번호로 로그인
               </button>
