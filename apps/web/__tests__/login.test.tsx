@@ -45,12 +45,12 @@ afterEach(() => {
 describe('LoginPage — Kakao OAuth (AUTH-07)', () => {
   it('renders the 카카오로 시작하기 button', () => {
     render(<LoginPage />);
-    expect(screen.getByText('카카오로 시작하기')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '카카오로 시작하기' })).toBeInTheDocument();
   });
 
   it('tapping the button calls signInWithOAuth once with provider kakao + /auth/callback redirect', async () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByText('카카오로 시작하기'));
+    fireEvent.click(screen.getByRole('button', { name: '카카오로 시작하기' }));
     await waitFor(() => expect(mockSignIn).toHaveBeenCalledTimes(1));
     expect(mockSignIn).toHaveBeenCalledWith({
       provider: 'kakao',
@@ -61,7 +61,7 @@ describe('LoginPage — Kakao OAuth (AUTH-07)', () => {
   it('surfaces an error toast (no redirect) when signInWithOAuth returns an error', async () => {
     mockSignIn.mockResolvedValueOnce({ error: { message: '카카오 로그인 실패' } });
     render(<LoginPage />);
-    fireEvent.click(screen.getByText('카카오로 시작하기'));
+    fireEvent.click(screen.getByRole('button', { name: '카카오로 시작하기' }));
     await waitFor(() =>
       expect(toast).toHaveBeenCalledWith('카카오 로그인 실패', { variant: 'error' }),
     );
