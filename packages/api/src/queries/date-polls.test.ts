@@ -6,8 +6,6 @@ import {
   getPublicTripPoll,
   pollByCode,
   getPollTally,
-  postComment,
-  deleteComment,
   confirmPollDate,
   createDatelessTrip,
   getPollByTrip,
@@ -22,7 +20,6 @@ import type { MoajoaSupabaseClient } from '../client';
 const TRIP = '11111111-1111-4111-8111-111111111111';
 const POLL = '22222222-2222-4222-8222-222222222222';
 const OPTION = '33333333-3333-4333-8333-333333333333';
-const COMMENT = '44444444-4444-4444-8444-444444444444';
 const CODE = 'abcd1234';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -156,45 +153,6 @@ describe('getPollTally — rpc(poll_vote_tally)', () => {
   it('throws when rpc returns { error }', async () => {
     const { client } = makeClient({ rpcResult: { data: null, error: { message: 'boom' } } });
     await expect(getPollTally(client, CODE)).rejects.toBeTruthy();
-  });
-});
-
-describe('postComment — rpc(post_poll_comment), DEFINER write (T-19-01)', () => {
-  it('calls rpc with the exact arg object', async () => {
-    const { client, rpc, from } = makeClient({ rpcResult: { data: { id: COMMENT }, error: null } });
-    await postComment(client, { code: CODE, deviceToken: 'd1', nickname: '나', body: '좋아요' });
-    expect(rpc).toHaveBeenCalledWith('post_poll_comment', {
-      p_code: CODE,
-      p_device_token: 'd1',
-      p_nickname: '나',
-      p_body: '좋아요',
-    });
-    expect(from).not.toHaveBeenCalled();
-  });
-
-  it('throws when rpc returns { error }', async () => {
-    const { client } = makeClient({ rpcResult: { data: null, error: { message: 'boom' } } });
-    await expect(
-      postComment(client, { code: CODE, deviceToken: 'd1', nickname: '나', body: 'x' }),
-    ).rejects.toBeTruthy();
-  });
-});
-
-describe('deleteComment — rpc(delete_poll_comment)', () => {
-  it('calls rpc with p_comment_id + p_device_token', async () => {
-    const { client, rpc } = makeClient({ rpcResult: { data: undefined, error: null } });
-    await deleteComment(client, { commentId: COMMENT, deviceToken: 'd1' });
-    expect(rpc).toHaveBeenCalledWith('delete_poll_comment', {
-      p_comment_id: COMMENT,
-      p_device_token: 'd1',
-    });
-  });
-
-  it('throws when rpc returns { error }', async () => {
-    const { client } = makeClient({ rpcResult: { data: null, error: { message: 'boom' } } });
-    await expect(
-      deleteComment(client, { commentId: COMMENT, deviceToken: 'd1' }),
-    ).rejects.toBeTruthy();
   });
 });
 

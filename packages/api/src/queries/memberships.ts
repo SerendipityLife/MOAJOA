@@ -31,6 +31,24 @@ export async function joinMoa(
 }
 
 /**
+ * Self-join a trip by its date-poll code (poll_code bearer — no slug involved).
+ * Idempotent (already a member = no-op — no role promotion, D-A4). Backed by the
+ * SECURITY DEFINER join_moa_by_poll_code RPC (0032): role is fixed server-side to
+ * 'voter' (poll_code is dates semantics — D-A1 dates branch mirror), user_id =
+ * auth.uid() — the caller can only join as themselves. No visibility gate: covers
+ * legacy private dateless-poll trips (share_slug null) that join_moa cannot reach.
+ * Granted to authenticated only — anonymous sessions work but a session is required.
+ */
+export async function joinMoaByPollCode(
+  client: MoajoaSupabaseClient,
+  code: string,
+): Promise<string> {
+  const { data, error } = await client.rpc('join_moa_by_poll_code', { p_code: code });
+  if (error) throw error;
+  return data as string;
+}
+
+/**
  * The caller's relationship to a trip: 'owner' (no memberships row by design),
  * 'member' (accepted memberships row), or null. Lets vote surfaces render the
  * member view on revisit instead of re-prompting 참여하기 (and prevents owners

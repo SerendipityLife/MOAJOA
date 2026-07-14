@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — 전면 개편
 status: executing
-stopped_at: Completed 27-02-PLAN.md
-last_updated: "2026-07-13T16:00:55.706Z"
-last_activity: 2026-07-13
+stopped_at: Completed 29-03-PLAN.md
+last_updated: "2026-07-14T04:11:00.000Z"
+last_activity: 2026-07-14
 progress:
   total_phases: 7
   completed_phases: 6
@@ -33,7 +33,7 @@ progress:
 
 ## Current Position
 
-Phase: 27 (Hardening & 마감) — EXECUTING
+Phase: 29 (Chat Unification (채팅 단일화)) — EXECUTING
 Plan(25): W1 = **25-01 ✅[backend]** 0029 마이그레이션 4함수 + api 래퍼·core 타입·typegen·smoke (e0d6567·0ccd10b·52cebb1·4aa01c6) · **25-02 ✅[컴포넌트 seam]** poll-vote-island 임베드 props·place-list own-only 삭제 게이트 D-12 (5198d46·623aea7·af1d537·61788ab) → W2 = **25-03 ✅[뼈대]** guest-surface + nickname-gate-sheet + page.tsx 교체 (ababe25·8eca62c·dcdea3e·d34e7fd, web 150 그린·build PASS 219kB) · **25-05 ✅[스모크]** 익명-세션 게스트 케이스 3종 append(fc52676·50afbfe, 전부 로컬 exit 0) → W3 = **25-04 ✅[linkIdentity 승격 심]** guest-promote linkIdentity 진입점 + 초대 카드 하단 마운트(C6) + config.toml manual_linking (d17905a·7533fdc·aaa20e3·9bb4b40, web 153 그린·build PASS 219kB).
 Next: **배포(main push)** → **UAT Test 3 재검증**(TP 하이재킹 소멸·찜 하트 도달·게스트 [함께 정하기] 부재 + 신규: '둘다 정하기' 공유→후보 날짜 세팅→시크릿 /t 날짜투표 렌더·투표·both join 후 [모으기] 상단 유지) → UAT Test 4(D-12·linkIdentity). 배포 게이트 2종(원격 0029 push·Manual linking 토글)은 UAT Test 1/2에서 pass 확인됨. 상세: `25-USER-SETUP.md`·`25-HUMAN-UAT.md`.
 
@@ -422,6 +422,9 @@ Plan: 1 of 1
 | Phase 28 P05 | ~40m | 3 tasks | 8 files |
 | Phase 27 P01 | 40min | 3 tasks | 2 files |
 | Phase 27 P02 | 4m | 2 tasks | 4 files |
+| Phase 29 P01 | 7min | 3 tasks | 5 files |
+| Phase 29 P02 | 7min | 2 tasks | 4 files |
+| Phase 29 P03 | 15min | 2 tasks | 5 files |
 
 ### Open questions (research/SUMMARY.md gaps)
 
@@ -435,8 +438,8 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-**Last session:** 2026-07-13T16:00:55.700Z
-**Stopped at:** Completed 27-02-PLAN.md
+**Last session:** 2026-07-14T04:11:00.000Z
+**Stopped at:** Completed 29-03-PLAN.md
 **Resume file:** None
 **Previous stop:** Phase 25 UAT round 3 완료 — BottomSheet body portal(47c375c)로 iOS WebKit 스태킹 트랩 해소, 게스트 날짜투표 라이브 실증(cast_date_vote_authed 204→tally 클로드게스트 1). 잔여 UAT는 Phase 27 통합 UAT로 합류(27-CONTEXT.md D-07). 참고: `.planning/phases/25-guest-unified-share/25-HUMAN-UAT.md`
 
@@ -526,3 +529,6 @@ Plan: 1 of 1
 - [Phase 27]: 27-01: 기존 trip fetch를 게이트 위치로 통합(owner_id 추가) — from('trips') 1회 유지, !trip 404 강화
 - [Phase 27]: NAME-01 카피 스윕: page.tsx 안내 문구 '가고싶어!를'→'찜을' 조사 정합 확정 (RESEARCH Open Q2), vote-island dead code·개발자 주석 무접촉 (D-04/D-06)
 - [Phase 27]: docs v2.1 갱신: WORKSTREAMS 구 할 일 취소선+사유 역사 보존, ARCHITECTURE data flow 기점 iOS→웹·board_id→trip_id·/b/slug→/t/[slug] 어휘만 갱신 (흐름 구조 유지)
+- [Phase 29]: 29-01: poll_code 자체를 bearer로 사용(D-03a) — slug 노출은 0018 bearer 스코프 분리 붕괴라 기각. 0032는 visibility·status 게이트 없음(레거시 private dateless-poll 커버·채팅은 trip 소속 A-8), role 고정 voter, grant authenticated만
+- [Phase 29]: 29-02: hidePlaceAdd는 클라이언트 파생(shareMode dates)로 충분 — DB can_edit_trip RLS가 최종 방어 (심층방어 2겹, T-29-07)
+- [Phase 29]: 29-03: presence 표면은 채팅 presence(moa:{tripId})로 단일화 — poll:{tripId}는 vote broadcast 전용 축소, 'vote' 프로토콜 무변경(iOS 계약 T-29-12). date_comments DROP은 append-only 규칙상 별건 후속(D-02a). stored-hydrate skip 조건을 onRequireMember 존재에 정렬해 세션 없는 재방문자 401 봉합(T-29-11)

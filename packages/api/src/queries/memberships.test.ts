@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { joinMoa, listTripMembers } from './memberships';
+import { joinMoa, joinMoaByPollCode, listTripMembers } from './memberships';
 import type { MoajoaSupabaseClient } from '../client';
 
 // uuid v4 fixtures (mirror ledger.test.ts idiom).
 const TRIP = '11111111-1111-4111-8111-111111111111';
 const SLUG = 'slug123';
+const CODE = 'code1234';
 
 /**
  * Minimal rpc-only mock of MoajoaSupabaseClient (ledger.test.ts makeClient idiom,
@@ -31,6 +32,25 @@ describe('joinMoa — self-join via the 0025 join_moa RPC (server decides role)'
   it('throws when the RPC returns { error }', async () => {
     const { client } = makeRpcClient({ data: null, error: { message: 'boom' } });
     await expect(joinMoa(client, SLUG)).rejects.toBeTruthy();
+  });
+});
+
+describe('joinMoaByPollCode — poll_code bearer self-join via the 0032 RPC (voter)', () => {
+  it("calls rpc('join_moa_by_poll_code', { p_code }) exactly once with the given code", async () => {
+    const { client, rpc } = makeRpcClient({ data: TRIP, error: null });
+    await joinMoaByPollCode(client, CODE);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('join_moa_by_poll_code', { p_code: CODE });
+  });
+
+  it('returns the trip id string the RPC resolves with', async () => {
+    const { client } = makeRpcClient({ data: TRIP, error: null });
+    await expect(joinMoaByPollCode(client, CODE)).resolves.toBe(TRIP);
+  });
+
+  it('throws when the RPC returns { error }', async () => {
+    const { client } = makeRpcClient({ data: null, error: { message: 'boom' } });
+    await expect(joinMoaByPollCode(client, CODE)).rejects.toBeTruthy();
   });
 });
 

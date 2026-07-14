@@ -810,3 +810,16 @@ describe('MoaIsland — plan 허브: 생성·진행·mutation·Day↔지도 (Pla
     expect(screen.getByText('스시집')).toBeInTheDocument();
   });
 });
+
+// ── 29-02 F-2 — voter 게스트(dates join)에게 장소 추가 FAB 미노출. ──
+describe('MoaIsland — hidePlaceAdd (F-2, 29-02)', () => {
+  it('Test 35: hidePlaceAdd 전달 → 장소 추가 FAB 미렌더 (실패하는 버튼 금지)', () => {
+    render(<MoaIsland {...baseProps} hidePlaceAdd />);
+    expect(screen.queryByLabelText('장소 추가')).toBeNull();
+  });
+
+  it('Test 36: 미전달 → FAB 렌더 유지 (기존 렌더 동일 — 회귀 앵커, CHAT-07)', () => {
+    render(<MoaIsland {...baseProps} />);
+    expect(screen.getByLabelText('장소 추가')).toBeInTheDocument();
+  });
+});

@@ -4,10 +4,9 @@ import type { MoajoaSupabaseClient } from '../client';
  * Date-poll RPC wrappers (0018). Mirrors votes.ts/trips.ts house contract:
  * client-first arg, `{ error } throw`, RLS-only.
  *
- * SECURITY: anon vote/comment WRITES go through SECURITY DEFINER RPCs ONLY
- * (cast_date_vote / post_poll_comment / delete_poll_comment). The date_votes and
- * date_comments tables are never written via a direct table insert from here —
- * they grant no INSERT to anon (T-19-01). The only direct table write here is
+ * SECURITY: anon vote WRITES go through the SECURITY DEFINER RPC ONLY
+ * (cast_date_vote). The date_votes table is never written via a direct table
+ * insert from here — it grants no INSERT to anon (T-19-01). The only direct table write here is
  * setPollMode's host-only date_polls update, gated by the date_polls_write RLS
  * (`am_trip_owner`, 0030 — was can_edit_trip).
  */
@@ -88,33 +87,6 @@ export async function getPollTally(client: MoajoaSupabaseClient, code: string): 
   const { data, error } = await client.rpc('poll_vote_tally', { p_code: code });
   if (error) throw error;
   return data;
-}
-
-/** Post an anon comment via the DEFINER RPC (T-19-01: never a direct insert). */
-export async function postComment(
-  client: MoajoaSupabaseClient,
-  input: { code: string; deviceToken: string; nickname: string; body: string },
-): Promise<unknown> {
-  const { data, error } = await client.rpc('post_poll_comment', {
-    p_code: input.code,
-    p_device_token: input.deviceToken,
-    p_nickname: input.nickname,
-    p_body: input.body,
-  });
-  if (error) throw error;
-  return data;
-}
-
-/** Delete an anon comment (own device_token OR host moderation, enforced in the RPC). */
-export async function deleteComment(
-  client: MoajoaSupabaseClient,
-  input: { commentId: string; deviceToken: string },
-): Promise<void> {
-  const { error } = await client.rpc('delete_poll_comment', {
-    p_comment_id: input.commentId,
-    p_device_token: input.deviceToken,
-  });
-  if (error) throw error;
 }
 
 /** Host confirms a winning date → sets trip start/end + closes the poll (owner-only RPC). */
