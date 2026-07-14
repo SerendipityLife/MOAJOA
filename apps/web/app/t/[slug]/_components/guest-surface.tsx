@@ -132,8 +132,10 @@ export function GuestSurface({
       try {
         const raw = (await getPublicTripPoll(client, slug)) as PollMeta | null;
         if (active && raw) setPollMeta(raw);
-      } catch {
-        /* poll 미노출 시 조용히 스킵 — dates 표면만 비게 됨 */
+      } catch (err) {
+        // poll 미노출 시 조용히 스킵 — dates 표면만 비게 됨. 단, both-mode에서 poll이
+        // 흔적 없이 사라지는 재발(Gap 3)을 진단할 수 있게 err는 남긴다.
+        console.error('[guest-surface] getPublicTripPoll failed', err);
       }
     })();
     return () => {
