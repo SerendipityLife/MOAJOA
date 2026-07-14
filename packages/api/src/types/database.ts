@@ -1395,6 +1395,7 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      public_trip_messages: { Args: { p_slug: string }; Returns: Json }
       public_trip_poll: { Args: { p_slug: string }; Returns: Json }
       public_trip_view: { Args: { p_slug: string }; Returns: Json }
       st_3dclosestpoint: {
