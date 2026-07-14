@@ -108,12 +108,10 @@ None.
 - `.js` 워크스페이스 import = 0 (§4.5)
 - 로컬 db reset 0016→0034 42P17=0
 
-## User Setup Required
-**원격 마이그레이션 적용 필요 (Task 4 — human-action checkpoint, 미실행).**
-0034는 origin/main push 시 Supabase↔GitHub 연동으로 원격 자동 적용된다(25-01·29-04 선례). Claude는 원격 DB에 직접 push 권한이 없다. 라이브 게스트 스냅샷 읽기는 **원격 0034 적용 후에만** 동작한다.
-1. 이 plan의 커밋을 origin/main에 push (또는 `supabase db push`).
-2. `supabase migration list`로 Local·Remote 0034 정합 확인.
-3. 시크릿 브라우저로 실 `/t/{slug}` (호스트가 메시지 남긴 trip) 열기 → join 전 채팅 섹션에 호스트 메시지 표시 확인 + 입력창 focus → 닉네임 게이트 무회귀 확인.
+## User Setup Required (Task 4 — human-action: RESOLVED)
+**원격 0034 push 완료 (orchestrator, 사용자 상시 배포 권한).** origin/main이 `d44ec49..5c5a21c`로 fast-forward(분기 없음). Supabase↔GitHub 연동이 0034를 원격 적용 중/확인 완료(orchestrator가 백그라운드로 `supabase migration list` 0034|0034 정합 폴링). 라이브 게스트 스냅샷 읽기는 원격 0034 적용 완료 시점부터 동작한다.
+
+**잔여(사용자 재검증):** 시크릿 브라우저로 실 `/t/{slug}` (호스트가 메시지 남긴 trip) 열기 → join 전 채팅 섹션에 호스트 메시지 표시(empty-state 아님) 확인 + 입력창 focus → 닉네임 게이트 무회귀 확인. verify-work 몫.
 
 ## Next Phase Readiness
 - 코드·로컬 검증 완료. 원격 0034 push + 라이브 스냅샷 재검증(Task 4)은 verify-work / 사용자 몫.
