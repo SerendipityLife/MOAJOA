@@ -9,6 +9,7 @@ import {
   getTrip,
   getVoteCounts,
   listLinksByTrip,
+  listMyTrips,
   listPlacesByTrip,
   listTripMembers,
   listTripMessages,
@@ -57,12 +58,13 @@ export default async function MoaTripPage({
   // plan seed — 이게 없으면 [일정] 영역이 영원히 빈 상태다(island은 쿼리를 처음부터 하지
   // 않고 이 seed로 시작한다). plan_items는 realtime 구독 대상이 아니므로 서버 seed +
   // mutation 후 로컬 refetch가 유일한 갱신 경로다(Pitfall 11).
-  const [places, links, members, initialMessages, plan] = await Promise.all([
+  const [places, links, members, initialMessages, plan, myTrips] = await Promise.all([
     listPlacesByTrip(supabase, id),
     listLinksByTrip(supabase, id),
     listTripMembers(supabase, id),
     listTripMessages(supabase, id),
     getPlanByTrip(supabase, id),
+    listMyTrips(supabase),
   ]);
 
   const placeIds = places.map((p) => p.id);
@@ -110,6 +112,7 @@ export default async function MoaTripPage({
       initialPlan={plan}
       currentUserNickname={profileNames[user.id] ?? '나'}
       pollSlot={pollSlot}
+      moas={myTrips}
     />
   );
 }

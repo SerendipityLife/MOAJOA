@@ -32,15 +32,26 @@ export function BottomNav() {
           const active = pathname === href;
           return (
             <li key={href} className="flex-1">
-              <Link
-                href={href}
-                className={
-                  'flex flex-col items-center gap-1 py-2.5 ' +
-                  (active ? 'text-brand-500' : 'text-neutral-500')
-                }
-              >
-                <Icon />
-                <span className="text-[11px] font-medium">{label}</span>
+              {/* Only the selected tab carries banana — a pill behind its icon
+                  (/design.md §4). The label is 11px, so it needs 4.5:1: brand-700
+                  is 6.89:1 on white. brand-500 (Royal Blue) would be 3.62:1 — it is
+                  never a small-text color. Icon on the banana-200 pill: 5.51:1. */}
+              <Link href={href} className="flex flex-col items-center gap-1 py-2.5">
+                <span
+                  className={
+                    'grid place-items-center rounded-full px-5 py-1 transition-colors duration-150 ease-out ' +
+                    (active ? 'bg-banana-200 text-brand-700' : 'text-neutral-500')
+                  }
+                >
+                  <Icon />
+                </span>
+                <span
+                  className={
+                    'text-[11px] font-medium ' + (active ? 'text-brand-700' : 'text-neutral-500')
+                  }
+                >
+                  {label}
+                </span>
               </Link>
             </li>
           );

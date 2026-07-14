@@ -197,9 +197,7 @@ export function PlaceList({
 
               {/* 중: 장소명 + '{닉네임}님이 담음' (MOA-06). */}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-semibold text-neutral-900">
-                  {p.name_local}
-                </p>
+                <p className="truncate text-base font-semibold text-neutral-900">{p.name_local}</p>
                 <p className="truncate text-xs font-normal text-neutral-500">
                   {profileNames[p.added_by] ?? '알 수 없음'}님이 담음
                 </p>
@@ -234,9 +232,7 @@ export function PlaceList({
             {/* 아코디언 (MOA-05, A-7 순서). 한 번에 하나만 — vote-island 조건부 마운트 미러. */}
             {isOpen && (
               <div className="flex flex-col gap-2 px-6 pb-4">
-                {p.address && (
-                  <p className="text-sm font-normal text-neutral-700">{p.address}</p>
-                )}
+                {p.address && <p className="text-sm font-normal text-neutral-700">{p.address}</p>}
                 <a
                   href={buildGoogleMapsPlaceUrl(p.name_local, p.google_place_id)}
                   target="_blank"

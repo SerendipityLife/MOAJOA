@@ -10,8 +10,8 @@ import { AccountSheet } from './account-sheet';
  * so the single moa:{tripId} realtime channel is never torn down on tab switch.
  * A route-per-tab split (like the app-shell bottom-nav) would remount the island
  * and churn the channel. Visuals mirror bottom-nav.tsx (fixed bottom, flex-1
- * items, brand-500 active). TABS is an array so it extends trivially to 4
- * (플랜/예약/가계부 자리만, D-01).
+ * items, banana pill behind the active icon). TABS is an array so it extends
+ * trivially to 4 (플랜/예약/가계부 자리만, D-01).
  *
  * [마이] is an ACTION, not a tab (D-A): it opens the account sheet and leaves
  * activeTab untouched, so closing the sheet drops the user back on whichever
@@ -44,18 +44,32 @@ export function MoaTabBar({ activeTab, onTabChange }: MoaTabBarProps) {
             const active = key !== 'account' && key === activeTab;
             return (
               <li key={key} className="flex-1">
+                {/* Only the selected tab carries banana — a pill behind its icon
+                    (/design.md §4). The label is 11px, so it needs 4.5:1: brand-700
+                    is 6.89:1 on white. brand-500 (Royal Blue) would be 3.62:1 — it is
+                    never a small-text color. Icon on the banana-200 pill: 5.51:1. */}
                 <button
                   type="button"
                   onClick={() => (key === 'account' ? setAccountOpen(true) : onTabChange(key))}
                   aria-current={active ? 'page' : undefined}
                   aria-haspopup={key === 'account' ? 'dialog' : undefined}
-                  className={
-                    'flex w-full flex-col items-center gap-1 py-2.5 ' +
-                    (active ? 'text-brand-500' : 'text-neutral-500')
-                  }
+                  className="flex w-full flex-col items-center gap-1 py-2.5"
                 >
-                  <Icon />
-                  <span className="text-[11px] font-medium">{label}</span>
+                  <span
+                    className={
+                      'grid place-items-center rounded-full px-5 py-1 transition-colors duration-150 ease-out ' +
+                      (active ? 'bg-banana-200 text-brand-700' : 'text-neutral-500')
+                    }
+                  >
+                    <Icon />
+                  </span>
+                  <span
+                    className={
+                      'text-[11px] font-medium ' + (active ? 'text-brand-700' : 'text-neutral-500')
+                    }
+                  >
+                    {label}
+                  </span>
                 </button>
               </li>
             );

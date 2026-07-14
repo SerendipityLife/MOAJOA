@@ -1,5 +1,5 @@
 import { LOW_CONFIDENCE_THRESHOLD } from '@moajoa/core';
-import { colors } from '@moajoa/ui-tokens';
+import { palette } from './palette';
 
 /**
  * Build a Google Maps Marker icon URL (SVG data URL) that visually encodes
@@ -9,9 +9,9 @@ import { colors } from '@moajoa/ui-tokens';
  * | source_kind | confidence              | fill      | fill-opacity | "?" badge |
  * |-------------|-------------------------|-----------|--------------|-----------|
  * | manual      | (any — null/undefined)  | #111827   | 1.0          | no        |
- * | ai          | null/undefined          | #2979FF   | 1.0          | no        |
- * | ai          | >= 0.7                  | #2979FF   | 1.0          | no        |
- * | ai          | <  0.7                  | #2979FF   | 0.45         | yes       |
+ * | ai          | null/undefined          | #2A6ACB   | 1.0          | no        |
+ * | ai          | >= 0.7                  | #2A6ACB   | 1.0          | no        |
+ * | ai          | <  0.7                  | #2A6ACB   | 0.45         | yes       |
  *
  * Stale-payload fallback (D-15 + plan note): undefined confidence on AI pin
  * is treated as high-confidence so Vercel ISR misses during 0006 rollout
@@ -22,8 +22,8 @@ import { colors } from '@moajoa/ui-tokens';
  * literals interpolated. Never include user-supplied strings (T-05-05-01).
  *
  * `fill` (optional, Phase 24 D-20) overrides the source_kind fill so member
- * pins can carry their memberColor. It MUST be a ui-tokens literal (e.g. a
- * colors.member[…] value) — never a user string, preserving the no-injection
+ * pins can carry their memberColor. It MUST be a palette literal (e.g. a
+ * palette.member[…] value) — never a user string, preserving the no-injection
  * contract (T-24-04). When omitted, output is identical to before.
  *
  * `label` (optional, Phase 28 D-16) draws the Day visit order on the pin so the
@@ -41,12 +41,11 @@ export function buildMarkerIconUrl(input: {
 }): string {
   const isAi = input.source_kind === 'ai';
   const conf = input.confidence;
-  const isLowConf =
-    isAi && typeof conf === 'number' && conf < LOW_CONFIDENCE_THRESHOLD;
+  const isLowConf = isAi && typeof conf === 'number' && conf < LOW_CONFIDENCE_THRESHOLD;
 
-  // Single source: ui-tokens — palette changes propagate without touching this file.
-  // Explicit fill (ui-tokens literal only) wins over the source_kind default.
-  const fill = input.fill ?? (isAi ? colors.brand[500] : colors.neutral[900]); // brand-500 (AI) · neutral-900 (manual)
+  // Single source: lib/palette — palette changes propagate without touching this file.
+  // Explicit fill (palette literal only) wins over the source_kind default.
+  const fill = input.fill ?? (isAi ? palette.brand[600] : palette.neutral[900]); // brand-600 (AI) · neutral-900 (manual)
   const fillOpacity = isLowConf ? 0.45 : 1.0;
   const hasLabel = typeof input.label === 'number';
   // A number label owns the badge slot; the "?" only shows when there is none.

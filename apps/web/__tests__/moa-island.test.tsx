@@ -209,6 +209,15 @@ vi.mock('@/app/moa/[id]/_components/moa-chat', () => ({
     </div>
   ),
 }));
+// MoaSwitcher 스텁 — 자체 테스트가 별도(moa-switcher.test). 스텁이 없으면 스위처가
+// @/components에서 Dropdown* 을 import하는데 위 mock에는 없어서 undefined 렌더 크래시.
+vi.mock('@/app/moa/[id]/_components/moa-switcher', () => ({
+  MoaSwitcher: ({ title, moas }: { title: string; moas?: { id: string }[] }) => (
+    <div data-testid="moa-switcher" data-moas={String(moas?.length ?? 0)}>
+      {title}
+    </div>
+  ),
+}));
 vi.mock('@/app/moa/[id]/_components/moa-tab-bar', () => ({
   MoaTabBar: ({ onTabChange }: { onTabChange: (tab: 'moa' | 'chat') => void }) => (
     <div>
@@ -551,6 +560,12 @@ describe('MoaIsland — 채널 lifecycle + reconcile + optimistic 찜 (D-14/16)'
   it('Test 19: hideHostControls 전달(게스트 마운트) → [함께 정하기] 부재 (25-06 Gap 4 — Test D)', () => {
     render(<MoaIsland {...baseProps} hideHostControls />);
     expect(screen.queryByText('함께 정하기')).toBeNull();
+  });
+
+  it('Test 35: 좌상단이 MoaSwitcher pill — 옛 [뒤로] 진입점 소멸 (quick-260714-kk6)', () => {
+    render(<MoaIsland {...baseProps} />);
+    expect(screen.getByTestId('moa-switcher')).toHaveTextContent('도쿄 모아');
+    expect(screen.queryByLabelText('뒤로')).toBeNull();
   });
 });
 

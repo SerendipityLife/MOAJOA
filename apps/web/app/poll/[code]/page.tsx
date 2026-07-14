@@ -38,12 +38,10 @@ export default async function PollPage({ params }: Props) {
 
   if (!poll) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-banana-100">
         <div className="mx-auto max-w-xl px-4 py-16 text-center">
-          <p className="text-lg font-semibold text-neutral-900">
-            투표를 찾을 수 없어요
-          </p>
-          <p className="mt-2 text-sm text-neutral-500">
+          <p className="text-lg font-semibold text-neutral-900">투표를 찾을 수 없어요</p>
+          <p className="mt-2 text-sm text-neutral-600">
             링크가 만료됐거나 잘못된 코드예요. 초대한 분께 다시 링크를 받아주세요.
           </p>
           <a
@@ -58,7 +56,7 @@ export default async function PollPage({ params }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-banana-100">
       <div className="mx-auto max-w-xl px-4 py-5 md:py-8">
         {/* Brand line — answers "무엇인지" in 3 seconds (mirror /t/[slug] chrome). */}
         <a href="/" className="flex items-center gap-1.5">
@@ -66,7 +64,7 @@ export default async function PollPage({ params }: Props) {
             <MapPin className="size-3" strokeWidth={2.4} />
           </span>
           <span className="text-xs font-semibold text-brand-600">MOAJOA</span>
-          <span className="text-xs text-neutral-400">함께 여행 날짜 정하기</span>
+          <span className="text-xs text-neutral-600">함께 여행 날짜 정하기</span>
         </a>
 
         <header className="mt-4">
@@ -96,9 +94,7 @@ export default async function PollPage({ params }: Props) {
           >
             MOAJOA
           </a>
-          <p className="mt-2 text-sm text-neutral-500">
-            이 투표는 MOAJOA로 만들었어요
-          </p>
+          <p className="mt-2 text-sm text-neutral-600">이 투표는 MOAJOA로 만들었어요</p>
         </footer>
       </div>
     </main>

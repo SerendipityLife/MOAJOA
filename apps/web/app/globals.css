@@ -3,8 +3,56 @@
 @config "../tailwind.config.ts";
 
 @theme {
-  --font-sans: var(--font-sans-kr), 'Pretendard', 'Apple SD Gothic Neo',
-    'Noto Sans KR', system-ui, sans-serif;
+  --font-sans:
+    var(--font-sans-kr), 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+
+  /* ── Brand palette — Banana Mania × Royal Blue (see /design.md) ──────────
+   * Overrides the brand scale from @moajoa/ui-tokens for web only. iOS keeps
+   * the old scale (frozen during the v2.1 web-first pivot), so the shared
+   * package stays untouched.
+   *
+   * brand-500 IS Royal Blue #4886E4 — the identity color. It only clears WCAG
+   * at large sizes (3.62:1 on white), so text and button fills use brand-600
+   * (5.22:1) instead. Same hue, so it still reads as Royal Blue. */
+  --color-brand-50: #f0f6ff;
+  --color-brand-100: #ddeafe;
+  --color-brand-200: #bdd5fa;
+  --color-brand-300: #91b8f3;
+  --color-brand-400: #6a9eec;
+  --color-brand-500: #4886e4; /* ★ Royal Blue — identity: display type, pins */
+  --color-brand-600: #2a6acb; /* ★ action: buttons, links (white text 5.22:1) */
+  --color-brand-700: #2158ab; /* hover/active */
+  --color-brand-800: #18468b;
+  --color-brand-900: #14376b;
+
+  /* Banana Mania — a surface color, never a text color.
+   * banana-700+ doubles as `warning`: the old #F59E0B sat in the same hue as
+   * the brand accent, so a warning was indistinguishable from a highlight. */
+  --color-banana-50: #fffceb;
+  --color-banana-100: #fcf2ba; /* ★ Banana Mania — canvas, highlight cards */
+  --color-banana-200: #f8e78c;
+  --color-banana-300: #f6d75a;
+  --color-banana-400: #f6c228; /* secondary CTA (ink text, 10.70:1) */
+  --color-banana-500: #eda807;
+  --color-banana-600: #c78005;
+  --color-banana-700: #a05e08;
+  --color-banana-800: #7c450e;
+  --color-banana-900: #5f3511;
+
+  /* Semantic — retuned so every solid clears AA with white text.
+   * success was 3.51:1 (failing) before; info folded into the brand blue. */
+  --color-success: #0d844d; /* 4.75:1 */
+  --color-warning: #a05e08; /* = banana-700, 5.12:1 */
+  --color-danger: #dd3131; /* 4.61:1 */
+  --color-info: #2a6acb; /* = brand-600, 5.22:1 */
+
+  /* Map pin + category colors are NOT redefined here. Nothing renders them via
+   * a Tailwind utility — the pins are SVG data: URLs built in lib/marker-svg.ts,
+   * which reads lib/palette.ts. Category chips do not exist yet; design.md §7.2
+   * holds their spec for when they do. */
+
+  /* Brand-tinted float shadow — tracks Royal Blue rgb(72,134,228). */
+  --shadow-fab: 0 4px 16px rgba(72, 134, 228, 0.3);
 
   /* shadcn-compatible semantic colors → MOAJOA brand tokens.
    * Web-only (intentionally NOT in packages/ui-tokens) so iOS is unaffected.
@@ -12,18 +60,19 @@
    * components render on-brand without per-component re-theming. */
   --color-background: #ffffff;
   --color-foreground: #111827; /* neutral-900 */
-  --color-primary: #2563eb; /* brand-600 */
+  --color-primary: #2a6acb; /* brand-600 */
   --color-primary-foreground: #ffffff;
   --color-muted: #f3f4f6; /* neutral-100 */
   --color-muted-foreground: #6b7280; /* neutral-500 */
-  --color-accent: #f5f7ff; /* brand-50 */
-  --color-accent-foreground: #1d4ed8; /* brand-700 */
+  --color-accent: #fcf2ba; /* banana-100 */
+  --color-accent-foreground: #2158ab; /* brand-700 — 6.08:1 on banana */
+  --color-canvas: #fcf2ba; /* banana-100 — landing/onboarding/login/share */
   --color-popover: #ffffff;
   --color-popover-foreground: #111827; /* neutral-900 */
   --color-border: #e5e7eb; /* neutral-200 */
   --color-input: #d1d5db; /* neutral-300 */
-  --color-ring: #2979ff; /* brand-500 */
-  --color-destructive: #ef4444; /* danger */
+  --color-ring: #4886e4; /* brand-500 — Royal Blue focus ring */
+  --color-destructive: #dd3131; /* danger */
   --color-destructive-foreground: #ffffff;
 }
 
@@ -52,8 +101,8 @@ body {
 
 /* Brand-tinted text selection (brand-100 / brand-700). */
 ::selection {
-  background: #e0eaff;
-  color: #1d4ed8;
+  background: #ddeafe;
+  color: #2158ab;
 }
 
 /* ── Entrance micro-interactions ──────────────────────────────────────────

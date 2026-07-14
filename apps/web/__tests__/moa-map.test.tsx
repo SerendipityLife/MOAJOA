@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import type { Place } from '@moajoa/core';
-import { colors } from '@moajoa/ui-tokens';
+import { palette } from '@/lib/palette';
 import { buildMarkerIconUrl } from '@/lib/marker-svg';
 
 // --- google.maps 스텁 (jsdom에는 실 SDK가 없다 — 실지도는 manual UAT). ---
@@ -9,7 +9,11 @@ import { buildMarkerIconUrl } from '@/lib/marker-svg';
 const mapCtor = vi.fn();
 const fitBounds = vi.fn();
 type MarkerOpts = { icon: { url: string }; position: { lat: number; lng: number } };
-type MarkerRecord = { opts: MarkerOpts; setIcon: ReturnType<typeof vi.fn>; setMap: ReturnType<typeof vi.fn> };
+type MarkerRecord = {
+  opts: MarkerOpts;
+  setIcon: ReturnType<typeof vi.fn>;
+  setMap: ReturnType<typeof vi.fn>;
+};
 let markers: MarkerRecord[] = [];
 
 class MapStub {
@@ -80,7 +84,7 @@ function makePlace(overrides: Partial<Place>): Place {
 const p1 = makePlace({});
 const p2 = makePlace({ id: 'p2', seq_no: 2, name_local: '카페', lat: 35.1, lng: 139.1 });
 const p3 = makePlace({ id: 'p3', seq_no: 3, name_local: '공원', lat: 35.2, lng: 139.2 });
-const colorFor = () => colors.member[0]!;
+const colorFor = () => palette.member[0]!;
 const onMarkerTap = vi.fn();
 
 describe('MoaMap — labels + fitKey additive props (D-16 · A-14 · Pitfall 4)', () => {
@@ -88,7 +92,7 @@ describe('MoaMap — labels + fitKey additive props (D-16 · A-14 · Pitfall 4)'
     render(<MoaMap places={[p1]} colorFor={colorFor} onMarkerTap={onMarkerTap} />);
     expect(markers).toHaveLength(1);
     expect(markers[0]!.opts.icon.url).toBe(
-      buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9, fill: colors.member[0]! }),
+      buildMarkerIconUrl({ source_kind: 'ai', confidence: 0.9, fill: palette.member[0]! }),
     );
   });
 
@@ -107,7 +111,7 @@ describe('MoaMap — labels + fitKey additive props (D-16 · A-14 · Pitfall 4)'
       buildMarkerIconUrl({
         source_kind: 'ai',
         confidence: 0.9,
-        fill: colors.brand[500],
+        fill: palette.brand[600],
         label: 1,
       }),
     );
@@ -115,7 +119,7 @@ describe('MoaMap — labels + fitKey additive props (D-16 · A-14 · Pitfall 4)'
       buildMarkerIconUrl({
         source_kind: 'ai',
         confidence: 0.9,
-        fill: colors.brand[500],
+        fill: palette.brand[600],
         label: 2,
       }),
     );
@@ -158,9 +162,7 @@ describe('MoaMap — labels + fitKey additive props (D-16 · A-14 · Pitfall 4)'
     const { rerender } = render(
       <MoaMap places={[p1]} colorFor={colorFor} onMarkerTap={onMarkerTap} fitKey={0} />,
     );
-    rerender(
-      <MoaMap places={[p1, p2]} colorFor={colorFor} onMarkerTap={onMarkerTap} fitKey={1} />,
-    );
+    rerender(<MoaMap places={[p1, p2]} colorFor={colorFor} onMarkerTap={onMarkerTap} fitKey={1} />);
     rerender(
       <MoaMap
         places={[p2]}
@@ -200,7 +202,7 @@ describe('MoaMap — labels + fitKey additive props (D-16 · A-14 · Pitfall 4)'
         url: buildMarkerIconUrl({
           source_kind: 'ai',
           confidence: 0.9,
-          fill: colors.brand[500],
+          fill: palette.brand[600],
           label: 3,
         }),
       }),

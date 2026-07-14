@@ -81,7 +81,7 @@ export default async function PublicBoardPage({ params }: Props) {
     : `${view.owner_display_name}님이 여행 후보 ${view.places.length}곳을 모았어요`;
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-banana-100">
       <div className="px-4 md:px-6 py-5 md:py-8 max-w-5xl mx-auto">
         {/* A안 리디자인 (2026-06-12): 첫 화면이 3초 안에 ①무엇인지 ②누가 보냈는지
             ③뭘 하면 되는지 답하도록 — 브랜드 한 줄 + 초대 카드가 그 역할. */}
@@ -90,7 +90,7 @@ export default async function PublicBoardPage({ params }: Props) {
             <MapPin className="size-3" strokeWidth={2.4} />
           </span>
           <span className="text-xs font-semibold text-brand-600">MOAJOA</span>
-          <span className="text-xs text-neutral-400">링크를 모아 여행 지도로</span>
+          <span className="text-xs text-neutral-600">링크를 모아 여행 지도로</span>
         </a>
 
         <header className="animate-fade-up mt-4">
@@ -104,7 +104,7 @@ export default async function PublicBoardPage({ params }: Props) {
           )}
         </header>
 
-        <section className="animate-fade-up mt-4 rounded-2xl bg-brand-50 p-4 [animation-delay:40ms]">
+        <section className="animate-fade-up mt-4 rounded-2xl border border-banana-300 bg-white p-4 [animation-delay:40ms]">
           <div className="flex items-start gap-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-500 text-sm font-semibold text-white">
               {ownerInitial}
@@ -112,8 +112,8 @@ export default async function PublicBoardPage({ params }: Props) {
             <div className="min-w-0">
               <p className="text-[15px] font-semibold leading-snug text-brand-900">{inviteLine}</p>
               <p className="mt-1 text-sm leading-relaxed text-brand-700">
-                가고 싶은 곳에 <span className="font-semibold">찜</span>을 눌러주세요.
-                많이 모인 곳으로 같이 정해요.
+                가고 싶은 곳에 <span className="font-semibold">찜</span>을 눌러주세요. 많이 모인
+                곳으로 같이 정해요.
               </p>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default async function PublicBoardPage({ params }: Props) {
         {view.links.length > 0 && (
           <details className="mt-8 group">
             <summary className="cursor-pointer list-none mb-3 flex items-center gap-1.5 text-base font-semibold text-neutral-700 hover:text-brand-600 transition-colors">
-              <span className="text-neutral-400 transition-transform group-open:rotate-90">▸</span>
+              <span className="text-neutral-600 transition-transform group-open:rotate-90">▸</span>
               이 모아의 출처 {view.links.length}개
             </summary>
             <ul className="space-y-2">
@@ -201,7 +201,7 @@ export default async function PublicBoardPage({ params }: Props) {
           >
             MOAJOA
           </a>
-          <p className="mt-2 text-sm text-neutral-500">이 모아는 MOAJOA로 만들었어요</p>
+          <p className="mt-2 text-sm text-neutral-600">이 모아는 MOAJOA로 만들었어요</p>
         </footer>
       </div>
     </main>

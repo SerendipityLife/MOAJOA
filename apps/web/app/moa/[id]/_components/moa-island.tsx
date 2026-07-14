@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import type {
   Link,
   Place,
@@ -29,11 +28,12 @@ import {
   triggerExtraction,
   updateTrip,
 } from '@moajoa/api';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { memberColor } from '@/lib/member-color';
 import { Button, useToast } from '@/components';
 import { MoaMap } from './moa-map';
+import { MoaSwitcher } from './moa-switcher';
 import { PlanSection, type PlanWithItemsView } from './plan-section';
 import { PlaceSheet, type SheetAnchor } from './place-sheet';
 import { PlaceList } from './place-list';
@@ -66,6 +66,8 @@ export interface MoaIslandProps {
   hidePlaceAdd?: boolean;
   /** both 모드 게스트: [모으기] 시트 상단 날짜투표 임베드(D-09/C2, 25-07). */
   pollSlot?: ReactNode;
+  /** 좌상단 스위처의 내 모아 목록. 게스트 마운트(/t)는 미전달 → 정적 제목 pill. */
+  moas?: Trip[];
 }
 
 /**
@@ -95,8 +97,8 @@ export function MoaIsland({
   hideHostControls,
   hidePlaceAdd,
   pollSlot,
+  moas,
 }: MoaIslandProps) {
-  const router = useRouter();
   const { toast } = useToast();
 
   const [places, setPlaces] = useState<Place[]>(initialPlaces);
@@ -106,8 +108,7 @@ export function MoaIsland({
     Object.fromEntries(initialMyVotedPlaceIds.map((id) => [id, true])),
   );
   const [votePending, setVotePending] = useState<Record<string, boolean>>({});
-  const [profileNames, setProfileNames] =
-    useState<Record<string, string>>(initialProfileNames);
+  const [profileNames, setProfileNames] = useState<Record<string, string>>(initialProfileNames);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
   const [sheetAnchor, setSheetAnchor] = useState<SheetAnchor>('collapsed');
   const [addOpen, setAddOpen] = useState(false);
@@ -213,7 +214,12 @@ export function MoaIsland({
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'trip_messages', filter: `trip_id=eq.${trip.id}` },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'trip_messages',
+          filter: `trip_id=eq.${trip.id}`,
+        },
         (payload) => appendMessage(payload.new as TripMessage),
       )
       .on('presence', { event: 'sync' }, () =>
@@ -552,106 +558,105 @@ export function MoaIsland({
               {...(plan && { fitKey: selectedDay })}
             />
 
-        {/* 뒤로 chevron 오버레이(흰 원형 + shadow). */}
-        <button
-          type="button"
-          aria-label="뒤로"
-          onClick={() => router.push('/moa')}
-          className="absolute left-4 top-4 z-50 grid size-10 place-items-center rounded-full bg-white shadow-md"
-        >
-          <ChevronLeft className="size-5 text-neutral-700" aria-hidden />
-        </button>
+            <MoaSwitcher
+              currentTripId={trip.id}
+              title={trip.title}
+              currentUserId={currentUserId}
+              moas={moas}
+            />
 
-        {/* 상단 바 우측 — [함께 정하기] primary sm 오버레이(UI-SPEC §상단 바).
+            {/* 상단 바 우측 — [함께 정하기] primary sm 오버레이(UI-SPEC §상단 바).
             게스트 마운트에선 숨김 — ShareSheet 마운트는 shareOpen이 절대 true가
             안 되므로 그대로 둔다(surgical, 25-06 Gap 4). */}
-        {!hideHostControls && (
-          <div className="absolute right-4 top-4 z-50">
-            <Button size="sm" onClick={() => setShareOpen(true)}>
-              함께 정하기
-            </Button>
-          </div>
-        )}
+            {!hideHostControls && (
+              <div className="absolute right-4 top-4 z-50">
+                {/* 바나나 CTA — 파랑(+FAB)은 "담기", 바나나는 "함께하기". 두 액션을
+                색으로 갈라 지도 위에서 역할이 바로 읽히게 한다(/design.md §6). */}
+                <Button variant="secondary" size="sm" onClick={() => setShareOpen(true)}>
+                  함께 정하기
+                </Button>
+              </div>
+            )}
 
-        <PlaceSheet
-          anchor={sheetAnchor}
-          onAnchorChange={setSheetAnchor}
-          header={
-            <div>
-              <p className="text-lg font-semibold text-neutral-900">{trip.title}</p>
-              <p className="text-sm font-normal text-neutral-500">장소 {places.length}개</p>
-            </div>
-          }
-        >
-          {/* both 모드 게스트 날짜투표 임베드(D-09/C2) — 호스트 /moa는 미전달=diff 0. */}
-          {pollSlot}
+            <PlaceSheet
+              anchor={sheetAnchor}
+              onAnchorChange={setSheetAnchor}
+              header={
+                <div>
+                  <p className="text-lg font-semibold text-neutral-900">{trip.title}</p>
+                  <p className="text-sm font-normal text-neutral-500">장소 {places.length}개</p>
+                </div>
+              }
+            >
+              {/* both 모드 게스트 날짜투표 임베드(D-09/C2) — 호스트 /moa는 미전달=diff 0. */}
+              {pollSlot}
 
-          {/* [일정] 영역 (D-15/HC-4) — 신규 라우트·탭이 아니라 기존 시트의 children이다.
+              {/* [일정] 영역 (D-15/HC-4) — 신규 라우트·탭이 아니라 기존 시트의 children이다.
               PlaceSheet 자체는 한 줄도 수정하지 않는다(HC-5 — 제스처 소유권 회귀 방지).
               게스트(/t/[slug]) 마운트에는 노출하지 않는다 — 열람자에게 플랜 변경 표면을
               주지 않는다(T-28-28). 실제 쓰기는 can_edit_trip RLS(0017)가 최종 게이트. */}
-          {!hideHostControls && (
-            <PlanSection
-              plan={plan}
-              places={places}
-              links={links}
-              trip={{ ...trip, day_count: dayCount }}
-              currentUserId={currentUserId}
-              generating={generating}
-              planStep={planStep}
-              error={planError}
-              selectedDay={selectedDay}
-              onSelectDay={setSelectedDay}
-              onGenerate={() => void runGenerate()}
-              onSaveDuration={(n) => void onSaveDuration(n)}
-              onMovePlaceToDay={(placeId, dayIndex) => void onMovePlaceToDay(placeId, dayIndex)}
-              onMoveItemToDay={(itemId, placeId, dayIndex) =>
-                void onMoveItemToDay(itemId, placeId, dayIndex)
-              }
-              onMoveToPool={(itemId) => void onMoveToPool(itemId)}
-              onTravelModeChange={(mode) => void onTravelModeChange(mode)}
-              onShare={() => setShareOpen(true)}
-              renderPool={(pool, onAddToPlan) => renderPlaceList(pool, onAddToPlan)}
-            />
-          )}
+              {!hideHostControls && (
+                <PlanSection
+                  plan={plan}
+                  places={places}
+                  links={links}
+                  trip={{ ...trip, day_count: dayCount }}
+                  currentUserId={currentUserId}
+                  generating={generating}
+                  planStep={planStep}
+                  error={planError}
+                  selectedDay={selectedDay}
+                  onSelectDay={setSelectedDay}
+                  onGenerate={() => void runGenerate()}
+                  onSaveDuration={(n) => void onSaveDuration(n)}
+                  onMovePlaceToDay={(placeId, dayIndex) => void onMovePlaceToDay(placeId, dayIndex)}
+                  onMoveItemToDay={(itemId, placeId, dayIndex) =>
+                    void onMoveItemToDay(itemId, placeId, dayIndex)
+                  }
+                  onMoveToPool={(itemId) => void onMoveToPool(itemId)}
+                  onTravelModeChange={(mode) => void onTravelModeChange(mode)}
+                  onShare={() => setShareOpen(true)}
+                  renderPool={(pool, onAddToPlan) => renderPlaceList(pool, onAddToPlan)}
+                />
+              )}
 
-          {/* 플랜이 있으면 풀이 PlanSection 안에서 이미 렌더된다 — 여기서 또 그리면 중복(A-12). */}
-          {!plan && renderPlaceList(places)}
-        </PlaceSheet>
+              {/* 플랜이 있으면 풀이 PlanSection 안에서 이미 렌더된다 — 여기서 또 그리면 중복(A-12). */}
+              {!plan && renderPlaceList(places)}
+            </PlaceSheet>
 
-        {/* FAB [+] — collapsed 시트(peek 30vh, place-sheet) 상단에서 16px 위(UI-SPEC 토큰:
+            {/* FAB [+] — collapsed 시트(peek 30vh, place-sheet) 상단에서 16px 위(UI-SPEC 토큰:
             FAB↔시트 오프셋 16px = spacing 4). expanded 시트는 리스트 풀스크린이라 첫 행
             하트 탭 타깃과 겹침 → 숨긴다(25-06 gap fix). add/share 시트가 열릴 때도 숨김. */}
-        {!hidePlaceAdd && !addOpen && !shareOpen && sheetAnchor !== 'expanded' && (
-          <button
-            type="button"
-            aria-label="장소 추가"
-            onClick={() => setAddOpen(true)}
-            className="absolute bottom-[calc(30vh+16px)] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
-          >
-            <Plus className="size-6" aria-hidden />
-          </button>
-        )}
+            {!hidePlaceAdd && !addOpen && !shareOpen && sheetAnchor !== 'expanded' && (
+              <button
+                type="button"
+                aria-label="장소 추가"
+                onClick={() => setAddOpen(true)}
+                className="absolute bottom-[calc(30vh+16px)] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
+              >
+                <Plus className="size-6" aria-hidden />
+              </button>
+            )}
 
-        {/* 검색 추가 Day 배치 분기(D-19/D-20). Day 수는 PlanSection과 같은 파생식을 쓴다
+            {/* 검색 추가 Day 배치 분기(D-19/D-20). Day 수는 PlanSection과 같은 파생식을 쓴다
             (day_count가 stale하거나 null인 레거시 플랜에서 items가 있는 Day를 숨기지 않기 위해
             max()로 감싼다 — 28-05와 동일). */}
-        <AddSheet
-          tripId={trip.id}
-          open={addOpen}
-          onClose={() => setAddOpen(false)}
-          onAdded={() => void reconcile()}
-          planExists={plan !== null}
-          dayCount={planDayTotal}
-          onPlacePickedForDay={(placeId, dayIndex) => void onMovePlaceToDay(placeId, dayIndex)}
-        />
+            <AddSheet
+              tripId={trip.id}
+              open={addOpen}
+              onClose={() => setAddOpen(false)}
+              onAdded={() => void reconcile()}
+              planExists={plan !== null}
+              dayCount={planDayTotal}
+              onPlacePickedForDay={(placeId, dayIndex) => void onMovePlaceToDay(placeId, dayIndex)}
+            />
 
-        <ShareSheet
-          trip={{ ...trip, share_mode: localShareMode }}
-          open={shareOpen}
-          onClose={() => setShareOpen(false)}
-          onShared={setLocalShareMode}
-        />
+            <ShareSheet
+              trip={{ ...trip, share_mode: localShareMode }}
+              open={shareOpen}
+              onClose={() => setShareOpen(false)}
+              onShared={setLocalShareMode}
+            />
           </div>
         </div>
       </div>

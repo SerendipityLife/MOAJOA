@@ -139,7 +139,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-surface-background">
+    <main className="flex min-h-screen flex-col bg-banana-100">
       {/* 상단 (D-02): 좌 뒤로 chevron(step>1) + 우 N/4 카운터. 4-dot 인디케이터는 제거됨.
           카운터는 step 상태에서 파생 — pushState/popstate 배선은 무수정. */}
       <div className="relative flex h-14 items-center px-4">
@@ -174,7 +174,7 @@ export default function OnboardingPage() {
             {HEADINGS[step].title}
           </h1>
           {HEADINGS[step].subtitle && (
-            <p className="text-center text-sm text-neutral-500">{HEADINGS[step].subtitle}</p>
+            <p className="text-center text-sm text-neutral-600">{HEADINGS[step].subtitle}</p>
           )}
         </div>
 

@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
-import { Button, Input, useToast } from '@/components';
-
-type Mode = 'password' | 'magic';
+import { useToast } from '@/components';
+// Path imports, not the barrel: login.test.tsx mocks '@/components' wholesale.
+import { SocialAuthButtons } from '@/components/social-auth-buttons';
+import { EmailAuthForm } from '@/components/email-auth-form';
 
 /**
  * Where to land after auth. Honors a validated ?next= (vote flow passes
@@ -33,12 +34,6 @@ function callbackUrl(): string {
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [mode, setMode] = useState<Mode>('password');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [magicSent, setMagicSent] = useState(false);
 
   // Surface failures bounced here by the auth callback route (/login?error=...),
   // then strip the param so a refresh doesn't re-show it.
@@ -52,58 +47,7 @@ export default function LoginPage() {
     router.replace(`/login${query ? `?${query}` : ''}` as never);
   }, [router, toast]);
 
-  async function signIn(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setPending(true);
-    const { error } = await getSupabaseBrowser().auth.signInWithPassword({ email, password });
-    setPending(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    router.replace(postLoginDestination() as never);
-  }
-
-  async function signUp() {
-    setError(null);
-    setPending(true);
-    const { error } = await getSupabaseBrowser().auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: callbackUrl(),
-      },
-    });
-    setPending(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    // With Confirm Email off, signUp returns a session immediately.
-    router.replace(postLoginDestination() as never);
-  }
-
-  async function sendMagicLink(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setPending(true);
-    const { error } = await getSupabaseBrowser().auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: callbackUrl(),
-      },
-    });
-    setPending(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setMagicSent(true);
-  }
-
   async function oauth(provider: 'google' | 'apple' | 'kakao') {
-    setError(null);
     const { error } = await getSupabaseBrowser().auth.signInWithOAuth({
       provider,
       options: {
@@ -115,135 +59,112 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="animate-fade-up w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="grid size-12 place-items-center rounded-2xl bg-brand-600 text-white shadow-fab">
-            <MapPin className="size-6" strokeWidth={2} />
-          </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-neutral-900">
-            MOAJOA
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">여행 정보를 모아두는 지도</p>
+    <main className="relative min-h-screen overflow-hidden bg-brand-700 px-6 py-12">
+      {/* Top glow. Capped at brand-600 rather than the mock's lighter blue, so
+          the brightest background pixel anywhere on the page is L=0.15 — the
+          worst case every text token below was contrast-checked against. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_90%_55%_at_50%_-8%,var(--color-brand-600)_0%,transparent_55%)]"
+      />
+
+      <div className="relative mx-auto w-full max-w-sm text-center">
+        {/* Wordmark. The 1d mock has none, but the login screen still has to say
+            whose product this is. Kept small + white (5.22:1 on brand-600) rather
+            than banana so it reads as a label, not a second headline — the h1
+            stays the visual lead. */}
+        <div className="animate-fade-up flex items-center justify-center gap-1.5 text-white">
+          <MapPin className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+          <span className="text-xs font-bold tracking-[0.14em]">MOAJOA</span>
         </div>
 
-        {mode === 'magic' && magicSent ? (
-          <div className="text-center">
-            <p className="text-neutral-700 mb-4">
-              <strong>{email}</strong>으로 로그인 링크를 보냈어요.
-              <br />
-              메일에서 링크를 클릭해 계속 진행해주세요.
-            </p>
-            <button
-              onClick={() => {
-                setMagicSent(false);
-                setMode('password');
-              }}
-              className="text-brand-500 underline text-sm"
-            >
-              비밀번호로 로그인
-            </button>
-          </div>
-        ) : mode === 'password' ? (
-          <form onSubmit={signIn} className="space-y-3">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일 주소"
-              required
-              autoComplete="email"
-            />
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="비밀번호 (6자 이상)"
-              required
-              minLength={6}
-              autoComplete="current-password"
-            />
-            <div className="flex gap-2">
-              <Button type="submit" disabled={pending} className="flex-1">
-                {pending ? '...' : '로그인'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={signUp}
-                disabled={pending || !email || password.length < 6}
-                className="flex-1"
-              >
-                가입하기
-              </Button>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setMode('magic');
-              }}
-              className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
-            >
-              비밀번호 없이 메일 링크로 로그인
-            </button>
-          </form>
-        ) : (
-          // magic-link mode
-          <form onSubmit={sendMagicLink} className="space-y-3">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일 주소"
-              required
-              autoComplete="email"
-            />
-            <Button type="submit" disabled={pending || !email} className="w-full">
-              {pending ? '...' : '메일로 로그인 링크 받기'}
-            </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setMode('password');
-              }}
-              className="w-full text-center text-sm text-neutral-500 hover:text-brand-500 mt-1"
-            >
-              비밀번호로 로그인
-            </button>
-          </form>
-        )}
+        {/* The mock's translucent-white chip lifts the local background enough to
+            drop banana text to 3.48:1 — invert to a dark brand ink chip (5.62:1). */}
+        <span className="animate-fade-up mt-3 inline-flex items-center gap-1.5 rounded-full border border-banana-100/60 bg-brand-900/25 px-3 py-1.5 text-xs font-semibold text-banana-100 [animation-delay:60ms]">
+          <span className="size-1.5 rounded-full bg-banana-100" />
+          친구와 함께 결정
+        </span>
 
-        {error && <p className="text-danger text-sm mt-3 text-center">{error}</p>}
+        <h1 className="animate-fade-up mt-3.5 text-3xl leading-tight font-extrabold tracking-tight text-banana-100 [animation-delay:120ms]">
+          어디 갈지, <span className="whitespace-nowrap">같이 정해요.</span>
+        </h1>
 
-        <div className="my-6 flex items-center gap-3">
-          <hr className="flex-1 border-neutral-200" />
-          <span className="text-xs text-neutral-500">또는</span>
-          <hr className="flex-1 border-neutral-200" />
-        </div>
+        <MapIllustration />
 
-        <div className="space-y-2">
-          <button
-            onClick={() => oauth('google')}
-            className="w-full rounded-lg border border-neutral-300 py-3 font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-50"
-          >
-            Google로 계속
-          </button>
-          <button
-            onClick={() => oauth('apple')}
-            className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition-colors hover:bg-neutral-800"
-          >
-            Apple로 계속
-          </button>
-          <button
-            onClick={() => oauth('kakao')}
-            className="w-full rounded-lg bg-[#FEE500] py-3 font-medium text-neutral-900 transition-colors hover:bg-[#FDD800]"
-          >
-            카카오로 시작하기
-          </button>
+        <div className="animate-fade-up mt-3 [animation-delay:240ms]">
+          {/* The form itself (password / magic / magic-sent + 회원가입) lives in
+              components/email-auth-form.tsx, shared with the landing modal. The
+              entrance animation stays here: it belongs to the page, not the form. */}
+          <EmailAuthForm
+            surface="blue"
+            getCallbackUrl={callbackUrl}
+            onAuthenticated={() => router.replace(postLoginDestination() as never)}
+            socialSlot={<SocialAuthButtons onProvider={oauth} />}
+          />
         </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * Decorative map — pure CSS, no tiles, no image, no map SDK. Every color is a
+ * design token; the place names are hardcoded dummies, not user data.
+ * aria-hidden: it restates the headline visually and says nothing a screen
+ * reader needs.
+ */
+function MapIllustration() {
+  return (
+    <div
+      aria-hidden="true"
+      className="animate-fade-up relative mt-4 h-[190px] overflow-hidden rounded-2xl bg-neutral-200 shadow-lg [animation-delay:180ms]"
+    >
+      {/* river */}
+      <div className="absolute -top-[14%] -left-[20%] h-10 w-[150%] rotate-[-20deg] bg-brand-100" />
+      {/* park */}
+      <div className="absolute top-[24%] right-[8%] h-[52px] w-[66px] rounded-[48%] bg-success/25" />
+      {/* roads */}
+      <div className="absolute top-0 left-[36%] h-full w-[3px] bg-white/90" />
+      <div className="absolute top-[52%] left-0 h-[3px] w-full rotate-[-6deg] bg-white/85" />
+
+      {/* pins — 확정 / 후보 / 보류. The rotation lives on an inner node so it
+          doesn't fight the positioning translate. */}
+      <div className="absolute top-[44%] left-[26%] -translate-x-1/2 -translate-y-full">
+        <div className="size-[26px] rotate-[-45deg] rounded-[50%_50%_50%_0] border-2 border-white bg-success shadow" />
+      </div>
+      <div className="absolute top-[66%] left-[54%] -translate-x-1/2 -translate-y-full">
+        <div className="size-[26px] rotate-[-45deg] rounded-[50%_50%_50%_0] border-2 border-white bg-brand-500 shadow" />
+      </div>
+      <div className="absolute top-[40%] left-[80%] -translate-x-1/2 -translate-y-full">
+        <div className="size-[22px] rotate-[-45deg] rounded-[50%_50%_50%_0] border-2 border-white bg-neutral-400 shadow" />
+      </div>
+
+      {/* place labels */}
+      <div className="absolute top-[46%] left-[27%] rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold whitespace-nowrap text-neutral-900 shadow">
+        오사카성 · 명소
+      </div>
+      <div className="absolute top-[68%] left-[55%] rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold whitespace-nowrap text-neutral-900 shadow">
+        이치란 라멘 · 맛집
+      </div>
+
+      {/* header chip + legend */}
+      <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold whitespace-nowrap text-neutral-900 shadow">
+        📍 오사카 여행 · 12곳
+      </div>
+      <div className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-2 rounded-full bg-white px-2.5 py-1.5 text-[11px] font-semibold whitespace-nowrap text-neutral-700 shadow">
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2 rounded-full bg-success" />
+          확정
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2 rounded-full bg-brand-500" />
+          후보
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2 rounded-full bg-neutral-400" />
+          보류
+        </span>
+      </div>
+    </div>
   );
 }
