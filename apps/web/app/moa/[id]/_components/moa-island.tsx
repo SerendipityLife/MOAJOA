@@ -664,13 +664,14 @@ export function MoaIsland({
         </div>
       </div>
 
-      {/* 채팅 뷰 — 탭바(fixed bottom, border+py-2.5+아이콘+라벨 ≈65.5px) 위에 입력바가 걸치지 않게 하단 여백 확보. */}
+      {/* 채팅 뷰 — 탭바(fixed bottom, 바나나 pill 포함 ≈74px) + iOS 홈 인디케이터 안전영역
+          위에 입력바가 걸치지 않게 하단 여백 확보(env(safe-area-inset-bottom)). */}
       <div
         className={
           activeTab === 'chat' ? 'fixed inset-0 flex justify-center bg-neutral-100' : 'hidden'
         }
       >
-        <div className="relative flex h-full w-full max-w-lg flex-col overflow-hidden px-4 pb-[72px] pt-4">
+        <div className="relative flex h-full w-full max-w-lg flex-col overflow-hidden px-4 pb-[calc(84px+env(safe-area-inset-bottom))] pt-4">
           <MoaChat
             messages={messages}
             currentUserId={currentUserId}

@@ -127,8 +127,10 @@ export function PlaceSheet({ anchor, onAnchorChange, header, children }: PlaceSh
           <div className="px-6 pt-2 pb-3">{header}</div>
         </div>
 
-        {/* 본문 — 스크롤 전용. overscroll-contain: 스크롤할 게 없어도 document로 체이닝 X. */}
-        <div className="flex-1 touch-pan-y overflow-y-auto overscroll-contain px-6 pb-8">
+        {/* 본문 — 스크롤 전용. overscroll-contain: 스크롤할 게 없어도 document로 체이닝 X.
+            하단 여백은 fixed MoaTabBar(~74px) + iOS 홈 인디케이터 안전영역을 예약해야
+            마지막 장소 카드가 탭바 뒤로 잘리지 않는다(iOS Safari: env(safe-area-inset-bottom)). */}
+        <div className="flex-1 touch-pan-y overflow-y-auto overscroll-contain px-6 pb-[calc(88px+env(safe-area-inset-bottom))]">
           {children}
         </div>
       </div>
