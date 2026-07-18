@@ -108,7 +108,7 @@ export function PlaceSheet({ anchor, onAnchorChange, header, children }: PlaceSh
       <div
         ref={sheetRef}
         className={cn(
-          'pointer-events-auto flex h-[85vh] w-full max-w-lg flex-col rounded-t-3xl bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.08)]',
+          'pointer-events-auto flex h-[85vh] w-full max-w-lg flex-col rounded-t-3xl border border-neutral-200/60 bg-white shadow-sheet',
           dragY === null && 'transition-transform duration-[250ms] ease-out',
         )}
         style={{ transform: `translateY(${dragY ?? restingTranslate}px)` }}

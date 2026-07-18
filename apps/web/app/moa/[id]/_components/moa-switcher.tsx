@@ -61,8 +61,10 @@ export function MoaSwitcher({ currentTripId, title, currentUserId, moas }: MoaSw
       <ChevronDown className="size-4 shrink-0 text-neutral-500" aria-hidden />
     </>
   );
+  // 지도 위 컨트롤은 하나의 "떠있는 레이어" 언어를 공유한다(v2.1 refine): 미세 글래스 +
+  // 흰 헤어라인 + 웜 색조 그림자(shadow-float). +FAB·탭 독과 같은 표면감으로 읽히게 한다.
   const pillClass =
-    'absolute left-4 top-4 z-50 flex items-center gap-1 rounded-full bg-white px-3 py-2 shadow-md';
+    'absolute left-4 top-4 z-50 flex items-center gap-1 rounded-full border border-white/70 bg-white/80 px-3.5 py-2 shadow-float backdrop-blur-md transition-transform duration-150 ease-out active:scale-[0.97]';
 
   if (!moas || moas.length === 0) {
     return <div className={pillClass}>{pill}</div>;

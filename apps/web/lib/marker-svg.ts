@@ -8,10 +8,10 @@ import { palette } from './palette';
  * Color/opacity matrix (web parity with iOS — D-24):
  * | source_kind | confidence              | fill      | fill-opacity | "?" badge |
  * |-------------|-------------------------|-----------|--------------|-----------|
- * | manual      | (any — null/undefined)  | #111827   | 1.0          | no        |
- * | ai          | null/undefined          | #2A6ACB   | 1.0          | no        |
- * | ai          | >= 0.7                  | #2A6ACB   | 1.0          | no        |
- * | ai          | <  0.7                  | #2A6ACB   | 0.45         | yes       |
+ * | manual      | (any — null/undefined)  | #050315   | 1.0          | no        |
+ * | ai          | null/undefined          | #2F27CE   | 1.0          | no        |
+ * | ai          | >= 0.7                  | #2F27CE   | 1.0          | no        |
+ * | ai          | <  0.7                  | #2F27CE   | 0.45         | yes       |
  *
  * Stale-payload fallback (D-15 + plan note): undefined confidence on AI pin
  * is treated as high-confidence so Vercel ISR misses during 0006 rollout

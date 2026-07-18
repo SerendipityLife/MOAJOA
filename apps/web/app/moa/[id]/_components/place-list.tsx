@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Link, Place } from '@moajoa/core';
-import { AlertCircle, ExternalLink, Heart, Loader2 } from 'lucide-react';
+import { AlertCircle, ExternalLink, Heart, Loader2, MapPin } from 'lucide-react';
 import { sortByLove } from '@/lib/place-sort';
 import { buildGoogleMapsPlaceUrl } from '@/lib/maps-url';
 import { buildYouTubeWatchUrl } from '@/lib/youtube';
@@ -123,11 +123,18 @@ export function PlaceList({
 
   if (isEmpty) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-        <p className="text-lg font-semibold text-neutral-900">아직 담은 장소가 없어요</p>
-        <p className="text-sm font-normal text-neutral-500">
-          아래 + 버튼으로 링크를 붙여넣거나 장소를 검색해 보세요
-        </p>
+      <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+        <div className="grid size-14 place-items-center rounded-2xl bg-banana-100 text-brand-600 ring-1 ring-inset ring-banana-300/40">
+          <MapPin className="size-7" aria-hidden />
+        </div>
+        <div className="space-y-1.5">
+          <p className="text-lg font-semibold -tracking-[0.01em] text-neutral-900">
+            아직 담은 장소가 없어요
+          </p>
+          <p className="mx-auto max-w-[16rem] text-sm text-neutral-500">
+            아래 + 버튼으로 링크를 붙여넣으면 영상 속 장소가 지도에 모여요
+          </p>
+        </div>
       </div>
     );
   }
@@ -293,7 +300,7 @@ export function PlaceList({
                       e.stopPropagation();
                       onDelete(p.id);
                     }}
-                    className="self-start text-sm font-medium text-[#EF4444]"
+                    className="self-start text-sm font-medium text-danger"
                   >
                     삭제
                   </button>
@@ -310,7 +317,7 @@ export function PlaceList({
           key={`failed-${l.id}`}
           className="flex min-h-[44px] items-center gap-3 border-b border-neutral-100 py-4"
         >
-          <AlertCircle className="size-5 shrink-0 text-[#EF4444]" aria-hidden />
+          <AlertCircle className="size-5 shrink-0 text-danger" aria-hidden />
           <span className="min-w-0 flex-1 text-sm font-normal text-neutral-700">
             {l.source_kind === 'manual' ? '지원하지 않는 링크예요' : '장소를 찾지 못했어요'}
           </span>

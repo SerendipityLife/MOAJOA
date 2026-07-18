@@ -6,72 +6,96 @@
   --font-sans:
     var(--font-sans-kr), 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
 
-  /* ── Brand palette — Banana Mania × Royal Blue (see /design.md) ──────────
-   * Overrides the brand scale from @moajoa/ui-tokens for web only. iOS keeps
-   * the old scale (frozen during the v2.1 web-first pivot), so the shared
-   * package stays untouched.
+  /* ── Brand palette — Indigo mono (references/reference_01, RealtimeColors) ──
+   * Full recolor to a single indigo hue (~243°), web-only. iOS keeps the old
+   * scale (frozen during the v2.1 web-first pivot), so @moajoa/ui-tokens stays
+   * untouched. One hue removes the old blue×yellow clash entirely.
    *
-   * brand-500 IS Royal Blue #4886E4 — the identity color. It only clears WCAG
-   * at large sizes (3.62:1 on white), so text and button fills use brand-600
-   * (5.22:1) instead. Same hue, so it still reads as Royal Blue. */
-  --color-brand-50: #f0f6ff;
-  --color-brand-100: #ddeafe;
-  --color-brand-200: #bdd5fa;
-  --color-brand-300: #91b8f3;
-  --color-brand-400: #6a9eec;
-  --color-brand-500: #4886e4; /* ★ Royal Blue — identity: display type, pins */
-  --color-brand-600: #2a6acb; /* ★ action: buttons, links (white text 5.22:1) */
-  --color-brand-700: #2158ab; /* hover/active */
-  --color-brand-800: #18468b;
-  --color-brand-900: #14376b;
+   * Anchors are the reference's exact colors:
+   *   brand-100 = Secondary #dedcff · brand-500 = Accent #433bff
+   *   brand-600 = Primary  #2f27ce (buttons/FAB, white text ~10:1). */
+  --color-brand-50: #f0efff;
+  --color-brand-100: #dedcff; /* ★ Secondary — light tinted surfaces */
+  --color-brand-200: #c3bfff;
+  --color-brand-300: #a29cff;
+  --color-brand-400: #6f66ff;
+  --color-brand-500: #433bff; /* ★ Accent — highlights, focus, active */
+  --color-brand-600: #2f27ce; /* ★ Primary — buttons, FAB, links (white ~10:1) */
+  --color-brand-700: #2620a6; /* hover/active */
+  --color-brand-800: #1e1a80;
+  --color-brand-900: #181563;
 
-  /* Banana Mania — a surface color, never a text color.
-   * banana-700+ doubles as `warning`: the old #F59E0B sat in the same hue as
-   * the brand accent, so a warning was indistinguishable from a highlight. */
-  --color-banana-50: #fffceb;
-  --color-banana-100: #fcf2ba; /* ★ Banana Mania — canvas, highlight cards */
-  --color-banana-200: #f8e78c;
-  --color-banana-300: #f6d75a;
-  --color-banana-400: #f6c228; /* secondary CTA (ink text, 10.70:1) */
-  --color-banana-500: #eda807;
-  --color-banana-600: #c78005;
-  --color-banana-700: #a05e08;
-  --color-banana-800: #7c450e;
-  --color-banana-900: #5f3511;
+  /* Lavender — the Secondary family (token still named `banana-*` to avoid an
+   * app-wide class rename; it is NOT yellow anymore). Surface + secondary-CTA
+   * range. `warning` no longer references this ramp — it is an independent
+   * amber literal below — so recoloring the whole ramp is safe. */
+  --color-banana-50: #f7f6ff;
+  --color-banana-100: #edecff; /* canvas, empty-state chip, highlight cards */
+  --color-banana-200: #dedcff; /* ★ Secondary — active tab pill */
+  --color-banana-300: #cbc7ff;
+  --color-banana-400: #b3adff; /* secondary CTA (ink text ~11:1) */
+  --color-banana-500: #9d96f7; /* hover */
+  --color-banana-600: #8a82ee;
+  --color-banana-700: #6f66d8;
+  --color-banana-800: #574ec0;
+  --color-banana-900: #443ba0;
+
+  /* Neutral — cool grays with a faint indigo tint, matching the reference's
+   * cool Background (#fbfbfe) and Text (#050315). neutral-900 IS the reference
+   * Text. Each step keeps AA-safe contrast (neutral-500 = 6.3:1 on white). */
+  --color-neutral-50: #f7f7fb;
+  --color-neutral-100: #eeeef6;
+  --color-neutral-200: #e2e1ee;
+  --color-neutral-300: #cbc9dc;
+  --color-neutral-400: #9895b3;
+  --color-neutral-500: #615d7d;
+  --color-neutral-600: #494663;
+  --color-neutral-700: #35324c;
+  --color-neutral-800: #211f33;
+  --color-neutral-900: #050315; /* ★ reference Text */
 
   /* Semantic — retuned so every solid clears AA with white text.
    * success was 3.51:1 (failing) before; info folded into the brand blue. */
   --color-success: #0d844d; /* 4.75:1 */
-  --color-warning: #a05e08; /* = banana-700, 5.12:1 */
+  --color-warning: #a05e08; /* independent amber — a warning must not read as brand */
   --color-danger: #dd3131; /* 4.61:1 */
-  --color-info: #2a6acb; /* = brand-600, 5.22:1 */
+  --color-info: #2f27ce; /* = brand-600 (Primary) */
 
   /* Map pin + category colors are NOT redefined here. Nothing renders them via
    * a Tailwind utility — the pins are SVG data: URLs built in lib/marker-svg.ts,
    * which reads lib/palette.ts. Category chips do not exist yet; design.md §7.2
    * holds their spec for when they do. */
 
-  /* Brand-tinted float shadow — tracks Royal Blue rgb(72,134,228). */
-  --shadow-fab: 0 4px 16px rgba(72, 134, 228, 0.3);
+  /* Brand-tinted FAB shadow — two layers so the indigo disc reads as lifted,
+   * not stamped. Tracks Primary rgb(47,39,206). */
+  --shadow-fab: 0 10px 24px -8px rgba(47, 39, 206, 0.45), 0 3px 8px -3px rgba(47, 39, 206, 0.4);
+
+  /* Floating map controls (switcher pill, tab dock) — a cool indigo-tinted
+   * shadow, never pure black, so it belongs to the same cool world as the palette. */
+  --shadow-float: 0 8px 28px -8px rgba(20, 18, 60, 0.16), 0 2px 8px -3px rgba(20, 18, 60, 0.1);
+
+  /* Bottom sheet — an upward cool shadow that separates the white sheet from the
+   * near-white map chrome without a hard line. */
+  --shadow-sheet: 0 -10px 34px -12px rgba(20, 18, 60, 0.14);
 
   /* shadcn-compatible semantic colors → MOAJOA brand tokens.
    * Web-only (intentionally NOT in packages/ui-tokens) so iOS is unaffected.
    * Light mode only — matches the app's color-scheme: light. Lets shadcn/Radix
    * components render on-brand without per-component re-theming. */
-  --color-background: #ffffff;
-  --color-foreground: #111827; /* neutral-900 */
-  --color-primary: #2a6acb; /* brand-600 */
+  --color-background: #fbfbfe; /* ★ reference Background */
+  --color-foreground: #050315; /* ★ reference Text */
+  --color-primary: #2f27ce; /* brand-600 (Primary) */
   --color-primary-foreground: #ffffff;
-  --color-muted: #f3f4f6; /* neutral-100 */
-  --color-muted-foreground: #6b7280; /* neutral-500 */
-  --color-accent: #fcf2ba; /* banana-100 */
-  --color-accent-foreground: #2158ab; /* brand-700 — 6.08:1 on banana */
-  --color-canvas: #fcf2ba; /* banana-100 — landing/onboarding/login/share */
+  --color-muted: #eeeef6; /* neutral-100 */
+  --color-muted-foreground: #615d7d; /* neutral-500 */
+  --color-accent: #dedcff; /* ★ Secondary — lavender surface */
+  --color-accent-foreground: #2f27ce; /* Primary on lavender — 7.8:1 */
+  --color-canvas: #edecff; /* lavender — landing/onboarding/login/share */
   --color-popover: #ffffff;
-  --color-popover-foreground: #111827; /* neutral-900 */
-  --color-border: #e5e7eb; /* neutral-200 */
-  --color-input: #d1d5db; /* neutral-300 */
-  --color-ring: #4886e4; /* brand-500 — Royal Blue focus ring */
+  --color-popover-foreground: #050315; /* reference Text */
+  --color-border: #e2e1ee; /* neutral-200 */
+  --color-input: #cbc9dc; /* neutral-300 */
+  --color-ring: #433bff; /* ★ Accent — focus ring */
   --color-destructive: #dd3131; /* danger */
   --color-destructive-foreground: #ffffff;
 }
@@ -90,8 +114,8 @@ body {
 }
 
 body {
-  background: #fff;
-  color: #111827; /* neutral-900 */
+  background: #fbfbfe; /* reference Background */
+  color: #050315; /* reference Text */
 }
 
 /* Keep focus visible only for keyboard nav */
@@ -99,10 +123,10 @@ body {
   outline: none;
 }
 
-/* Brand-tinted text selection (brand-100 / brand-700). */
+/* Brand-tinted text selection (Secondary lavender / Primary indigo). */
 ::selection {
-  background: #ddeafe;
-  color: #2158ab;
+  background: #dedcff;
+  color: #2f27ce;
 }
 
 /* ── Entrance micro-interactions ──────────────────────────────────────────

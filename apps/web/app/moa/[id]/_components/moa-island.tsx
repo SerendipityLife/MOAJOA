@@ -586,8 +586,12 @@ export function MoaIsland({
               onAnchorChange={setSheetAnchor}
               header={
                 <div>
-                  <p className="text-lg font-semibold text-neutral-900">{trip.title}</p>
-                  <p className="text-sm font-normal text-neutral-500">장소 {places.length}개</p>
+                  <p className="text-xl font-semibold -tracking-[0.01em] text-neutral-900">
+                    {trip.title}
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium tabular-nums text-neutral-500">
+                    장소 {places.length}개
+                  </p>
                 </div>
               }
             >
@@ -635,7 +639,7 @@ export function MoaIsland({
                 type="button"
                 aria-label="장소 추가"
                 onClick={() => setAddOpen(true)}
-                className="absolute bottom-[calc(30vh+16px)] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab"
+                className="absolute bottom-[calc(30vh+16px)] right-4 z-[60] grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-fab ring-1 ring-inset ring-white/20 transition-[transform,background-color] duration-150 ease-out hover:bg-brand-700 active:scale-95"
               >
                 <Plus className="size-6" aria-hidden />
               </button>

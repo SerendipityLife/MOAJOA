@@ -294,7 +294,7 @@ export function ShareSheet({ trip, open, onClose, onShared }: ShareSheetProps) {
                     type="button"
                     aria-label="후보 삭제"
                     onClick={() => void handleRemoveOption(o.id)}
-                    className="grid size-11 place-items-center text-[#EF4444]"
+                    className="grid size-11 place-items-center text-danger"
                   >
                     <X className="size-5" aria-hidden />
                   </button>
